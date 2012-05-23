@@ -1,0 +1,30 @@
+##
+## This file has been automatically generated.
+## Any edit to this file will be lost on next update.
+## If you need to add static paths to the ignore list, please edit the createGitIgnore script.
+##
+## - ETj
+
+nb*.xml
+.classpath
+.project
+.settings
+*~
+catalog.xml
+
+src/target
+src/server/core/model/target
+src/server/core/persistence/target
+src/server/core/target
+src/server/core/services-api/target
+src/server/core/services-impl/target
+src/server/modules/target
+src/server/modules/rest/api/target
+src/server/modules/rest/client/target
+src/server/modules/rest/extjs/target
+src/server/modules/rest/impl/target
+src/server/modules/rest/target
+src/server/modules/rest/test/target
+src/server/target
+src/server/web/app/target
+src/server/web/target

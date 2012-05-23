@@ -1,0 +1,107 @@
+/* ====================================================================
+ *
+ * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * http://www.geo-solutions.it
+ *
+ * GPLv3 + Classpath exception
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. 
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by developers
+ * of GeoSolutions.  For more information on GeoSolutions, please see
+ * <http://www.geo-solutions.it/>.
+ *
+ */
+
+package it.geosolutions.geostore.services.rest;
+
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTQuickBackup;
+
+import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+
+
+import javax.ws.rs.core.SecurityContext;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+
+/** 
+ * Backup/restore REST service
+ * 
+ * @author ETj (etj at geo-solutions.it)
+ */
+    @RolesAllowed({"ADMIN"})
+    public interface RESTBackupService {
+
+    /**
+     * @param id
+     * @return Resource
+     * @throws NotFoundWebEx
+     */
+    @GET
+    @Path("/full")
+    @Produces({MediaType.TEXT_PLAIN})
+    @RolesAllowed({"ADMIN"})
+    String backup(@Context SecurityContext sc);
+
+    @PUT
+    @Path("/full/{token}")
+    @Produces({MediaType.TEXT_PLAIN})
+    @RolesAllowed({"ADMIN"})
+    String restore(@Context SecurityContext sc,
+            @PathParam("token") String token);
+
+
+    /**
+     * Quick backup is a backup that is built in memory.
+     * It can only be issued when the data base in the store is not very big.
+     * Furthermore, most internal params are not backup/restored (creation time, ...)
+     * Most important, <b>neither users or authentication info are backupped</b>.
+     *
+     */
+    @GET
+    @Path("/quick")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN"})
+    RESTQuickBackup quickBackup(
+    		@Context SecurityContext sc)
+            throws BadRequestServiceEx ;
+
+
+    /**
+     * Quick backup is a backup that is built in memory.
+     * It can only be issued when the data base in the store is not very big.
+     * Furthermore, most internal params are not backup/restored (creation time, ...)
+     * Most important, <b>neither users or authentication info are backupped</b>.
+     *
+     */
+    @PUT
+    @Path("/quick")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN"})
+    String quickRestore(
+    		@Context SecurityContext sc,
+            @Multipart("backup") RESTQuickBackup backup)
+            throws BadRequestServiceEx ;
+
+}
