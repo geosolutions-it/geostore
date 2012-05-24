@@ -32,6 +32,7 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -48,6 +49,7 @@ import javax.ws.rs.core.SecurityContext;
  * Experimental operations go here.
  *
  * @author ETj (etj at geo-solutions.it)
+ * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
  
 public interface RESTMiscService {
@@ -71,4 +73,13 @@ public interface RESTMiscService {
     		@PathParam("rname") String rname)
                 throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
 
+    @GET
+    @Path("/category/name/{cname}/resources/")
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    ShortResourceList getResourcesByCategory(
+      @Context SecurityContext sc,
+      @PathParam("cname") String cname)
+                throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
+    
 }

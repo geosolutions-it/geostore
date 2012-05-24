@@ -27,18 +27,27 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.*;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.StoredDataService;
 import it.geosolutions.geostore.services.dto.ShortResource;
-import it.geosolutions.geostore.services.dto.search.*;
+import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTMiscService;
-import it.geosolutions.geostore.services.rest.exception.*;
-import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
+import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
+import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+
 import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
@@ -49,15 +58,22 @@ import org.apache.log4j.Logger;
  * Class RESTMiscServiceImpl.
  *
  * @author ETj (etj at geo-solutions.it)
+ * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService {
 	
-    private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
+    @SuppressWarnings("unused")
+	private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
 
-    private CategoryService categoryService;
+    @SuppressWarnings("unused")
+	private CategoryService categoryService;
     private ResourceService resourceService;
-    private StoredDataService storedDataService;
+    @SuppressWarnings("unused")
+	private StoredDataService storedDataService;
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.RESTMiscService#getData(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
+     */
     @Override
     public String getData(SecurityContext sc, String catName, String resName) 
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
@@ -90,6 +106,9 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         return resources.get(0).getData().getData();
     }
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
+     */
     @Override
     public Resource getResource(SecurityContext sc, String catName, String resName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
@@ -120,6 +139,35 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         }
 
         return resources.get(0);
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
+     */
+    @Override
+    public ShortResourceList getResourcesByCategory(SecurityContext sc, String catName)
+            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
+
+        if(catName == null)
+            throw new BadRequestWebEx("Category is null");
+
+        SearchFilter filter = new CategoryFilter(catName, SearchOperator.EQUAL_TO);
+
+        List<ShortResource> resources = null;
+        try {
+            User user = extractAuthUser(sc);
+            resources = resourceService.getResources(filter, user);
+        } catch (BadRequestServiceEx ex) {
+            throw new BadRequestWebEx(ex.getMessage());
+        } catch (InternalErrorServiceEx ex) {
+            throw new InternalErrorWebEx(ex.getMessage());
+        }
+
+        if (resources.isEmpty()) {
+            throw new NotFoundWebEx("No resource found");
+        }
+
+        return new ShortResourceList(resources);
     }
     
 
