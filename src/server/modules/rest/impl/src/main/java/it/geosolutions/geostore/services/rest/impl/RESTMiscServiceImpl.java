@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.CategoryService;
@@ -49,6 +50,7 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
 import java.util.List;
+import java.util.logging.Level;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -148,9 +150,20 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     public ShortResourceList getResourcesByCategory(SecurityContext sc, String catName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
+        // some checks on category
         if(catName == null)
             throw new BadRequestWebEx("Category is null");
 
+        Category category;
+        try {
+            category = categoryService.get(catName);
+        } catch (BadRequestServiceEx ex) {
+            throw new BadRequestWebEx(ex.getMessage());
+        }
+        if(category == null)
+            throw new NotFoundWebEx("Category not found");
+
+        // ok, search for the resource list
         SearchFilter filter = new CategoryFilter(catName, SearchOperator.EQUAL_TO);
 
         List<ShortResource> resources = null;
@@ -161,10 +174,6 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
             throw new InternalErrorWebEx(ex.getMessage());
-        }
-
-        if (resources.isEmpty()) {
-            throw new NotFoundWebEx("No resource found");
         }
 
         return new ShortResourceList(resources);

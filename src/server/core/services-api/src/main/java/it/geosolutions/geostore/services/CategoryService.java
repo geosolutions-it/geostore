@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -70,6 +70,12 @@ public interface CategoryService {
      * @return Category
      */
     Category get(long id);
+
+    /**
+     * @return the category with the exact name requested, or null if none was found
+     * @throws BadRequestServiceEx is a null name was given
+     */
+    Category get(String name) throws BadRequestServiceEx;
 
     /**
      * @param page

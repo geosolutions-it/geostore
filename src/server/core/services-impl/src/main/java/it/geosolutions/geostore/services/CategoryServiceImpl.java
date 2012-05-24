@@ -110,6 +110,25 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.CategoryService#get(long)
+     */
+    @Override
+    public Category get(String name) throws BadRequestServiceEx {
+        if(name == null) {
+            throw new BadRequestServiceEx("Category name must be specified !");
+        }
+
+        Search searchCriteria = new Search(Category.class);
+        searchCriteria.addFilterEqual("name", name);
+        List<Category> categories = categoryDAO.search(searchCriteria);
+        if(categories.size() > 1) {
+            LOGGER.warn("Found " + categories.size() + " categories with name '"+name+"'");
+        }
+
+        return categories.isEmpty() ? null : categories.get(0);
+    }
+
+    /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.CategoryService#delete(long)
      */
     @Override
