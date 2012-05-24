@@ -1,4 +1,4 @@
-**`GeoStore <https://github.com/geosolutions-it/geostore>`_** is an open source Java enterprise application for storing, searching and retrieving data on the fly.
+**`GeoStore <http://github.com/geosolutions-it/geostore>`_** is an open source Java enterprise application for storing, searching and retrieving data on the fly.
 
 GeoStore performs authentication internally (auth framework shall be pluggable), and internal authorization rules grant permissions on single Resources or whole Categories.
 
