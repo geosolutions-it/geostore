@@ -81,6 +81,9 @@ public class RESTBackupServiceImpl implements RESTBackupService {
     @Override
     public RESTQuickBackup quickBackup(SecurityContext sc) throws BadRequestServiceEx {
 
+        if(LOGGER.isDebugEnabled())
+            LOGGER.debug("quickBackup()");
+
         if(resourceService.getCount(null) > MAX_RESOURCES_FOR_QUICK_BACKUP )
             throw new BadRequestServiceEx("Too many resources for a quick backup");
 
@@ -102,6 +105,9 @@ public class RESTBackupServiceImpl implements RESTBackupService {
 
     @Override
     public String quickRestore(SecurityContext sc, RESTQuickBackup backup) {
+        if(LOGGER.isDebugEnabled())
+            LOGGER.debug("quickRestore()");
+
         try {
 
             LOGGER.error("Deleting all categories");

@@ -50,7 +50,6 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
 import java.util.List;
-import java.util.logging.Level;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -64,14 +63,12 @@ import org.apache.log4j.Logger;
  */
 public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService {
 	
-    @SuppressWarnings("unused")
 	private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
 
-    @SuppressWarnings("unused")
 	private CategoryService categoryService;
     private ResourceService resourceService;
-    @SuppressWarnings("unused")
-	private StoredDataService storedDataService;
+
+    private StoredDataService storedDataService;
 
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getData(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
@@ -79,6 +76,9 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     @Override
     public String getData(SecurityContext sc, String catName, String resName) 
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
+
+        if(LOGGER.isDebugEnabled())
+            LOGGER.debug("getData("+catName+","+resName+")");
 
         if(catName == null)
             throw new BadRequestWebEx("Category is null");
@@ -115,6 +115,9 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     public Resource getResource(SecurityContext sc, String catName, String resName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
+        if(LOGGER.isDebugEnabled())
+            LOGGER.debug("getResource("+catName+","+resName+")");
+
         if(catName == null)
             throw new BadRequestWebEx("Category is null");
         if(resName == null)
@@ -149,6 +152,9 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     @Override
     public ShortResourceList getResourcesByCategory(SecurityContext sc, String catName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
+
+        if(LOGGER.isDebugEnabled())
+            LOGGER.debug("getResourcesByCategory("+catName+")");
 
         // some checks on category
         if(catName == null)
