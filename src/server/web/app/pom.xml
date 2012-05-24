@@ -30,8 +30,10 @@
         <!-- ================================================================-->
         <!-- GeoStore modules -->
         <!-- ================================================================-->
-
-
+        <dependency>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-persistence</artifactId>
+        </dependency>
         <!-- =============================================================== -->
 
 	</dependencies>
