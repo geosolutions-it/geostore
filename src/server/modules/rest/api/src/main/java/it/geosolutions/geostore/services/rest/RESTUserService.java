@@ -1,11 +1,6 @@
-/*
- * $ Header: it.geosolutions.georepo.services.rest.RESTUserInterface,v. 0.1 9-set-2011 10.39.58 created by tobaro <tobia.dipisa at geo-solutions.it> $
- * $ Revision: 0.1 $
- * $ Date: 8-set-2011 10.39.58 $
+/* ====================================================================
  *
- * ====================================================================
- *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -118,5 +113,11 @@ public interface RESTUserService {
     long getCount(
     		@Context SecurityContext sc, 
     		@PathParam("nameLike") String nameLike);
+    
+    @GET
+    @Path("/user/details/")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN", "USER"})
+    User getAuthUserDetails(@Context SecurityContext sc);
     
 }

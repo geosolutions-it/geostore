@@ -50,7 +50,6 @@ import net.sf.json.JSONSerializer;
 import net.sf.json.xml.XMLSerializer;
 
 import org.apache.log4j.Logger;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
@@ -189,7 +188,7 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
             // ///////////////////////
             // data To JSON conversion
             // ///////////////////////
-            JSON json = JSONSerializer.toJSON(data);            
+            JSONSerializer.toJSON(data);            
             if(LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is in native JSON format.");
             return data;
@@ -214,7 +213,7 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
         try {
             StringReader reader = new StringReader(data);
             SAXBuilder builder = new SAXBuilder();
-            Document doc = builder.build(reader);
+            builder.build(reader);
             // no errors: return the original data
             if(LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is in native XML format.");
