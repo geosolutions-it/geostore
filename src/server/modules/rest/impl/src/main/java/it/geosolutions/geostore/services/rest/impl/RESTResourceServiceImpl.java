@@ -330,6 +330,9 @@ public class RESTResourceServiceImpl implements RESTResourceService {
 
         ShortAttribute shAttribute = resourceService.getAttribute(id, name);
 
+        if(shAttribute == null)
+            throw new NotFoundWebEx("Resource attribute not found");
+        
         return shAttribute.getValue();
 	}
 

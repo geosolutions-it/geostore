@@ -222,7 +222,6 @@ public class ResourceServiceImpl implements ResourceService {
         // Removing old attributes
         //
         List<Attribute> oldList = resource.getAttribute();
-        Iterator<Attribute> iterator;
 
         if (oldList != null) {
             for (Attribute a : oldList) {
@@ -417,7 +416,10 @@ public class ResourceServiceImpl implements ResourceService {
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
-        return dtoList.get(0);
+        if(dtoList.size() > 0)
+        	return dtoList.get(0);
+        else
+        	return null;       
     }
 
     /* (non-Javadoc)
