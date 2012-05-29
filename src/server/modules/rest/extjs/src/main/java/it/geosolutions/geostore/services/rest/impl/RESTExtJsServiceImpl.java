@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
@@ -161,9 +162,9 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 					jobj.element("id", sr.getId());
 					jobj.element("name", sr.getName());
 					
-					String owner = sr.getOwner();
+					ShortAttribute owner = resourceService.getAttribute(sr.getId(), "owner");
 					if(owner != null)
-						jobj.element("owner", owner);
+						jobj.element("owner", owner.getValue());
 
 					if (result instanceof JSONArray)
 						((JSONArray) result).add(jobj);
