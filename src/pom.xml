@@ -13,6 +13,26 @@
 
     <name>Master GeoStore POM</name>
 
+    <ciManagement>
+        <system>jenkins</system>    
+        <url>http://ci.geo-solutions.it/</url>
+    </ciManagement>
+
+    <distributionManagement>
+      <!-- use the following if you're not using a snapshot version. -->
+      <repository>
+         <uniqueVersion>false</uniqueVersion>
+         <id>geosolutions</id>
+         <url>ftp://maven.geo-solutions.it/</url>
+      </repository>
+      <!-- use the following if you ARE using a snapshot version. -->
+      <snapshotRepository>
+         <uniqueVersion>false</uniqueVersion>
+         <id>geosolutions</id>
+         <url>ftp://maven.geo-solutions.it/</url>
+      </snapshotRepository>
+    </distributionManagement>
+
     <modules>
         <module>server</module>
     </modules>
