@@ -13,6 +13,11 @@
 
     <name>Master GeoStore POM</name>
 
+    <scm>
+        <url>https://github.com/geosolutions-it/geostore</url>
+        <connection>scm:git:git://github.com/geosolutions-it/geostore.git</connection>
+    </scm>
+
     <ciManagement>
         <system>jenkins</system>    
         <url>http://ci.geo-solutions.it/</url>
