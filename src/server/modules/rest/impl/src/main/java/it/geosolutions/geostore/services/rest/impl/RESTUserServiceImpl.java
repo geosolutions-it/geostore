@@ -37,10 +37,11 @@ import it.geosolutions.geostore.services.rest.RESTUserService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
 import it.geosolutions.geostore.services.rest.utils.GeoStorePrincipal;
-import java.security.Principal;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -220,7 +221,18 @@ public class RESTUserServiceImpl implements RESTUserService {
     @Override
     public UserList getAll(SecurityContext sc, Integer page, Integer entries) throws BadRequestWebEx {
         try {
-            return new UserList(userService.getAll(page, entries));
+			List<User> userList = userService.getAll(page, entries);
+			Iterator<User> iterator = userList.iterator();
+			
+			List<RESTUser> restUSERList = new ArrayList<RESTUser>();
+			while(iterator.hasNext()){
+				User user = iterator.next();
+				
+				RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+				restUSERList.add(restUser);
+			}
+			
+			return new UserList(restUSERList);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }

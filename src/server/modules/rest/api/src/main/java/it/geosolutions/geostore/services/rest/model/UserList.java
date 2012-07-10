@@ -28,8 +28,6 @@
  */
 package it.geosolutions.geostore.services.rest.model;
 
-import it.geosolutions.geostore.core.model.User;
-
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
@@ -44,7 +42,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name="UserList")
 public class UserList {
 	
-    private List<User> list;
+    private List<RESTUser> list;
 
     public UserList() {
     	
@@ -53,7 +51,7 @@ public class UserList {
     /**
      * @param list
      */
-    public UserList(List<User> list) {
+    public UserList(List<RESTUser> list) {
         this.list = list;
     }
 
@@ -61,14 +59,14 @@ public class UserList {
      * @return List<Category>
      */ 
     @XmlElement(name="User")
-    public List<User> getList() {
+    public List<RESTUser> getList() {
         return list;
     }
 
     /**
      * @param list
      */
-    public void setList(List<User> list) {
+    public void setList(List<RESTUser> list) {
         this.list = list;
     }
     
