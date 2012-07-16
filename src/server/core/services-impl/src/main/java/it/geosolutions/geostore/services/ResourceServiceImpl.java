@@ -47,6 +47,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -360,11 +361,13 @@ public class ResourceServiceImpl implements ResourceService {
 
                 while (iterator.hasNext()) {
                     SecurityRule rule = iterator.next();
-                    if (rule.getUser().getId().equals(authUser.getId())) {
+                    User owner = rule.getUser();
+                    
+                    if (owner.getId().equals(authUser.getId()) || authUser.getRole().equals(Role.ADMIN)) {
                         if (rule.isCanWrite()) {
                             shortResource.setCanEdit(true);
                             shortResource.setCanDelete(true);
-
+                            
                             break;
                         }
                     }

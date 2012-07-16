@@ -102,14 +102,14 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 			if (resources != null && resources.size() > 0)
 				count = resourceService.getCount(nameLike);
 
-			JSONObject result = makeJSONResult(true, count, resources);
+			JSONObject result = makeJSONResult(true, count, resources, authUser);
 			return result.toString();
 
 		} catch (BadRequestServiceEx e) {
 			if (LOGGER.isEnabledFor(Level.ERROR))
 				LOGGER.error(e.getMessage());
 
-			JSONObject obj = makeJSONResult(false, 0, null);
+			JSONObject obj = makeJSONResult(false, 0, null, authUser);
 			return obj.toString();
 		}
 	}
@@ -121,7 +121,7 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 	 * @return JSONObject
 	 */
 	private JSONObject makeJSONResult(boolean success, long count,
-			List<ShortResource> resources) {
+			List<ShortResource> resources, User authUser) {
 		JSONObject jsonObj = new JSONObject();
 		jsonObj.put("success", success);
 		jsonObj.put("totalCount", count);
@@ -146,6 +146,11 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 					JSONObject jobj = new JSONObject();
 					jobj.element("canDelete", sr.isCanDelete());
 					jobj.element("canEdit", sr.isCanEdit());
+					
+					if(authUser != null)
+						jobj.element("canCopy", true);
+					else
+						jobj.element("canCopy", false);
 					
 					Date date = sr.getCreation();
 					if(date != null)
