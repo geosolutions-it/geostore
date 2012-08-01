@@ -27,7 +27,7 @@
             </list>
         </property>
         <property name="ignoreResourceNotFound" value="false"/>
-   </bean>
+	</bean>
 
     <bean class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
         <property name="ignoreResourceNotFound" value="true"/>
@@ -84,7 +84,7 @@
 
     <bean id="geostoreVendorAdapter"
                 class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
-        <property name="databasePlatform" value="org.hibernatespatial.postgis.PostgisDialect" />
+        <property name="databasePlatform" value="org.hibernate.dialect.H2Dialect" />
         <property name="showSql" value="true" />
         <property name="generateDdl" value="false" />
     </bean>
