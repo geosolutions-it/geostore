@@ -1,18 +1,71 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>it.geosolutions</groupId>
     <artifactId>geostore</artifactId>
-
-    <packaging>pom</packaging>
     <version>1.1-SNAPSHOT</version>
 
+    <packaging>pom</packaging>
+
     <name>Master GeoStore POM</name>
+    <description>
+        GeoStore is an open source Java enterprise application for storing, searching and retrieving data on the fly.
+    </description>
+
+    <url>https://github.com/geosolutions-it/geostore</url>
+    <inceptionYear>2011</inceptionYear>
+
+    <organization>
+        <name>GeoSolutions</name>
+        <url>http://www.geo-solutions.it</url>
+    </organization>
+
+    <developers>
+        <developer>
+          <id>etj</id>
+          <name>Emanuele Tajariol</name>
+          <email>etj AT geosolutions.it</email>
+          <organization>GeoSolutions</organization>
+          <organizationUrl>http://www.geo-solutions.it</organizationUrl>
+          <roles>
+            <role>architect</role>
+            <role>developer</role>
+          </roles>
+          <timezone>+1</timezone>
+        </developer>
+        <developer>
+          <id>tobaro</id>
+          <name>Tobia Di Pisa</name>
+          <email>tobia.dipisa AT geosolutions.it</email>
+          <organization>GeoSolutions</organization>
+          <organizationUrl>http://www.geo-solutions.it</organizationUrl>
+          <roles>
+            <role>developer</role>
+          </roles>
+          <timezone>+1</timezone>
+      </developer>
+    </developers>
+
+    <licenses>
+        <license>
+            <name>GPL-3-0</name>
+            <url>http://opensource.org/licenses/GPL-3.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <issueManagement>
+        <system>github</system>
+        <url>https://github.com/geosolutions-it/geostore/issues</url>
+    </issueManagement>
 
     <scm>
         <url>https://github.com/geosolutions-it/geostore</url>
         <connection>scm:git:git://github.com/geosolutions-it/geostore.git</connection>
+<!--        <tag>master</tag> -->
     </scm>
 
     <ciManagement>
@@ -33,7 +86,83 @@
          <id>geosolutions</id>
          <url>ftp://maven.geo-solutions.it/</url>
       </snapshotRepository>
+      <site>
+         <id>demo.geosolutions</id>
+         <url>scp://demo.geo-solutions.it/var/www/share/javadoc/geostore/${project.version}</url>
+      </site>
     </distributionManagement>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.0.2</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+
+          <!-- ======================================================= -->
+          <!-- Source packaging. -->
+
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- ======================================================= -->
+            <!-- versioning -->
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.2.2</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
+    <reporting>
+        <plugins>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <links>
+                        <link>http://commons.apache.org/lang/api</link>
+                        <link>http://java.sun.com/j2se/1.5.0/docs/api</link>
+                        <link>http://www.jdom.org/docs/apidocs</link>
+                    </links>
+                </configuration>
+            </plugin>
+            
+            <!-- <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>cobertura-maven-plugin</artifactId>
+                <version>2.2</version>
+            </plugin>-->
+        </plugins>
+    </reporting>
+
 
     <modules>
         <module>server</module>
