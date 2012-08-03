@@ -254,6 +254,11 @@ public class User implements Serializable {
             builder.append("group=").append(group.toString());
         }
 
+        if ( role != null ) {
+            builder.append(", ");
+            builder.append("role=").append(role);
+        }
+
         builder.append(']');
 
         return builder.toString();

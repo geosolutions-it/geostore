@@ -16,6 +16,11 @@
 
     <context:annotation-config />
 
-    <bean id="geostoreInitializer" class="it.geosolutions.geostore.services.rest.GeoStoreInit" lazy-init="false"/>
+    <bean id="geostoreInitializer" class="it.geosolutions.geostore.services.rest.GeoStoreInit" lazy-init="false">
+        <!-- Site specific initialization. Please specify a path in the ovr file-->
+        <property name="userListInitFile"><null/></property>
+        <!-- Site specific initialization. Please specify a path in the ovr file-->
+        <property name="categoryListInitFile"><null/></property>
+    </bean>
 
 </beans>

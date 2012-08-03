@@ -1,7 +1,6 @@
-/*
- * ====================================================================
+/* ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -29,9 +28,9 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.User;
-
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -42,7 +41,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  *
  */
 @XmlRootElement(name="UserList")
-public class UserList {
+public class UserList implements Iterable<User> {
 	
     private List<User> list;
 
@@ -70,6 +69,13 @@ public class UserList {
      */
     public void setList(List<User> list) {
         this.list = list;
+    }
+
+    @Override
+    public Iterator<User> iterator() {
+        return list == null ?
+            Collections.EMPTY_LIST.iterator() :
+            list.iterator();
     }
     
 }
