@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<UserList>
+<InitUserList>
     <User>
         <name>admin</name>
         <newPassword>admin</newPassword>
@@ -10,4 +10,4 @@
         <newPassword>user</newPassword>
         <role>USER</role>
     </User>
-</UserList>
+</InitUserList>

@@ -17,21 +17,19 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.services.rest;
+package it.geosolutions.geostore.init;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-import it.geosolutions.geostore.services.rest.model.UserList;
+import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
-import javax.xml.bind.JAXB;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import org.apache.log4j.Logger;
@@ -114,7 +112,7 @@ public class GeoStoreInit implements InitializingBean {
     private void initUsers(File file) {
         try {
             JAXBContext context = GeoStoreJAXBContext.getContext();
-            UserList list = (UserList)context.createUnmarshaller().unmarshal(file);
+            InitUserList list = (InitUserList)context.createUnmarshaller().unmarshal(file);
             for (User user : list.getList()) {
                 LOGGER.info("Adding user " + user);
                 userService.insert(user);
