@@ -35,19 +35,48 @@
         </dependency>
         <!-- =============================================================== -->
 
+		<dependency>
+        	<groupId>it.geosolutions.geostore</groupId>
+        	<artifactId>geostore-rest-impl</artifactId>
+        </dependency>
+
 	</dependencies>
 	
+	<!-- if you want to create a new profile for support another DB create a profile including JDBC dependency and right esclusion/inclusion rule for load the right override file -->
+	<!-- Profile for supporting Postgres -->
 	<profiles>
-	  <profile>
-        <id>rest</id>
-        <activation><activeByDefault>true</activeByDefault></activation>
-        <dependencies>
-            <dependency>
-                <groupId>it.geosolutions.geostore</groupId>
-                <artifactId>geostore-rest-impl</artifactId>
-            </dependency>
-        </dependencies>
-      </profile>
+		<profile>
+			<id>postgres</id>
+		    <build>
+		    	<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
+		    	<plugins>
+			      <plugin>
+			        <artifactId>maven-antrun-plugin</artifactId>
+			        <version>1.1</version>
+			        <executions>
+			          <execution>
+			            <phase>process-classes</phase>
+			            <configuration>
+			              <tasks>
+			                <copy file="src/main/resources/db-conf/postgres.properties" tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties" overwrite="true" verbose="true"/>
+			              </tasks>
+			            </configuration>
+			            <goals>
+			              <goal>run</goal>
+			            </goals>
+			          </execution>
+			        </executions>
+			      </plugin>
+		    	</plugins>
+		    </build>
+		    
+		    <dependencies>
+		        <dependency>
+		            <groupId>postgresql</groupId>
+		            <artifactId>postgresql</artifactId>
+		        </dependency>
+	        </dependencies>
+	    </profile>
 
       <profile>
         <id>extjs</id>
@@ -105,5 +134,6 @@
 		</plugins>
 
 	</build>
+	
 
 </project>
