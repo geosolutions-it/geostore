@@ -111,7 +111,8 @@ public class GeoStoreInit implements InitializingBean {
 
     private void initUsers(File file) {
         try {
-            JAXBContext context = GeoStoreJAXBContext.getContext();
+            JAXBContext context = getUserContext();
+
             InitUserList list = (InitUserList)context.createUnmarshaller().unmarshal(file);
             for (User user : list.getList()) {
                 LOGGER.info("Adding user " + user);
@@ -133,6 +134,22 @@ public class GeoStoreInit implements InitializingBean {
             }
 
             throw new RuntimeException("Error while initting users.");
+        }
+    }
+
+    private static JAXBContext getUserContext() {
+    
+        List<Class> allClasses = GeoStoreJAXBContext.getGeoStoreClasses();
+        allClasses.add(InitUserList.class);
+
+        if(LOGGER.isDebugEnabled())
+            LOGGER.debug("Initializing JAXBContext with " +  allClasses.size()+ " classes " + allClasses);
+
+        try {
+            return JAXBContext.newInstance(allClasses.toArray(new Class[allClasses.size()]));
+        } catch (JAXBException ex) {
+            LOGGER.error("Can't create GeoStore context: " + ex.getMessage(), ex);
+            return null;
         }
     }
 
