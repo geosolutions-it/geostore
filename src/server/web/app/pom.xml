@@ -4,7 +4,7 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-web</artifactId>
-        <version>1.1-SNAPSHOT</version>
+        <version>1.0.1</version>
     </parent>
 
     <groupId>it.geosolutions.geostore</groupId>
@@ -58,7 +58,7 @@
 			            <phase>process-classes</phase>
 			            <configuration>
 			              <tasks>
-			                <copy file="src/main/resources/db-conf/postgres.properties" tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties" overwrite="true" verbose="true"/>
+			                <copy file="src/main/resources/db-conf/postgres.properties" tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties" overwrite="true" verbose="true" />
 			              </tasks>
 			            </configuration>
 			            <goals>
