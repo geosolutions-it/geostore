@@ -62,7 +62,7 @@
 
     <scm>
         <url>https://github.com/geosolutions-it/geostore</url>
-        <connection>scm:git:git://github.com/geosolutions-it/geostore.git</connection>
+        <connection>scm:git:git@github.com:geosolutions-it/geostore.git</connection>
 <!--        <tag>master</tag> -->
     </scm>
 
