@@ -33,6 +33,7 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
@@ -68,5 +69,15 @@ public interface RESTExtJsService {
     		@PathParam("nameLike") String nameLike,
             @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit)throws BadRequestWebEx;
+
+    @GET
+    @Path("/search/category/{categoryName}")
+    @Produces({MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    String getResourcesByCategory(
+    		@Context SecurityContext sc,
+    		@PathParam("categoryName") String categoryName,
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit)throws BadRequestWebEx, InternalErrorWebEx;
     
 }

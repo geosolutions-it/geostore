@@ -341,6 +341,15 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceDAO.count(searchCriteria);
     }
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.ResourceService#getCount(java.lang.String)
+     */
+    @Override
+    public long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx, BadRequestServiceEx {
+        Search searchCriteria = SearchConverter.convert(filter);
+        return resourceDAO.count(searchCriteria);
+    }
+
     /**
      * @param list
      * @return List<ShortResource>
@@ -469,7 +478,23 @@ public class ResourceServiceImpl implements ResourceService {
     @Override
     public List<ShortResource> getResources(SearchFilter filter, User authUser) throws BadRequestServiceEx,
             InternalErrorServiceEx {
+        return getResources(filter, null, null, authUser);
+    }
+
+    @Override
+    public List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries, User authUser) 
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+        
+        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
+            throw new BadRequestServiceEx("Page and entries params should be declared together");
+        }
+
         Search searchCriteria = SearchConverter.convert(filter);
+
+        if (page != null) {
+            searchCriteria.setMaxResults(entries);
+            searchCriteria.setPage(page);
+        }
 
         // //////////////////////////////////////////////////////////
         // addFetch to charge the corresponding security rules

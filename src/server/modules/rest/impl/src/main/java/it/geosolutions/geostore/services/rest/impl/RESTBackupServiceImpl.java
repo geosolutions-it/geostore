@@ -84,7 +84,7 @@ public class RESTBackupServiceImpl implements RESTBackupService {
         if(LOGGER.isDebugEnabled())
             LOGGER.debug("quickBackup()");
 
-        if(resourceService.getCount(null) > MAX_RESOURCES_FOR_QUICK_BACKUP )
+        if(resourceService.getCount((String)null) > MAX_RESOURCES_FOR_QUICK_BACKUP )
             throw new BadRequestServiceEx("Too many resources for a quick backup");
 
         RESTQuickBackup backup = new RESTQuickBackup();

@@ -31,7 +31,14 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
@@ -106,6 +113,56 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 			return result.toString();
 
 		} catch (BadRequestServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+
+			JSONObject obj = makeJSONResult(false, 0, null, authUser);
+			return obj.toString();
+		}
+	}
+
+	@Override
+    public String getResourcesByCategory( SecurityContext sc,
+                                    String categoryName,
+                                    Integer start, Integer limit)
+            throws BadRequestWebEx {
+
+        if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
+            throw new BadRequestWebEx("start and limit params should be declared together");
+        }
+
+        if(categoryName == null)
+            throw new BadRequestWebEx("Category is null");
+
+		if (LOGGER.isDebugEnabled())
+			LOGGER.debug("getResourcesByCategory("+categoryName+", start="+start+", limit="+limit);
+
+		User authUser = extractAuthUser(sc);
+
+		Integer page = null;
+        if(start != null) {
+            page = start / limit;
+        }
+
+		try {
+            SearchFilter filter = new CategoryFilter(categoryName, SearchOperator.EQUAL_TO);
+
+			List<ShortResource> resources = resourceService.getResources(filter, page, limit, authUser);
+
+			long count = 0;
+			if (resources != null && resources.size() > 0)
+				count = resourceService.getCountByFilter(filter);
+
+			JSONObject result = makeJSONResult(true, count, resources, authUser);
+			return result.toString();
+
+		} catch (InternalErrorServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+
+			JSONObject obj = makeJSONResult(false, 0, null, authUser);
+			return obj.toString();
+        } catch (BadRequestServiceEx e) {
 			if (LOGGER.isEnabledFor(Level.ERROR))
 				LOGGER.error(e.getMessage());
 

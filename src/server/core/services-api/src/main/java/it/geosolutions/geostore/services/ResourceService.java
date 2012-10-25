@@ -106,6 +106,7 @@ public interface ResourceService {
      */
     long getCount(String nameLike);
     
+    long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx, BadRequestServiceEx;
 
 	/**
 	 * @param id
@@ -145,7 +146,8 @@ public interface ResourceService {
 	 */
 	List<ShortResource> getResources(SearchFilter filter, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
 
-
+    List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
+    
     /**
      * Return a list of resources joined with their data.
      * This call can be very heavy for the system. Please use this method only when you are sure
