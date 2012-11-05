@@ -109,6 +109,17 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
     		@PathParam("id") long id) throws NotFoundWebEx;
 
     /**
+     * @param filter
+     * @return ShortResourceList
+     */
+    @DELETE
+    @Path("/")
+    @RolesAllowed({"ADMIN"})
+    void deleteResources(
+    		@Context SecurityContext sc, 
+    		@Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
+    
+    /**
      * @param id
      * @return Resource
      * @throws NotFoundWebEx

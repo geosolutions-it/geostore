@@ -28,20 +28,20 @@
 
 package it.geosolutions.geostore.core.dao.impl;
 
-import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.ISearch;
-import com.googlecode.genericdao.search.Search;
-
-import java.util.Date;
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 
+import java.util.Date;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 
 
 /**
@@ -178,6 +178,16 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
     public boolean remove(Resource entity)
     {
         return super.remove(entity);
+    }
+    
+    /* (non-Javadoc)
+     * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
+     */
+    @Override
+    public void removeResources(ISearch search)
+    {
+    	List<Resource> resources = super.search(search);
+    	super.remove(resources.toArray(new Resource[1]));  
     }
 
     /* (non-Javadoc)

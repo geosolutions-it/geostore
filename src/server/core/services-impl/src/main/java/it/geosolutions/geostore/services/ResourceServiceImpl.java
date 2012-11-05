@@ -27,15 +27,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import com.googlecode.genericdao.search.Search;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.AttributeDAO;
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
@@ -56,7 +47,17 @@ import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
+
+import com.googlecode.genericdao.search.Search;
 
 /**
  * Class ResourceServiceImpl.
@@ -152,7 +153,11 @@ public class ResourceServiceImpl implements ResourceService {
         r.setName(resource.getName());
         r.setCategory(loadedCategory);
 
-        resourceDAO.persist(r);
+        try{
+        	resourceDAO.persist(r);
+        }catch(DataIntegrityViolationException exc){
+        	throw new BadRequestServiceEx(exc.getLocalizedMessage());
+        }
 
         //
         // Persisting Attributes
@@ -260,6 +265,15 @@ public class ResourceServiceImpl implements ResourceService {
         // data on ancillary tables should be deleted by cascading
         //
         return resourceDAO.removeById(id);
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.ResourceService#delete(long)
+     */
+    @Override
+    public void deleteResources(SearchFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
+        Search searchCriteria = SearchConverter.convert(filter);
+        this.resourceDAO.removeResources(searchCriteria);
     }
 
     /* (non-Javadoc)

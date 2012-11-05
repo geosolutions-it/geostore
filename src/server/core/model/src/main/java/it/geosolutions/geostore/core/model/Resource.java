@@ -44,6 +44,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -62,7 +63,8 @@ import org.hibernate.annotations.Index;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Resource")
-@Table(name = "gs_resource")
+@Table(name = "gs_resource", uniqueConstraints = {
+	    @UniqueConstraint(columnNames = {"name"})})
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
 @XmlRootElement(name = "Resource")
 public class Resource implements Serializable, CycleRecoverable {

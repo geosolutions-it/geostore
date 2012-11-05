@@ -72,6 +72,13 @@ public interface ResourceService {
      * @return long
      */
     boolean delete(long id);
+
+    /**
+     * @param filter
+     * @throws InternalErrorServiceEx 
+     * @throws BadRequestServiceEx 
+     */
+    void deleteResources(SearchFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx;
     
     /**
      * @param id

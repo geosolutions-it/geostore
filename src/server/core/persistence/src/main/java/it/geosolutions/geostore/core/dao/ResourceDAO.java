@@ -30,6 +30,8 @@ package it.geosolutions.geostore.core.dao;
 
 import java.util.List;
 
+import com.googlecode.genericdao.search.ISearch;
+
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -62,4 +64,9 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource>
      * @return List<Attribute>
      */
     public List<Attribute> findAttributes(long resourceId);
+
+	/**
+	 * @param search
+	 */
+	public void removeResources(ISearch search);
 }

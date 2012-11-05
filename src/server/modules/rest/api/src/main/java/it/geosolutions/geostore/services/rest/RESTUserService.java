@@ -70,7 +70,7 @@ public interface RESTUserService {
     @PUT
     @Path("/user/{id}")
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
-    @RolesAllowed({"ADMIN"})
+    @RolesAllowed({"ADMIN", "USER"})
     long update(
     		@Context SecurityContext sc, 
     		@PathParam("id") long id,

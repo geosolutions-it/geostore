@@ -61,6 +61,7 @@ import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -213,6 +214,24 @@ public class RESTResourceServiceImpl implements RESTResourceService {
 	            throw new NotFoundWebEx("Resource not found");
 		}else
 			throw new ForbiddenErrorWebEx("This user cannot delete this resource !");
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.RESTResourceService#delete(long)
+     */
+    @Override
+    public void deleteResources(SecurityContext sc, SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx {
+        try {
+			resourceService.deleteResources(filter);
+		} catch (BadRequestServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+			throw new BadRequestWebEx(e.getMessage());
+		} catch (InternalErrorServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+			throw new InternalErrorWebEx(e.getMessage());
+		}
     }
 
     @Override

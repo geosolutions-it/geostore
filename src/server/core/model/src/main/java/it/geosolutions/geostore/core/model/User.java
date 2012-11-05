@@ -85,7 +85,7 @@ public class User implements Serializable {
     @Index(name = "idx_user_password")
     private String password;
 
-    @Column(name = "role", nullable = false, updatable = false)
+    @Column(name = "role", nullable = false, updatable = true)
     @Index(name = "idx_user_role")
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -111,7 +111,7 @@ public class User implements Serializable {
     /**
      * @return the id
      */
-    @XmlTransient
+    //@XmlTransient
     public Long getId() {
         return id;
     }

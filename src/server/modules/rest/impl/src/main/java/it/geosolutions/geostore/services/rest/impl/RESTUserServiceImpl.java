@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -112,42 +113,69 @@ public class RESTUserServiceImpl implements RESTUserService {
     @Override
     public long update(SecurityContext sc, long id, User user) {
         try {
+        	User authUser = extractAuthUser(sc);
+        	
             User old = userService.get(id);
             if ( old == null ) {
                 throw new NotFoundWebEx("User not found");
             }
-
-            old.setNewPassword(user.getNewPassword());
-            old.setRole(user.getRole());
-
-            UserGroup group = user.getGroup();
-            if ( group != null ) {
-                old.setGroup(group);
+            
+            boolean userUpdated = false;
+            if(authUser.getRole().equals(Role.ADMIN)){
+            	String npw = user.getNewPassword();
+            	if(npw != null){
+            		old.setNewPassword(user.getNewPassword());
+            		userUpdated = true;
+            	}
+                
+            	Role nr = user.getRole();
+            	if(nr != null){
+            		old.setRole(nr);
+            		userUpdated = true;
+            	}
+                
+                UserGroup group = user.getGroup();
+                if (group != null) {
+                    old.setGroup(group);
+                    userUpdated = true;
+                }
+            }else if(old.getName().equals(authUser.getName())){ // Check if the User is the same
+            	String npw = user.getNewPassword();
+            	if(npw != null){
+            		old.setNewPassword(user.getNewPassword());
+            		userUpdated = true;
+            	}
             }
 
-            id = userService.update(old);
+            if(userUpdated){
+                id = userService.update(old);
 
-            //
-            // Creating a new User Attribute list (updated).
-            //
-            List<UserAttribute> attributeDto = user.getAttribute();
-            Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
+                //
+                // Creating a new User Attribute list (updated).
+                //
+                List<UserAttribute> attributeDto = user.getAttribute();
+                
+                if(attributeDto != null){
+                    Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
 
-            List<UserAttribute> attributes = new ArrayList<UserAttribute>();
-            while (iteratorDto.hasNext()) {
-                UserAttribute aDto = iteratorDto.next();
+                    List<UserAttribute> attributes = new ArrayList<UserAttribute>();
+                    while (iteratorDto.hasNext()) {
+                        UserAttribute aDto = iteratorDto.next();
 
-                UserAttribute a = new UserAttribute();
-                a.setValue(aDto.getValue());
-                a.setName(aDto.getName());
-                attributes.add(a);
-            }
+                        UserAttribute a = new UserAttribute();
+                        a.setValue(aDto.getValue());
+                        a.setName(aDto.getName());
+                        attributes.add(a);
+                    }
 
-            if ( attributes.size() > 0 ) {
-                userService.updateAttributes(id, attributes);
-            }
+                    if ( attributes.size() > 0 ) {
+                        userService.updateAttributes(id, attributes);
+                    }
+                }
 
-            return id;
+                return id;
+            }else
+            	return -1;
 
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
