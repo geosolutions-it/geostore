@@ -139,6 +139,14 @@ public class GeoStoreClient {
 
         return category;
     }
+    
+    public Long getCategoryCount(String nameLike) {
+    	String count = getBaseWebResource("categories","count",nameLike)
+    			.accept(MediaType.TEXT_PLAIN)
+                .get(String.class);
+
+        return Long.parseLong(count);
+    }
 
 //    @GET
 //    @Path("/")
