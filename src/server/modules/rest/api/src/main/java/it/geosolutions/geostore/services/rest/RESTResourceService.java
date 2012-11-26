@@ -35,6 +35,7 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
@@ -51,9 +52,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-
-
 import javax.ws.rs.core.SecurityContext;
+
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 
 /** 
@@ -62,8 +62,8 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-    @RolesAllowed({"ADMIN"})
-    public interface RESTResourceService {
+@RolesAllowed({"ADMIN"})
+public interface RESTResourceService {
 
     /**
      * @param resource
@@ -177,9 +177,35 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
     @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    @Deprecated
     ShortResourceList getResources(
     		@Context SecurityContext sc, 
     		@Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
+    
+    /**
+     * @param sc
+     * @param filter
+     * @param page
+     * @param entries
+     * @param includeAttributes
+     * @param includeData
+     * @return ResourceList
+     * @throws BadRequestWebEx
+     * @throws InternalErrorWebEx
+     */
+    @POST
+    @GET
+    @Path("/search/list")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    ResourceList getResourcesList(
+    		@Context SecurityContext sc, 
+            @QueryParam("page") Integer page,
+            @QueryParam("entries") Integer entries,
+            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes,
+            @QueryParam("includeData")@DefaultValue("false") boolean includeData,
+            @Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
     
     /**
      * @param nameLike

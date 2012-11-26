@@ -27,6 +27,7 @@ import javax.xml.bind.annotation.XmlType;
  * Enum BaseField.
  * 
  * @author ETj (etj at geo-solutions.it)
+ * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 @XmlType
 public enum BaseField {
@@ -35,7 +36,8 @@ public enum BaseField {
     ID("id", Long.class),
     LASTUPDATE("lastUpdate", Date.class),    
     NAME("name", String.class),    
-    DESCRIPTION("description", String.class);
+    DESCRIPTION("description", String.class),
+    METADATA("metadata", String.class);;
 
     private String fieldName;
     

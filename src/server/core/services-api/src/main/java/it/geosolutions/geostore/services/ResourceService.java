@@ -113,6 +113,12 @@ public interface ResourceService {
      */
     long getCount(String nameLike);
     
+    /**
+     * @param filter
+     * @return long
+     * @throws InternalErrorServiceEx
+     * @throws BadRequestServiceEx
+     */
     long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx, BadRequestServiceEx;
 
 	/**
@@ -153,7 +159,29 @@ public interface ResourceService {
 	 */
 	List<ShortResource> getResources(SearchFilter filter, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
 
+    /**
+     * @param filter
+     * @param page
+     * @param entries
+     * @param authUser
+     * @return List<ShortResource>
+     * @throws BadRequestServiceEx
+     * @throws InternalErrorServiceEx
+     */
     List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
+    
+	/**
+	 * @param filter
+	 * @param page
+	 * @param entries
+	 * @param includeAttributes
+	 * @param includeData
+	 * @return List<Resource>
+	 * @throws BadRequestServiceEx
+	 * @throws InternalErrorServiceEx
+	 */
+    List<Resource> getResources(SearchFilter filter, Integer page, Integer entries, boolean includeAttributes, 
+    		boolean includeData, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx; 
     
     /**
      * Return a list of resources joined with their data.

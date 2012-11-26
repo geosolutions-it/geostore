@@ -494,6 +494,65 @@ public class ResourceServiceImpl implements ResourceService {
             InternalErrorServiceEx {
         return getResources(filter, null, null, authUser);
     }
+    
+    /* 
+     * (non-Javadoc)
+     * @see it.geosolutions.geostore.services.ResourceService#getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, boolean, boolean, it.geosolutions.geostore.core.model.User)
+     */
+    public List<Resource> getResources(SearchFilter filter, Integer page, Integer entries, 
+    		boolean includeAttributes, boolean includeData, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx {
+    	
+        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
+            throw new BadRequestServiceEx("Page and entries params should be declared together");
+        }
+        
+        Search searchCriteria = SearchConverter.convert(filter);
+        
+        if (page != null) {
+            searchCriteria.setMaxResults(entries);
+            searchCriteria.setPage(page);
+        }
+
+        List<Resource> resources = this.resourceDAO.search(searchCriteria);        
+        resources = this.configResourceList(resources, includeAttributes, includeData, authUser);
+		
+        return resources;
+	}
+    
+    /**
+     * @param list
+     * @param includeAttributes
+     * @param includeData
+     * @param authUser
+     * @return List<Resource>
+     */
+    private List<Resource> configResourceList(List<Resource> list, boolean includeAttributes, 
+    		boolean includeData, User authUser) {
+        List<Resource> rList = new ArrayList<Resource>(list.size());
+        
+        for (Resource resource : list) {
+            Resource res = new Resource();
+            
+            res.setCategory(resource.getCategory());
+            res.setCreation(resource.getCreation());
+            res.setDescription(resource.getDescription());
+            res.setId(resource.getId());
+            res.setLastUpdate(resource.getLastUpdate());
+            res.setName(resource.getName());
+            
+            if(includeData){
+            	res.setData(resource.getData());
+            }
+            
+            if(includeAttributes){
+            	res.setAttribute(resource.getAttribute());
+            }
+            
+            rList.add(res);
+        }
+
+        return rList;
+    }
 
     @Override
     public List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries, User authUser) 

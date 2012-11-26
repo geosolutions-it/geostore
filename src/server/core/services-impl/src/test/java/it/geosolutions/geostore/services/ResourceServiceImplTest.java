@@ -19,15 +19,14 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.Date;
-import java.util.List;
-
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+
+import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;

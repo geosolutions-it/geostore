@@ -50,6 +50,7 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
@@ -391,6 +392,28 @@ public class RESTResourceServiceImpl implements RESTResourceService {
 
 		try {
 			return new ShortResourceList(resourceService.getResources(filter, authUser));
+		} catch (BadRequestServiceEx e) {
+			if(LOGGER.isInfoEnabled())
+				LOGGER.info(e.getMessage());
+            throw new BadRequestWebEx(e.getMessage());
+		} catch (InternalErrorServiceEx e) {
+			if(LOGGER.isInfoEnabled())
+				LOGGER.info(e.getMessage());
+			throw new InternalErrorWebEx(e.getMessage());
+		}
+	}
+	
+	/* 
+	 * (non-Javadoc)
+	 * @see it.geosolutions.geostore.services.rest.RESTResourceService#getResourcesList(javax.ws.rs.core.SecurityContext, it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, boolean, boolean)
+	 */
+	@Override
+	public ResourceList getResourcesList(SecurityContext sc, Integer page, 
+			Integer entries, boolean includeAttributes, boolean includeData, SearchFilter filter){
+		User authUser = extractAuthUser(sc);
+
+		try {
+			return new ResourceList(resourceService.getResources(filter, page, entries, includeAttributes, includeData, authUser));
 		} catch (BadRequestServiceEx e) {
 			if(LOGGER.isInfoEnabled())
 				LOGGER.info(e.getMessage());

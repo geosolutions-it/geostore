@@ -181,4 +181,155 @@ public class SearchConverterTest extends ServiceTestBase {
             assertEquals(2, resources.size());
         }
     }
+    
+    @Test
+    public void testSearch() throws Exception {
+        //
+        // Creating Resources and Attributes
+        //
+        Category category = new Category();
+        category.setName("MAP");
+
+        categoryService.insert(category);
+
+        for (int i = 0; i < 10; i++) {
+            Resource resource = new Resource();
+            resource.setName("resource" + i);
+            resource.setDescription("resource description" + i);
+            resource.setCategory(category);
+            resource.setMetadata("resource" + i);
+
+            List<Attribute> attributes = new ArrayList<Attribute>();
+
+            Attribute attr1 = new Attribute();
+            attr1.setName("attr1");
+            attr1.setTextValue("value" + i);
+            attr1.setType(DataType.STRING);
+            attributes.add(attr1);
+
+            Attribute attr2 = new Attribute();
+            attr2.setName("attr2");
+            attr2.setNumberValue(Double.valueOf(i));
+            attr2.setType(DataType.NUMBER);
+            attributes.add(attr2);
+
+            Attribute attr3 = new Attribute();
+            attr3.setName("attr3");
+            attr3.setDateValue(new Date());
+            attr3.setType(DataType.DATE);
+            attributes.add(attr3);
+
+            resource.setAttribute(attributes);
+
+            long resourceId = resourceService.insert(resource);
+
+            List<ShortAttribute> sAttributes = resourceService.getAttributes(resourceId);
+            assertNotNull(sAttributes);
+            assertTrue(sAttributes.size() == 3);
+
+            assertNotNull(resourceService.get(resourceId));
+            assertTrue(resourceService.getAttributes(resourceId).size() == 3);
+
+            long id = createData("data" + i, resourceService.get(resourceId)); 
+            
+            assertNotNull(storedDataService.get(id));
+        }
+
+        //
+        // Search with paging, filter excluding Data
+        //
+        {
+            String xmlFilter = "<AND>"
+                    + "<FIELD>"
+                    + "<field>METADATA</field>"
+                    + "<operator>LIKE</operator>"
+                    + "<value>%resource%</value>"
+                    + "</FIELD>"
+                    + "<ATTRIBUTE>"
+                    + "<name>attr1</name>"
+                    + "<operator>LIKE</operator>"
+                    + "<type>STRING</type>"
+                    + "<value>%value%</value>"
+                    + "</ATTRIBUTE>"
+                    + "</AND>";
+
+            StringReader reader = new StringReader(xmlFilter);
+            AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
+            assertNotNull(searchFilter);
+
+            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, false, null);
+            assertEquals(5, resources.size());
+            
+            Resource res = resources.get(0);
+            
+            assertNotNull(res.getAttribute());
+            assertTrue(res.getAttribute().size() == 3);
+            
+            assertNull(res.getData());
+        }
+        
+        //
+        // Search with paging, filter excluding attributes
+        //
+        {
+            String xmlFilter = "<AND>"
+                    + "<FIELD>"
+                    + "<field>METADATA</field>"
+                    + "<operator>LIKE</operator>"
+                    + "<value>%resource%</value>"
+                    + "</FIELD>"
+                    + "<ATTRIBUTE>"
+                    + "<name>attr1</name>"
+                    + "<operator>LIKE</operator>"
+                    + "<type>STRING</type>"
+                    + "<value>%value%</value>"
+                    + "</ATTRIBUTE>"
+                    + "</AND>";
+
+            StringReader reader = new StringReader(xmlFilter);
+            AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
+            assertNotNull(searchFilter);
+
+            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, false, true, null);
+            assertEquals(5, resources.size());
+            
+            Resource res = resources.get(0);
+            
+            assertNotNull(res.getData());            
+            assertNull(res.getAttribute());
+        }
+        
+        //
+        // Search with paging, filter
+        //
+        {
+            String xmlFilter = "<AND>"
+                    + "<FIELD>"
+                    + "<field>METADATA</field>"
+                    + "<operator>LIKE</operator>"
+                    + "<value>%resource%</value>"
+                    + "</FIELD>"
+                    + "<ATTRIBUTE>"
+                    + "<name>attr1</name>"
+                    + "<operator>LIKE</operator>"
+                    + "<type>STRING</type>"
+                    + "<value>%value%</value>"
+                    + "</ATTRIBUTE>"
+                    + "</AND>";
+
+            StringReader reader = new StringReader(xmlFilter);
+            AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
+            assertNotNull(searchFilter);
+
+            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, true, null);
+            assertEquals(5, resources.size());
+            
+            Resource res = resources.get(0);
+            
+            assertNotNull(res.getData());  
+            
+            assertNotNull(res.getAttribute());
+            assertTrue(res.getAttribute().size() == 3);
+        }
+    }
 }
