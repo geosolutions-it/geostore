@@ -45,6 +45,7 @@
         <jaxrs:providers>
            <ref bean="jaxbXmlProvider"/>
            <ref bean="jsonProvider"/>
+           <ref bean="jaxbContextResolver"/>
         </jaxrs:providers>    
         
         <jaxrs:inInterceptors>

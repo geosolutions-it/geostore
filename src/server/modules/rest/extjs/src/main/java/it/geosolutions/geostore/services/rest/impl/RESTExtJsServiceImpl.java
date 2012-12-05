@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -36,6 +37,7 @@ import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
@@ -118,6 +120,9 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesByCategory(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.Integer, java.lang.Integer)
+	 */
 	@Override
     public String getResourcesByCategory( SecurityContext sc,
                                     String categoryName,
@@ -132,7 +137,7 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
             throw new BadRequestWebEx("Category is null");
 
 		if (LOGGER.isDebugEnabled())
-			LOGGER.debug("getResourcesByCategory("+categoryName+", start="+start+", limit="+limit);
+			LOGGER.debug("getResourcesByCategory(" + categoryName  +", start=" + start + ", limit=" + limit);
 
 		User authUser = extractAuthUser(sc);
 
@@ -168,6 +173,51 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer, java.lang.Integer, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
+	 */
+	@Override
+    public ExtResourceList getExtResourcesList(SecurityContext sc, Integer start, 
+			Integer limit, boolean includeAttributes, SearchFilter filter)
+            throws BadRequestWebEx {
+
+        if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
+            throw new BadRequestWebEx("start and limit params should be declared together");
+        }
+
+        if (LOGGER.isDebugEnabled())
+        	LOGGER.debug("getResourcesList(start=" + start + ", limit=" + limit + ", includeAttributes=" + includeAttributes);
+
+		User authUser = extractAuthUser(sc);
+
+		Integer page = null;
+        if(start != null) {
+            page = start / limit;
+        }
+
+		try {
+			List<Resource> resources = resourceService.getResources(filter, page, limit, includeAttributes, false, authUser);
+
+			long count = 0;
+			if (resources != null && resources.size() > 0)
+				count = resourceService.getCountByFilter(filter);
+
+			ExtResourceList list = new ExtResourceList(count, resources);
+			return list;
+
+		} catch (InternalErrorServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+
+			return null;
+        } catch (BadRequestServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+
+			return null;
+		}
+	}
+	
 	/**
 	 * @param success
 	 * @param count

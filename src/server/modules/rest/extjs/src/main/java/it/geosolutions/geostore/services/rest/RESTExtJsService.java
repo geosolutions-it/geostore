@@ -32,11 +32,16 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -44,6 +49,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
+
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 
 /** 
  * Interface RESTExtJsService.
@@ -79,5 +86,28 @@ public interface RESTExtJsService {
     		@PathParam("categoryName") String categoryName,
             @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit)throws BadRequestWebEx, InternalErrorWebEx;
+    
+    /**
+     * @param sc
+     * @param filter
+     * @param page
+     * @param entries
+     * @param includeAttributes
+     * @return ResourceList
+     * @throws BadRequestWebEx
+     * @throws InternalErrorWebEx
+     */
+    @POST
+    @GET
+    @Path("/search/list")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    ExtResourceList getExtResourcesList(
+    		@Context SecurityContext sc, 
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit,
+            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes,
+            @Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
     
 }
