@@ -21,18 +21,15 @@ package it.geosolutions.geostore.services.rest;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
 import it.geosolutions.geostore.core.model.Attribute;
-import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
-import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.*;
-import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,55 +37,21 @@ import java.util.List;
 import java.util.Map;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.log4j.Logger;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assume.*;
 import static org.junit.Assert.*;
 
 /**
  *
  * @author ETj (etj at geo-solutions.it)
  */
-public class GeoStoreClientTest {
+public class GeoStoreClientTest extends BaseGeoStoreClientTest {
     private final static Logger LOGGER = Logger.getLogger(GeoStoreClientTest.class);
 
-    public GeoStoreClientTest() {
-    }
-
-
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
-
-    @Before
-    public void before() throws Exception {
-        GeoStoreClient client = createClient();
-        assumeTrue(pingGeoStore(client));
-    }
-
-    protected GeoStoreClient createClient() {
-        GeoStoreClient client = new GeoStoreClient();
-        client.setGeostoreRestUrl("http://localhost:9191/geostore/rest");
-        client.setUsername("admin");
-        client.setPassword("admin");
-        return client;
-    }
-
-    @Test
-    public void testSearchResources() {
-    }
+    final String DEFAULTCATEGORYNAME = "TestCategory1";
 
 
     @Test
     public void testRemoveAllAttribs() {
-        GeoStoreClient client = createClient();
 
         final String KEY_STRING = "stringAtt";
 
@@ -103,8 +66,10 @@ public class GeoStoreClientTest {
 
         String timeid = Long.toString(System.currentTimeMillis());
 
+        createDefaultCategory();
+
         RESTResource origResource = new RESTResource();
-        origResource.setCategory(new RESTCategory("TestCategory1"));
+        origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
         origResource.setName("rest_test_resource_"+timeid);
         origResource.setStore(storedData);
         origResource.setAttribute(attrList);
@@ -156,14 +121,15 @@ public class GeoStoreClientTest {
 
     @Test
 //    @Ignore
-    public void _testInsertResource() {
-        GeoStoreClient client = createClient();
+    public void testInsertResource() {
 
         final String KEY_STRING = "stringAtt";
         final String KEY_DATE = "dateAtt";
 
         final Date origDate = new Date();
         final String origString = "OrigStringValue";
+
+        createDefaultCategory();
 
         RESTStoredData storedData = new RESTStoredData();
         storedData.setData("we wish you a merry xmas and a happy new year");
@@ -175,7 +141,7 @@ public class GeoStoreClientTest {
         String timeid = Long.toString(System.currentTimeMillis());
 
         RESTResource origResource = new RESTResource();
-        origResource.setCategory(new RESTCategory("TestCategory1"));
+        origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
         origResource.setName("rest_test_resource_"+timeid);
         origResource.setStore(storedData);
         origResource.setAttribute(attrList);
@@ -219,8 +185,8 @@ public class GeoStoreClientTest {
         assertEquals(rid, (Long)rlist.getList().get(0).getId());
     }
 
-    public void _testUpdateResource() {
-        GeoStoreClient client = createClient();
+    @Test
+    public void testUpdateResource() {
 
         final String KEY_STRING = "stringAtt";
         final String KEY_DATE = "dateAtt";
@@ -229,6 +195,8 @@ public class GeoStoreClientTest {
         final String origString = "OrigStringValue";
 
         Long rid;
+
+        createDefaultCategory();
 
         {
             RESTStoredData storedData = new RESTStoredData();
@@ -242,7 +210,7 @@ public class GeoStoreClientTest {
             String timeid = Long.toString(System.currentTimeMillis());
 
             RESTResource origResource = new RESTResource();
-            origResource.setCategory(new RESTCategory("TestCategory1"));
+            origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
             origResource.setName("rest_test_resource_"+timeid);
             origResource.setStore(storedData);
             origResource.setAttribute(attrList);
@@ -311,48 +279,38 @@ public class GeoStoreClientTest {
     }
 
     @Test
-    public void _testSearchByCategory() {
-        GeoStoreClient client = createClient();
+    public void testSearchByCategory() {
 
-        removeAllResources(client);
-        removeAllCategories(client);
-
-        RESTCategory c1 = new RESTCategory();
-        c1.setName("cat1");
-        client.insert(c1);
+        createDefaultCategory();
 
         RESTResource res = new RESTResource();
-        res.setCategory(c1);
+        res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
 
         String timeid = Long.toString(System.currentTimeMillis());
         res.setName("rest_test_resource_"+timeid);
 
         Long id = client.insert(res);
 
-        SearchFilter filter = new CategoryFilter("cat1", SearchOperator.EQUAL_TO);
+        SearchFilter filter = new CategoryFilter(DEFAULTCATEGORYNAME, SearchOperator.EQUAL_TO);
         ShortResourceList resources = client.searchResources(filter);
         assertEquals(1, resources.getList().size());
 
     }
 
-    @Test
-    public void _testGetResource() {
-        GeoStoreClient client = createClient();
-        Resource resource = client.getResource(261l);
-        System.out.println("Resource is " + resource);
-        if(resource.getAttribute() != null) {
-            System.out.println("Attributes " + resource.getAttribute());
-        } else {
-            System.out.println("No attrs");
-        }
-    }
+//    @Test
+//    public void testGetResource() {
+//        GeoStoreClient client = createClient();
+//        Resource resource = client.getResource(261l);
+//        System.out.println("Resource is " + resource);
+//        if(resource.getAttribute() != null) {
+//            System.out.println("Attributes " + resource.getAttribute());
+//        } else {
+//            System.out.println("No attrs");
+//        }
+//    }
 
     @Test
-    public void _testClearAll() {
-        GeoStoreClient client = createClient();
-
-        removeAllResources(client);
-        removeAllCategories(client);
+    public void testClearAll() {
 
         Long catId1 = client.insert(new RESTCategory("Test Category#1"));
         Long catId2 = client.insert(new RESTCategory("Test Category#2"));
@@ -368,110 +326,22 @@ public class GeoStoreClientTest {
             ShortResourceList resources = client.searchResources(filter);
             assertEquals(3, resources.getList().size());
         }
-
-        removeAllResources(client);
-        removeAllCategories(client);
     }
 
-    protected RESTResource createSampleResource(Long catId) {
-        String timeid = Long.toString(System.currentTimeMillis());
-
-        RESTStoredData storedData = new RESTStoredData();
-        storedData.setData("test stored data #"+timeid);
-
-        List<ShortAttribute> attrList = new ArrayList<ShortAttribute>();
-        attrList.add(new ShortAttribute("stringAtt", "attVal"+timeid, DataType.STRING));
-        attrList.add(ShortAttribute.createDateAttribute("dateAtt", new Date()));
-        attrList.add(new ShortAttribute("longAtt", timeid, DataType.NUMBER));
-
-        RESTResource resource = new RESTResource();
-        resource.setCategory(new RESTCategory(catId));
-        resource.setName("rest_test_resource_"+timeid);
-        resource.setStore(storedData);
-        resource.setAttribute(attrList);
-
-        return resource;
-    }
-
-    protected void removeAllResources(GeoStoreClient client) {
-        SearchFilter filter = new FieldFilter(BaseField.NAME, "*", SearchOperator.IS_NOT_NULL);
-        {
-            ShortResourceList resources = client.searchResources(filter);
-            if(resources.getList() != null) {
-                LOGGER.info("Found " + resources.getList().size() +" resources");
-                for (ShortResource shortResource : resources.getList()) {
-                    LOGGER.info("Found resource " + shortResource + " . Deleting...");
-                    client.deleteResource(shortResource.getId());
-                }
-            } else {
-                LOGGER.info("No resource found");
-            }
-        }
-        {
-            ShortResourceList resources = client.searchResources(filter);
-            assertNull("Not all resources have been deleted", resources.getList());
-//            assertEquals("Not all resources have been deleted", 0, resources.getList().size());
-        }
-    }
-
-    protected void removeAllCategories(GeoStoreClient client) {
-        {
-            CategoryList categories = client.getCategories();
-            if(categories.getList() != null) {
-                LOGGER.info("Found " + categories.getList().size() +" categories");
-                for (Category category : categories.getList()) {
-                    LOGGER.info("Found category " + category + " . Deleting...");
-                    client.deleteCategory(category.getId());
-                }
-            } else {
-                LOGGER.info("No category found");
-            }
-        }
-        {
-            CategoryList categories = client.getCategories();
-            assertNull("Not all categories have been deleted", categories.getList());
-//            assertEquals("Not all categories have been deleted", 0, categories.getList().size());
-        }
-    }
-
-
-    @Test
-    public void testGetPassword() {
-    }
-
-    @Test
-    public void testSetPassword() {
-    }
-
-    @Test
-    public void testGetUsername() {
-    }
-
-    @Test
-    public void testSetUsername() {
-    }
-
-    @Test
-    public void testGetGeostoreRestUrl() {
-    }
-
-    @Test
-    public void testSetGeostoreRestUrl() {
-    }
 
     @Test
     public void testGetResourceFull() {
 
-        GeoStoreClient client = createClient();
+        createDefaultCategory();
 
         final String DATA = "we wish you a merry xmas and a happy new year";
 
         RESTStoredData storedData = new RESTStoredData();
         storedData.setData(DATA);
 
-
+        
         RESTResource origResource = new RESTResource();
-        origResource.setCategory(new RESTCategory("TestCategory1"));
+        origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
         origResource.setName("rest_test_resource_getFull");
         origResource.setStore(storedData);
 
@@ -501,24 +371,56 @@ public class GeoStoreClientTest {
 
     }
 
+    @Test
+    public void testSearch01() {
 
-    protected boolean pingGeoStore(GeoStoreClient client) {
-        try {
-            client.getCategories();
-            return true;
-        } catch (Exception ex) {
-            LOGGER.debug("Error connecting to GeoStore", ex);
-            //... and now for an awful example of heuristic.....
-            Throwable t = ex;
-            while(t!=null) {
-                if(t instanceof ConnectException) {
-                    LOGGER.warn("Testing GeoStore is offline");
-                    return false;
-                }
-                t = t.getCause();
-            }
-            throw new RuntimeException("Unexpected exception: " + ex.getMessage(), ex);
+        // SETUP
+        createDefaultCategory();
+
+        RESTResource res = new RESTResource();
+        res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
+        res.setName("rest_test_resource_1");
+        res.setAttribute(new ArrayList<ShortAttribute>());
+        res.getAttribute().add(new ShortAttribute("name1", "value1", DataType.STRING));
+        res.getAttribute().add(new ShortAttribute("name2", "value2", DataType.STRING));
+        res.setData("pippo");
+
+        Long id = client.insert(res);
+        assertNotNull(id);
+
+        // TEST
+        SearchFilter filter = new CategoryFilter(DEFAULTCATEGORYNAME, SearchOperator.EQUAL_TO);
+
+        {
+            ResourceList resources = client.searchResources(filter, null, null, false, false);
+            assertEquals(1, resources.getList().size());
+            assertNull(resources.getList().get(0).getAttribute());
+            assertNull(resources.getList().get(0).getData());
         }
+
+        {
+            ResourceList resources = client.searchResources(filter, null, null, true, false);
+            assertEquals(1, resources.getList().size());
+            assertNotNull(resources.getList().get(0).getAttribute());
+            assertEquals(2, resources.getList().get(0).getAttribute().size());
+            assertNull(resources.getList().get(0).getData());
+        }
+
+        {
+            ResourceList resources = client.searchResources(filter, null, null, true, true);
+            assertEquals(1, resources.getList().size());
+            assertNotNull(resources.getList().get(0).getAttribute());
+            assertEquals(2, resources.getList().get(0).getAttribute().size());
+            assertNotNull(resources.getList().get(0).getData());
+            assertEquals("pippo", resources.getList().get(0).getData().getData());
+        }
+
+    }
+
+    protected Long createDefaultCategory() {
+        Long catid = client.insert(new RESTCategory(DEFAULTCATEGORYNAME));
+        assertNotNull(catid);
+        return catid;
     }
 
 }

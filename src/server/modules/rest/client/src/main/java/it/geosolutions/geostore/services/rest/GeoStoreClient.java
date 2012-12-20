@@ -1,19 +1,19 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
- * 
+ *
  *  GPLv3 + Classpath exception
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,6 +28,7 @@ import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import javax.ws.rs.core.MediaType;
 
@@ -48,7 +49,11 @@ public class GeoStoreClient {
     //=== RESOURCES
     //==========================================================================
 
-    public ShortResourceList searchResources(SearchFilter searchFilter) {        
+    /**
+     * @deprecated the REST service call is deprecated and should be replaced by  {@link #searchResources(it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, java.lang.Boolean, java.lang.Boolean) }
+     */
+    @Deprecated
+    public ShortResourceList searchResources(SearchFilter searchFilter) {
 //        WebResource wr = getBaseWebResource();
 //
 //        ShortResourceList resourceList = wr.path("resources").path("search")
@@ -58,6 +63,28 @@ public class GeoStoreClient {
                 .post(ShortResourceList.class, searchFilter);
 
         return resourceList;
+    }
+
+    public ResourceList searchResources(SearchFilter searchFilter, Integer page, Integer entries, Boolean includeAttributes, Boolean includeData) {
+
+        WebResource wb = getBaseWebResource("resources","search","list");
+
+        wb = addQParam(wb, "page", page );
+        wb = addQParam(wb, "entries", entries );
+
+        wb = addQParam(wb, "includeAttributes", includeAttributes );
+        wb = addQParam(wb, "includeData", includeData );
+
+        return  wb.header("Content-Type", MediaType.TEXT_XML)
+            .accept(MediaType.TEXT_XML)
+            .post(ResourceList.class, searchFilter);
+    }
+
+    protected WebResource addQParam(WebResource wb, String key, Object value) {
+        if(value != null)
+            return wb.queryParam(key, value.toString());
+        else
+            return wb;
     }
 
     public Long insert(RESTResource resource) {
@@ -94,7 +121,7 @@ public class GeoStoreClient {
 
     public void updateResource(Long id, RESTResource resource) {
         getBaseWebResource("resources", "resource", id)
-                .header("Content-Type", MediaType.TEXT_XML)                
+                .header("Content-Type", MediaType.TEXT_XML)
                 .put(resource);
     }
 
@@ -139,7 +166,7 @@ public class GeoStoreClient {
 
         return category;
     }
-    
+
     public Long getCategoryCount(String nameLike) {
     	String count = getBaseWebResource("categories","count",nameLike)
     			.accept(MediaType.TEXT_PLAIN)
