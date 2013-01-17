@@ -121,7 +121,7 @@ public interface RESTExtJsService {
     @GET
     @Path("/search/users/{nameLike}")
     @Produces({MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    @RolesAllowed({"ADMIN", "USER"})
     ExtUserList getUsersList(
     		@Context SecurityContext sc,
     		@PathParam("nameLike") String nameLike,
