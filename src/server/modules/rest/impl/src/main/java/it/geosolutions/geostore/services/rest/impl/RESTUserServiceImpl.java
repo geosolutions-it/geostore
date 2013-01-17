@@ -339,4 +339,28 @@ public class RESTUserServiceImpl implements RESTUserService {
             return user;
         }
     }
+
+	@Override
+	public UserList getUserList(SecurityContext sc, String nameLike, Integer page,
+			Integer entries, boolean includeAttributes) throws BadRequestWebEx {
+		
+    	nameLike = nameLike.replaceAll("[*]", "%");
+		
+        try {
+			List<User> userList = userService.getAll(page, entries, nameLike, includeAttributes);
+			Iterator<User> iterator = userList.iterator();
+			
+			List<RESTUser> restUSERList = new ArrayList<RESTUser>();
+			while(iterator.hasNext()){
+				User user = iterator.next();
+				
+				RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+				restUSERList.add(restUser);
+			}
+			
+			return new UserList(restUSERList);
+        } catch (BadRequestServiceEx ex) {
+            throw new BadRequestWebEx(ex.getMessage());
+        }
+	}
 }

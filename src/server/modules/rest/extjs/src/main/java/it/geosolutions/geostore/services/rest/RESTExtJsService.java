@@ -34,6 +34,7 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.model.ExtResourceList;
+import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
@@ -109,5 +110,23 @@ public interface RESTExtJsService {
             @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes,
             @Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
+    
+    /**
+     * @param sc
+     * @param page
+     * @param entries
+     * @return String
+     * @throws BadRequestWebEx
+     */
+    @GET
+    @Path("/search/user/{nameLike}")
+    @Produces({MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    ExtUserList getUsersList(
+    		@Context SecurityContext sc,
+    		@PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit,
+            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes)throws BadRequestWebEx;
     
 }

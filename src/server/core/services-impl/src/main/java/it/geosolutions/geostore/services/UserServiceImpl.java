@@ -19,11 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import com.googlecode.genericdao.search.Search;
-
-import java.util.Iterator;
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
@@ -33,7 +28,12 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
+
+import com.googlecode.genericdao.search.Search;
 
 /**
  * Class UserServiceImpl.
@@ -184,7 +184,7 @@ public class UserServiceImpl implements UserService {
         // Removing old attributes
         //
         List<UserAttribute> oldList = user.getAttribute();
-        Iterator<UserAttribute> iterator;
+//        Iterator<UserAttribute> iterator;
 
         if (oldList != null) {
             for (UserAttribute a : oldList) {
@@ -257,6 +257,61 @@ public class UserServiceImpl implements UserService {
         List<User> found = userDAO.search(searchCriteria);
 
         return found;
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.UserService#getAll(java.lang.Integer, java.lang.Integer)
+     */
+    @Override
+    public List<User> getAll(Integer page, Integer entries, String nameLike, boolean includeAttributes) throws BadRequestServiceEx {
+
+        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
+            throw new BadRequestServiceEx("Page and entries params should be declared together.");
+        }
+
+        Search searchCriteria = new Search(User.class);
+
+        if (page != null) {
+            searchCriteria.setMaxResults(entries);
+            searchCriteria.setPage(page);
+        }
+
+        searchCriteria.addSortAsc("name");
+        
+	    if (nameLike != null) {
+	    	searchCriteria.addFilterILike("name", nameLike);
+	    }
+
+        List<User> found = userDAO.search(searchCriteria);
+        found = this.configUserList(found, includeAttributes);
+        
+        return found;
+    }
+    
+    /**
+     * @param list
+     * @param includeAttributes
+     * @return List<User>
+     */
+    private List<User> configUserList(List<User> list, boolean includeAttributes) {
+        List<User> uList = new ArrayList<User>(list.size());
+        
+        for (User user : list) {
+        	User u = new User();
+        	u.setGroup(user.getGroup());
+        	u.setId(user.getId());
+        	u.setName(user.getName());
+        	u.setPassword(user.getPassword());
+        	u.setRole(user.getRole());
+            
+            if(includeAttributes){
+            	u.setAttribute(user.getAttribute());
+            }
+            
+            uList.add(u);
+        }
+
+        return uList;
     }
 
     /* (non-Javadoc)

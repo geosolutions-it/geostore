@@ -25,59 +25,75 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-package it.geosolutions.geostore.services.rest.model;
+
+package it.geosolutions.geostore.services.model;
 
 import it.geosolutions.geostore.core.model.User;
 
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /** 
- * Class UserList.
+ * Class ExtUserList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  *
  */
-@XmlRootElement(name="UserList")
-public class UserList implements Iterable<User> {
-	
-    private List<RESTUser> list;
+@XmlRootElement(name="ExtUserList")
+public class ExtUserList {
 
-    public UserList() {
+	private long count;
+	
+    private List<User> list;
+
+    public ExtUserList() {
     	
     }
 
     /**
      * @param list
      */
-    public UserList(List<RESTUser> list) {
-        this.list = list;
+    public ExtUserList(long count, List<User> list) {
+        this.count = count;
+    	this.list = list;
     }
 
     /**
-     * @return List<Category>
+	 * @return the count
+	 */
+    @XmlElement(name="UserCount")
+	public long getCount() {
+		return count;
+	}
+
+	/**
+	 * @param count the count to set
+	 */
+	public void setCount(long count) {
+		this.count = count;
+	}
+	
+    /**
+     * @return List<ShortResource>
      */ 
     @XmlElement(name="User")
-    public List<RESTUser> getList() {
+    public List<User> getList() {
         return list;
     }
 
     /**
      * @param list
      */
-    public void setList(List<RESTUser> list) {
+    public void setList(List<User> list) {
         this.list = list;
     }
-
-    @Override
-    public Iterator<User> iterator() {
-        return list == null ?
-            Collections.EMPTY_LIST.iterator() :
-            list.iterator();
+    
+	@XmlTransient
+    public boolean isEmpty() {
+        return list == null || list.isEmpty();
     }
     
 }

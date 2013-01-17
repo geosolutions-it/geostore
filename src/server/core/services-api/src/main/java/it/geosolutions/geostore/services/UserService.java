@@ -87,6 +87,16 @@ public interface UserService {
     List<User> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
 
     /**
+     * @param page
+     * @param entries
+     * @param nameLike
+     * @param includeAttributes
+     * @return List<User>
+     * @throws BadRequestServiceEx
+     */
+    List<User> getAll(Integer page, Integer entries, String nameLike, boolean includeAttributes) throws BadRequestServiceEx;
+
+    /**
      * @param nameLike
      * @return long
      */

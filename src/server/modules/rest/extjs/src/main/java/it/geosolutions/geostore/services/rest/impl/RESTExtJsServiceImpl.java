@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
@@ -38,6 +39,7 @@ import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.model.ExtResourceList;
+import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
@@ -69,12 +71,21 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 			.getLogger(RESTExtJsServiceImpl.class);
 
 	private ResourceService resourceService;
+	
+	private UserService userService;
 
 	/**
 	 * @param resourceService
 	 */
 	public void setResourceService(ResourceService resourceService) {
 		this.resourceService = resourceService;
+	}
+
+	/**
+	 * @param userService the userService to set
+	 */
+	public void setUserService(UserService userService) {
+		this.userService = userService;
 	}
 
 	/*
@@ -325,4 +336,38 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 		}
 	}
 
+	@Override
+	public ExtUserList getUsersList(SecurityContext sc, String nameLike,
+			Integer start, Integer limit, boolean includeAttributes) throws BadRequestWebEx {
+		
+		if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
+            throw new BadRequestWebEx("start and limit params should be declared together");
+        }
+
+        if (LOGGER.isDebugEnabled())
+        	LOGGER.debug("getUsersList(start=" + start + ", limit=" + limit);
+
+		Integer page = null;
+        if(start != null) {
+            page = start / limit;
+        }
+
+		try {
+			nameLike = nameLike.replaceAll("[*]", "%");
+			List<User> users = userService.getAll(page, limit, nameLike, includeAttributes);
+
+			long count = 0;
+			if (users != null && users.size() > 0)
+				count = userService.getCount(nameLike);
+
+			ExtUserList list = new ExtUserList(count, users);
+			return list;
+
+		} catch (BadRequestServiceEx e) {
+			if (LOGGER.isEnabledFor(Level.ERROR))
+				LOGGER.error(e.getMessage());
+
+			return null;
+		}
+	}
 }

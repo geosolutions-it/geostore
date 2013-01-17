@@ -37,6 +37,7 @@ import it.geosolutions.geostore.services.rest.model.UserList;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -119,5 +120,17 @@ public interface RESTUserService {
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @RolesAllowed({"ADMIN", "USER"})
     User getAuthUserDetails(@Context SecurityContext sc);
+    
+    
+    @GET
+    @Path("/search/list/{nameLike}")
+    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    @RolesAllowed({"ADMIN", "USER"})
+    UserList getUserList(
+    		@Context SecurityContext sc, 
+            @PathParam("nameLike") String nameLike,
+            @QueryParam("page") Integer page,
+            @QueryParam("entries") Integer entries,
+            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes)throws BadRequestWebEx;
     
 }
