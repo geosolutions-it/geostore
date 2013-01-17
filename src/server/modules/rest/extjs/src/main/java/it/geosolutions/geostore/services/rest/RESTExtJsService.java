@@ -119,7 +119,7 @@ public interface RESTExtJsService {
      * @throws BadRequestWebEx
      */
     @GET
-    @Path("/search/user/{nameLike}")
+    @Path("/search/users/{nameLike}")
     @Produces({MediaType.APPLICATION_JSON})
     @RolesAllowed({"ADMIN", "USER", "GUEST"})
     ExtUserList getUsersList(
