@@ -57,6 +57,13 @@ public class RESTStoredData implements Serializable{
     }
 
     /**
+     * Instantiates a new instance.
+     */
+    public RESTStoredData(String data) {
+        this.data = data;
+    }
+
+    /**
      * @return the id
      */
     public Long getId() {

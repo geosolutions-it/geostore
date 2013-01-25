@@ -194,8 +194,9 @@ public class RESTResource implements Serializable{
      * Shortcut for setting data
      */
 	public void setData(String data) {
-        this.store = new RESTStoredData();
-		this.store.setData(data);
+        this.store = data == null? 
+                null :
+                new RESTStoredData(data);
 	}
 
 	/**
