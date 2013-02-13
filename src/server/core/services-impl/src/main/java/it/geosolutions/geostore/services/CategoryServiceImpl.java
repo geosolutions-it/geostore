@@ -19,10 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import com.googlecode.genericdao.search.Search;
-
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.model.Category;
@@ -30,7 +26,11 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
+
+import com.googlecode.genericdao.search.Search;
 
 /**
  * Class CategoryServiceImpl.
@@ -76,17 +76,17 @@ public class CategoryServiceImpl implements CategoryService {
 
         categoryDAO.persist(cat);
 
-        //
-        // Persisting SecurityRule
-        //
-        List<SecurityRule> rules = category.getSecurity();
-
-        if (rules != null) {
-            for (SecurityRule rule : rules) {
-                rule.setCategory(cat);
-                securityDAO.persist(rule);
-            }
-        }
+//        //
+//        // Persisting SecurityRule
+//        //
+//        List<SecurityRule> rules = category.getSecurity();
+//
+//        if (rules != null) {
+//            for (SecurityRule rule : rules) {
+//                rule.setCategory(cat);
+//                securityDAO.persist(rule);
+//            }
+//        }
 
         return cat.getId();
     }

@@ -1,77 +1,77 @@
 
     create table gs_attribute (
-        id int8 not null,
+        id number(19,0) not null,
         attribute_date timestamp,
-        name varchar(255) not null,
-        attribute_number float8,
-        attribute_text varchar(255),
-        attribute_type varchar(255) not null,
-        resource_id int8 not null,
+        name varchar2(255 char) not null,
+        attribute_number double precision,
+        attribute_text varchar2(255 char),
+        attribute_type varchar2(255 char) not null,
+        resource_id number(19,0) not null,
         primary key (id),
         unique (name, resource_id)
     );
 
     create table gs_category (
-        id int8 not null,
-        name varchar(255) not null,
+        id number(19,0) not null,
+        name varchar2(255 char) not null,
         primary key (id),
         unique (name)
     );
 
     create table gs_resource (
-        id int8 not null,
+        id number(19,0) not null,
         creation timestamp not null,
-        description varchar(255),
+        description varchar2(255 char),
         lastUpdate timestamp,
-        metadata varchar(30000),
-        name varchar(255) not null,
-        category_id int8 not null,
+        metadata varchar2(4000 char),
+        name varchar2(255 char) not null,
+        category_id number(19,0) not null,
         primary key (id),
         unique (name)
     );
 
     create table gs_security (
-        id int8 not null,
-        canRead bool not null,
-        canWrite bool not null,
-        group_id int8,
-        resource_id int8,
-        user_id int8,
+        id number(19,0) not null,
+        canRead number(1,0) not null,
+        canWrite number(1,0) not null,
+        group_id number(19,0),
+        resource_id number(19,0),
+        user_id number(19,0),
         primary key (id),
         unique (user_id, resource_id),
         unique (resource_id, group_id)
     );
 
     create table gs_stored_data (
-        id int8 not null,
-        stored_data varchar(500000) not null,
-        resource_id int8 not null,
+        id number(19,0) not null,
+        stored_data CLOB not null,
+        resource_id number(19,0) not null,
         primary key (id),
         unique (resource_id)
     );
 
     create table gs_user (
-        id int8 not null,
-        name varchar(20) not null,
-        user_password varchar(255),
-        user_role varchar(255) not null,
-        group_id int8,
+        id number(19,0) not null,
+        name varchar2(20 char) not null,
+        user_password varchar2(255 char),
+        user_role varchar2(255 char) not null,
+        group_id number(19,0),
         primary key (id),
         unique (name)
     );
 
     create table gs_user_attribute (
-        id int8 not null,
-        name varchar(255) not null,
-        string varchar(255),
-        user_id int8 not null,
+        id number(19,0) not null,
+        name varchar2(255 char) not null,
+        string varchar2(255 char),
+        user_id number(19,0) not null,
         primary key (id),
         unique (name, user_id)
     );
 
     create table gs_usergroup (
-        id int8 not null,
-        groupName varchar(20) not null,
+        id number(19,0) not null,
+        groupName varchar2(20 char) not null,
         primary key (id),
         unique (groupName)
     );

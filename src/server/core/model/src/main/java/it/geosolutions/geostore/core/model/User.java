@@ -85,7 +85,7 @@ public class User implements Serializable {
     @Index(name = "idx_user_password")
     private String password;
 
-    @Column(name = "role", nullable = false, updatable = true)
+    @Column(name = "user_role", nullable = false, updatable = true)
     @Index(name = "idx_user_role")
     @Enumerated(EnumType.STRING)
     private Role role;

@@ -60,7 +60,7 @@ public class StoredData implements Serializable {
     @Id
     private Long id;
 
-    @Column(nullable = false, updatable = true, length = 500000)
+    @Column(name="stored_data", nullable = false, updatable = true, length = 500000)
     private String data;
 
     @OneToOne(optional = false)

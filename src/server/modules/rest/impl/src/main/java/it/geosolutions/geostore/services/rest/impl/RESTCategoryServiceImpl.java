@@ -48,7 +48,6 @@ import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.utils.GeoStorePrincipal;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
@@ -89,17 +88,17 @@ public class RESTCategoryServiceImpl implements RESTCategoryService{
         //
         // Preparing Security Rule
         //
-        User authUser = extractAuthUser(sc);
+//        User authUser = extractAuthUser(sc);
         
-        SecurityRule securityRule = new SecurityRule();
-        securityRule.setCanRead(true);
-        securityRule.setCanWrite(true);
-        securityRule.setUser(authUser);
-        
-        List<SecurityRule> securities = new ArrayList<SecurityRule>();
-        securities.add(securityRule);
-        
-        category.setSecurity(securities);
+//        SecurityRule securityRule = new SecurityRule();
+//        securityRule.setCanRead(true);
+//        securityRule.setCanWrite(true);
+//        securityRule.setUser(authUser);
+//        
+//        List<SecurityRule> securities = new ArrayList<SecurityRule>();
+//        securities.add(securityRule);
+//        
+//        category.setSecurity(securities);
         
         try {
 			id = categoryService.insert(category);
