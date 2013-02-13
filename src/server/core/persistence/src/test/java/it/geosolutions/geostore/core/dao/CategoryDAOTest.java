@@ -21,7 +21,6 @@ package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
 
 import java.util.Date;
 
@@ -52,7 +51,7 @@ public class CategoryDAOTest extends BaseDAOTest {
 		
         long categoryId;
         long resourceId;
-        long securityId;
+//        long securityId;
         
         //
         // PERSIST
@@ -78,16 +77,16 @@ public class CategoryDAOTest extends BaseDAOTest {
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());   
             
-            SecurityRule security = new SecurityRule();
-            security.setCanRead(true);
-            security.setCanWrite(true);
-            security.setCategory(category);
-            
-	        securityDAO.persist(security);
-	        securityId = security.getId();
+//            SecurityRule security = new SecurityRule();
+//            security.setCanRead(true);
+//            security.setCanWrite(true);
+//            security.setCategory(category);
+//            
+//	        securityDAO.persist(security);
+//	        securityId = security.getId();
 
-            assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());   
+//            assertEquals(1, securityDAO.count(null));
+//            assertEquals(1, securityDAO.findAll().size());   
         }
         
         //
@@ -113,7 +112,7 @@ public class CategoryDAOTest extends BaseDAOTest {
         	categoryDAO.removeById(categoryId);
             assertNull("Category not deleted", categoryDAO.find(categoryId));            
             assertNull("Resource not deleted", resourceDAO.find(resourceId));
-            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
+//            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
         }
         
 	}

@@ -55,9 +55,9 @@ import org.hibernate.annotations.Index;
 @Entity(name = "Security")
 @Table(name = "gs_security", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"user_id", "resource_id"}),
-    @UniqueConstraint(columnNames = {"user_id", "category_id"}),
+    /*@UniqueConstraint(columnNames = {"user_id", "category_id"}),*/
     @UniqueConstraint(columnNames = {"resource_id", "group_id"}),
-    @UniqueConstraint(columnNames = {"category_id", "group_id"})})
+    /*@UniqueConstraint(columnNames = {"category_id", "group_id"})*/})
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
 @XmlRootElement(name = "Security")
 public class SecurityRule implements Serializable {
@@ -77,14 +77,14 @@ public class SecurityRule implements Serializable {
     @ForeignKey(name = "fk_security_resource")
     private Resource resource;
 
-    /**
-     * A SecurityRule may refer either to a resource or to a Category, then neither of them are mandatory. A check to ensure they
-     * are not both null is done in onPreUpdate() <BR>TODO: it would be nice to have a DB constraint on nonnullability on them.
-     */
-    @ManyToOne(optional = true)
-    @Index(name = "idx_security_category")
-    @ForeignKey(name = "fk_security_category")
-    private Category category;
+//    /**
+//     * A SecurityRule may refer either to a resource or to a Category, then neither of them are mandatory. A check to ensure they
+//     * are not both null is done in onPreUpdate() <BR>TODO: it would be nice to have a DB constraint on nonnullability on them.
+//     */
+//    @ManyToOne(optional = true)
+//    @Index(name = "idx_security_category")
+//    @ForeignKey(name = "fk_security_category")
+//    private Category category;
 
     @ManyToOne(optional = true)
     @Index(name = "idx_security_user")
@@ -110,9 +110,9 @@ public class SecurityRule implements Serializable {
     @PreUpdate
     @PrePersist
     public void onPreUpdate() throws Exception {
-        if ( !((this.resource != null) ^ (this.category != null)) ) {
-            throw new Exception("Only one between Category and Resource can be not-null inside the Security entity");
-        }
+//        if ( !((this.resource != null) ^ (this.category != null)) ) {
+//            throw new Exception("Only one between Category and Resource can be not-null inside the Security entity");
+//        }
     }
 
     /**
@@ -145,20 +145,20 @@ public class SecurityRule implements Serializable {
         this.resource = resource;
     }
 
-    /**
-     * @return the category
-     */
-    @XmlTransient
-    public Category getCategory() {
-        return category;
-    }
-
-    /**
-     * @param category the category to set
-     */
-    public void setCategory(Category category) {
-        this.category = category;
-    }
+//    /**
+//     * @return the category
+//     */
+//    @XmlTransient
+//    public Category getCategory() {
+//        return category;
+//    }
+//
+//    /**
+//     * @param category the category to set
+//     */
+//    public void setCategory(Category category) {
+//        this.category = category;
+//    }
 
     /**
      * @return the user
@@ -248,10 +248,10 @@ public class SecurityRule implements Serializable {
             builder.append("group=").append(group);
         }
 
-        if ( category != null ) {
-            builder.append(", ");
-            builder.append("category=").append(category);
-        }
+//        if ( category != null ) {
+//            builder.append(", ");
+//            builder.append("category=").append(category);
+//        }
 
         builder.append(']');
 
@@ -267,8 +267,8 @@ public class SecurityRule implements Serializable {
         int result = 1;
         result = (prime * result) + (canRead ? 1231 : 1237);
         result = (prime * result) + (canWrite ? 1231 : 1237);
-        result = (prime * result)
-                + ((category == null) ? 0 : category.hashCode());
+//        result = (prime * result)
+//                + ((category == null) ? 0 : category.hashCode());
         result = (prime * result) + ((group == null) ? 0 : group.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result)
@@ -300,13 +300,13 @@ public class SecurityRule implements Serializable {
         if ( canWrite != other.canWrite ) {
             return false;
         }
-        if ( category == null ) {
-            if ( other.category != null ) {
-                return false;
-            }
-        } else if ( !category.equals(other.category) ) {
-            return false;
-        }
+//        if ( category == null ) {
+//            if ( other.category != null ) {
+//                return false;
+//            }
+//        } else if ( !category.equals(other.category) ) {
+//            return false;
+//        }
         if ( group == null ) {
             if ( other.group != null ) {
                 return false;

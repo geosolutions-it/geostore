@@ -822,6 +822,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <!-- Use 2.4.2 because 2.4.3 has bug with system properties
+				     see http://jira.codehaus.org/browse/SUREFIRE-121 -->
+			    <version>2.4.2</version>
                 <configuration>
                     <systemProperties>
                         <property>

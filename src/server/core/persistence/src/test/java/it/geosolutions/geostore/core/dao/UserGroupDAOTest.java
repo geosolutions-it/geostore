@@ -88,7 +88,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
-            security.setCategory(category);
+//            security.setCategory(category);
             security.setGroup(group);
             security.setUser(user);
             

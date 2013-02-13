@@ -84,20 +84,20 @@ public class Attribute implements Serializable {
 	@Index(name = "idx_attribute_name")
 	private String name;
 
-	@Column(name = "string", nullable = true, updatable = true)
+	@Column(name = "attribute_text", nullable = true, updatable = true)
 	@Index(name = "idx_attribute_text")
 	private String textValue;
 	
-	@Column(name = "number", nullable = true, updatable = true)
+	@Column(name = "attribute_number", nullable = true, updatable = true)
 	@Index(name = "idx_attribute_number")
 	private Double numberValue;
 	
-	@Column(name = "date", nullable = true, updatable = true)
+	@Column(name = "attribute_date", nullable = true, updatable = true)
 	@Index(name = "idx_attribute_date")
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date dateValue;
 	
-	@Column(name = "type", nullable = false, updatable = false)
+	@Column(name = "attribute_type", nullable = false, updatable = false)
 	@Index(name = "idx_attribute_type")
 	@Enumerated(EnumType.STRING)
 	private DataType type;

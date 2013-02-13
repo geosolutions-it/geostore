@@ -71,22 +71,58 @@
 		    </build>
 		    
 		    <dependencies>
+			    <!-- POSTGRESQL database driver -->
 		        <dependency>
 		            <groupId>postgresql</groupId>
 		            <artifactId>postgresql</artifactId>
 		        </dependency>
 	        </dependencies>
 	    </profile>
-
-      <profile>
-        <id>extjs</id>
-        <dependencies>
-            <dependency>
-                <groupId>it.geosolutions.geostore</groupId>
-                <artifactId>geostore-rest-extjs</artifactId>
-            </dependency>
-        </dependencies>
-      </profile>
+		
+		<profile>
+			<id>oracle</id>
+		    <build>
+		    	<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
+		    	<plugins>
+			      <plugin>
+			        <artifactId>maven-antrun-plugin</artifactId>
+			        <version>1.1</version>
+			        <executions>
+			          <execution>
+			            <phase>process-classes</phase>
+			            <configuration>
+			              <tasks>
+			                <copy file="src/main/resources/db-conf/oracle.properties" tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties" overwrite="true" verbose="true"/>
+			              </tasks>
+			            </configuration>
+			            <goals>
+			              <goal>run</goal>
+			            </goals>
+			          </execution>
+			        </executions>
+			      </plugin>
+		    	</plugins>
+		    </build>
+		    
+		    <dependencies>
+				<!-- ORACLE database driver -->
+				<dependency>
+					<groupId>com.oracle</groupId>
+					<artifactId>ojdbc6</artifactId>
+					<version>11.2.0</version>
+				</dependency>
+	        </dependencies>
+	    </profile>
+		
+        <profile>
+			<id>extjs</id>
+			<dependencies>
+				<dependency>
+					<groupId>it.geosolutions.geostore</groupId>
+					<artifactId>geostore-rest-extjs</artifactId>
+				</dependency>
+			</dependencies>
+        </profile>
 	</profiles>
 
 

@@ -76,11 +76,11 @@ public class Category implements Serializable {
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<Resource> resource;
 
-    /*
-     * Only To allow the CASCADING operation
-     */
-    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    private List<SecurityRule> security;
+//    /*
+//     * Only To allow the CASCADING operation
+//     */
+//    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+//    private List<SecurityRule> security;
 
     /**
      * @return the id
@@ -111,20 +111,20 @@ public class Category implements Serializable {
         this.resource = resource;
     }
 
-    /**
-     * @return the security
-     */
-    @XmlTransient
-    public List<SecurityRule> getSecurity() {
-        return security;
-    }
-
-    /**
-     * @param security the security to set
-     */
-    public void setSecurity(List<SecurityRule> security) {
-        this.security = security;
-    }
+//    /**
+//     * @return the security
+//     */
+//    @XmlTransient
+//    public List<SecurityRule> getSecurity() {
+//        return security;
+//    }
+//
+//    /**
+//     * @param security the security to set
+//     */
+//    public void setSecurity(List<SecurityRule> security) {
+//        this.security = security;
+//    }
 
     /**
      * @return the name
@@ -174,8 +174,8 @@ public class Category implements Serializable {
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result)
                 + ((resource == null) ? 0 : resource.hashCode());
-        result = (prime * result)
-                + ((security == null) ? 0 : security.hashCode());
+//        result = (prime * result)
+//                + ((security == null) ? 0 : security.hashCode());
 
         return result;
     }
@@ -217,13 +217,13 @@ public class Category implements Serializable {
         } else if ( !resource.equals(other.resource) ) {
             return false;
         }
-        if ( security == null ) {
-            if ( other.security != null ) {
-                return false;
-            }
-        } else if ( !security.equals(other.security) ) {
-            return false;
-        }
+//        if ( security == null ) {
+//            if ( other.security != null ) {
+//                return false;
+//            }
+//        } else if ( !security.equals(other.security) ) {
+//            return false;
+//        }
 
         return true;
     }

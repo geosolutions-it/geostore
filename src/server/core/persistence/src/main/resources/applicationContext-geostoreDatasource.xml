@@ -35,6 +35,7 @@
         <property name="locations">
             <list>
                 <value>classpath*:geostore-datasource-ovr.properties</value>
+				<value>classpath*:${ovrdir}/geostore-datasource-ovr.properties</value>
                 <value>${geostore-ovr}</value>
             </list>
         </property>
