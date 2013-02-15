@@ -56,8 +56,8 @@ import org.hibernate.annotations.Index;
 @Table(name = "gs_security", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"user_id", "resource_id"}),
     /*@UniqueConstraint(columnNames = {"user_id", "category_id"}),*/
-    @UniqueConstraint(columnNames = {"resource_id", "group_id"}),
-    /*@UniqueConstraint(columnNames = {"category_id", "group_id"})*/})
+    @UniqueConstraint(columnNames = {"resource_id", "group_id"})/*,
+    @UniqueConstraint(columnNames = {"category_id", "group_id"})*/})
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
 @XmlRootElement(name = "Security")
 public class SecurityRule implements Serializable {
