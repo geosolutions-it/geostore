@@ -218,6 +218,8 @@ public class UserServiceImpl implements UserService {
     public User get(String name) throws NotFoundServiceEx {
         Search searchCriteria = new Search(User.class);
         searchCriteria.addFilterEqual("name", name);
+        searchCriteria.addFetch("attribute");
+        
 
         List<User> users = userDAO.search(searchCriteria);
         if( ! users.isEmpty()) {
