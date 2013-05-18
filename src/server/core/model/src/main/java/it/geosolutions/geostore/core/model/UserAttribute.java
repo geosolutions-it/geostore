@@ -123,6 +123,7 @@ public class UserAttribute implements Serializable {
     /**
      * @return the user
      */
+    @XmlTransient
     public User getUser() {
         return user;
     }
