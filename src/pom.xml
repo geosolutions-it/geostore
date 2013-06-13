@@ -93,6 +93,31 @@
     </distributionManagement>
 
 
+ <pluginRepositories>
+  <pluginRepository>
+   <id>codehaus-snapshot-plugins</id>
+   <name>codehaus-shapshot-plugins</name>
+   <url>http://snapshots.repository.codehaus.org/</url>
+   <snapshots>
+    <enabled>true</enabled>
+   </snapshots>
+   <releases>
+    <enabled>false</enabled>
+   </releases>
+  </pluginRepository>
+  <pluginRepository>
+   <id>repo1.maven.org/maven2</id>
+   <name>repo1.maven.org/maven2</name>
+   <url>http://repo1.maven.org/maven2/</url>
+   <snapshots>
+    <enabled>false</enabled>
+   </snapshots>
+   <releases>
+    <enabled>true</enabled>
+   </releases>
+  </pluginRepository>  
+ </pluginRepositories>
+
     <build>
         <plugins>
             <plugin>
