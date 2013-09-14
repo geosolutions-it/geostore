@@ -998,9 +998,18 @@
         </pluginRepository>
 
         <pluginRepository>
-            <id>mortbay-repo</id>
-            <name>mortbay-repo</name>
-            <url>http://www.mortbay.org/maven2/snapshot</url>
+          <id>codehaus-release-repo</id>
+          <name>Codehaus Release Repo</name>
+          <url>http://repository.codehaus.org</url>
+        </pluginRepository>
+        
+        <pluginRepository>
+          <id>codehaus-snapshot-repo</id>
+          <name>Codehaus Snapshot Repo</name>
+          <url>http://snapshots.repository.codehaus.org</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
         </pluginRepository>
 
     </pluginRepositories>
