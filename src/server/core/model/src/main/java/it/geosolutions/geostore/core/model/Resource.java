@@ -79,7 +79,7 @@ public class Resource implements Serializable, CycleRecoverable {
     @Index(name = "idx_resource_name")
     private String name;
 
-    @Column(nullable = true, updatable = true)
+    @Column(nullable = true, updatable = true, length = 10000)
     @Index(name = "idx_resource_description")
     private String description;
 

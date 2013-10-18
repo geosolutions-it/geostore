@@ -144,6 +144,12 @@ public class GeoStoreClient {
     public void setData(Long id, String data ) {
         getBaseWebResource("data", id).put(data);
     }
+    
+    public void updateData(Long id, String data) {
+        getBaseWebResource("data", id)
+        .header("Content-Type", MediaType.TEXT_PLAIN)
+        .put(data);
+    }
 
     //==========================================================================
     //=== CATEGORIES
