@@ -90,7 +90,8 @@ public interface RESTUserService {
     @RolesAllowed({"ADMIN"})
     User get(
     		@Context SecurityContext sc, 
-    		@PathParam("id") long id) throws NotFoundWebEx;
+    		@PathParam("id") long id,
+    		@QueryParam("includeattributes")@DefaultValue("false") boolean includeAttributes) throws NotFoundWebEx;
     
     @GET
     @Path("/search/{name}")
@@ -98,7 +99,8 @@ public interface RESTUserService {
     @RolesAllowed({"ADMIN"})
     User get(
     		@Context SecurityContext sc, 
-    		@PathParam("name") String name) throws NotFoundWebEx;
+    		@PathParam("name") String name,
+    		@QueryParam("includeattributes")@DefaultValue("false") boolean includeAttributes) throws NotFoundWebEx;
 
     @GET
     @Path("/")
@@ -119,7 +121,8 @@ public interface RESTUserService {
     @Path("/user/details/")
     @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @RolesAllowed({"ADMIN", "USER"})
-    User getAuthUserDetails(@Context SecurityContext sc);
+    User getAuthUserDetails(@Context SecurityContext sc,
+    		@QueryParam("includeattributes")@DefaultValue("false") boolean includeAttributes);
     
     
     @GET
@@ -131,6 +134,6 @@ public interface RESTUserService {
             @PathParam("nameLike") String nameLike,
             @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries,
-            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes)throws BadRequestWebEx;
+            @QueryParam("includeattributes")@DefaultValue("false") boolean includeAttributes)throws BadRequestWebEx;
     
 }

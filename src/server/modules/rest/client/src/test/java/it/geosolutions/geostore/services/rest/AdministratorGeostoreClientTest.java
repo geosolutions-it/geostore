@@ -29,7 +29,7 @@ public class AdministratorGeostoreClientTest {
 	protected AdministratorGeoStoreClient createAdministratorClient() {
 		geoStoreClient = new AdministratorGeoStoreClient();
 		geoStoreClient
-				.setGeostoreRestUrl("http://localhost:9191/geostore/rest");
+				.setGeostoreRestUrl("http://localhost:9190/geostore/rest");
 		geoStoreClient.setUsername("admin");
 		geoStoreClient.setPassword("admin");
 		return geoStoreClient;
@@ -78,7 +78,7 @@ public class AdministratorGeostoreClientTest {
 
 		// User user = geoStoreClient.getUser(1);
 		try {
-			RESTUser userd = geoStoreClient.getUserDetails();
+			User userd = geoStoreClient.getUserDetails();
 			System.out.println(userd.getId());
 		} catch (Exception e) {
 			fail();
@@ -119,8 +119,12 @@ public class AdministratorGeostoreClientTest {
 			user.setAttribute(attrs);
 			Long id = geoStoreClient.insert(user);
 			System.out.println(id);
-			RESTUser us = geoStoreClient.getUser(id);
+			User us = geoStoreClient.getUser(id,true);
 			user.getName().equals("testuser");
+			attrs = us.getAttribute();
+			assertNotNull("Missing attribute list",attrs);
+			assertTrue("Attributes missing",attrs.size()>0);
+
 
 		} catch (Exception e) {
 			fail();
