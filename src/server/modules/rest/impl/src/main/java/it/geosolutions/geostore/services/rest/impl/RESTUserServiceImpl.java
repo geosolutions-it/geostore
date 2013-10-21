@@ -199,7 +199,7 @@ public class RESTUserServiceImpl implements RESTUserService {
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#get(long)
      */
     @Override
-    public User get(SecurityContext sc, long id) throws NotFoundWebEx {
+    public User get(SecurityContext sc, long id,boolean includeAttributes) throws NotFoundWebEx {
         if ( id == -1 ) {
             if ( LOGGER.isDebugEnabled() ) {
                 LOGGER.debug("Retriving dummy data !");
@@ -213,11 +213,20 @@ public class RESTUserServiceImpl implements RESTUserService {
             return user;
         }
 
-        User ret = userService.get(id);
-        if ( ret == null ) {
+        User authUser = userService.get(id);
+        if ( authUser == null ) {
             throw new NotFoundWebEx("User not found");
         }
 
+        User ret = new User();
+        ret.setId(authUser.getId());
+        ret.setName(authUser.getName());
+        // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
+        ret.setRole(authUser.getRole());
+        ret.setGroup(authUser.getGroup());
+        if(includeAttributes){
+        	ret.setAttribute(authUser.getAttribute());
+        }
         return ret;
     }
 
@@ -225,7 +234,7 @@ public class RESTUserServiceImpl implements RESTUserService {
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserService#get(java.lang.String)
      */
     @Override
-    public User get(SecurityContext sc, String name) throws NotFoundWebEx {
+    public User get(SecurityContext sc, String name,boolean includeAttributes) throws NotFoundWebEx {
         if ( name == null ) {
             if ( LOGGER.isDebugEnabled() ) {
                 LOGGER.debug("User Name is null !");
@@ -236,6 +245,11 @@ public class RESTUserServiceImpl implements RESTUserService {
         User ret;
         try {
             ret = userService.get(name);
+            if(includeAttributes){
+            	ret.setAttribute(ret.getAttribute());
+            }else{
+            	ret.setAttribute(null);
+            }
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx("User not found");
         }
@@ -281,7 +295,7 @@ public class RESTUserServiceImpl implements RESTUserService {
      * @see it.geosolutions.geostore.services.rest.RESTUserService#getAuthUserDetails (javax.ws.rs.core.SecurityContext)
      */
     @Override
-    public User getAuthUserDetails(SecurityContext sc) {
+    public User getAuthUserDetails(SecurityContext sc,boolean includeAttributes) {
         User authUser = extractAuthUser(sc);
 
         User ret = null;
@@ -295,6 +309,9 @@ public class RESTUserServiceImpl implements RESTUserService {
                 // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
                 ret.setRole(authUser.getRole());
                 ret.setGroup(authUser.getGroup());
+                if(includeAttributes){
+                	ret.setAttribute(authUser.getAttribute());
+                }
             }
 
         } catch (NotFoundServiceEx e) {

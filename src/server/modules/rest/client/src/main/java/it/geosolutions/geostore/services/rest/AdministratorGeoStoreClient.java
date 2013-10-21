@@ -1,22 +1,35 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
 
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 
 import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 /**
- * 
+ * Advanced GeoStore client for user management
  * @author Lorenzo Natali
  *
  */
 public class AdministratorGeoStoreClient extends GeoStoreClient {
 	
-	public RESTUser getUser(long id) {
-		return getBaseWebResource("users", "user", id).get(RESTUser.class);
+	public User getUser(long id) {
+		return getBaseWebResource("users", "user", id).get(User.class);
+
+	}
+	public User getUser(long id,Boolean includeAttributes) {
+		WebResource wr = getBaseWebResource("users", "user", id);
+		MultivaluedMap<String,String> queryParams = new MultivaluedMapImpl();
+
+		if(includeAttributes!=null){
+						  
+			   queryParams.add("includeattributes", includeAttributes.toString());
+
+		}
+		return wr.queryParams(queryParams).get(User.class);
 
 	}
 
@@ -32,9 +45,10 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
 				.accept(MediaType.TEXT_XML).get(UserList.class);
 	}
 
-	public RESTUser getUserDetails() {
+	//TODO move it to the base client to allow login
+	public User getUserDetails() {
 		return getBaseWebResource("users", "user", "details").get(
-				RESTUser.class);
+				User.class);
 	}
 
 	public Long insert(User user) {
