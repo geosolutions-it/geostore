@@ -989,6 +989,54 @@
         </pluginRepository>
 -->
         <pluginRepository>
+        <id>codehaus-release-repo</id>
+        <name>Codehaus Release Repo</name>
+        <url>http://repository.codehaus.org</url>
+         <snapshots>
+          <enabled>false</enabled>
+         </snapshots>
+         <releases>
+          <enabled>true</enabled>
+         </releases>
+        </pluginRepository> 
+       
+        <pluginRepository>
+         <id>codehaus-snapshot-plugins</id>
+         <name>codehaus-shapshot-plugins</name>
+         <url>http://snapshots.repository.codehaus.org/</url>
+         <snapshots>
+          <enabled>true</enabled>
+         </snapshots>
+         <releases>
+          <enabled>false</enabled>
+         </releases>
+        </pluginRepository>
+        
+        <pluginRepository>
+         <id>repo.maven.org/maven2</id>
+         <name>repo.maven.org/maven2</name>
+         <url>http://repo.maven.org/maven2/</url>
+         <snapshots>
+          <enabled>true</enabled>
+         </snapshots>
+         <releases>
+          <enabled>true</enabled>
+         </releases>
+        </pluginRepository>  
+        
+        <pluginRepository>
+         <id>repo1.maven.org/maven2</id>
+         <name>repo1.maven.org/maven2</name>
+         <url>http://repo1.maven.org/maven2/</url>
+         <snapshots>
+          <enabled>true</enabled>
+         </snapshots>
+         <releases>
+          <enabled>true</enabled>
+         </releases>
+        </pluginRepository>
+
+        <pluginRepository>
             <id>apache.incubating</id>
             <name>Apache Incubating Repository</name>
             <url>http://people.apache.org/repo/m2-incubating-repository</url>
@@ -997,11 +1045,11 @@
             </snapshots>
         </pluginRepository>
 
-        <pluginRepository>
+        <!--pluginRepository>
             <id>mortbay-repo</id>
             <name>mortbay-repo</name>
             <url>http://www.mortbay.org/maven2/snapshot</url>
-        </pluginRepository>
+        </pluginRepository-->
 
     </pluginRepositories>
 
