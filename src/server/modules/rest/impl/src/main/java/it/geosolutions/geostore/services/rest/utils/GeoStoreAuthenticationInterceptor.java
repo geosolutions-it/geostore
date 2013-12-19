@@ -19,104 +19,149 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
-import org.apache.cxf.configuration.security.AuthorizationPolicy;
-import org.apache.cxf.interceptor.Fault;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.cxf.interceptor.security.AccessDeniedException;
 import org.apache.cxf.message.Message;
-import org.apache.cxf.phase.AbstractPhaseInterceptor;
-import org.apache.cxf.phase.Phase;
-import org.apache.cxf.security.SecurityContext;
-import org.apache.log4j.Logger;
 
 /**
- *
- * Class GeoStoreAuthenticationInterceptor. Starting point was JAASLoginInterceptor.
+ * 
+ * Class GeoStoreAuthenticationInterceptor. Starting point was
+ * JAASLoginInterceptor.
  * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
+ * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public class GeoStoreAuthenticationInterceptor extends AbstractPhaseInterceptor<Message> {
+public class GeoStoreAuthenticationInterceptor extends
+		AbstractGeoStoreAuthenticationInterceptor {
 
-    private static final Logger LOGGER = Logger.getLogger(GeoStoreAuthenticationInterceptor.class);
-
-    private UserService userService;
+	private UserService userService;
 
 	/**
-	 * @param userService the userService to set
+	 * Flag to indicate if an user that not exists could be created when it's
+	 * used
+	 */
+	private Boolean autoCreateUsers = false;
+
+	/**
+	 * Role for the new user
+	 */
+	private Role newUsersRole = Role.USER;
+
+	/**
+	 * New password strategy @see {@link NewPasswordStrategy}
+	 */
+	private NewPasswordStrategy newUsersPassword = NewPasswordStrategy.NONE;
+
+	/**
+	 * Header key for the new password if the selected strategy is
+	 * {@link NewPasswordStrategy#FROMHEADER}
+	 */
+	private String newUsersPasswordHeader = "";
+
+	/**
+	 * @param userService
+	 *            the userService to set
 	 */
 	public void setUserService(UserService userService) {
 		this.userService = userService;
 	}
 
-	public GeoStoreAuthenticationInterceptor() {
-        super(Phase.UNMARSHAL);
-    }
+	public void setAutoCreateUsers(Boolean autoCreateUsers) {
+		this.autoCreateUsers = autoCreateUsers;
+	}
 
-    /* (non-Javadoc)
-     * @see org.apache.cxf.interceptor.Interceptor#handleMessage(org.apache.cxf.message.Message)
-     */
-    @Override
-    public void handleMessage(Message message) throws Fault {
-    	if(LOGGER.isInfoEnabled()){
-            LOGGER.info("In handleMessage");
-            LOGGER.info("Message --> " + message) ;
-    	}
-        
-        String username = null;
-        String password = null;
+	public void setNewUsersRole(Role newUsersRole) {
+		this.newUsersRole = newUsersRole;
+	}
 
-        User user = null;
+	public void setNewUsersPassword(NewPasswordStrategy newUsersPassword) {
+		this.newUsersPassword = newUsersPassword;
+	}
 
-        AuthorizationPolicy policy = (AuthorizationPolicy)message.get(AuthorizationPolicy.class);
-        if (policy != null) {
-            username = policy.getUserName();
-            password = policy.getPassword();
-            if(password == null)
-                password = "";
+	public void setNewUsersPasswordHeader(String newUsersPasswordHeader) {
+		this.newUsersPasswordHeader = newUsersPasswordHeader;
+	}
 
-            if(LOGGER.isInfoEnabled())
-            	LOGGER.info("Requesting user: " + username);
-            
-            // //////////////////////////////////////////////////////////////////
-            // read user from DB: If user and PW do not match, 
-            // throw new AuthenticationException("Unauthorized");
-            // ///////////////////////////////////////////////////////////////////
-
-            String encodedPw = null;
-            try {
-				user =  userService.get(username);
-				encodedPw = PwEncoder.encode(password);
-			} catch (NotFoundServiceEx e) {
-	            if(LOGGER.isInfoEnabled())
-	            	LOGGER.info("Requested user not found: " + username);
-	            throw new AccessDeniedException("Not authorized");
-			} catch (Exception e) {
-	            	LOGGER.error("Exception while checking pw: " + username, e);
-	            throw new AccessDeniedException("Authorization error");
+	/**
+	 * Obtain the new password for a new user
+	 * 
+	 * @param message
+	 * @param username
+	 * 
+	 * @return password for the new user
+	 */
+	private String getNewUserPassword(Message message, String username) {
+		switch (newUsersPassword) {
+		case NONE:
+			return "";
+		case USERNAME:
+			return username;
+		case FROMHEADER:
+			@SuppressWarnings("unchecked")
+			Map<String, List<String>> headers = (Map<String, List<String>>) message
+					.get(Message.PROTOCOL_HEADERS);
+			if (headers.containsKey(newUsersPasswordHeader)) {
+				return headers.get(newUsersPasswordHeader).get(0);
 			}
+			return "";
+		default:
+			return "";
+		}
+	}
 
-            if( ! encodedPw.equalsIgnoreCase(user.getPassword())) {
-	            if(LOGGER.isInfoEnabled())
-	            	LOGGER.info("Bad pw for user " + username);
-                throw new AccessDeniedException("Not authorized");
-            }
+	/**
+	 * Obtain an user from his username
+	 * 
+	 * @param username
+	 *            of the user
+	 * @param message
+	 *            intercepted
+	 * 
+	 * @return user identified with the username
+	 */
+	protected User getUser(String username, Message message) {
+		User user = null;
+		try {
+			// Search on db
+			user = userService.get(username);
+		} catch (NotFoundServiceEx e) {
+			if (LOGGER.isInfoEnabled())
+				LOGGER.info("Requested user not found: " + username);
 
-        } else {
-        	if(LOGGER.isInfoEnabled())
-        		LOGGER.info("No requesting user -- GUEST access");
-        }
+			// Auto create user
+			if (autoCreateUsers) {
+				if (LOGGER.isInfoEnabled()) {
+					LOGGER.info("Creating now");
+				}
+				user = new User();
+				user.setName(username);
 
-        GeoStoreSecurityContext securityContext = new GeoStoreSecurityContext();
-        GeoStorePrincipal principal = user != null ?
-                new GeoStorePrincipal(user) : GeoStorePrincipal.createGuest();
-        securityContext.setPrincipal(principal);
+				user.setNewPassword(getNewUserPassword(message, username));
+				user.setRole(newUsersRole);
+				try {
+					// insert
+					user.setId(userService.insert(user));
+					// reload user stored
+					user = userService.get(username);
+				} catch (Exception e1) {
+					throw new AccessDeniedException(
+							"Not able to create new user");
+				}
+			} else {
+				throw new AccessDeniedException("Not authorized");
+			}
+		}
 
-        message.put(SecurityContext.class, securityContext);
-    }
-    
+		return user;
+
+	}
+
 }
