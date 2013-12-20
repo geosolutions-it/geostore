@@ -22,19 +22,12 @@ package it.geosolutions.geostore.services.rest.utils;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
-import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.interceptor.security.AccessDeniedException;
-import org.apache.cxf.message.Message;
-import org.apache.cxf.message.MessageImpl;
-import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -44,14 +37,7 @@ import org.junit.Test;
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public class GeoStoreAuthenticationInterceptorTest {
-
-	UserService userService;
-
-	@Before
-	public void init() {
-		userService = new MockedUserService();
-	}
+public class GeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInterceptorTest{
 
 	/**
 	 * Access denied for a new user if the interceptor doesn't create new users
@@ -120,37 +106,6 @@ public class GeoStoreAuthenticationInterceptorTest {
 		} catch (NotFoundServiceEx e) {
 			fail("Couldn't found user");
 		}
-	}
-
-	/**
-	 * Mock a message to be handled by the interceptor
-	 * 
-	 * @param username
-	 *            for the authorization policy
-	 * @param password
-	 *            for the authorization policy
-	 * @param headers
-	 *            for the request
-	 * 
-	 * @return Message to be handled
-	 */
-	private Message getMockedMessage(String username, String password,
-			Map<String, String> headers) {
-		MessageImpl messageImpl = (MessageImpl) new MessageImpl();
-		AuthorizationPolicy policy = new AuthorizationPolicy();
-		policy.setUserName(username);
-		policy.setPassword(password);
-		if (headers != null) {
-			Map<String, List<String>> mockedHeaders = new HashMap<String, List<String>>();
-			for (String key : headers.keySet()) {
-				List<String> value = new LinkedList<String>();
-				value.add(headers.get(key));
-				mockedHeaders.put(key, value);
-			}
-			messageImpl.put(Message.PROTOCOL_HEADERS, mockedHeaders);
-		}
-		messageImpl.put(AuthorizationPolicy.class, policy);
-		return messageImpl;
 	}
 
 }

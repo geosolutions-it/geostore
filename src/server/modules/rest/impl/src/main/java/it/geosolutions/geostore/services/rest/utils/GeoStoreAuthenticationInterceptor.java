@@ -33,7 +33,7 @@ import org.apache.cxf.message.Message;
 /**
  * 
  * Class GeoStoreAuthenticationInterceptor. Starting point was
- * JAASLoginInterceptor.
+ * JAASLoginInterceptor. Allow users auto creation
  * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
