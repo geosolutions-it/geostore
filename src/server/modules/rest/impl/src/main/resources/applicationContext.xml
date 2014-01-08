@@ -130,6 +130,8 @@
         </jaxrs:providers>    
         
         <jaxrs:inInterceptors>
+            <!-- Auto create users interceptor (uncomment to allow users autocreation for /users requests) 
+            <ref bean="autoCreateUsersInterceptor"/> -->
             <ref bean="geostoreAuthInterceptor"/>
             <bean class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
                <property name="securedObject" ref="restUserService"/>
@@ -225,11 +227,18 @@
         </property>
     </bean>
 	
+	<!-- Basic authentication interceptor -->
     <bean id="geostoreAuthInterceptor" class="it.geosolutions.geostore.services.rest.utils.GeoStoreAuthenticationInterceptor">
-    	<property name="autoCreateUsers" value="false"/>
+    	<property name="userService" ref="userService"/>
+    </bean>
+    
+    <!-- Auto create users interceptor -->
+    <bean id="autoCreateUsersInterceptor" class="it.geosolutions.geostore.services.rest.utils.AutoUserCreateGeostoreAuthenticationInterceptor">
+    	<property name="autoCreateUsers" value="true"/>
     	<property name="newUsersRole" value="USER"/>
     	<property name="newUsersPassword" value="NONE"/>
     	<property name="newUsersPasswordHeader" value=""/>
     	<property name="userService" ref="userService"/>
     </bean>
+    
 </beans>

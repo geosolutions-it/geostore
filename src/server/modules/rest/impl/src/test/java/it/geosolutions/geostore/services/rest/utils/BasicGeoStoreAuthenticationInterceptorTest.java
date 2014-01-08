@@ -27,7 +27,7 @@ import org.junit.Test;
 
 /**
  * 
- * Test for BasicGeoStoreAuthenticationInterceptor.
+ * Test for GeoStoreAuthenticationInterceptor.
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
@@ -41,7 +41,7 @@ public class BasicGeoStoreAuthenticationInterceptorTest extends BaseAuthenticati
 	 */
 	@Test(expected = AccessDeniedException.class)
 	public void testNotCreatesUser() {
-		BasicGeoStoreAuthenticationInterceptor interceptor = new BasicGeoStoreAuthenticationInterceptor();
+		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
 		interceptor.setUserService(userService);
 		interceptor.handleMessage(getMockedMessage(USERNAME, PASSWORD, null));
 	}
@@ -51,7 +51,7 @@ public class BasicGeoStoreAuthenticationInterceptorTest extends BaseAuthenticati
 	 */
 	@Test
 	public void testCreatedUser() {
-		BasicGeoStoreAuthenticationInterceptor interceptor = new BasicGeoStoreAuthenticationInterceptor();
+		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
 		interceptor.setUserService(userService);
 		User user = new User();
 		user.setName(USERNAME);

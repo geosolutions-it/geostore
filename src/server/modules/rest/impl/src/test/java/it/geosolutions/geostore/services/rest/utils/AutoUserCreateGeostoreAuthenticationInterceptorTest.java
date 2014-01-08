@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2014 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  * 
  *  GPLv3 + Classpath exception
@@ -32,19 +32,20 @@ import org.junit.Test;
 
 /**
  * 
- * Test for GeoStoreAuthenticationInterceptor. Test different configurations for
- * the interceptor
+ * Test for AutoUserCreateGeostoreAuthenticationInterceptor. Test different
+ * configurations for the interceptor
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public class GeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInterceptorTest{
+public class AutoUserCreateGeostoreAuthenticationInterceptorTest extends
+		BaseAuthenticationInterceptorTest {
 
 	/**
 	 * Access denied for a new user if the interceptor doesn't create new users
 	 */
 	@Test(expected = AccessDeniedException.class)
 	public void testNotCreateUsers() {
-		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
+		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
 		interceptor.setAutoCreateUsers(false);
 		interceptor.setUserService(userService);
 		interceptor.handleMessage(getMockedMessage("test", "", null));
@@ -55,7 +56,7 @@ public class GeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInt
 	 */
 	@Test
 	public void testCreateUsers() {
-		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
+		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
 		interceptor.setAutoCreateUsers(true);
 		interceptor.setNewUsersPassword(NewPasswordStrategy.NONE);
 		interceptor.setUserService(userService);
@@ -73,7 +74,7 @@ public class GeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInt
 	 */
 	@Test
 	public void testCreateUsersStrategyUserName() {
-		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
+		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
 		interceptor.setAutoCreateUsers(true);
 		interceptor.setNewUsersPassword(NewPasswordStrategy.USERNAME);
 		interceptor.setUserService(userService);
@@ -91,7 +92,7 @@ public class GeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInt
 	 */
 	@Test
 	public void testCreateUsersStrategyFromHeader() {
-		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
+		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
 		interceptor.setAutoCreateUsers(true);
 		interceptor.setNewUsersPassword(NewPasswordStrategy.FROMHEADER);
 		interceptor.setNewUsersPasswordHeader("newPassword");
