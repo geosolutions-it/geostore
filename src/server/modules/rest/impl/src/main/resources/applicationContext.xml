@@ -130,6 +130,8 @@
         </jaxrs:providers>    
         
         <jaxrs:inInterceptors>
+            <!-- Auto create users interceptor (uncomment to allow users autocreation for /users requests) 
+            <ref bean="autoCreateUsersInterceptor"/> -->
             <ref bean="geostoreAuthInterceptor"/>
             <bean class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
                <property name="securedObject" ref="restUserService"/>
@@ -213,7 +215,30 @@
     <bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.JSONProvider"/>
     <bean id="jaxbContextResolver" class="it.geosolutions.geostore.services.rest.utils.JAXBContextResolver" />
 
+	
+	<bean class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
+        <property name="ignoreResourceNotFound" value="true"/>
+        <property name="order" value="5"/>
+        <property name="locations">
+            <list>
+                <value>classpath*:geostore-ovr.properties</value>
+				<value>classpath*:${ovrdir}/geostore-ovr.properties</value>
+            </list>
+        </property>
+    </bean>
+	
+	<!-- Basic authentication interceptor -->
     <bean id="geostoreAuthInterceptor" class="it.geosolutions.geostore.services.rest.utils.GeoStoreAuthenticationInterceptor">
     	<property name="userService" ref="userService"/>
     </bean>
+    
+    <!-- Auto create users interceptor -->
+    <bean id="autoCreateUsersInterceptor" class="it.geosolutions.geostore.services.rest.utils.AutoUserCreateGeostoreAuthenticationInterceptor">
+    	<property name="autoCreateUsers" value="true"/>
+    	<property name="newUsersRole" value="USER"/>
+    	<property name="newUsersPassword" value="NONE"/>
+    	<property name="newUsersPasswordHeader" value=""/>
+    	<property name="userService" ref="userService"/>
+    </bean>
+    
 </beans>
