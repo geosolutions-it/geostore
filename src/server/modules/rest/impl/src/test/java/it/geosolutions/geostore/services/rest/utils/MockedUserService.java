@@ -42,7 +42,7 @@ public class MockedUserService implements UserService {
 
 	private static Random RANDOM = new Random();
 
-	private static Map<Long, User> USERS = new ConcurrentHashMap<Long, User>();
+	private Map<Long, User> USERS = new ConcurrentHashMap<Long, User>();
 
 	/*
 	 * (non-Javadoc)
