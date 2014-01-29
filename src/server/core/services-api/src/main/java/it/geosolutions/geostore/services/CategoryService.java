@@ -35,11 +35,11 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.List;
 
-/** 
+/**
  * Interafce CategoryService.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public interface CategoryService {
 
@@ -55,7 +55,7 @@ public interface CategoryService {
      * @param category
      * @return long
      * @throws NotFoundServiceEx
-     * @throws BadRequestServiceEx 
+     * @throws BadRequestServiceEx
      */
     long update(Category category) throws BadRequestServiceEx;
 
@@ -88,7 +88,7 @@ public interface CategoryService {
     /**
      * @param nameLike
      * @return long
-     */ 
+     */
     long getCount(String nameLike);
 
     /**
@@ -97,5 +97,5 @@ public interface CategoryService {
      * @return List<SecurityRule>
      */
     List<SecurityRule> getUserSecurityRule(String userName, long categoryId);
-    
+
 }

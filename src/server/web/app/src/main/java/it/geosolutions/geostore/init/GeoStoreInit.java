@@ -36,16 +36,19 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class GeoStoreInit implements InitializingBean {
 
     private final static Logger LOGGER = Logger.getLogger(GeoStoreInit.class);
+
     protected UserService userService;
+
     protected CategoryService categoryService;
 
     protected File userListInitFile = null;
+
     protected File categoryListInitFile = null;
 
     @Override
@@ -56,7 +59,7 @@ public class GeoStoreInit implements InitializingBean {
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
             LOGGER.warn("No category found.");
-            if(categoryListInitFile != null) {
+            if (categoryListInitFile != null) {
                 LOGGER.warn("Initializing categories from file " + categoryListInitFile);
                 initCategories(categoryListInitFile);
             } else {
@@ -69,7 +72,7 @@ public class GeoStoreInit implements InitializingBean {
         long userCnt = userService.getCount(null);
         if (userCnt == 0) {
             LOGGER.warn("No user found.");
-            if(userListInitFile != null) {
+            if (userListInitFile != null) {
                 LOGGER.warn("Initializing users from file " + userListInitFile);
                 initUsers(userListInitFile);
             } else {
@@ -80,24 +83,25 @@ public class GeoStoreInit implements InitializingBean {
         }
     }
 
-
     private void initCategories(File file) {
         try {
             JAXBContext context = GeoStoreJAXBContext.getContext();
-            CategoryList list = (CategoryList)context.createUnmarshaller().unmarshal(file);
+            CategoryList list = (CategoryList) context.createUnmarshaller().unmarshal(file);
             for (Category item : list.getList()) {
                 LOGGER.info("Adding category " + item);
                 categoryService.insert(item);
             }
         } catch (JAXBException ex) {
-            throw new RuntimeException("Error reading categories init file "+file, ex);
+            throw new RuntimeException("Error reading categories init file " + file, ex);
         } catch (Exception e) {
             LOGGER.error("Error while initting categories. Rolling back.", e);
             List<Category> removeList;
             try {
                 removeList = categoryService.getAll(null, null);
             } catch (BadRequestServiceEx ex) {
-                throw new RuntimeException("Error while rolling back categories initialization. Your DB may now contain an incomplete category list. Please check manually.", e);
+                throw new RuntimeException(
+                        "Error while rolling back categories initialization. Your DB may now contain an incomplete category list. Please check manually.",
+                        e);
             }
 
             for (Category cat : removeList) {
@@ -106,27 +110,29 @@ public class GeoStoreInit implements InitializingBean {
 
             throw new RuntimeException("Error while initting categories.");
         }
-        
+
     }
 
     private void initUsers(File file) {
         try {
             JAXBContext context = getUserContext();
 
-            InitUserList list = (InitUserList)context.createUnmarshaller().unmarshal(file);
+            InitUserList list = (InitUserList) context.createUnmarshaller().unmarshal(file);
             for (User user : list.getList()) {
                 LOGGER.info("Adding user " + user);
                 userService.insert(user);
             }
         } catch (JAXBException ex) {
-            throw new RuntimeException("Error reading users init file "+file, ex);
+            throw new RuntimeException("Error reading users init file " + file, ex);
         } catch (Exception e) {
             LOGGER.error("Error while initting users. Rolling back.", e);
             List<User> removeList;
             try {
                 removeList = userService.getAll(null, null);
             } catch (BadRequestServiceEx ex) {
-                throw new RuntimeException("Error while rolling back user initialization. Your DB may now contain an incomplete user list. Please check manually.", e);
+                throw new RuntimeException(
+                        "Error while rolling back user initialization. Your DB may now contain an incomplete user list. Please check manually.",
+                        e);
             }
 
             for (User user : removeList) {
@@ -138,12 +144,13 @@ public class GeoStoreInit implements InitializingBean {
     }
 
     private static JAXBContext getUserContext() {
-    
+
         List<Class> allClasses = GeoStoreJAXBContext.getGeoStoreClasses();
         allClasses.add(InitUserList.class);
 
-        if(LOGGER.isDebugEnabled())
-            LOGGER.debug("Initializing JAXBContext with " +  allClasses.size()+ " classes " + allClasses);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("Initializing JAXBContext with " + allClasses.size() + " classes "
+                    + allClasses);
 
         try {
             return JAXBContext.newInstance(allClasses.toArray(new Class[allClasses.size()]));
@@ -153,7 +160,7 @@ public class GeoStoreInit implements InitializingBean {
         }
     }
 
-    //==========================================================================
+    // ==========================================================================
 
     public void setUserListInitFile(File userListInitFile) {
         this.userListInitFile = userListInitFile;
@@ -163,7 +170,7 @@ public class GeoStoreInit implements InitializingBean {
         this.categoryListInitFile = categoryListInitFile;
     }
 
-    //==========================================================================
+    // ==========================================================================
 
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;

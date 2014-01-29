@@ -27,12 +27,13 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Base class for tests with a spring context loaded from the classpath.
- *
+ * 
  * @author Nate Sammons
  */
 public abstract class AbstractSpringContextTest extends TestCase {
 
     protected Logger logger = Logger.getLogger(getClass());
+
     protected ClassPathXmlApplicationContext context = null;
 
     /**

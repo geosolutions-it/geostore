@@ -47,13 +47,13 @@ import org.hibernate.annotations.Index;
 
 /**
  * Class Attribute.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 @Entity(name = "UserAttribute")
-@Table(name = "gs_user_attribute", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"name", "user_id"})})
+@Table(name = "gs_user_attribute", uniqueConstraints = { @UniqueConstraint(columnNames = { "name",
+        "user_id" }) })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
 @XmlRootElement(name = "UserAttribute")
 public class UserAttribute implements Serializable {
@@ -143,16 +143,16 @@ public class UserAttribute implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if ( id != null ) {
+        if (id != null) {
             builder.append("id=").append(id);
         }
 
-        if ( name != null ) {
+        if (name != null) {
             builder.append(", ");
             builder.append("name=").append(name);
         }
 
-        if ( value != null ) {
+        if (value != null) {
             builder.append(", ");
             builder.append("value=").append(value);
         }
@@ -182,43 +182,43 @@ public class UserAttribute implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if ( this == obj ) {
+        if (this == obj) {
             return true;
         }
-        if ( obj == null ) {
+        if (obj == null) {
             return false;
         }
-        if ( getClass() != obj.getClass() ) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
 
         UserAttribute other = (UserAttribute) obj;
-        if ( id == null ) {
-            if ( other.id != null ) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if ( !id.equals(other.id) ) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
-        if ( name == null ) {
-            if ( other.name != null ) {
+        if (name == null) {
+            if (other.name != null) {
                 return false;
             }
-        } else if ( !name.equals(other.name) ) {
+        } else if (!name.equals(other.name)) {
             return false;
         }
-        if ( user == null ) {
-            if ( other.user != null ) {
+        if (user == null) {
+            if (other.user != null) {
                 return false;
             }
-        } else if ( !user.equals(other.user) ) {
+        } else if (!user.equals(other.user)) {
             return false;
         }
-        if ( value == null ) {
-            if ( other.value != null ) {
+        if (value == null) {
+            if (other.value != null) {
                 return false;
             }
-        } else if ( !value.equals(other.value) ) {
+        } else if (!value.equals(other.value)) {
             return false;
         }
 

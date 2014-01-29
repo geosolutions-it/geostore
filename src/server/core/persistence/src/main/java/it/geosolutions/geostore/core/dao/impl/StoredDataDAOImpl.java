@@ -32,24 +32,20 @@ import it.geosolutions.geostore.core.model.StoredData;
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
  * Class StoredDataDAOImpl.
- *
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
-public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements StoredDataDAO
-{
+public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements StoredDataDAO {
 
     private static final Logger LOGGER = Logger.getLogger(StoredDataDAOImpl.class);
 
     @Override
-    public void persist(StoredData... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public void persist(StoredData... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for StoredData ... ");
         }
 
@@ -57,46 +53,40 @@ public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements Stor
     }
 
     @Override
-    public List<StoredData> findAll()
-    {
+    public List<StoredData> findAll() {
         return super.findAll();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<StoredData> search(ISearch search)
-    {
+    public List<StoredData> search(ISearch search) {
         return super.search(search);
     }
 
     @Override
-    public StoredData merge(StoredData entity)
-    {
+    public StoredData merge(StoredData entity) {
         return super.merge(entity);
     }
 
     @Override
-    public boolean remove(StoredData entity)
-    {
+    public boolean remove(StoredData entity) {
         return super.remove(entity);
     }
 
     @Override
-    public boolean removeById(Long id)
-    {
+    public boolean removeById(Long id) {
         return super.removeById(id);
     }
 
     @Override
-    public List<SecurityRule> findUserSecurityRule(String name, long resourceId)
-    {
+    public List<SecurityRule> findUserSecurityRule(String name, long resourceId) {
         Search searchCriteria = new Search(StoredData.class);
         searchCriteria.addField("resource.security");
 
-        Filter securityFilter = Filter.some("resource.security",
-                Filter.and(
-                    Filter.equal("resource.security.resource.id", resourceId),
-                    Filter.equal("resource.security.user.name", name)));
+        Filter securityFilter = Filter.some(
+                "resource.security",
+                Filter.and(Filter.equal("resource.security.resource.id", resourceId),
+                        Filter.equal("resource.security.user.name", name)));
         searchCriteria.addFilter(securityFilter);
 
         return super.search(searchCriteria);

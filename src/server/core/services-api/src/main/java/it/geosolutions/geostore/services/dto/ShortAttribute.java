@@ -32,30 +32,30 @@ import java.util.Date;
  */
 public class ShortAttribute implements Serializable {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -2866828937413755002L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -2866828937413755002L;
 
-	private String name;
+    private String name;
 
-	private String value;
-	
-	private DataType type;
-		
-	public ShortAttribute() {
-		super();
-	}
+    private String value;
 
-	/**
-	 * @param name
-	 * @param value
-	 * @param type
-	 */
-	public ShortAttribute(Attribute attribute) {
-		super();
-		this.name = attribute.getName();
-		this.value = attribute.getValue();
-		this.type = attribute.getType();
-	}
+    private DataType type;
+
+    public ShortAttribute() {
+        super();
+    }
+
+    /**
+     * @param name
+     * @param value
+     * @param type
+     */
+    public ShortAttribute(Attribute attribute) {
+        super();
+        this.name = attribute.getName();
+        this.value = attribute.getValue();
+        this.type = attribute.getType();
+    }
 
     public ShortAttribute(String name, String value, DataType type) {
         this.name = name;
@@ -71,64 +71,66 @@ public class ShortAttribute implements Serializable {
         return new ShortAttribute(name, text, DataType.STRING);
     }
 
-	/**
-	 * @return the attribute
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @return the attribute
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @param name the attribute to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
-	
+    /**
+     * @param name the attribute to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public String getValue() {
         return this.value;
     }
-	
-	/**
-	 * @param value
-	 */
-	public void setValue(String value){
-		this.value = value;
-	}
 
-	/**
-	 * @return the type
-	 */
-	public DataType getType() {
-		return type;
-	}
+    /**
+     * @param value
+     */
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-	/**
-	 * @param type the type to set
-	 */
-	public void setType(DataType type) {
-		this.type = type;
-	}
+    /**
+     * @return the type
+     */
+    public DataType getType() {
+        return type;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {		
+    /**
+     * @param type the type to set
+     */
+    public void setType(DataType type) {
+        this.type = type;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
-        
+
         if (name != null)
             builder.append("name=").append(name).append(", ");
-        
+
         if (value != null)
             builder.append("value=").append(value).append(", ");
-        
+
         if (type != null)
             builder.append("type=").append(type);
-        
+
         builder.append(']');
         return builder.toString();
-	}
-	
+    }
+
 }

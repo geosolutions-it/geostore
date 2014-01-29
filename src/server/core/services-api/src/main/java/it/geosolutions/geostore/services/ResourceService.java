@@ -40,7 +40,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.List;
 
-/** 
+/**
  * Interafce ResourceService.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
@@ -50,23 +50,23 @@ public interface ResourceService {
 
     // ==========================================================================
     // Basic operations
-	// ==========================================================================
+    // ==========================================================================
 
     /**
      * @param resource
      * @return long
-     * @throws BadRequestServiceEx 
-     * @throws NotFoundServiceEx 
+     * @throws BadRequestServiceEx
+     * @throws NotFoundServiceEx
      */
     long insert(Resource resource) throws BadRequestServiceEx, NotFoundServiceEx;
-    
+
     /**
      * @param resource
      * @return long
      * @throws NotFoundServiceEx
      */
     long update(Resource resource) throws NotFoundServiceEx;
-    
+
     /**
      * @param id
      * @return long
@@ -75,11 +75,11 @@ public interface ResourceService {
 
     /**
      * @param filter
-     * @throws InternalErrorServiceEx 
-     * @throws BadRequestServiceEx 
+     * @throws InternalErrorServiceEx
+     * @throws BadRequestServiceEx
      */
     void deleteResources(SearchFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx;
-    
+
     /**
      * @param id
      * @return long
@@ -96,7 +96,7 @@ public interface ResourceService {
      */
     List<ShortResource> getList(String nameLike, Integer page, Integer entries, User authUser)
             throws BadRequestServiceEx;
-    
+
     /**
      * @param page
      * @param entries
@@ -112,7 +112,7 @@ public interface ResourceService {
      * @return long
      */
     long getCount(String nameLike);
-    
+
     /**
      * @param filter
      * @return long
@@ -121,43 +121,44 @@ public interface ResourceService {
      */
     long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx, BadRequestServiceEx;
 
-	/**
-	 * @param id
-	 * @param attributes
-	 */
-	void updateAttributes(long id, List<Attribute> attributes) throws NotFoundServiceEx;
-	
-	/**
-	 * @param id
-	 * @return List<ShortAttribute>
-	 * @throws NotFoundServiceEx
-	 */
-	List<ShortAttribute> getAttributes(long id);
-	
-	/**
-	 * @param id
-	 * @return ShortAttribute
-	 * @throws NotFoundServiceEx
-	 */
-	ShortAttribute getAttribute(long id, String name);
+    /**
+     * @param id
+     * @param attributes
+     */
+    void updateAttributes(long id, List<Attribute> attributes) throws NotFoundServiceEx;
 
-	/**
-	 * @param id
-	 * @param name
-	 * @param value
-	 * @return long
-	 * @throws InternalErrorServiceEx 
-	 */
-	long updateAttribute(long id, String name, String value) throws InternalErrorServiceEx;
-	
-	/**
-	 * @param filter
-	 * @param authUser
-	 * @return List<ShortResource>
-	 * @throws BadRequestServiceEx
-	 * @throws InternalErrorServiceEx
-	 */
-	List<ShortResource> getResources(SearchFilter filter, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
+    /**
+     * @param id
+     * @return List<ShortAttribute>
+     * @throws NotFoundServiceEx
+     */
+    List<ShortAttribute> getAttributes(long id);
+
+    /**
+     * @param id
+     * @return ShortAttribute
+     * @throws NotFoundServiceEx
+     */
+    ShortAttribute getAttribute(long id, String name);
+
+    /**
+     * @param id
+     * @param name
+     * @param value
+     * @return long
+     * @throws InternalErrorServiceEx
+     */
+    long updateAttribute(long id, String name, String value) throws InternalErrorServiceEx;
+
+    /**
+     * @param filter
+     * @param authUser
+     * @return List<ShortResource>
+     * @throws BadRequestServiceEx
+     * @throws InternalErrorServiceEx
+     */
+    List<ShortResource> getResources(SearchFilter filter, User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
      * @param filter
@@ -168,36 +169,37 @@ public interface ResourceService {
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
-    List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
-    
-	/**
-	 * @param filter
-	 * @param page
-	 * @param entries
-	 * @param includeAttributes
-	 * @param includeData
-	 * @return List<Resource>
-	 * @throws BadRequestServiceEx
-	 * @throws InternalErrorServiceEx
-	 */
-    List<Resource> getResources(SearchFilter filter, Integer page, Integer entries, boolean includeAttributes, 
-    		boolean includeData, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx; 
-    
+    List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries,
+            User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
+
     /**
-     * Return a list of resources joined with their data.
-     * This call can be very heavy for the system. Please use this method only when you are sure
-     * a few data will be returned, otherwise consider using
-     * {@link #getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, it.geosolutions.geostore.core.model.User) getResources)
-     * if you need less data.
+     * @param filter
+     * @param page
+     * @param entries
+     * @param includeAttributes
+     * @param includeData
+     * @return List<Resource>
+     * @throws BadRequestServiceEx
+     * @throws InternalErrorServiceEx
+     */
+    List<Resource> getResources(SearchFilter filter, Integer page, Integer entries,
+            boolean includeAttributes, boolean includeData, User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
+
+    /**
+     * Return a list of resources joined with their data. This call can be very heavy for the system. Please use this method only when you are sure a
+     * few data will be returned, otherwise consider using
+     * {@link #getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, it.geosolutions.geostore.core.model.User) getResources) if you
+     * need less data.
      */
     public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
-            throws BadRequestServiceEx,InternalErrorServiceEx;
-    
-	/**
-	 * @param userName
-	 * @param resourceId
-	 * @return List<SecurityRule>
-	 */
-	List<SecurityRule> getUserSecurityRule(String userName, long resourceId);
+            throws BadRequestServiceEx, InternalErrorServiceEx;
+
+    /**
+     * @param userName
+     * @param resourceId
+     * @return List<SecurityRule>
+     */
+    List<SecurityRule> getUserSecurityRule(String userName, long resourceId);
 
 }

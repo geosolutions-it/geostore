@@ -32,92 +32,96 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
  * Class CategoryDAOImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
-public class CategoryDAOImpl extends BaseDAO<Category, Long> implements CategoryDAO
-{
+public class CategoryDAOImpl extends BaseDAO<Category, Long> implements CategoryDAO {
 
     private static final Logger LOGGER = Logger.getLogger(CategoryDAOImpl.class);
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
-    public void persist(Category... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public void persist(Category... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for Category ... ");
         }
 
         super.persist(entities);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
-    public List<Category> findAll()
-    {
+    public List<Category> findAll() {
         return super.findAll();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<Category> search(ISearch search)
-    {
+    public List<Category> search(ISearch search) {
         return super.search(search);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
-    public Category merge(Category entity)
-    {
+    public Category merge(Category entity) {
         return super.merge(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
-    public boolean remove(Category entity)
-    {
+    public boolean remove(Category entity) {
         return super.remove(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
-    public boolean removeById(Long id)
-    {
+    public boolean removeById(Long id) {
         return super.removeById(id);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.core.dao.CategoryDAO#findUserSecurityRule(java.lang.String, long)
      */
     @Override
-    public List<SecurityRule> findUserSecurityRule(String userName, long categoryId)
-    {
+    public List<SecurityRule> findUserSecurityRule(String userName, long categoryId) {
         Search searchCriteria = new Search(Category.class);
         searchCriteria.addField("security");
 
-        Filter securityFilter = Filter.some("security",
-                Filter.and(
-                    Filter.equal("category.id", categoryId),
-                    Filter.equal("user.name", userName)));
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(Filter.equal("category.id", categoryId),
+                        Filter.equal("user.name", userName)));
         searchCriteria.addFilter(securityFilter);
 
         return super.search(searchCriteria);

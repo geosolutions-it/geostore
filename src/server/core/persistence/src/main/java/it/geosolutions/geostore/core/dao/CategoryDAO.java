@@ -24,19 +24,19 @@ import java.util.List;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 
-/** 
+/**
  * Interface CategoryDAO.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-public interface CategoryDAO extends RestrictedGenericDAO<Category>  {
+public interface CategoryDAO extends RestrictedGenericDAO<Category> {
 
-	/**
-	 * @param userName
-	 * @param categoryId
-	 * @return List<SecurityRule>
-	 */
-	List<SecurityRule> findUserSecurityRule(String userName, long categoryId);
+    /**
+     * @param userName
+     * @param categoryId
+     * @return List<SecurityRule>
+     */
+    List<SecurityRule> findUserSecurityRule(String userName, long categoryId);
 
 }

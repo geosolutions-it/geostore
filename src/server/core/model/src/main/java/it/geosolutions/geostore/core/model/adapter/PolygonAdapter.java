@@ -38,7 +38,7 @@ import com.vividsolutions.jts.io.WKTWriter;
 
 /**
  * The Class PolygonAdapter.
- *
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public class PolygonAdapter extends XmlAdapter<String, Polygon> {
@@ -51,8 +51,8 @@ public class PolygonAdapter extends XmlAdapter<String, Polygon> {
         WKTReader wktReader = new WKTReader();
 
         Geometry the_geom = wktReader.read(val);
-        if ( the_geom instanceof Polygon ) {
-            if ( the_geom.getSRID() == 0 ) {
+        if (the_geom instanceof Polygon) {
+            if (the_geom.getSRID() == 0) {
                 the_geom.setSRID(4326);
             }
 
@@ -67,9 +67,9 @@ public class PolygonAdapter extends XmlAdapter<String, Polygon> {
      */
     @Override
     public String marshal(Polygon the_geom) throws ParseException {
-        if ( the_geom != null ) {
+        if (the_geom != null) {
             WKTWriter wktWriter = new WKTWriter();
-            if ( the_geom.getSRID() == 0 ) {
+            if (the_geom.getSRID() == 0) {
                 the_geom.setSRID(4326);
             }
 

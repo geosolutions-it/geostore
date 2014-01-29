@@ -23,13 +23,10 @@ package it.geosolutions.geostore.core.dao;
 import com.googlecode.genericdao.search.ISearch;
 import java.util.List;
 
-
 /**
- * Public interface to define a restricted set of operation wrt to ones
- * defined in GenericDAO.
- * This may be useful if some constraints are implemented in the DAO, so that fewer
- * point of access are allowed.
- *
+ * Public interface to define a restricted set of operation wrt to ones defined in GenericDAO. This may be useful if some constraints are implemented
+ * in the DAO, so that fewer point of access are allowed.
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 

@@ -20,17 +20,17 @@
 package it.geosolutions.geostore.services.exception;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public abstract class GeoStoreServiceException extends Exception {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 2559610693677043420L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 2559610693677043420L;
 
-	public GeoStoreServiceException(String message) {
+    public GeoStoreServiceException(String message) {
         super(message);
-     }
+    }
 
     public GeoStoreServiceException(String message, Throwable cause) {
         super(message, cause);

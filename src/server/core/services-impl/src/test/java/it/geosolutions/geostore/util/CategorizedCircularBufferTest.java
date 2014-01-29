@@ -28,7 +28,7 @@ import junit.framework.TestCase;
 import org.junit.Test;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class CategorizedCircularBufferTest extends TestCase {

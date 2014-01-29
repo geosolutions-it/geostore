@@ -32,76 +32,80 @@ import org.apache.cxf.security.SecurityContext;
 import org.apache.log4j.Logger;
 
 /**
- *
+ * 
  * Class AbstractGeoStoreAuthenticationInterceptor. Envelop for different authentication provider interceptors.
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public abstract class AbstractGeoStoreAuthenticationInterceptor extends AbstractPhaseInterceptor<Message> {
+public abstract class AbstractGeoStoreAuthenticationInterceptor extends
+        AbstractPhaseInterceptor<Message> {
 
-    protected static final Logger LOGGER = Logger.getLogger(AbstractGeoStoreAuthenticationInterceptor.class);
+    protected static final Logger LOGGER = Logger
+            .getLogger(AbstractGeoStoreAuthenticationInterceptor.class);
 
-	public AbstractGeoStoreAuthenticationInterceptor() {
+    public AbstractGeoStoreAuthenticationInterceptor() {
         super(Phase.UNMARSHAL);
     }
 
-	/* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.apache.cxf.interceptor.Interceptor#handleMessage(org.apache.cxf.message.Message)
      */
     @Override
     public void handleMessage(Message message) throws Fault {
-    	if(LOGGER.isInfoEnabled()){
+        if (LOGGER.isInfoEnabled()) {
             LOGGER.info("In handleMessage");
-            LOGGER.info("Message --> " + message) ;
-    	}
-        
+            LOGGER.info("Message --> " + message);
+        }
+
         String username = null;
         String password = null;
 
         User user = null;
 
-        AuthorizationPolicy policy = (AuthorizationPolicy)message.get(AuthorizationPolicy.class);
+        AuthorizationPolicy policy = (AuthorizationPolicy) message.get(AuthorizationPolicy.class);
         if (policy != null) {
             username = policy.getUserName();
             password = policy.getPassword();
-            if(password == null)
+            if (password == null)
                 password = "";
 
-            if(LOGGER.isInfoEnabled())
-            	LOGGER.info("Requesting user: " + username);
-            
+            if (LOGGER.isInfoEnabled())
+                LOGGER.info("Requesting user: " + username);
+
             // //////////////////////////////////////////////////////////////////
-            // read user from the interceptor: If user and PW do not match, 
+            // read user from the interceptor: If user and PW do not match,
             // throw new AuthenticationException("Unauthorized");
             // ///////////////////////////////////////////////////////////////////
 
             String encodedPw = null;
             try {
-				user =  getUser(username, message);
-			} catch (Exception e) {
-	            	LOGGER.error("Exception while checking pw: " + username, e);
-	            throw new AccessDeniedException("Authorization error");
-			}
+                user = getUser(username, message);
+            } catch (Exception e) {
+                LOGGER.error("Exception while checking pw: " + username, e);
+                throw new AccessDeniedException("Authorization error");
+            }
             encodedPw = PwEncoder.encode(password);
-            if( ! encodedPw.equalsIgnoreCase(user.getPassword())) {
-	            if(LOGGER.isInfoEnabled())
-	            	LOGGER.info("Bad pw for user " + username);
+            if (!encodedPw.equalsIgnoreCase(user.getPassword())) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Bad pw for user " + username);
                 throw new AccessDeniedException("Not authorized");
             }
 
         } else {
-        	if(LOGGER.isInfoEnabled())
-        		LOGGER.info("No requesting user -- GUEST access");
+            if (LOGGER.isInfoEnabled())
+                LOGGER.info("No requesting user -- GUEST access");
         }
 
         GeoStoreSecurityContext securityContext = new GeoStoreSecurityContext();
-        GeoStorePrincipal principal = user != null ?
-                new GeoStorePrincipal(user) : GeoStorePrincipal.createGuest();
+        GeoStorePrincipal principal = user != null ? new GeoStorePrincipal(user)
+                : GeoStorePrincipal.createGuest();
         securityContext.setPrincipal(principal);
 
         message.put(SecurityContext.class, securityContext);
     }
-    
+
     /**
      * Obtain an user from his username
      * 
@@ -111,5 +115,5 @@ public abstract class AbstractGeoStoreAuthenticationInterceptor extends Abstract
      * @return user identified with the username
      */
     protected abstract User getUser(String username, Message message);
-    
+
 }

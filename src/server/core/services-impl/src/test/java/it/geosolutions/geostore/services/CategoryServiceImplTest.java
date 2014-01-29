@@ -27,9 +27,9 @@ import org.junit.Test;
 
 /**
  * Class CategoryServiceImplTest.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class CategoryServiceImplTest extends ServiceTestBase {
 
@@ -80,7 +80,7 @@ public class CategoryServiceImplTest extends ServiceTestBase {
                 categoryService.update(loaded);
                 fail("Exception not trapped !");
             } catch (Exception exc) {
-                if ( LOGGER.isDebugEnabled() ) {
+                if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("OK: exception trapped", exc);
                 }
             }

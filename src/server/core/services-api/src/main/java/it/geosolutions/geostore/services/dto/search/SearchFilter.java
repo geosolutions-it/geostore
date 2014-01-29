@@ -26,16 +26,17 @@ import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** 
+/**
  * Abstract Class SearchFilter.
  * 
  * @author ETj (etj at geo-solutions.it)
  */
 @XmlRootElement
 public abstract class SearchFilter implements Serializable {
-	
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -3525374410342234805L;
 
-	abstract public void accept(FilterVisitor visitor) throws BadRequestServiceEx, InternalErrorServiceEx;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -3525374410342234805L;
+
+    abstract public void accept(FilterVisitor visitor) throws BadRequestServiceEx,
+            InternalErrorServiceEx;
 }

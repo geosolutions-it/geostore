@@ -57,10 +57,10 @@ import org.jdom.output.XMLOutputter;
 
 /**
  * Class RESTStoredDataServiceImpl.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class RESTStoredDataServiceImpl implements RESTStoredDataService {
 
@@ -75,44 +75,48 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
         this.storedDataService = storedDataService;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#update(long, java.lang.String)
      */
     @Override
     public long update(SecurityContext sc, long id, String data) throws NotFoundWebEx {
         try {
-            if(data == null)
+            if (data == null)
                 throw new BadRequestWebEx("Data is null");
 
             //
             // Authorization check.
             //
             boolean canUpdate = false;
-			User authUser = extractAuthUser(sc);
-			canUpdate = resourceAccess(authUser, id); // The ID is also the resource ID
+            User authUser = extractAuthUser(sc);
+            canUpdate = resourceAccess(authUser, id); // The ID is also the resource ID
 
-    		if(canUpdate){
-    			storedDataService.update(id, data);
-    		}else{
-    			throw new ForbiddenErrorWebEx("This user cannot update or create this store !");
-    		}
+            if (canUpdate) {
+                storedDataService.update(id, data);
+            } else {
+                throw new ForbiddenErrorWebEx("This user cannot update or create this store !");
+            }
 
             return id;
         } catch (NotFoundServiceEx ex) {
-            LOGGER.warn("Data not found (" + id + "): " + ex.getMessage(), ex );
+            LOGGER.warn("Data not found (" + id + "): " + ex.getMessage(), ex);
             throw new NotFoundWebEx("Data not found");
         }
     }
 
-//    /* (non-Javadoc)
-//     * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#getAll()
-//     */
-//    @Override
-//    public StoredDataList getAll(SecurityContext sc) {
-//        return new StoredDataList(storedDataService.getAll());
-//    }
+    // /* (non-Javadoc)
+    // * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#getAll()
+    // */
+    // @Override
+    // public StoredDataList getAll(SecurityContext sc) {
+    // return new StoredDataList(storedDataService.getAll());
+    // }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#delete(long)
      */
     @Override
@@ -121,50 +125,57 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
         // Authorization check.
         //
         boolean canDelete = false;
-		User authUser = extractAuthUser(sc);
-		canDelete = resourceAccess(authUser, id);
+        User authUser = extractAuthUser(sc);
+        canDelete = resourceAccess(authUser, id);
 
-		if(canDelete){
-	        boolean ret = storedDataService.delete(id);
-	        if(!ret)
-	            throw new NotFoundWebEx("Data not found");
-		}else
-			throw new ForbiddenErrorWebEx("This user cannot delete this store !");
+        if (canDelete) {
+            boolean ret = storedDataService.delete(id);
+            if (!ret)
+                throw new NotFoundWebEx("Data not found");
+        } else
+            throw new ForbiddenErrorWebEx("This user cannot delete this store !");
     }
 
+    private final static Collection<MediaType> GET_XML_MEDIA_TYPES = Arrays.asList(
+            MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
 
-    private final static Collection<MediaType> GET_XML_MEDIA_TYPES = Arrays.asList(MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
-    private final static Collection<MediaType> GET_JSON_MEDIA_TYPES = Arrays.asList(MediaType.APPLICATION_JSON_TYPE);
-    private final static Collection<MediaType> GET_TEXT_MEDIA_TYPES = Arrays.asList(MediaType.TEXT_PLAIN_TYPE);
+    private final static Collection<MediaType> GET_JSON_MEDIA_TYPES = Arrays
+            .asList(MediaType.APPLICATION_JSON_TYPE);
 
-    /* (non-Javadoc)
+    private final static Collection<MediaType> GET_TEXT_MEDIA_TYPES = Arrays
+            .asList(MediaType.TEXT_PLAIN_TYPE);
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#get(long)
      */
     @Override
     public String get(SecurityContext sc, HttpHeaders headers, long id) throws NotFoundWebEx {
-        if(id == -1)
-           return "dummy payload";
+        if (id == -1)
+            return "dummy payload";
 
         StoredData storedData;
         try {
             storedData = storedDataService.get(id);
-        } catch(NotFoundServiceEx e){
-        	throw new NotFoundWebEx("Data not found");
+        } catch (NotFoundServiceEx e) {
+            throw new NotFoundWebEx("Data not found");
         }
 
-        String data = storedData == null? "" : storedData.getData();
+        String data = storedData == null ? "" : storedData.getData();
 
         // prefer no transformation
-        if( headers.getAcceptableMediaTypes().contains(MediaType.WILDCARD_TYPE)) {
+        if (headers.getAcceptableMediaTypes().contains(MediaType.WILDCARD_TYPE)) {
             return data;
-        } else if(! Collections.disjoint(GET_TEXT_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
+        } else if (!Collections.disjoint(GET_TEXT_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
             return data;
-        } else if(! Collections.disjoint(GET_JSON_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
+        } else if (!Collections.disjoint(GET_JSON_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
             return toJSON(data);
-        } else if(! Collections.disjoint(GET_XML_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
+        } else if (!Collections.disjoint(GET_XML_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
             return toXML(data);
         } else
-            throw new InternalErrorWebEx("Illegal state ("+headers.getAcceptableMediaTypes()+")");
+            throw new InternalErrorWebEx("Illegal state (" + headers.getAcceptableMediaTypes()
+                    + ")");
     }
 
     private String toJSON(String data) {
@@ -176,11 +187,11 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
             XMLSerializer xmlSerializer = new XMLSerializer();
             JSON json = xmlSerializer.read(data);
             String ret = json.toString();
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Transformed XML -> JSON");
             return ret;
         } catch (JSONException exc) {
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is not in native XML format.");
         }
 
@@ -188,20 +199,20 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
             // ///////////////////////
             // data To JSON conversion
             // ///////////////////////
-            JSONSerializer.toJSON(data);            
-            if(LOGGER.isDebugEnabled())
+            JSONSerializer.toJSON(data);
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is in native JSON format.");
             return data;
 
         } catch (JSONException e) {
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is not in native JSON format.");
         }
 
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("data", data);
         String ret = jsonObj.toString();
-        if(LOGGER.isDebugEnabled())
+        if (LOGGER.isDebugEnabled())
             LOGGER.debug("Transformed plaintext -> JSON");
 
         return ret;
@@ -215,11 +226,11 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
             SAXBuilder builder = new SAXBuilder();
             builder.build(reader);
             // no errors: return the original data
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is in native XML format.");
             return data;
         } catch (Exception e) {
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is not in native XML format.");
         }
 
@@ -231,12 +242,12 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
             JSON json = JSONSerializer.toJSON(data);
             XMLSerializer xmlSerializer = new XMLSerializer();
             String ret = xmlSerializer.write(json);
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Transformed JSON -> XML");
             return ret;
 
         } catch (JSONException exc) {
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Data is not in native JSON format.");
         }
 
@@ -246,12 +257,11 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
 
         XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
         String ret = outputter.outputString(element);
-        if(LOGGER.isDebugEnabled())
+        if (LOGGER.isDebugEnabled())
             LOGGER.debug("Transformed plaintext -> XML");
 
         return ret;
     }
-
 
     /**
      * @param id
@@ -259,11 +269,11 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
      * @throws BadRequestWebEx
      */
     @SuppressWarnings("unused")
-	private long parseId(String id) throws BadRequestWebEx {
+    private long parseId(String id) throws BadRequestWebEx {
         try {
             return Long.parseLong(id);
         } catch (Exception e) {
-            LOGGER.info("Bad id requested '"+id+"'");
+            LOGGER.info("Bad id requested '" + id + "'");
             throw new BadRequestWebEx("Bad id");
         }
     }
@@ -272,23 +282,24 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
      * @return User - The authenticated user that is accessing this service, or null if guest access.
      */
     private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if(sc == null)
+        if (sc == null)
             throw new InternalErrorWebEx("Missing auth info");
         else {
             Principal principal = sc.getUserPrincipal();
-            if(principal == null){
-    			if(LOGGER.isInfoEnabled())
-    				LOGGER.info("Missing auth principal");
-    			throw new InternalErrorWebEx("Missing auth principal");
+            if (principal == null) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Missing auth principal");
+                throw new InternalErrorWebEx("Missing auth principal");
             }
 
-            if( ! (principal instanceof GeoStorePrincipal )){
-    			if(LOGGER.isInfoEnabled())
-    				LOGGER.info("Missing auth principal");
-    			throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")");
+            if (!(principal instanceof GeoStorePrincipal)) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Missing auth principal");
+                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
+                        + ")");
             }
 
-            GeoStorePrincipal gsp = (GeoStorePrincipal)principal;
+            GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
 
             //
             // may be null if guest
@@ -301,25 +312,25 @@ public class RESTStoredDataServiceImpl implements RESTStoredDataService {
     }
 
     /**
-     * Check if the user can access the requested resource (is own resource or not ?)
-	 * in order to update it.
-	 *
+     * Check if the user can access the requested resource (is own resource or not ?) in order to update it.
+     * 
      * @param resource
      * @return boolean
      */
     private boolean resourceAccess(User authUser, long resourceId) {
-    	boolean canAccess = false;
+        boolean canAccess = false;
 
-    	if(authUser.getRole().equals(Role.ADMIN)){
-    		canAccess = true;
-    	}else{
-        	List<SecurityRule> securityRules  = storedDataService.getUserSecurityRule(authUser.getName(), resourceId);
+        if (authUser.getRole().equals(Role.ADMIN)) {
+            canAccess = true;
+        } else {
+            List<SecurityRule> securityRules = storedDataService.getUserSecurityRule(
+                    authUser.getName(), resourceId);
 
-    		if(securityRules != null && ! securityRules.isEmpty() )
-    			canAccess = true;
-    	}
+            if (securityRules != null && !securityRules.isEmpty())
+                canAccess = true;
+        }
 
-		return canAccess;
+        return canAccess;
     }
 
 }

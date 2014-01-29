@@ -55,38 +55,40 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
 
-/** 
+/**
  * Class RESTMiscServiceImpl.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService {
-	
-	private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
 
-	private CategoryService categoryService;
+    private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
+
+    private CategoryService categoryService;
+
     private ResourceService resourceService;
 
     private StoredDataService storedDataService;
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getData(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
-    public String getData(SecurityContext sc, String catName, String resName) 
-            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
+    public String getData(SecurityContext sc, String catName, String resName) throws NotFoundWebEx,
+            ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if(LOGGER.isDebugEnabled())
-            LOGGER.debug("getData("+catName+","+resName+")");
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("getData(" + catName + "," + resName + ")");
 
-        if(catName == null)
+        if (catName == null)
             throw new BadRequestWebEx("Category is null");
-        if(resName == null)
+        if (resName == null)
             throw new BadRequestWebEx("Resource is null");
 
-        SearchFilter filter = new AndFilter(
-                new CategoryFilter(catName, SearchOperator.EQUAL_TO),
+        SearchFilter filter = new AndFilter(new CategoryFilter(catName, SearchOperator.EQUAL_TO),
                 new FieldFilter(BaseField.NAME, resName, SearchOperator.EQUAL_TO));
 
         List<Resource> resources = null;
@@ -101,30 +103,31 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
         if (resources.isEmpty()) {
             throw new NotFoundWebEx("No resource found");
-        } else  if (resources.size() > 1) {
+        } else if (resources.size() > 1) {
             throw new ConflictWebEx("Too many resources match the request");
         }
 
         return resources.get(0).getData().getData();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
     public Resource getResource(SecurityContext sc, String catName, String resName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if(LOGGER.isDebugEnabled())
-            LOGGER.debug("getResource("+catName+","+resName+")");
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("getResource(" + catName + "," + resName + ")");
 
-        if(catName == null)
+        if (catName == null)
             throw new BadRequestWebEx("Category is null");
-        if(resName == null)
+        if (resName == null)
             throw new BadRequestWebEx("Resource is null");
 
-        SearchFilter filter = new AndFilter(
-                new CategoryFilter(catName, SearchOperator.EQUAL_TO),
+        SearchFilter filter = new AndFilter(new CategoryFilter(catName, SearchOperator.EQUAL_TO),
                 new FieldFilter(BaseField.NAME, resName, SearchOperator.EQUAL_TO));
 
         List<Resource> resources = null;
@@ -139,25 +142,27 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
         if (resources.isEmpty()) {
             throw new NotFoundWebEx("No resource found");
-        } else  if (resources.size() > 1) {
+        } else if (resources.size() > 1) {
             throw new ConflictWebEx("Too many resources match the request");
         }
 
         return resources.get(0);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
     public ShortResourceList getResourcesByCategory(SecurityContext sc, String catName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if(LOGGER.isDebugEnabled())
-            LOGGER.debug("getResourcesByCategory("+catName+")");
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("getResourcesByCategory(" + catName + ")");
 
         // some checks on category
-        if(catName == null)
+        if (catName == null)
             throw new BadRequestWebEx("Category is null");
 
         Category category;
@@ -166,7 +171,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
-        if(category == null)
+        if (category == null)
             throw new NotFoundWebEx("Category not found");
 
         // ok, search for the resource list
@@ -184,13 +189,12 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
         return new ShortResourceList(resources);
     }
-    
 
-    //=========================================================================
+    // =========================================================================
 
-	public void setCategoryService(CategoryService categoryService) {
-		this.categoryService = categoryService;
-	}
+    public void setCategoryService(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;

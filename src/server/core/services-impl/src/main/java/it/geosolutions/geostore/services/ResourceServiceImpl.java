@@ -61,17 +61,22 @@ import com.googlecode.genericdao.search.Search;
 
 /**
  * Class ResourceServiceImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 public class ResourceServiceImpl implements ResourceService {
 
     private static final Logger LOGGER = Logger.getLogger(ResourceServiceImpl.class);
+
     private ResourceDAO resourceDAO;
+
     private AttributeDAO attributeDAO;
+
     private StoredDataDAO storedDataDAO;
+
     private CategoryDAO categoryDAO;
+
     private SecurityDAO securityDAO;
 
     /**
@@ -109,7 +114,9 @@ public class ResourceServiceImpl implements ResourceService {
         this.categoryDAO = categoryDAO;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#insert(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
@@ -131,7 +138,8 @@ public class ResourceServiceImpl implements ResourceService {
         if (category.getId() != null) {
             loadedCategory = categoryDAO.find(category.getId());
             if (loadedCategory == null) {
-                throw new NotFoundServiceEx("Resource Category not found [id:" + category.getId() + "]");
+                throw new NotFoundServiceEx("Resource Category not found [id:" + category.getId()
+                        + "]");
             }
 
         } else if (category.getName() != null) {
@@ -140,11 +148,11 @@ public class ResourceServiceImpl implements ResourceService {
 
             List<Category> categories = categoryDAO.search(searchCriteria);
             if (categories.isEmpty()) {
-                throw new NotFoundServiceEx("Resource Category not found [name:" + category.getName() + "]");
+                throw new NotFoundServiceEx("Resource Category not found [name:"
+                        + category.getName() + "]");
             }
             loadedCategory = categories.get(0);
         }
-
 
         Resource r = new Resource();
         r.setCreation(new Date());
@@ -153,10 +161,10 @@ public class ResourceServiceImpl implements ResourceService {
         r.setName(resource.getName());
         r.setCategory(loadedCategory);
 
-        try{
-        	resourceDAO.persist(r);
-        }catch(DataIntegrityViolationException exc){
-        	throw new BadRequestServiceEx(exc.getLocalizedMessage());
+        try {
+            resourceDAO.persist(r);
+        } catch (DataIntegrityViolationException exc) {
+            throw new BadRequestServiceEx(exc.getLocalizedMessage());
         }
 
         //
@@ -195,7 +203,9 @@ public class ResourceServiceImpl implements ResourceService {
         return r.getId();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#update(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
@@ -214,7 +224,9 @@ public class ResourceServiceImpl implements ResourceService {
         return orig.getId();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#updateAttributes(long, java.util.List)
      */
     @Override
@@ -244,19 +256,23 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    /* @param id
+    /*
+     * @param id
+     * 
      * @return the Resource or null if none was found with given id
-     *
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#get(long)
      */
     @Override
     public Resource get(long id) {
         Resource resource = resourceDAO.find(id);
-        
+
         return resource;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#delete(long)
      */
     @Override
@@ -266,17 +282,22 @@ public class ResourceServiceImpl implements ResourceService {
         //
         return resourceDAO.removeById(id);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#delete(long)
      */
     @Override
-    public void deleteResources(SearchFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
+    public void deleteResources(SearchFilter filter) throws BadRequestServiceEx,
+            InternalErrorServiceEx {
         Search searchCriteria = SearchConverter.convert(filter);
         this.resourceDAO.removeResources(searchCriteria);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getList(java.lang.String, java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -311,11 +332,14 @@ public class ResourceServiceImpl implements ResourceService {
         return convertToShortList(found, authUser);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getList(java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public List<ShortResource> getAll(Integer page, Integer entries, User authUser) throws BadRequestServiceEx {
+    public List<ShortResource> getAll(Integer page, Integer entries, User authUser)
+            throws BadRequestServiceEx {
 
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
@@ -341,7 +365,9 @@ public class ResourceServiceImpl implements ResourceService {
         return convertToShortList(found, authUser);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getCount(java.lang.String)
      */
     @Override
@@ -355,11 +381,14 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceDAO.count(searchCriteria);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getCount(java.lang.String)
      */
     @Override
-    public long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx, BadRequestServiceEx {
+    public long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx,
+            BadRequestServiceEx {
         Search searchCriteria = SearchConverter.convert(filter);
         return resourceDAO.count(searchCriteria);
     }
@@ -385,12 +414,13 @@ public class ResourceServiceImpl implements ResourceService {
                 while (iterator.hasNext()) {
                     SecurityRule rule = iterator.next();
                     User owner = rule.getUser();
-                    
-                    if (owner.getId().equals(authUser.getId()) || authUser.getRole().equals(Role.ADMIN)) {
+
+                    if (owner.getId().equals(authUser.getId())
+                            || authUser.getRole().equals(Role.ADMIN)) {
                         if (rule.isCanWrite()) {
                             shortResource.setCanEdit(true);
                             shortResource.setCanDelete(true);
-                            
+
                             break;
                         }
                     }
@@ -403,7 +433,9 @@ public class ResourceServiceImpl implements ResourceService {
         return swList;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getListAttributes(long)
      */
     @Override
@@ -430,7 +462,9 @@ public class ResourceServiceImpl implements ResourceService {
         return swList;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getAttribute(long, java.lang.String)
      */
     @Override
@@ -442,13 +476,15 @@ public class ResourceServiceImpl implements ResourceService {
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
-        if(dtoList.size() > 0)
-        	return dtoList.get(0);
+        if (dtoList.size() > 0)
+            return dtoList.get(0);
         else
-        	return null;       
+            return null;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#updateAttribute(long, java.lang.String, java.lang.String)
      */
     @Override
@@ -462,23 +498,23 @@ public class ResourceServiceImpl implements ResourceService {
         Attribute attribute = attributes.get(0);
 
         switch (attribute.getType()) {
-            case DATE:
+        case DATE:
 
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-                try {
-                    attribute.setDateValue(sdf.parse(value));
-                } catch (ParseException e) {
-                    throw new InternalErrorServiceEx("Error parsing attribute date value");
-                }
-                break;
-            case NUMBER:
-                attribute.setNumberValue(Double.valueOf(value));
-                break;
-            case STRING:
-                attribute.setTextValue(value);
-                break;
-            default:
-                throw new IllegalStateException("Unknown type " + attribute.getType());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            try {
+                attribute.setDateValue(sdf.parse(value));
+            } catch (ParseException e) {
+                throw new InternalErrorServiceEx("Error parsing attribute date value");
+            }
+            break;
+        case NUMBER:
+            attribute.setNumberValue(Double.valueOf(value));
+            break;
+        case STRING:
+            attribute.setTextValue(value);
+            break;
+        default:
+            throw new IllegalStateException("Unknown type " + attribute.getType());
         }
 
         attribute = this.attributeDAO.merge(attribute);
@@ -486,39 +522,44 @@ public class ResourceServiceImpl implements ResourceService {
         return attribute.getId();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.ResourceService#getResourcesByFilter(it.geosolutions.geostore.services.dto.SearchFilter)
      */
     @Override
-    public List<ShortResource> getResources(SearchFilter filter, User authUser) throws BadRequestServiceEx,
-            InternalErrorServiceEx {
+    public List<ShortResource> getResources(SearchFilter filter, User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
         return getResources(filter, null, null, authUser);
     }
-    
-    /* 
+
+    /*
      * (non-Javadoc)
-     * @see it.geosolutions.geostore.services.ResourceService#getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, boolean, boolean, it.geosolutions.geostore.core.model.User)
+     * 
+     * @see it.geosolutions.geostore.services.ResourceService#getResources(it.geosolutions.geostore.services.dto.search.SearchFilter,
+     * java.lang.Integer, java.lang.Integer, boolean, boolean, it.geosolutions.geostore.core.model.User)
      */
-    public List<Resource> getResources(SearchFilter filter, Integer page, Integer entries, 
-    		boolean includeAttributes, boolean includeData, User authUser) throws BadRequestServiceEx, InternalErrorServiceEx {
-    	
+    public List<Resource> getResources(SearchFilter filter, Integer page, Integer entries,
+            boolean includeAttributes, boolean includeData, User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
         }
-        
+
         Search searchCriteria = SearchConverter.convert(filter);
-        
+
         if (page != null) {
             searchCriteria.setMaxResults(entries);
             searchCriteria.setPage(page);
         }
 
-        List<Resource> resources = this.resourceDAO.search(searchCriteria);        
+        List<Resource> resources = this.resourceDAO.search(searchCriteria);
         resources = this.configResourceList(resources, includeAttributes, includeData, authUser);
-		
+
         return resources;
-	}
-    
+    }
+
     /**
      * @param list
      * @param includeAttributes
@@ -526,28 +567,28 @@ public class ResourceServiceImpl implements ResourceService {
      * @param authUser
      * @return List<Resource>
      */
-    private List<Resource> configResourceList(List<Resource> list, boolean includeAttributes, 
-    		boolean includeData, User authUser) {
+    private List<Resource> configResourceList(List<Resource> list, boolean includeAttributes,
+            boolean includeData, User authUser) {
         List<Resource> rList = new ArrayList<Resource>(list.size());
-        
+
         for (Resource resource : list) {
             Resource res = new Resource();
-            
+
             res.setCategory(resource.getCategory());
             res.setCreation(resource.getCreation());
             res.setDescription(resource.getDescription());
             res.setId(resource.getId());
             res.setLastUpdate(resource.getLastUpdate());
             res.setName(resource.getName());
-            
-            if(includeData){
-            	res.setData(resource.getData());
+
+            if (includeData) {
+                res.setData(resource.getData());
             }
-            
-            if(includeAttributes){
-            	res.setAttribute(resource.getAttribute());
+
+            if (includeAttributes) {
+                res.setAttribute(resource.getAttribute());
             }
-            
+
             rList.add(res);
         }
 
@@ -555,9 +596,9 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries, User authUser) 
-            throws BadRequestServiceEx, InternalErrorServiceEx {
-        
+    public List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries,
+            User authUser) throws BadRequestServiceEx, InternalErrorServiceEx {
+
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
         }
@@ -580,7 +621,7 @@ public class ResourceServiceImpl implements ResourceService {
         return convertToShortList(resources, authUser);
     }
 
-    /**
+/**
      * Return a list of resources joined with their data.
      * This call can be very heavy for the system. Please use this method only when you are sure
      * a few data will be returned, otherwise consider using
@@ -594,8 +635,8 @@ public class ResourceServiceImpl implements ResourceService {
      * @throws InternalErrorServiceEx
      */
     @Override
-    public List<Resource> getResourcesFull(SearchFilter filter, User authUser) 
-            throws BadRequestServiceEx,InternalErrorServiceEx {
+    public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
 
         Search searchCriteria = SearchConverter.convert(filter);
         searchCriteria.addFetch("security");

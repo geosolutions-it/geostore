@@ -32,9 +32,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
- * Auto create users integration test. You need to override this properties on
- * your GeoStore instance (use your geostore-ovr.properties):
- * <br /><br /> 
+ * Auto create users integration test. You need to override this properties on your GeoStore instance (use your geostore-ovr.properties): <br />
+ * <br />
  * <code>
  * 	geostoreAuthInterceptor.autoCreateUsers=true
  * 	geostoreAuthInterceptor.newUsersRole=USER
@@ -45,66 +44,62 @@ import org.junit.Test;
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
 public class AutoCreateUsersTest {
-	private final static Logger LOGGER = Logger
-			.getLogger(AutoCreateUsersTest.class);
+    private final static Logger LOGGER = Logger.getLogger(AutoCreateUsersTest.class);
 
-	AdministratorGeoStoreClient geoStoreClient;
+    AdministratorGeoStoreClient geoStoreClient;
 
-	final String DEFAULTCATEGORYNAME = "TestCategory1";
+    final String DEFAULTCATEGORYNAME = "TestCategory1";
 
-	protected AdministratorGeoStoreClient createAdministratorClient() {
-		geoStoreClient = new AdministratorGeoStoreClient();
-		geoStoreClient
-				.setGeostoreRestUrl("http://localhost:9191/geostore/rest");
-		geoStoreClient.setUsername("admin");
-		geoStoreClient.setPassword("admin");
-		return geoStoreClient;
-	}
+    protected AdministratorGeoStoreClient createAdministratorClient() {
+        geoStoreClient = new AdministratorGeoStoreClient();
+        geoStoreClient.setGeostoreRestUrl("http://localhost:9191/geostore/rest");
+        geoStoreClient.setUsername("admin");
+        geoStoreClient.setPassword("admin");
+        return geoStoreClient;
+    }
 
-	protected boolean pingGeoStore(GeoStoreClient client) {
-		try {
-			client.getCategories();
-			return true;
-		} catch (Exception ex) {
-			LOGGER.debug("Error connecting to GeoStore", ex);
-			// ... and now for an awful example of heuristic.....
-			Throwable t = ex;
-			while (t != null) {
-				if (t instanceof ConnectException) {
-					LOGGER.warn("Testing GeoStore is offline");
-					return false;
-				}
-				t = t.getCause();
-			}
-			throw new RuntimeException("Unexpected exception: "
-					+ ex.getMessage(), ex);
-		}
-	}
+    protected boolean pingGeoStore(GeoStoreClient client) {
+        try {
+            client.getCategories();
+            return true;
+        } catch (Exception ex) {
+            LOGGER.debug("Error connecting to GeoStore", ex);
+            // ... and now for an awful example of heuristic.....
+            Throwable t = ex;
+            while (t != null) {
+                if (t instanceof ConnectException) {
+                    LOGGER.warn("Testing GeoStore is offline");
+                    return false;
+                }
+                t = t.getCause();
+            }
+            throw new RuntimeException("Unexpected exception: " + ex.getMessage(), ex);
+        }
+    }
 
-	@Before
-	public void before() throws Exception {
-		geoStoreClient = createAdministratorClient();
-		assumeTrue(pingGeoStore(geoStoreClient));
-	}
+    @Before
+    public void before() throws Exception {
+        geoStoreClient = createAdministratorClient();
+        assumeTrue(pingGeoStore(geoStoreClient));
+    }
 
-	/**
-	 * Test auto create users with GeoStore client
-	 */
-	@Test
-	public void testAutoCreateUsers() {
+    /**
+     * Test auto create users with GeoStore client
+     */
+    @Test
+    public void testAutoCreateUsers() {
 
-		geoStoreClient.setUsername("test");
-		geoStoreClient.setPassword("");
+        geoStoreClient.setUsername("test");
+        geoStoreClient.setPassword("");
 
-		try {
-			User user = geoStoreClient.getUserDetails();
-			assertNotNull(user);
-			assertTrue(user.getPassword() == null
-					|| user.getPassword().equals(""));
-		} catch (Exception e) {
-			fail("Unable to create user");
-		}
+        try {
+            User user = geoStoreClient.getUserDetails();
+            assertNotNull(user);
+            assertTrue(user.getPassword() == null || user.getPassword().equals(""));
+        } catch (Exception e) {
+            fail("Unable to create user");
+        }
 
-	}
+    }
 
 }

@@ -20,16 +20,16 @@
 package it.geosolutions.geostore.services.exception;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class InternalErrorServiceEx extends GeoStoreServiceException {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 8500691976750142406L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 8500691976750142406L;
 
-	public InternalErrorServiceEx(String message) {
+    public InternalErrorServiceEx(String message) {
         super(message);
-     }
+    }
 
 }

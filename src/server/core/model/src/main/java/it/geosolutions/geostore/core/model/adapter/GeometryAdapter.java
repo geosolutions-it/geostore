@@ -37,13 +37,12 @@ import com.vividsolutions.jts.io.WKTWriter;
 
 /**
  * The Class GeometryAdapter.
- *
+ * 
  * @param <G> the generic type
- *
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
-public class GeometryAdapter<G extends Geometry>
-    extends XmlAdapter<String, G> {
+public class GeometryAdapter<G extends Geometry> extends XmlAdapter<String, G> {
 
     /*
      * (non-Javadoc) @see javax.xml.bind.annotation.adapters.XmlAdapter#unmarshal(java.lang.Object)
@@ -54,7 +53,7 @@ public class GeometryAdapter<G extends Geometry>
         WKTReader wktReader = new WKTReader();
 
         Geometry the_geom = wktReader.read(val);
-        if ( the_geom.getSRID() == 0 ) {
+        if (the_geom.getSRID() == 0) {
             the_geom.setSRID(4326);
         }
 
@@ -70,9 +69,9 @@ public class GeometryAdapter<G extends Geometry>
      */
     @Override
     public String marshal(G the_geom) throws ParseException {
-        if ( the_geom != null ) {
+        if (the_geom != null) {
             WKTWriter wktWriter = new WKTWriter();
-            if ( the_geom.getSRID() == 0 ) {
+            if (the_geom.getSRID() == 0) {
                 the_geom.setSRID(4326);
             }
 

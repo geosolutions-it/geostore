@@ -21,19 +21,19 @@ package it.geosolutions.geostore.services.rest.exception;
 
 import javax.ws.rs.core.Response;
 
-/** 
+/**
  * Class ForbiddenErrorWebEx.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class ForbiddenErrorWebEx extends GeoStoreWebEx {
-	
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 1523832654674590775L;
-	
+
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 1523832654674590775L;
+
     public ForbiddenErrorWebEx(String message) {
         super(Response.Status.FORBIDDEN, message);
-     }
+    }
 
 }

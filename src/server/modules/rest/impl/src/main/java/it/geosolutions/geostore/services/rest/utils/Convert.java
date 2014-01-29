@@ -34,16 +34,16 @@ import java.util.List;
 import org.apache.commons.collections.CollectionUtils;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class Convert {
 
     public static Resource convertResource(RESTResource resource) {
         Category category = new Category();
-        if(resource.getCategory().getName() != null)
+        if (resource.getCategory().getName() != null)
             category.setName(resource.getCategory().getName());
-        if(resource.getCategory().getId() != null)
+        if (resource.getCategory().getId() != null)
             category.setId(resource.getCategory().getId());
 
         Resource r = new Resource();
@@ -53,23 +53,24 @@ public class Convert {
         r.setCategory(category);
 
         // Parsing Attributes list
-        if( CollectionUtils.isNotEmpty(resource.getAttribute()) ) {
+        if (CollectionUtils.isNotEmpty(resource.getAttribute())) {
             List<Attribute> attributes = Convert.convertAttributeList(resource.getAttribute());
             r.setAttribute(attributes);
         }
 
-    	RESTStoredData dataDto = resource.getStore();
-    	if(dataDto != null) {
-    		StoredData data = new StoredData();
-    		data.setData(dataDto.getData());
+        RESTStoredData dataDto = resource.getStore();
+        if (dataDto != null) {
+            StoredData data = new StoredData();
+            data.setData(dataDto.getData());
 
-    		r.setData(data);
-    	}
+            r.setData(data);
+        }
 
         return r;
     }
 
-    public static List<Attribute> convertAttributeList(List<ShortAttribute> list) throws InternalErrorWebEx {
+    public static List<Attribute> convertAttributeList(List<ShortAttribute> list)
+            throws InternalErrorWebEx {
         List<Attribute> attributes = new ArrayList<Attribute>(list.size());
         for (ShortAttribute shortAttribute : list) {
             attributes.add(Convert.convertAttribute(shortAttribute));
@@ -82,29 +83,29 @@ public class Convert {
         ret.setName(shattr.getName());
         ret.setType(shattr.getType());
 
-        if(shattr.getType() == null)
-            throw new BadRequestWebEx("Missing type for attribute "+shattr);
+        if (shattr.getType() == null)
+            throw new BadRequestWebEx("Missing type for attribute " + shattr);
 
-        switch(ret.getType()) {
-            case DATE:
-                try {
-                    ret.setDateValue(Attribute.DATE_FORMAT.parse(shattr.getValue()));
-                } catch (ParseException e) {
-                    throw new BadRequestWebEx("Error parsing attribute date value " + shattr);
-                }
-                break;
-            case NUMBER:
-                try {
-                    ret.setNumberValue(Double.valueOf(shattr.getValue()));
-                } catch (NumberFormatException ex) {
-                    throw new BadRequestWebEx("Error parsing number value " + shattr);
-                }
-                break;
-            case STRING:
-                ret.setTextValue(shattr.getValue());
-                break;
-            default:
-                throw new InternalErrorWebEx("Unknown attribute type " + shattr);
+        switch (ret.getType()) {
+        case DATE:
+            try {
+                ret.setDateValue(Attribute.DATE_FORMAT.parse(shattr.getValue()));
+            } catch (ParseException e) {
+                throw new BadRequestWebEx("Error parsing attribute date value " + shattr);
+            }
+            break;
+        case NUMBER:
+            try {
+                ret.setNumberValue(Double.valueOf(shattr.getValue()));
+            } catch (NumberFormatException ex) {
+                throw new BadRequestWebEx("Error parsing number value " + shattr);
+            }
+            break;
+        case STRING:
+            ret.setTextValue(shattr.getValue());
+            break;
+        default:
+            throw new InternalErrorWebEx("Unknown attribute type " + shattr);
         }
         return ret;
     }
@@ -116,6 +117,5 @@ public class Convert {
         }
         return attributes;
     }
-
 
 }

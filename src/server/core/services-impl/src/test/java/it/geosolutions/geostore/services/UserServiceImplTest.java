@@ -27,42 +27,33 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-
 /**
  * Class UserServiceImplTest.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-public class UserServiceImplTest extends ServiceTestBase
-{
+public class UserServiceImplTest extends ServiceTestBase {
 
     @BeforeClass
-    public static void setUpClass() throws Exception
-    {
+    public static void setUpClass() throws Exception {
     }
 
     @AfterClass
-    public static void tearDownClass() throws Exception
-    {
+    public static void tearDownClass() throws Exception {
     }
 
-    public UserServiceImplTest()
-    {
+    public UserServiceImplTest() {
 
     }
 
     @Test
-    public void testInsertDeleteUser() throws Exception
-    {
+    public void testInsertDeleteUser() throws Exception {
 
         //
         // Creating and deleting user data
         //
-        long userId = createUser(
-                "test",
-                Role.USER,
-                "tesPW");
+        long userId = createUser("test", Role.USER, "tesPW");
 
         assertEquals(1, userService.getCount(null));
         assertTrue("Could not delete user", userService.delete(userId));
@@ -70,14 +61,10 @@ public class UserServiceImplTest extends ServiceTestBase
     }
 
     @Test
-    public void testUpdateLoadData() throws Exception
-    {
+    public void testUpdateLoadData() throws Exception {
         final String NAME = "name1";
 
-        long userId = createUser(
-                NAME,
-                Role.USER,
-                "testPW");
+        long userId = createUser(NAME, Role.USER, "testPW");
 
         assertEquals(1, userService.getCount(null));
 

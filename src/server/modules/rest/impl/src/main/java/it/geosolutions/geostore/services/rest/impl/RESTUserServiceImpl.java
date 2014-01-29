@@ -53,14 +53,15 @@ import org.apache.log4j.Logger;
 
 /**
  * Class RESTUserServiceImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
- *
+ * 
  */
 public class RESTUserServiceImpl implements RESTUserService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTUserServiceImpl.class);
+
     private UserService userService;
 
     /**
@@ -71,15 +72,14 @@ public class RESTUserServiceImpl implements RESTUserService {
     }
 
     /*
-     * (non-Javadoc) @see
-     * it.geosolutions.geostore.services.rest.RESTUserInterface#insert(it.geosolutions.geostore.core.model.User)
+     * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#insert(it.geosolutions.geostore.core.model.User)
      */
     @Override
     public long insert(SecurityContext sc, User user) {
-        if ( user == null ) {
+        if (user == null) {
             throw new BadRequestWebEx("User is null");
         }
-        if ( user.getId() != null ) {
+        if (user.getId() != null) {
             throw new BadRequestWebEx("Id should be null");
         }
 
@@ -90,8 +90,8 @@ public class RESTUserServiceImpl implements RESTUserService {
             //
             List<UserAttribute> usAttribute = user.getAttribute();
 
-            if ( usAttribute != null ) {
-                if ( usAttribute.size() > 0 ) {
+            if (usAttribute != null) {
+                if (usAttribute.size() > 0) {
                     user.setAttribute(usAttribute);
                 }
             }
@@ -107,55 +107,54 @@ public class RESTUserServiceImpl implements RESTUserService {
     }
 
     /*
-     * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#update(long,
-     * it.geosolutions.geostore.core.model.User)
+     * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#update(long, it.geosolutions.geostore.core.model.User)
      */
     @Override
     public long update(SecurityContext sc, long id, User user) {
         try {
-        	User authUser = extractAuthUser(sc);
-        	
+            User authUser = extractAuthUser(sc);
+
             User old = userService.get(id);
-            if ( old == null ) {
+            if (old == null) {
                 throw new NotFoundWebEx("User not found");
             }
-            
+
             boolean userUpdated = false;
-            if(authUser.getRole().equals(Role.ADMIN)){
-            	String npw = user.getNewPassword();
-            	if(npw != null){
-            		old.setNewPassword(user.getNewPassword());
-            		userUpdated = true;
-            	}
-                
-            	Role nr = user.getRole();
-            	if(nr != null){
-            		old.setRole(nr);
-            		userUpdated = true;
-            	}
-                
+            if (authUser.getRole().equals(Role.ADMIN)) {
+                String npw = user.getNewPassword();
+                if (npw != null) {
+                    old.setNewPassword(user.getNewPassword());
+                    userUpdated = true;
+                }
+
+                Role nr = user.getRole();
+                if (nr != null) {
+                    old.setRole(nr);
+                    userUpdated = true;
+                }
+
                 UserGroup group = user.getGroup();
                 if (group != null) {
                     old.setGroup(group);
                     userUpdated = true;
                 }
-            }else if(old.getName().equals(authUser.getName())){ // Check if the User is the same
-            	String npw = user.getNewPassword();
-            	if(npw != null){
-            		old.setNewPassword(user.getNewPassword());
-            		userUpdated = true;
-            	}
+            } else if (old.getName().equals(authUser.getName())) { // Check if the User is the same
+                String npw = user.getNewPassword();
+                if (npw != null) {
+                    old.setNewPassword(user.getNewPassword());
+                    userUpdated = true;
+                }
             }
 
-            if(userUpdated){
+            if (userUpdated) {
                 id = userService.update(old);
 
                 //
                 // Creating a new User Attribute list (updated).
                 //
                 List<UserAttribute> attributeDto = user.getAttribute();
-                
-                if(attributeDto != null){
+
+                if (attributeDto != null) {
                     Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
 
                     List<UserAttribute> attributes = new ArrayList<UserAttribute>();
@@ -168,14 +167,14 @@ public class RESTUserServiceImpl implements RESTUserService {
                         attributes.add(a);
                     }
 
-                    if ( attributes.size() > 0 ) {
+                    if (attributes.size() > 0) {
                         userService.updateAttributes(id, attributes);
                     }
                 }
 
                 return id;
-            }else
-            	return -1;
+            } else
+                return -1;
 
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
@@ -190,7 +189,7 @@ public class RESTUserServiceImpl implements RESTUserService {
     @Override
     public void delete(SecurityContext sc, long id) throws NotFoundWebEx {
         boolean ret = userService.delete(id);
-        if ( !ret ) {
+        if (!ret) {
             throw new NotFoundWebEx("User not found");
         }
     }
@@ -199,9 +198,9 @@ public class RESTUserServiceImpl implements RESTUserService {
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#get(long)
      */
     @Override
-    public User get(SecurityContext sc, long id,boolean includeAttributes) throws NotFoundWebEx {
-        if ( id == -1 ) {
-            if ( LOGGER.isDebugEnabled() ) {
+    public User get(SecurityContext sc, long id, boolean includeAttributes) throws NotFoundWebEx {
+        if (id == -1) {
+            if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Retriving dummy data !");
             }
 
@@ -214,7 +213,7 @@ public class RESTUserServiceImpl implements RESTUserService {
         }
 
         User authUser = userService.get(id);
-        if ( authUser == null ) {
+        if (authUser == null) {
             throw new NotFoundWebEx("User not found");
         }
 
@@ -224,8 +223,8 @@ public class RESTUserServiceImpl implements RESTUserService {
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
         ret.setGroup(authUser.getGroup());
-        if(includeAttributes){
-        	ret.setAttribute(authUser.getAttribute());
+        if (includeAttributes) {
+            ret.setAttribute(authUser.getAttribute());
         }
         return ret;
     }
@@ -234,9 +233,10 @@ public class RESTUserServiceImpl implements RESTUserService {
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserService#get(java.lang.String)
      */
     @Override
-    public User get(SecurityContext sc, String name,boolean includeAttributes) throws NotFoundWebEx {
-        if ( name == null ) {
-            if ( LOGGER.isDebugEnabled() ) {
+    public User get(SecurityContext sc, String name, boolean includeAttributes)
+            throws NotFoundWebEx {
+        if (name == null) {
+            if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("User Name is null !");
             }
             throw new BadRequestWebEx("User name is null");
@@ -245,10 +245,10 @@ public class RESTUserServiceImpl implements RESTUserService {
         User ret;
         try {
             ret = userService.get(name);
-            if(includeAttributes){
-            	ret.setAttribute(ret.getAttribute());
-            }else{
-            	ret.setAttribute(null);
+            if (includeAttributes) {
+                ret.setAttribute(ret.getAttribute());
+            } else {
+                ret.setAttribute(null);
             }
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx("User not found");
@@ -261,20 +261,21 @@ public class RESTUserServiceImpl implements RESTUserService {
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public UserList getAll(SecurityContext sc, Integer page, Integer entries) throws BadRequestWebEx {
+    public UserList getAll(SecurityContext sc, Integer page, Integer entries)
+            throws BadRequestWebEx {
         try {
-			List<User> userList = userService.getAll(page, entries);
-			Iterator<User> iterator = userList.iterator();
-			
-			List<RESTUser> restUSERList = new ArrayList<RESTUser>();
-			while(iterator.hasNext()){
-				User user = iterator.next();
-				
-				RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
-				restUSERList.add(restUser);
-			}
-			
-			return new UserList(restUSERList);
+            List<User> userList = userService.getAll(page, entries);
+            Iterator<User> iterator = userList.iterator();
+
+            List<RESTUser> restUSERList = new ArrayList<RESTUser>();
+            while (iterator.hasNext()) {
+                User user = iterator.next();
+
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+                restUSERList.add(restUser);
+            }
+
+            return new UserList(restUSERList);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
@@ -291,26 +292,26 @@ public class RESTUserServiceImpl implements RESTUserService {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTUserService#getAuthUserDetails (javax.ws.rs.core.SecurityContext)
      */
     @Override
-    public User getAuthUserDetails(SecurityContext sc,boolean includeAttributes) {
+    public User getAuthUserDetails(SecurityContext sc, boolean includeAttributes) {
         User authUser = extractAuthUser(sc);
 
         User ret = null;
         try {
             authUser = userService.get(authUser.getName());
 
-            if ( authUser != null ) {
+            if (authUser != null) {
                 ret = new User();
                 ret.setId(authUser.getId());
                 ret.setName(authUser.getName());
                 // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
                 ret.setRole(authUser.getRole());
                 ret.setGroup(authUser.getGroup());
-                if(includeAttributes){
-                	ret.setAttribute(authUser.getAttribute());
+                if (includeAttributes) {
+                    ret.setAttribute(authUser.getAttribute());
                 }
             }
 
@@ -325,23 +326,23 @@ public class RESTUserServiceImpl implements RESTUserService {
      * @return User - The authenticated user that is accessing this service, or null if guest access.
      */
     private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if ( sc == null ) {
+        if (sc == null) {
             throw new InternalErrorWebEx("Missing auth info");
         } else {
             Principal principal = sc.getUserPrincipal();
-            if ( principal == null ) {
-                if ( LOGGER.isInfoEnabled() ) {
+            if (principal == null) {
+                if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Missing auth principal");
                 }
                 throw new InternalErrorWebEx("Missing auth principal");
             }
 
-            if ( !(principal instanceof GeoStorePrincipal) ) {
-                if ( LOGGER.isInfoEnabled() ) {
+            if (!(principal instanceof GeoStorePrincipal)) {
+                if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Mismatching auth principal");
                 }
-                throw new InternalErrorWebEx("Mismatching auth principal ("
-                        + principal.getClass() + ")");
+                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
+                        + ")");
             }
 
             GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
@@ -351,33 +352,32 @@ public class RESTUserServiceImpl implements RESTUserService {
             //
             User user = gsp.getUser();
 
-            LOGGER.info("Accessing service with user "
-                    + (user == null ? "GUEST" : user.getName()));
+            LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
             return user;
         }
     }
 
-	@Override
-	public UserList getUserList(SecurityContext sc, String nameLike, Integer page,
-			Integer entries, boolean includeAttributes) throws BadRequestWebEx {
-		
-    	nameLike = nameLike.replaceAll("[*]", "%");
-		
+    @Override
+    public UserList getUserList(SecurityContext sc, String nameLike, Integer page, Integer entries,
+            boolean includeAttributes) throws BadRequestWebEx {
+
+        nameLike = nameLike.replaceAll("[*]", "%");
+
         try {
-			List<User> userList = userService.getAll(page, entries, nameLike, includeAttributes);
-			Iterator<User> iterator = userList.iterator();
-			
-			List<RESTUser> restUSERList = new ArrayList<RESTUser>();
-			while(iterator.hasNext()){
-				User user = iterator.next();
-				
-				RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
-				restUSERList.add(restUser);
-			}
-			
-			return new UserList(restUSERList);
+            List<User> userList = userService.getAll(page, entries, nameLike, includeAttributes);
+            Iterator<User> iterator = userList.iterator();
+
+            List<RESTUser> restUSERList = new ArrayList<RESTUser>();
+            while (iterator.hasNext()) {
+                User user = iterator.next();
+
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+                restUSERList.add(restUser);
+            }
+
+            return new UserList(restUSERList);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
-	}
+    }
 }

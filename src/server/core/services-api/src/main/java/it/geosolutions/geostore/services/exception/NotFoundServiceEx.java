@@ -20,15 +20,15 @@
 package it.geosolutions.geostore.services.exception;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class NotFoundServiceEx extends GeoStoreServiceException {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 25640758991004779L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 25640758991004779L;
 
-	public NotFoundServiceEx(String message) {
+    public NotFoundServiceEx(String message) {
         super(message);
-     }
+    }
 }

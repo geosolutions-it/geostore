@@ -28,106 +28,106 @@ import java.util.Date;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-/** 
+/**
  * Class SecurityDAOTest.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class SecurityDAOTest extends BaseDAOTest {
 
-	final private static Logger LOGGER = Logger.getLogger(SecurityDAOTest.class);
+    final private static Logger LOGGER = Logger.getLogger(SecurityDAOTest.class);
 
-	/**
-	 * @throws Exception
-	 */
-	@Test
-	public void testPersistSecurity() throws Exception {
-		
-		final String NAME = "NAME";
-		
-		if(LOGGER.isDebugEnabled()){
-			LOGGER.debug("Persisting Security");
-		}
-		
+    /**
+     * @throws Exception
+     */
+    @Test
+    public void testPersistSecurity() throws Exception {
+
+        final String NAME = "NAME";
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting Security");
+        }
+
         long categoryId;
         long resourceId;
         long securityId;
-        
+
         //
         // PRE-PERSIST
         //
         {
-        	Category category = new Category();
-        	category.setName("MAP");
-        		
-        	categoryDAO.persist(category);
-        	categoryId = category.getId();
-        	
+            Category category = new Category();
+            category.setName("MAP");
+
+            categoryDAO.persist(category);
+            categoryId = category.getId();
+
             assertEquals(1, categoryDAO.count(null));
-            assertEquals(1, categoryDAO.findAll().size());    
-            
+            assertEquals(1, categoryDAO.findAll().size());
+
             Resource resource = new Resource();
             resource.setName(NAME);
             resource.setCreation(new Date());
             resource.setCategory(category);
-            
+
             resourceDAO.persist(resource);
             resourceId = resource.getId();
 
             assertEquals(1, resourceDAO.count(null));
-            assertEquals(1, resourceDAO.findAll().size());   
-            
-//            SecurityRule security = new SecurityRule();
-//            security.setCanRead(true);
-//            security.setCanWrite(true);
-//            security.setCategory(category);
-//            security.setResource(resource);
-//            
-//            // ///////////////////////////////////////////////////////
-//            // The Exception should be trapped because only one 
-//            // between resource and category can be specified
-//            // ///////////////////////////////////////////////////////
-//	        try{
-//	        	securityDAO.persist(security);
-//	        	fail("Exception not trapped");
-//        	} catch(Exception exc) {
-//        	   if(LOGGER.isDebugEnabled()){
-//        		   LOGGER.debug("OK: exception trapped", exc);
-//        	   }
-//        	}
+            assertEquals(1, resourceDAO.findAll().size());
+
+            // SecurityRule security = new SecurityRule();
+            // security.setCanRead(true);
+            // security.setCanWrite(true);
+            // security.setCategory(category);
+            // security.setResource(resource);
+            //
+            // // ///////////////////////////////////////////////////////
+            // // The Exception should be trapped because only one
+            // // between resource and category can be specified
+            // // ///////////////////////////////////////////////////////
+            // try{
+            // securityDAO.persist(security);
+            // fail("Exception not trapped");
+            // } catch(Exception exc) {
+            // if(LOGGER.isDebugEnabled()){
+            // LOGGER.debug("OK: exception trapped", exc);
+            // }
+            // }
         }
-        
+
         //
         // PERSIST
         //
-        {         
+        {
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
             security.setResource(resourceDAO.find(resourceId));
-            
+
             securityDAO.persist(security);
             securityId = security.getId();
-            
+
             assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());    
+            assertEquals(1, securityDAO.findAll().size());
         }
-        
+
         //
         // UPDATE
         //
         {
-        	SecurityRule loaded = securityDAO.find(securityId);
-            assertNotNull("Can't retrieve Security", loaded);  
-            
+            SecurityRule loaded = securityDAO.find(securityId);
+            assertNotNull("Can't retrieve Security", loaded);
+
             assertTrue(loaded.isCanWrite());
-            
-            loaded.setCanWrite(false);            
+
+            loaded.setCanWrite(false);
             securityDAO.merge(loaded);
-            
+
             loaded = securityDAO.find(securityId);
-        	assertNotNull("Can't retrieve Security", loaded);   
+            assertNotNull("Can't retrieve Security", loaded);
             assertFalse(loaded.isCanWrite());
         }
 
@@ -135,10 +135,10 @@ public class SecurityDAOTest extends BaseDAOTest {
         // LOAD, REMOVE
         //
         {
-        	securityDAO.removeById(securityId);
-            assertNull("Security not deleted", securityDAO.find(categoryId));            
+            securityDAO.removeById(securityId);
+            assertNull("Security not deleted", securityDAO.find(categoryId));
         }
-        
-	}
+
+    }
 
 }

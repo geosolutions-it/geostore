@@ -36,21 +36,21 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-/** 
+/**
  * Class ExtUserList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-@XmlRootElement(name="ExtUserList")
+@XmlRootElement(name = "ExtUserList")
 public class ExtUserList {
 
-	private long count;
-	
+    private long count;
+
     private List<User> list;
 
     public ExtUserList() {
-    	
+
     }
 
     /**
@@ -58,28 +58,28 @@ public class ExtUserList {
      */
     public ExtUserList(long count, List<User> list) {
         this.count = count;
-    	this.list = list;
+        this.list = list;
     }
 
     /**
-	 * @return the count
-	 */
-    @XmlElement(name="UserCount")
-	public long getCount() {
-		return count;
-	}
+     * @return the count
+     */
+    @XmlElement(name = "UserCount")
+    public long getCount() {
+        return count;
+    }
 
-	/**
-	 * @param count the count to set
-	 */
-	public void setCount(long count) {
-		this.count = count;
-	}
-	
+    /**
+     * @param count the count to set
+     */
+    public void setCount(long count) {
+        this.count = count;
+    }
+
     /**
      * @return List<ShortResource>
-     */ 
-    @XmlElement(name="User")
+     */
+    @XmlElement(name = "User")
     public List<User> getList() {
         return list;
     }
@@ -90,10 +90,10 @@ public class ExtUserList {
     public void setList(List<User> list) {
         this.list = list;
     }
-    
-	@XmlTransient
+
+    @XmlTransient
     public boolean isEmpty() {
         return list == null || list.isEmpty();
     }
-    
+
 }

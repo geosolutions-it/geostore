@@ -32,23 +32,23 @@ import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** 
+/**
  * Class RESTStoredData.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 @XmlRootElement(name = "StoredData")
-public class RESTStoredData implements Serializable{
+public class RESTStoredData implements Serializable {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -7571757460032518456L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -7571757460032518456L;
 
-	/** The id. */
+    /** The id. */
     private Long id;
 
     private String data;
-    
+
     /**
      * Instantiates a new instance.
      */
@@ -77,33 +77,35 @@ public class RESTStoredData implements Serializable{
         this.id = id;
     }
 
-	/**
-	 * @return the data
-	 */
-	public String getData() {
-		return data;
-	}
+    /**
+     * @return the data
+     */
+    public String getData() {
+        return data;
+    }
 
-	/**
-	 * @param data the data to set
-	 */
-	public void setData(String data) {
-		this.data = data;
-	}
+    /**
+     * @param data the data to set
+     */
+    public void setData(String data) {
+        this.data = data;
+    }
 
-	/* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#toString()
      */
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
-        
+
         builder.append("id=").append(id).append(", ");
-        
+
         if (data != null)
             builder.append("data=").append(data);
-        
+
         builder.append(']');
         return builder.toString();
     }

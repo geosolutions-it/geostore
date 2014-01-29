@@ -28,51 +28,46 @@ import org.apache.cxf.message.Message;
 
 /**
  * 
- * Class GeoStoreAuthenticationInterceptor. Starting point was
- * JAASLoginInterceptor.
+ * Class GeoStoreAuthenticationInterceptor. Starting point was JAASLoginInterceptor.
  * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public class GeoStoreAuthenticationInterceptor extends
-		AbstractGeoStoreAuthenticationInterceptor {	
-	
-	private UserService userService;
-	
-	/**
-	 * @param userService
-	 *            the userService to set
-	 */
-	public void setUserService(UserService userService) {
-		this.userService = userService;
-	}
-	
-	/**
-	 * Obtain an user from his username
-	 * 
-	 * @param username
-	 *            of the user
-	 * @param message
-	 *            intercepted
-	 * 
-	 * @return user identified with the username
-	 */
-	protected User getUser(String username, Message message) {
-		User user = null;
-		try {
-			// Search on db
-			user = userService.get(username);
-		} catch (NotFoundServiceEx e) {
-			if (LOGGER.isInfoEnabled()){
-				LOGGER.info("Requested user not found: " + username);
-			}
-			// throw exception
-			throw new AccessDeniedException("Not authorized");
-		}
-	
-		return user;
-	
-	}
+public class GeoStoreAuthenticationInterceptor extends AbstractGeoStoreAuthenticationInterceptor {
+
+    private UserService userService;
+
+    /**
+     * @param userService the userService to set
+     */
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    /**
+     * Obtain an user from his username
+     * 
+     * @param username of the user
+     * @param message intercepted
+     * 
+     * @return user identified with the username
+     */
+    protected User getUser(String username, Message message) {
+        User user = null;
+        try {
+            // Search on db
+            user = userService.get(username);
+        } catch (NotFoundServiceEx e) {
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Requested user not found: " + username);
+            }
+            // throw exception
+            throw new AccessDeniedException("Not authorized");
+        }
+
+        return user;
+
+    }
 
 }

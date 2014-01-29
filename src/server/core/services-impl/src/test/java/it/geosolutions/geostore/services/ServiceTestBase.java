@@ -38,18 +38,21 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Class ServiceTestBase.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class ServiceTestBase extends TestCase {
 
     protected static StoredDataService storedDataService;
+
     protected static ResourceService resourceService;
+
     protected static CategoryService categoryService;
+
     protected static UserService userService;
-    
+
     protected static ClassPathXmlApplicationContext ctx = null;
 
     protected final Logger LOGGER = Logger.getLogger(getClass());
@@ -59,9 +62,9 @@ public class ServiceTestBase extends TestCase {
      */
     public ServiceTestBase() {
         synchronized (ServiceTestBase.class) {
-            if ( ctx == null ) {
-                String[] paths = {"classpath*:applicationContext.xml"
-//                         ,"applicationContext-test.xml"
+            if (ctx == null) {
+                String[] paths = { "classpath*:applicationContext.xml"
+                // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
@@ -150,7 +153,7 @@ public class ServiceTestBase extends TestCase {
 
     /**
      * @throws BadRequestServiceEx
-     *
+     * 
      */
     private void removeAllResource() throws BadRequestServiceEx {
         List<ShortResource> list = resourceService.getAll(null, null, null);
@@ -197,7 +200,8 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    protected long createResource(String name, String description, Category category) throws Exception {
+    protected long createResource(String name, String description, Category category)
+            throws Exception {
 
         Resource resource = new Resource();
         resource.setName(name);

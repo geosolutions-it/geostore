@@ -32,21 +32,22 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "Field")
 public class FieldFilter extends SearchFilter implements Serializable {
-	
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 2541950449534850345L;
-	
-	private BaseField field;
-	private String value;
-	
+
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 2541950449534850345L;
+
+    private BaseField field;
+
+    private String value;
+
     private SearchOperator operator;
 
-	/**
+    /**
 	 * 
 	 */
-	public FieldFilter() {
-		
-	}
+    public FieldFilter() {
+
+    }
 
     public FieldFilter(BaseField field, String value, SearchOperator operator) {
         this.field = field;
@@ -83,19 +84,17 @@ public class FieldFilter extends SearchFilter implements Serializable {
         visitor.visit(this);
     }
 
-	@Override
-	public String toString() {
+    @Override
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
-        builder.append(field!=null?field:"!field!");
+        builder.append(field != null ? field : "!field!");
         builder.append(' ');
-        builder.append(operator!=null?operator:"!op!");
+        builder.append(operator != null ? operator : "!op!");
         builder.append(' ');
-        builder.append(value!=null?value:"!value!");
+        builder.append(value != null ? value : "!value!");
         builder.append(']');
         return builder.toString();
-	}
+    }
 
-
-	
 }

@@ -25,15 +25,13 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
-
 /**
  * Interafce StoredDataService. Operations on {@link StoredData StoredData}s.
- *
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public interface StoredDataService
-{
+public interface StoredDataService {
 
     /**
      * @param id

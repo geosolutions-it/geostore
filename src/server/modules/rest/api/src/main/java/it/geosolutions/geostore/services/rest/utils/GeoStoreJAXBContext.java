@@ -19,7 +19,6 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -33,14 +32,14 @@ import javax.xml.bind.JAXBContext;
 import org.apache.log4j.Logger;
 
 /**
- * A JAXBContext of public GeoStore classes.
- * Useful when unmarhasalling geostore classes.
+ * A JAXBContext of public GeoStore classes. Useful when unmarhasalling geostore classes.
  * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class GeoStoreJAXBContext {
 
     private final static Logger LOGGER = Logger.getLogger(GeoStoreJAXBContext.class);
+
     private final static JAXBContext context;
 
     static {
@@ -48,26 +47,26 @@ public class GeoStoreJAXBContext {
     }
 
     /**
-     * Use this method if you need to extend your context, or use the
-     * getContext() method if you need the standard context.
+     * Use this method if you need to extend your context, or use the getContext() method if you need the standard context.
      */
     public static JAXBContext createNewContext() {
         JAXBContext tmpContext = null;
         try {
             // This procedure has been commented out since it has problems in dealing with classes inside jar files.
             // An explicit enumeration of the classes has been implemented instead.
-//            String coreModelPackage = Resource.class.getPackage().getName();
-//            String serviceApiPackage = ShortResource.class.getPackage().getName();
-//            String restApiPackage = RESTResource.class.getPackage().getName();
-//
-//            List<Class> coreModelClasses = getClasses(coreModelPackage);
-//            List<Class> serviceApiClasses = getClasses(serviceApiPackage);
-//            List<Class> restApiClasses = getClasses(restApiPackage);
+            // String coreModelPackage = Resource.class.getPackage().getName();
+            // String serviceApiPackage = ShortResource.class.getPackage().getName();
+            // String restApiPackage = RESTResource.class.getPackage().getName();
+            //
+            // List<Class> coreModelClasses = getClasses(coreModelPackage);
+            // List<Class> serviceApiClasses = getClasses(serviceApiPackage);
+            // List<Class> restApiClasses = getClasses(restApiPackage);
 
             List<Class> allClasses = getGeoStoreClasses();
 
-            if(LOGGER.isDebugEnabled())
-                LOGGER.debug("Initializing GeoStoreJAXBContext with " +  allClasses.size()+ " classes " + allClasses);
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Initializing GeoStoreJAXBContext with " + allClasses.size()
+                        + " classes " + allClasses);
 
             tmpContext = JAXBContext.newInstance(allClasses.toArray(new Class[allClasses.size()]));
         } catch (Exception ex) {
@@ -84,7 +83,8 @@ public class GeoStoreJAXBContext {
         List restApiClasses = getRESTclasses();
 
         // merge the classes and create the context
-        List<Class> allClasses = new ArrayList<Class>(coreModelClasses.size() + serviceApiClasses.size() + restApiClasses.size());
+        List<Class> allClasses = new ArrayList<Class>(coreModelClasses.size()
+                + serviceApiClasses.size() + restApiClasses.size());
         allClasses.addAll(coreModelClasses);
         allClasses.addAll(serviceApiClasses);
         allClasses.addAll(restApiClasses);
@@ -92,72 +92,69 @@ public class GeoStoreJAXBContext {
         return allClasses;
     }
 
-    private static List<Class<? extends Serializable>>getModelClasses() {
-        return Arrays.asList(
-            it.geosolutions.geostore.core.model.Attribute.class,
-            it.geosolutions.geostore.core.model.Category.class,
-            it.geosolutions.geostore.core.model.Resource.class,
-            it.geosolutions.geostore.core.model.SecurityRule.class,
-            it.geosolutions.geostore.core.model.StoredData.class,
-            it.geosolutions.geostore.core.model.User.class,
-            it.geosolutions.geostore.core.model.UserAttribute.class,
-            it.geosolutions.geostore.core.model.UserGroup.class,
-            it.geosolutions.geostore.core.model.enums.AccessType.class,
-            it.geosolutions.geostore.core.model.enums.DataType.class,
-            it.geosolutions.geostore.core.model.enums.Role.class);
+    private static List<Class<? extends Serializable>> getModelClasses() {
+        return Arrays.asList(it.geosolutions.geostore.core.model.Attribute.class,
+                it.geosolutions.geostore.core.model.Category.class,
+                it.geosolutions.geostore.core.model.Resource.class,
+                it.geosolutions.geostore.core.model.SecurityRule.class,
+                it.geosolutions.geostore.core.model.StoredData.class,
+                it.geosolutions.geostore.core.model.User.class,
+                it.geosolutions.geostore.core.model.UserAttribute.class,
+                it.geosolutions.geostore.core.model.UserGroup.class,
+                it.geosolutions.geostore.core.model.enums.AccessType.class,
+                it.geosolutions.geostore.core.model.enums.DataType.class,
+                it.geosolutions.geostore.core.model.enums.Role.class);
     }
 
-    private static List<Class<? extends Serializable>>getAPIclasses() {
-        return Arrays.asList(
-            it.geosolutions.geostore.services.dto.ShortAttribute.class,
-            it.geosolutions.geostore.services.dto.ShortResource.class,
-            it.geosolutions.geostore.services.dto.search.AndFilter.class,
-            it.geosolutions.geostore.services.dto.search.AttributeFilter.class,
-            it.geosolutions.geostore.services.dto.search.BaseField.class,
-            it.geosolutions.geostore.services.dto.search.CategoryFilter.class,
-            it.geosolutions.geostore.services.dto.search.FieldFilter.class,
-            it.geosolutions.geostore.services.dto.search.NotFilter.class,
-            it.geosolutions.geostore.services.dto.search.OrFilter.class,
-            it.geosolutions.geostore.services.dto.search.SearchFilter.class,
-            it.geosolutions.geostore.services.dto.search.SearchOperator.class);
+    private static List<Class<? extends Serializable>> getAPIclasses() {
+        return Arrays.asList(it.geosolutions.geostore.services.dto.ShortAttribute.class,
+                it.geosolutions.geostore.services.dto.ShortResource.class,
+                it.geosolutions.geostore.services.dto.search.AndFilter.class,
+                it.geosolutions.geostore.services.dto.search.AttributeFilter.class,
+                it.geosolutions.geostore.services.dto.search.BaseField.class,
+                it.geosolutions.geostore.services.dto.search.CategoryFilter.class,
+                it.geosolutions.geostore.services.dto.search.FieldFilter.class,
+                it.geosolutions.geostore.services.dto.search.NotFilter.class,
+                it.geosolutions.geostore.services.dto.search.OrFilter.class,
+                it.geosolutions.geostore.services.dto.search.SearchFilter.class,
+                it.geosolutions.geostore.services.dto.search.SearchOperator.class);
 
     }
 
-    private static List<Class<?>>getRESTclasses() {
-        return Arrays.asList(
-            it.geosolutions.geostore.services.rest.model.CategoryList.class
-            ,it.geosolutions.geostore.services.rest.model.RESTResource.class
-            ,it.geosolutions.geostore.services.rest.model.RESTCategory.class
-            ,it.geosolutions.geostore.services.rest.model.StoredDataList.class
-            ,it.geosolutions.geostore.services.rest.model.ShortAttributeList.class
-            ,it.geosolutions.geostore.services.rest.model.UserList.class
-            ,it.geosolutions.geostore.services.rest.model.ShortResourceList.class
-            ,it.geosolutions.geostore.services.rest.model.RESTStoredData.class
-            ,it.geosolutions.geostore.services.rest.model.RESTQuickBackup.class
-            ,it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCategory.class
-            ,it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource.class
-        );
+    private static List<Class<?>> getRESTclasses() {
+        return Arrays
+                .asList(it.geosolutions.geostore.services.rest.model.CategoryList.class,
+                        it.geosolutions.geostore.services.rest.model.RESTResource.class,
+                        it.geosolutions.geostore.services.rest.model.RESTCategory.class,
+                        it.geosolutions.geostore.services.rest.model.StoredDataList.class,
+                        it.geosolutions.geostore.services.rest.model.ShortAttributeList.class,
+                        it.geosolutions.geostore.services.rest.model.UserList.class,
+                        it.geosolutions.geostore.services.rest.model.ShortResourceList.class,
+                        it.geosolutions.geostore.services.rest.model.RESTStoredData.class,
+                        it.geosolutions.geostore.services.rest.model.RESTQuickBackup.class,
+                        it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCategory.class,
+                        it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource.class);
     }
 
     public static JAXBContext getContext() {
-        if(context == null)
+        if (context == null)
             throw new IllegalStateException("Context has not been properly initialized");
         return context;
     }
-    
+
     /**
      * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
-     *
+     * 
      * @param packageName The base package
      * @return The classes
      * @throws ClassNotFoundException
      * @throws IOException
      */
     @SuppressWarnings("unchecked")
-    private static List<Class> getClasses(String packageName)
-            throws ClassNotFoundException, IOException {
-        
-        if(LOGGER.isDebugEnabled())
+    private static List<Class> getClasses(String packageName) throws ClassNotFoundException,
+            IOException {
+
+        if (LOGGER.isDebugEnabled())
             LOGGER.debug("Loading classes from " + packageName);
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         assert classLoader != null;
@@ -168,9 +165,9 @@ public class GeoStoreJAXBContext {
             URL resource = resources.nextElement();
             String fileName = resource.getFile();
 
-            if(LOGGER.isDebugEnabled())
+            if (LOGGER.isDebugEnabled())
                 LOGGER.debug("   adding resource " + fileName);
-            
+
             String fileNameDecoded = URLDecoder.decode(fileName, "UTF-8");
             dirs.add(new File(fileNameDecoded));
         }
@@ -183,16 +180,17 @@ public class GeoStoreJAXBContext {
 
     /**
      * Recursive method used to find all classes in a given directory and subdirs.
-     *
+     * 
      * This method is not useful if classes are inside a jar file.
-     *
-     * @param directory   The base directory
+     * 
+     * @param directory The base directory
      * @param packageName The package name for classes found inside the base directory
      * @return The classes
      * @throws ClassNotFoundException
      */
     @SuppressWarnings("unchecked")
-    private static List<Class> findClasses(File directory, String packageName) throws ClassNotFoundException {
+    private static List<Class> findClasses(File directory, String packageName)
+            throws ClassNotFoundException {
         List<Class> classes = new ArrayList<Class>();
         if (!directory.exists()) {
             LOGGER.debug("Directory not found :" + directory);
@@ -208,12 +206,14 @@ public class GeoStoreJAXBContext {
             } else if (fileName.endsWith(".class") && !fileName.contains("$")) {
                 Class _class;
                 try {
-                    _class = Class.forName(packageName + '.' + fileName.substring(0, fileName.length() - 6));
+                    _class = Class.forName(packageName + '.'
+                            + fileName.substring(0, fileName.length() - 6));
                 } catch (ExceptionInInitializerError e) {
                     // happen, for example, in classes, which depend on
                     // Spring to inject some beans, and which fail,
                     // if dependency is not fulfilled
-                    _class = Class.forName(packageName + '.' + fileName.substring(0, fileName.length() - 6),
+                    _class = Class.forName(
+                            packageName + '.' + fileName.substring(0, fileName.length() - 6),
                             false, Thread.currentThread().getContextClassLoader());
                 }
                 classes.add(_class);

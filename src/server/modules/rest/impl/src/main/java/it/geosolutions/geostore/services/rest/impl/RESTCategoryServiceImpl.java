@@ -54,91 +54,95 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
 
-/** 
+/**
  * Class RESTCategoryServiceImpl.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-public class RESTCategoryServiceImpl implements RESTCategoryService{
-	
+public class RESTCategoryServiceImpl implements RESTCategoryService {
+
     private final static Logger LOGGER = Logger.getLogger(RESTCategoryServiceImpl.class);
 
     private CategoryService categoryService;
-    
-    /**
-	 * @param categoryService the categoryService to set
-	 */
-	public void setCategoryService(CategoryService categoryService) {
-		this.categoryService = categoryService;
-	}
 
-    /* (non-Javadoc)
+    /**
+     * @param categoryService the categoryService to set
+     */
+    public void setCategoryService(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#insert(it.geosolutions.geostore.core.model.Category)
      */
     @Override
-    public long insert(SecurityContext sc, Category category){
-        if(category == null)
+    public long insert(SecurityContext sc, Category category) {
+        if (category == null)
             throw new BadRequestWebEx("Category is null");
-        if(category.getId() != null)
+        if (category.getId() != null)
             throw new BadRequestWebEx("Id should be null");
 
         long id = -1;
-        
+
         //
         // Preparing Security Rule
         //
-//        User authUser = extractAuthUser(sc);
-        
-//        SecurityRule securityRule = new SecurityRule();
-//        securityRule.setCanRead(true);
-//        securityRule.setCanWrite(true);
-//        securityRule.setUser(authUser);
-//        
-//        List<SecurityRule> securities = new ArrayList<SecurityRule>();
-//        securities.add(securityRule);
-//        
-//        category.setSecurity(securities);
-        
+        // User authUser = extractAuthUser(sc);
+
+        // SecurityRule securityRule = new SecurityRule();
+        // securityRule.setCanRead(true);
+        // securityRule.setCanWrite(true);
+        // securityRule.setUser(authUser);
+        //
+        // List<SecurityRule> securities = new ArrayList<SecurityRule>();
+        // securities.add(securityRule);
+        //
+        // category.setSecurity(securities);
+
         try {
-			id = categoryService.insert(category);
-		} catch (NotFoundServiceEx e) {
-			throw new NotFoundWebEx(e.getMessage());
-		} catch (BadRequestServiceEx e) {
-			throw new BadRequestWebEx(e.getMessage());
-		}
-		
-		return id;
+            id = categoryService.insert(category);
+        } catch (NotFoundServiceEx e) {
+            throw new NotFoundWebEx(e.getMessage());
+        } catch (BadRequestServiceEx e) {
+            throw new BadRequestWebEx(e.getMessage());
+        }
+
+        return id;
     }
-    
+
     @Override
-    public long update(SecurityContext sc, long id, Category category){
-    	try {
-    		Category old = categoryService.get(id);
-            if(old == null)
+    public long update(SecurityContext sc, long id, Category category) {
+        try {
+            Category old = categoryService.get(id);
+            if (old == null)
                 throw new NotFoundWebEx("Category not found");
-            
+
             //
             // Authorization check.
             //
             boolean canUpdate = false;
-			User authUser = extractAuthUser(sc);
-			canUpdate = resourceAccess(authUser, old.getId());
+            User authUser = extractAuthUser(sc);
+            canUpdate = resourceAccess(authUser, old.getId());
 
-    		if(canUpdate){
-    			id = categoryService.update(category);
-    		}else{
-    			throw new ForbiddenErrorWebEx("This user cannot update this category !");
-    		}
-			
-		} catch (BadRequestServiceEx e) {
-			throw new BadRequestWebEx(e.getMessage());
-		}
-		
-		return id;
+            if (canUpdate) {
+                id = categoryService.update(category);
+            } else {
+                throw new ForbiddenErrorWebEx("This user cannot update this category !");
+            }
+
+        } catch (BadRequestServiceEx e) {
+            throw new BadRequestWebEx(e.getMessage());
+        }
+
+        return id;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#delete(long)
      */
     @Override
@@ -147,47 +151,52 @@ public class RESTCategoryServiceImpl implements RESTCategoryService{
         // Authorization check.
         //
         boolean canDelete = false;
-		User authUser = extractAuthUser(sc);
-		canDelete = resourceAccess(authUser, id);  			
-		
-		if(canDelete){
-	        boolean ret = categoryService.delete(id);
-	        if(!ret)
-	            throw new NotFoundWebEx("Category not found");
-		}else
-			throw new ForbiddenErrorWebEx("This user cannot delete this category !");
+        User authUser = extractAuthUser(sc);
+        canDelete = resourceAccess(authUser, id);
+
+        if (canDelete) {
+            boolean ret = categoryService.delete(id);
+            if (!ret)
+                throw new NotFoundWebEx("Category not found");
+        } else
+            throw new ForbiddenErrorWebEx("This user cannot delete this category !");
 
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#get(long)
      */
     @Override
     public Category get(SecurityContext sc, long id) throws NotFoundWebEx {
-        if(id == -1) { 
-        	if(LOGGER.isDebugEnabled())
-        		LOGGER.debug("Retriving dummy data !");
-        	
-        	//
-        	// return test instance
-        	//
-        	Category category = new Category();
-        	category.setName("dummy name");
+        if (id == -1) {
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Retriving dummy data !");
+
+            //
+            // return test instance
+            //
+            Category category = new Category();
+            category.setName("dummy name");
             return category;
         }
 
         Category ret = categoryService.get(id);
-        if(ret == null)
+        if (ret == null)
             throw new NotFoundWebEx("Category not found");
-        
+
         return ret;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public CategoryList getAll(SecurityContext sc, Integer page, Integer entries) throws BadRequestWebEx {
+    public CategoryList getAll(SecurityContext sc, Integer page, Integer entries)
+            throws BadRequestWebEx {
         try {
             return new CategoryList(categoryService.getAll(page, entries));
         } catch (BadRequestServiceEx ex) {
@@ -195,12 +204,14 @@ public class RESTCategoryServiceImpl implements RESTCategoryService{
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#getCount(java.lang.String)
      */
     @Override
     public long getCount(SecurityContext sc, String nameLike) {
-    	nameLike = nameLike.replaceAll("[*]", "%");
+        nameLike = nameLike.replaceAll("[*]", "%");
         return categoryService.getCount(nameLike);
     }
 
@@ -208,28 +219,29 @@ public class RESTCategoryServiceImpl implements RESTCategoryService{
      * @return User - The authenticated user that is accessing this service, or null if guest access.
      */
     private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if(sc == null)
+        if (sc == null)
             throw new InternalErrorWebEx("Missing auth info");
         else {
             Principal principal = sc.getUserPrincipal();
-            if(principal == null){
-    			if(LOGGER.isInfoEnabled())
-    				LOGGER.info("Missing auth principal");
-    			throw new InternalErrorWebEx("Missing auth principal");
-            }
-                
-            if( ! (principal instanceof GeoStorePrincipal )){
-    			if(LOGGER.isInfoEnabled())
-    				LOGGER.info("Missing auth principal");
-    			throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")");
+            if (principal == null) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Missing auth principal");
+                throw new InternalErrorWebEx("Missing auth principal");
             }
 
-            GeoStorePrincipal gsp = (GeoStorePrincipal)principal;
-            
+            if (!(principal instanceof GeoStorePrincipal)) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Missing auth principal");
+                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
+                        + ")");
+            }
+
+            GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
+
             //
             // may be null if guest
             //
-            User user = gsp.getUser(); 
+            User user = gsp.getUser();
 
             LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
             return user;
@@ -237,25 +249,25 @@ public class RESTCategoryServiceImpl implements RESTCategoryService{
     }
 
     /**
-     * Check if the user can access the requested resource (is own resource or not ?) 
-	 * in order to update it.
-	 * 
+     * Check if the user can access the requested resource (is own resource or not ?) in order to update it.
+     * 
      * @param resource
      * @return boolean
      */
     private boolean resourceAccess(User authUser, long resourceId) {
-    	boolean canAccess = false;
-    	
-    	if(authUser.getRole().equals(Role.ADMIN)){
-    		canAccess = true;
-    	}else{
-        	List<SecurityRule> securityRules  = categoryService.getUserSecurityRule(authUser.getName(), resourceId);
-    		
-    		if(securityRules != null && securityRules.size() > 0)
-    			canAccess = true;
-    	}
-		
-		return canAccess;
+        boolean canAccess = false;
+
+        if (authUser.getRole().equals(Role.ADMIN)) {
+            canAccess = true;
+        } else {
+            List<SecurityRule> securityRules = categoryService.getUserSecurityRule(
+                    authUser.getName(), resourceId);
+
+            if (securityRules != null && securityRules.size() > 0)
+                canAccess = true;
+        }
+
+        return canAccess;
     }
-    
+
 }

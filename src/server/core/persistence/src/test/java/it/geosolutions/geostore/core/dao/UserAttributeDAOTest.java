@@ -27,95 +27,95 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-/** 
+/**
  * Class RoleDAOTest.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class UserAttributeDAOTest extends BaseDAOTest {
 
-	final private static Logger LOGGER = Logger.getLogger(UserAttributeDAOTest.class);
+    final private static Logger LOGGER = Logger.getLogger(UserAttributeDAOTest.class);
 
-	/**
-	 * @throws Exception
-	 */
-	@Test
-	public void testPersistRole() throws Exception {
-		
+    /**
+     * @throws Exception
+     */
+    @Test
+    public void testPersistRole() throws Exception {
+
         final String VALUE1 = "value1";
         final String VALUE2 = "value2";
-        
-		if(LOGGER.isDebugEnabled()){
-			LOGGER.debug("Persisting Role");
-		}
-		
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting Role");
+        }
+
         long attributeId;
-        
+
         //
         // PERSIST
         //
-        { 
-	        UserGroup group = new UserGroup();
-	        group.setGroupName("GROUP1");
-	        
-	        userGroupDAO.persist(group);
-	        
+        {
+            UserGroup group = new UserGroup();
+            group.setGroupName("GROUP1");
+
+            userGroupDAO.persist(group);
+
             assertEquals(1, userGroupDAO.count(null));
-            assertEquals(1, userGroupDAO.findAll().size());    
-	        
-	        User user = new User();
-	        user.setGroup(group);
-	        user.setName("USER_NAME");
-	        user.setNewPassword("user");
-	        user.setRole(Role.ADMIN);
-	        
-	        userDAO.persist(user);
-	        
+            assertEquals(1, userGroupDAO.findAll().size());
+
+            User user = new User();
+            user.setGroup(group);
+            user.setName("USER_NAME");
+            user.setNewPassword("user");
+            user.setRole(Role.ADMIN);
+
+            userDAO.persist(user);
+
             assertEquals(1, userDAO.count(null));
-            assertEquals(1, userDAO.findAll().size());   
-            
-	        UserAttribute attribute = new UserAttribute();
-	        attribute.setName("attr1");
-	        attribute.setValue(VALUE1);
-	        attribute.setUser(user);
-	       
-	        userAttributeDAO.persist(attribute);
-	        attributeId = attribute.getId();
-	        
+            assertEquals(1, userDAO.findAll().size());
+
+            UserAttribute attribute = new UserAttribute();
+            attribute.setName("attr1");
+            attribute.setValue(VALUE1);
+            attribute.setUser(user);
+
+            userAttributeDAO.persist(attribute);
+            attributeId = attribute.getId();
+
             assertEquals(1, userAttributeDAO.count(null));
-            assertEquals(1, userAttributeDAO.findAll().size());   
+            assertEquals(1, userAttributeDAO.findAll().size());
         }
 
         //
         // UPDATE AND LOAD
         //
         {
-        	UserAttribute loaded = userAttributeDAO.find(attributeId);
+            UserAttribute loaded = userAttributeDAO.find(attributeId);
             assertNotNull("Can't retrieve UserAttribute", loaded);
-            
+
             assertEquals(VALUE1, loaded.getValue());
             loaded.setValue(VALUE2);
             userAttributeDAO.merge(loaded);
         }
 
         {
-        	UserAttribute loaded = userAttributeDAO.find(attributeId);
+            UserAttribute loaded = userAttributeDAO.find(attributeId);
             assertNotNull("Can't retrieve UserAttribute", loaded);
             assertEquals(VALUE2, loaded.getValue());
         }
-        
+
         //
         // LOAD, REMOVE
         //
         {
-        	UserAttribute loaded = userAttributeDAO.find(attributeId);
-        	assertNotNull("Can't retrieve Role", loaded);   
-        	
-        	userAttributeDAO.removeById(attributeId);
-        	assertNull("Role not deleted", userAttributeDAO.find(attributeId));     
+            UserAttribute loaded = userAttributeDAO.find(attributeId);
+            assertNotNull("Can't retrieve Role", loaded);
+
+            userAttributeDAO.removeById(attributeId);
+            assertNull("Role not deleted", userAttributeDAO.find(attributeId));
         }
 
-	}
+    }
 
 }

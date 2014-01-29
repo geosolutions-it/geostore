@@ -53,11 +53,11 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 
-/** 
+/**
  * Interface RESTExtJsService.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public interface RESTExtJsService {
 
@@ -70,24 +70,20 @@ public interface RESTExtJsService {
      */
     @GET
     @Path("/search/{nameLike}")
-    @Produces({MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    String getAllResources(
-    		@Context SecurityContext sc,
-    		@PathParam("nameLike") String nameLike,
-            @QueryParam("start") Integer start,
-            @QueryParam("limit") Integer limit)throws BadRequestWebEx;
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String getAllResources(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit)
+            throws BadRequestWebEx;
 
     @GET
     @Path("/search/category/{categoryName}")
-    @Produces({MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    String getResourcesByCategory(
-    		@Context SecurityContext sc,
-    		@PathParam("categoryName") String categoryName,
-            @QueryParam("start") Integer start,
-            @QueryParam("limit") Integer limit)throws BadRequestWebEx, InternalErrorWebEx;
-    
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String getResourcesByCategory(@Context SecurityContext sc,
+            @PathParam("categoryName") String categoryName, @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit) throws BadRequestWebEx, InternalErrorWebEx;
+
     /**
      * @param sc
      * @param filter
@@ -101,16 +97,14 @@ public interface RESTExtJsService {
     @POST
     @GET
     @Path("/search/list")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    ExtResourceList getExtResourcesList(
-    		@Context SecurityContext sc, 
-            @QueryParam("start") Integer start,
-            @QueryParam("limit") Integer limit,
-            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes,
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    ExtResourceList getExtResourcesList(@Context SecurityContext sc,
+            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
+            @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
-    
+
     /**
      * @param sc
      * @param page
@@ -120,13 +114,11 @@ public interface RESTExtJsService {
      */
     @GET
     @Path("/search/users/{nameLike}")
-    @Produces({MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER"})
-    ExtUserList getUsersList(
-    		@Context SecurityContext sc,
-    		@PathParam("nameLike") String nameLike,
-            @QueryParam("start") Integer start,
-            @QueryParam("limit") Integer limit,
-            @QueryParam("includeAttributes")@DefaultValue("false") boolean includeAttributes)throws BadRequestWebEx;
-    
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER" })
+    ExtUserList getUsersList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
+            @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes)
+            throws BadRequestWebEx;
+
 }

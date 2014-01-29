@@ -29,10 +29,11 @@ import java.util.Date;
 
 import org.junit.Test;
 
-/** 
+/**
  * Class ResourceDAOTest
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class ResourceDAOTest extends BaseDAOTest {
 
@@ -45,69 +46,69 @@ public class ResourceDAOTest extends BaseDAOTest {
         long dataId;
         long resourceId;
         long securityId;
-        
+
         //
         // PERSIST
         //
         {
-        	Category category = new Category();
-        	category.setName("MAP");
-        		
-        	categoryDAO.persist(category);
-        	
+            Category category = new Category();
+            category.setName("MAP");
+
+            categoryDAO.persist(category);
+
             assertEquals(1, categoryDAO.count(null));
-            assertEquals(1, categoryDAO.findAll().size());     
-        	
+            assertEquals(1, categoryDAO.findAll().size());
+
             Resource resource = new Resource();
             resource.setName(NAME1);
             resource.setCreation(new Date());
             resource.setCategory(category);
-            
+
             resourceDAO.persist(resource);
             resourceId = resource.getId();
-            
+
             assertEquals(1, resourceDAO.count(null));
-            assertEquals(1, resourceDAO.findAll().size());  
-            
+            assertEquals(1, resourceDAO.findAll().size());
+
             StoredData data = new StoredData();
             data.setData("Dummy data");
             data.setResource(resource);
             data.setId(resource.getId());
-            
+
             storedDataDAO.persist(data);
             dataId = data.getId();
-            
+
             assertEquals(1, storedDataDAO.count(null));
-            assertEquals(1, storedDataDAO.findAll().size());  
-   
-            assertEquals(dataId, resourceId); 
-            
+            assertEquals(1, storedDataDAO.findAll().size());
+
+            assertEquals(dataId, resourceId);
+
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
             security.setResource(resource);
-            
-	        securityDAO.persist(security);
-	        securityId = security.getId();
-	        
+
+            securityDAO.persist(security);
+            securityId = security.getId();
+
             assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());   
+            assertEquals(1, securityDAO.findAll().size());
         }
-        
+
         //
         // UPDATE AND LOAD
         //
         {
-        	Resource loaded = resourceDAO.find(resourceId);
+            Resource loaded = resourceDAO.find(resourceId);
             assertNotNull("Can't retrieve resource", loaded);
-            
+
             assertEquals(NAME1, loaded.getName());
             loaded.setName(NAME2);
             resourceDAO.merge(loaded);
         }
 
         {
-        	Resource loaded = resourceDAO.find(resourceId);
+            Resource loaded = resourceDAO.find(resourceId);
             assertNotNull("Can't retrieve resource", loaded);
             assertEquals(NAME2, loaded.getName());
         }
@@ -116,21 +117,21 @@ public class ResourceDAOTest extends BaseDAOTest {
         // REMOVE, CASCADING
         //
         {
-        	Resource loaded = resourceDAO.find(resourceId);
-        	StoredData data = loaded.getData();
-        	
-        	assertNotNull("Can't retrieve StoredData from Resource", data);
-        	
+            Resource loaded = resourceDAO.find(resourceId);
+            StoredData data = loaded.getData();
+
+            assertNotNull("Can't retrieve StoredData from Resource", data);
+
             resourceDAO.removeById(resourceId);
             assertNull("Resource not deleted", resourceDAO.find(resourceId));
-            
+
             //
             // Cascading
             //
-            assertNull("SecurityRule not deleted", securityDAO.find(securityId));    
+            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
             assertNull("StoredData not deleted", storedDataDAO.find(dataId));
         }
-        
+
     }
 
 }

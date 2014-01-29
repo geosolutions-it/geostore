@@ -22,16 +22,16 @@ package it.geosolutions.geostore.services.rest.exception;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class BadRequestWebEx extends GeoStoreWebEx {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -2585698525010604674L;
-	
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -2585698525010604674L;
+
     public BadRequestWebEx(String message) {
         super(Response.Status.BAD_REQUEST, message);
-     }
+    }
 
 }

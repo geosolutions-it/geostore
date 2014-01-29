@@ -37,14 +37,16 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
     private final static JAXBContext context = GeoStoreJAXBContext.getContext();
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see javax.ws.rs.ext.ContextResolver#getContext(java.lang.Class)
      */
     @Override
     public JAXBContext getContext(Class<?> clazz) {
-    	 if(clazz.equals(SearchFilter.class))
-             return context;
-         return null;
+        if (clazz.equals(SearchFilter.class))
+            return context;
+        return null;
     }
 
 }

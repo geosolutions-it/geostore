@@ -29,19 +29,17 @@ import javax.persistence.PersistenceContext;
 
 import org.springframework.stereotype.Repository;
 
-
 /**
- *
+ * 
  * Class BaseDAO.
- *
+ * 
  * The base DAO furnish a set of methods usually used
- *
+ * 
  * @author Tobia Di Pisa (tobia.dipisa@geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Repository(value = "geostore")
-public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID>
-{
+public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
 
     @PersistenceContext(unitName = "geostoreEntityManagerFactory")
     private EntityManager entityManager;
@@ -50,38 +48,33 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID>
 
     /**
      * EntityManager setting
-     *
-     * @param entityManager
-     *            the entity manager to set
+     * 
+     * @param entityManager the entity manager to set
      */
     @Override
-    public void setEntityManager(EntityManager entityManager)
-    {
+    public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
         super.setEntityManager(this.entityManager);
     }
 
     /**
      * JPASearchProcessor setting
-     *
-     * @param searchProcessor
-     *            the search processor to set
+     * 
+     * @param searchProcessor the search processor to set
      */
     @Override
-    public void setSearchProcessor(JPASearchProcessor searchProcessor)
-    {
+    public void setSearchProcessor(JPASearchProcessor searchProcessor) {
         this.searchProcessor = searchProcessor;
         super.setSearchProcessor(this.searchProcessor);
     }
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see com.trg.dao.jpa.JPABaseDAO#em()
      */
     @Override
-    public EntityManager em()
-    {
+    public EntityManager em() {
         return this.entityManager;
     }
 }

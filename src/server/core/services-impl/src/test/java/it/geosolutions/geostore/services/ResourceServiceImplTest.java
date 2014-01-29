@@ -34,9 +34,9 @@ import org.junit.Test;
 
 /**
  * Class ResourceServiceImplTest.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class ResourceServiceImplTest extends ServiceTestBase {
 
@@ -54,10 +54,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     @Test
     public void testInsertDeleteResource() throws Exception {
 
-        long resourceId = createResource(
-                "name1",
-                "description1",
-                "MAP");
+        long resourceId = createResource("name1", "description1", "MAP");
 
         assertEquals(1, resourceService.getCount(null));
         assertTrue("Could not delete resource", resourceService.delete(resourceId));
@@ -69,10 +66,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         final String NAME1 = "name1";
         final String NAME2 = "name2";
 
-        long resourceId = createResource(
-                NAME1,
-                "description1",
-                "MAP");
+        long resourceId = createResource(NAME1, "description1", "MAP");
 
         assertEquals(1, resourceService.getCount(null));
 
@@ -106,17 +100,11 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(0, resourceService.getAll(null, null, null).size());
 
         for (int i = 0; i < 10; i++) {
-            createResource(
-                    "name" + i,
-                    "description" + i,
-                    "MAP1" + i);
+            createResource("name" + i, "description" + i, "MAP1" + i);
         }
 
         for (int i = 0; i < 10; i++) {
-            createResource(
-                    "test name" + i,
-                    "description" + i,
-                    "MAP2" + i);
+            createResource("test name" + i, "description" + i, "MAP2" + i);
         }
 
         assertEquals(20, resourceService.getAll(null, null, null).size());
@@ -144,7 +132,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
         Category c1n = new Category();
         c1n.setName("category1");
-
 
         assertEquals(0, resourceService.getAll(null, null, null).size());
 

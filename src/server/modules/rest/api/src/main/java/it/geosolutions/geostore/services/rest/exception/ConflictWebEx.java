@@ -22,12 +22,12 @@ package it.geosolutions.geostore.services.rest.exception;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class ConflictWebEx extends GeoStoreWebEx {
-	
+
     public ConflictWebEx(String message) {
         super(Response.Status.CONFLICT, message);
-     }
+    }
 }

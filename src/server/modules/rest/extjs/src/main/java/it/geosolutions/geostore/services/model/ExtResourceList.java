@@ -36,21 +36,21 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-/** 
+/**
  * Class ExtResourceList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-@XmlRootElement(name="ExtResourceList")
+@XmlRootElement(name = "ExtResourceList")
 public class ExtResourceList {
 
-	private long count;
-	
+    private long count;
+
     private List<Resource> list;
 
     public ExtResourceList() {
-    	
+
     }
 
     /**
@@ -58,28 +58,28 @@ public class ExtResourceList {
      */
     public ExtResourceList(long count, List<Resource> list) {
         this.count = count;
-    	this.list = list;
+        this.list = list;
     }
 
     /**
-	 * @return the count
-	 */
-    @XmlElement(name="ResourceCount")
-	public long getCount() {
-		return count;
-	}
+     * @return the count
+     */
+    @XmlElement(name = "ResourceCount")
+    public long getCount() {
+        return count;
+    }
 
-	/**
-	 * @param count the count to set
-	 */
-	public void setCount(long count) {
-		this.count = count;
-	}
-	
+    /**
+     * @param count the count to set
+     */
+    public void setCount(long count) {
+        this.count = count;
+    }
+
     /**
      * @return List<ShortResource>
-     */ 
-    @XmlElement(name="Resource")
+     */
+    @XmlElement(name = "Resource")
     public List<Resource> getList() {
         return list;
     }
@@ -90,10 +90,10 @@ public class ExtResourceList {
     public void setList(List<Resource> list) {
         this.list = list;
     }
-    
-	@XmlTransient
+
+    @XmlTransient
     public boolean isEmpty() {
         return list == null || list.isEmpty();
     }
-    
+
 }

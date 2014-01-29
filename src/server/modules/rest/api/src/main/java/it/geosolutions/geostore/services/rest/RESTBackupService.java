@@ -41,17 +41,16 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 
-
 import javax.ws.rs.core.SecurityContext;
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 
-/** 
+/**
  * Backup/restore REST service
  * 
  * @author ETj (etj at geo-solutions.it)
  */
-    @RolesAllowed({"ADMIN"})
-    public interface RESTBackupService {
+@RolesAllowed({ "ADMIN" })
+public interface RESTBackupService {
 
     /**
      * @param id
@@ -60,48 +59,37 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
      */
     @GET
     @Path("/full")
-    @Produces({MediaType.TEXT_PLAIN})
-    @RolesAllowed({"ADMIN"})
+    @Produces({ MediaType.TEXT_PLAIN })
+    @RolesAllowed({ "ADMIN" })
     String backup(@Context SecurityContext sc);
 
     @PUT
     @Path("/full/{token}")
-    @Produces({MediaType.TEXT_PLAIN})
-    @RolesAllowed({"ADMIN"})
-    String restore(@Context SecurityContext sc,
-            @PathParam("token") String token);
-
+    @Produces({ MediaType.TEXT_PLAIN })
+    @RolesAllowed({ "ADMIN" })
+    String restore(@Context SecurityContext sc, @PathParam("token") String token);
 
     /**
-     * Quick backup is a backup that is built in memory.
-     * It can only be issued when the data base in the store is not very big.
-     * Furthermore, most internal params are not backup/restored (creation time, ...)
-     * Most important, <b>neither users or authentication info are backupped</b>.
-     *
+     * Quick backup is a backup that is built in memory. It can only be issued when the data base in the store is not very big. Furthermore, most
+     * internal params are not backup/restored (creation time, ...) Most important, <b>neither users or authentication info are backupped</b>.
+     * 
      */
     @GET
     @Path("/quick")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN"})
-    RESTQuickBackup quickBackup(
-    		@Context SecurityContext sc)
-            throws BadRequestServiceEx ;
-
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN" })
+    RESTQuickBackup quickBackup(@Context SecurityContext sc) throws BadRequestServiceEx;
 
     /**
-     * Quick backup is a backup that is built in memory.
-     * It can only be issued when the data base in the store is not very big.
-     * Furthermore, most internal params are not backup/restored (creation time, ...)
-     * Most important, <b>neither users or authentication info are backupped</b>.
-     *
+     * Quick backup is a backup that is built in memory. It can only be issued when the data base in the store is not very big. Furthermore, most
+     * internal params are not backup/restored (creation time, ...) Most important, <b>neither users or authentication info are backupped</b>.
+     * 
      */
     @PUT
     @Path("/quick")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN"})
-    String quickRestore(
-    		@Context SecurityContext sc,
-            @Multipart("backup") RESTQuickBackup backup)
-            throws BadRequestServiceEx ;
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN" })
+    String quickRestore(@Context SecurityContext sc, @Multipart("backup") RESTQuickBackup backup)
+            throws BadRequestServiceEx;
 
 }

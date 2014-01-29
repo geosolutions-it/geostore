@@ -32,118 +32,117 @@ import java.util.Date;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-/** 
+/**
  * Class UserDAOTest.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class UserDAOTest extends BaseDAOTest {
 
-	final private static Logger LOGGER = Logger.getLogger(UserDAOTest.class);
+    final private static Logger LOGGER = Logger.getLogger(UserDAOTest.class);
 
-	/**
-	 * @throws Exception
-	 */
-	@Test
-	public void testPersistUser() throws Exception {
-		
-		final String NAME = "NAME";
-		final String VALUE = "value";
-		
-		if(LOGGER.isDebugEnabled()){
-			LOGGER.debug("Persisting User");
-		}
-		
+    /**
+     * @throws Exception
+     */
+    @Test
+    public void testPersistUser() throws Exception {
+
+        final String NAME = "NAME";
+        final String VALUE = "value";
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting User");
+        }
+
         long securityId;
         long userId;
         long attributeId;
-        
+
         //
         // PERSIST
         //
         {
-        	Category category = new Category();
-        	category.setName("MAP");
-        		
-        	categoryDAO.persist(category);
-        	
+            Category category = new Category();
+            category.setName("MAP");
+
+            categoryDAO.persist(category);
+
             assertEquals(1, categoryDAO.count(null));
-            assertEquals(1, categoryDAO.findAll().size());    
-        	
+            assertEquals(1, categoryDAO.findAll().size());
+
             Resource resource = new Resource();
             resource.setName(NAME);
             resource.setCreation(new Date());
             resource.setCategory(category);
-            
+
             resourceDAO.persist(resource);
-            
+
             assertEquals(1, resourceDAO.count(null));
-            assertEquals(1, resourceDAO.findAll().size());   
-            
-	        UserGroup group = new UserGroup();
-	        group.setGroupName("GROUP1");
-	        
-	        userGroupDAO.persist(group);
-	        
+            assertEquals(1, resourceDAO.findAll().size());
+
+            UserGroup group = new UserGroup();
+            group.setGroupName("GROUP1");
+
+            userGroupDAO.persist(group);
+
             assertEquals(1, userGroupDAO.count(null));
-            assertEquals(1, userGroupDAO.findAll().size());   
-	        
-	        User user = new User();
-	        user.setGroup(group);
-	        user.setName("USER_NAME");
-	        user.setNewPassword("user");
-	        user.setRole(Role.ADMIN);
-	        
-	        userDAO.persist(user);
-	        userId = user.getId();
-	        
+            assertEquals(1, userGroupDAO.findAll().size());
+
+            User user = new User();
+            user.setGroup(group);
+            user.setName("USER_NAME");
+            user.setNewPassword("user");
+            user.setRole(Role.ADMIN);
+
+            userDAO.persist(user);
+            userId = user.getId();
+
             assertEquals(1, userDAO.count(null));
-            assertEquals(1, userDAO.findAll().size());   
-            
-	        UserAttribute attribute = new UserAttribute();
-	        attribute.setName("attr1");
-	        attribute.setValue(VALUE);
-	        attribute.setUser(user);
-	       
-	        userAttributeDAO.persist(attribute);
-	        attributeId = attribute.getId();
-	        
+            assertEquals(1, userDAO.findAll().size());
+
+            UserAttribute attribute = new UserAttribute();
+            attribute.setName("attr1");
+            attribute.setValue(VALUE);
+            attribute.setUser(user);
+
+            userAttributeDAO.persist(attribute);
+            attributeId = attribute.getId();
+
             assertEquals(1, userAttributeDAO.count(null));
-            assertEquals(1, userAttributeDAO.findAll().size());   
-	        
+            assertEquals(1, userAttributeDAO.findAll().size());
+
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
             security.setResource(resource);
             security.setGroup(group);
             security.setUser(user);
-            
-	        securityDAO.persist(security);
-	        securityId = security.getId();
-	        
+
+            securityDAO.persist(security);
+            securityId = security.getId();
+
             assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());   
+            assertEquals(1, securityDAO.findAll().size());
         }
 
         //
         // LOAD, REMOVE, CASCADING
         //
         {
-        	User loaded = userDAO.find(userId);
-        	assertNotNull("Can't retrieve User", loaded);   
-        	
-        	userDAO.removeById(userId);
-            assertNull("User not deleted", userDAO.find(userId));         
-            
+            User loaded = userDAO.find(userId);
+            assertNotNull("Can't retrieve User", loaded);
+
+            userDAO.removeById(userId);
+            assertNull("User not deleted", userDAO.find(userId));
+
             //
             // Cascading
             //
-            assertNull("SecurityRule not deleted", securityDAO.find(securityId));    
+            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
             assertNull("UserAttribute not deleted", userAttributeDAO.find(attributeId));
         }
-        
-	}
+
+    }
 
 }
-

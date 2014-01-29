@@ -60,10 +60,11 @@ import org.apache.log4j.Logger;
  *
  */
 public class RESTBackupServiceImpl implements RESTBackupService {
-	
+
     private final static Logger LOGGER = Logger.getLogger(RESTBackupServiceImpl.class);
 
     private CategoryService categoryService;
+
     private ResourceService resourceService;
 
     private final static long MAX_RESOURCES_FOR_QUICK_BACKUP = 100l;
@@ -81,10 +82,10 @@ public class RESTBackupServiceImpl implements RESTBackupService {
     @Override
     public RESTQuickBackup quickBackup(SecurityContext sc) throws BadRequestServiceEx {
 
-        if(LOGGER.isDebugEnabled())
+        if (LOGGER.isDebugEnabled())
             LOGGER.debug("quickBackup()");
 
-        if(resourceService.getCount((String)null) > MAX_RESOURCES_FOR_QUICK_BACKUP )
+        if (resourceService.getCount((String) null) > MAX_RESOURCES_FOR_QUICK_BACKUP)
             throw new BadRequestServiceEx("Too many resources for a quick backup");
 
         RESTQuickBackup backup = new RESTQuickBackup();
@@ -105,7 +106,7 @@ public class RESTBackupServiceImpl implements RESTBackupService {
 
     @Override
     public String quickRestore(SecurityContext sc, RESTQuickBackup backup) {
-        if(LOGGER.isDebugEnabled())
+        if (LOGGER.isDebugEnabled())
             LOGGER.debug("quickRestore()");
 
         try {
@@ -129,19 +130,22 @@ public class RESTBackupServiceImpl implements RESTBackupService {
         } catch (Exception ex) {
             LOGGER.error(ex.getMessage(), ex);
             throw new InternalErrorWebEx(ex.getMessage());
-        }        
+        }
     }
 
-    private void quickRestoreCategory(RESTBackupCategory rbc) throws BadRequestServiceEx, NotFoundServiceEx {
+    private void quickRestoreCategory(RESTBackupCategory rbc) throws BadRequestServiceEx,
+            NotFoundServiceEx {
         LOGGER.info("Restoring category: " + rbc.getName());
         Category cat = rbc2cat(rbc);
         long catId = categoryService.insert(cat);
         // TODO: cat auth
 
         for (RESTBackupResource rbr : rbc.getResources()) {
-            if(LOGGER.isInfoEnabled()) {
-                int attnum = (rbr!=null&&rbr.getResource()!=null&&rbr.getResource().getAttribute()!=null)?rbr.getResource().getAttribute().size():-1;
-                LOGGER.info("Restoring resource: " +  cat.getName()+":"+rbr.getResource().getName()+ " ("+attnum+" attrs)");
+            if (LOGGER.isInfoEnabled()) {
+                int attnum = (rbr != null && rbr.getResource() != null && rbr.getResource()
+                        .getAttribute() != null) ? rbr.getResource().getAttribute().size() : -1;
+                LOGGER.info("Restoring resource: " + cat.getName() + ":"
+                        + rbr.getResource().getName() + " (" + attnum + " attrs)");
             }
             Resource res = rbr2res(rbr, catId);
             resourceService.insert(res);
@@ -161,8 +165,8 @@ public class RESTBackupServiceImpl implements RESTBackupService {
         return ret;
     }
 
-
-    private RESTBackupCategory createCategory(Category category) throws BadRequestServiceEx, InternalErrorServiceEx {
+    private RESTBackupCategory createCategory(Category category) throws BadRequestServiceEx,
+            InternalErrorServiceEx {
         LOGGER.info("Packing category " + category.getName());
 
         RESTBackupCategory ret = new RESTBackupCategory();
@@ -178,7 +182,7 @@ public class RESTBackupServiceImpl implements RESTBackupService {
 
     private RESTBackupResource createResource(Resource resource) {
         LOGGER.info("Packing resource " + resource.getName());
-        
+
         RESTResource rr = createRESTResource(resource);
         RESTBackupResource rbr = new RESTBackupResource();
         rbr.setResource(rr);
@@ -191,21 +195,21 @@ public class RESTBackupServiceImpl implements RESTBackupService {
         ret.setName(resource.getName());
         ret.setDescription(resource.getDescription());
         ret.setMetadata(resource.getMetadata());
-        if(resource.getData() != null)
+        if (resource.getData() != null)
             ret.setData(resource.getData().getData());
-        if(CollectionUtils.isNotEmpty(resource.getAttribute()) )
+        if (CollectionUtils.isNotEmpty(resource.getAttribute()))
             ret.setAttribute(Convert.convertToShortAttributeList(resource.getAttribute()));
         return ret;
     }
 
-    //=========================================================================
+    // =========================================================================
 
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
 
-	public void setCategoryService(CategoryService categoryService) {
-		this.categoryService = categoryService;
-	}
+    public void setCategoryService(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
 
 }

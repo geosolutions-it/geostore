@@ -24,21 +24,17 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public abstract class GeoStoreWebEx extends WebApplicationException {
-	
-	private String message;
+
+    private String message;
 
     protected GeoStoreWebEx(Status status, String message) {
-        super(Response
-                .status(status)
-                .type("text/plain")
-                .entity(message)
-                .build());
+        super(Response.status(status).type("text/plain").entity(message).build());
         this.message = message;
-     }
+    }
 
     @Override
     public String getMessage() {

@@ -29,13 +29,13 @@ import javax.xml.bind.annotation.XmlRootElement;
  * 
  * @author ETj (etj at geo-solutions.it)
  */
-@XmlRootElement(name="NOT")
+@XmlRootElement(name = "NOT")
 public class NotFilter extends SearchFilter {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -6747037964743365346L;
-	
-	private SearchFilter filter;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -6747037964743365346L;
+
+    private SearchFilter filter;
 
     public NotFilter() {
     }
@@ -59,7 +59,7 @@ public class NotFilter extends SearchFilter {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName()+"[" + filter + '}';
+        return getClass().getSimpleName() + "[" + filter + '}';
     }
 
 }

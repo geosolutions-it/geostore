@@ -27,7 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.model;
 
-
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 
 import java.io.Serializable;
@@ -38,186 +37,186 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-/** 
+/**
  * Class RESTResource.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @XmlRootElement(name = "Resource")
-public class RESTResource implements Serializable{
+public class RESTResource implements Serializable {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -2854721983878935169L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -2854721983878935169L;
 
-	/** The id. */
+    /** The id. */
     private Long id;
-	
-	private String name;
-    
-	private String description; 
-    
-	private Date creation;
-    
-	private Date lastUpdate;
-    
-	private String metadata;
-    
+
+    private String name;
+
+    private String description;
+
+    private Date creation;
+
+    private Date lastUpdate;
+
+    private String metadata;
+
     private List<ShortAttribute> attribute;
-    
-	private RESTStoredData store;
-	
-	private RESTCategory category;
 
-	/**
-	 * @return the id
-	 */
-	public Long getId() {
-		return id;
-	}
+    private RESTStoredData store;
 
-	/**
-	 * @param id the id to set
-	 */
-	public void setId(Long id) {
-		this.id = id;
-	}
+    private RESTCategory category;
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @return the id
+     */
+    public Long getId() {
+        return id;
+    }
 
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @param id the id to set
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	/**
-	 * @return the description
-	 */
-	public String getDescription() {
-		return description;
-	}
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @param description the description to set
-	 */
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @return the creation
-	 */
-	public Date getCreation() {
-		return creation;
-	}
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
 
-	/**
-	 * @param creation the creation to set
-	 */
-	public void setCreation(Date creation) {
-		this.creation = creation;
-	}
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	/**
-	 * @return the lastUpdate
-	 */
-	public Date getLastUpdate() {
-		return lastUpdate;
-	}
+    /**
+     * @return the creation
+     */
+    public Date getCreation() {
+        return creation;
+    }
 
-	/**
-	 * @param lastUpdate the lastUpdate to set
-	 */
-	public void setLastUpdate(Date lastUpdate) {
-		this.lastUpdate = lastUpdate;
-	}
+    /**
+     * @param creation the creation to set
+     */
+    public void setCreation(Date creation) {
+        this.creation = creation;
+    }
 
-	/**
-	 * @return the metadata
-	 */
-	public String getMetadata() {
-		return metadata;
-	}
+    /**
+     * @return the lastUpdate
+     */
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
 
-	/**
-	 * @param metadata the metadata to set
-	 */
-	public void setMetadata(String metadata) {
-		this.metadata = metadata;
-	}
-	
-	/**
-	 * @return the attribute
-	 */
-    @XmlElementWrapper(name="Attributes")
-	public List<ShortAttribute> getAttribute() {
-		return attribute;
-	}
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
+    public void setLastUpdate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
 
-	/**
-	 * @param attribute the attribute to set
-	 */
-	public void setAttribute(List<ShortAttribute> attribute) {
-		this.attribute = attribute;
-	}
+    /**
+     * @return the metadata
+     */
+    public String getMetadata() {
+        return metadata;
+    }
 
-	/**
-	 * @return the store
-	 */
-	public RESTStoredData getStore() {
-		return store;
-	}
+    /**
+     * @param metadata the metadata to set
+     */
+    public void setMetadata(String metadata) {
+        this.metadata = metadata;
+    }
 
-	/**
-	 * @param store the store to set
-	 */
-	public void setStore(RESTStoredData store) {
-		this.store = store;
-	}
+    /**
+     * @return the attribute
+     */
+    @XmlElementWrapper(name = "Attributes")
+    public List<ShortAttribute> getAttribute() {
+        return attribute;
+    }
+
+    /**
+     * @param attribute the attribute to set
+     */
+    public void setAttribute(List<ShortAttribute> attribute) {
+        this.attribute = attribute;
+    }
+
+    /**
+     * @return the store
+     */
+    public RESTStoredData getStore() {
+        return store;
+    }
+
+    /**
+     * @param store the store to set
+     */
+    public void setStore(RESTStoredData store) {
+        this.store = store;
+    }
 
     /**
      * Shortcut for reading data
      */
     @XmlTransient
-	public String getData() {
-        return store == null? null: store.getData();
-	}
+    public String getData() {
+        return store == null ? null : store.getData();
+    }
 
     /**
      * Shortcut for setting data
      */
-	public void setData(String data) {
-        this.store = data == null? 
-                null :
-                new RESTStoredData(data);
-	}
+    public void setData(String data) {
+        this.store = data == null ? null : new RESTStoredData(data);
+    }
 
-	/**
-	 * @return the category
-	 */
-	public RESTCategory getCategory() {
-		return category;
-	}
+    /**
+     * @return the category
+     */
+    public RESTCategory getCategory() {
+        return category;
+    }
 
-	/**
-	 * @param category the category to set
-	 */
-	public void setCategory(RESTCategory category) {
-		this.category = category;
-	}
+    /**
+     * @param category the category to set
+     */
+    public void setCategory(RESTCategory category) {
+        this.category = category;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {		
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
@@ -225,30 +224,30 @@ public class RESTResource implements Serializable{
 
         if (name != null)
             builder.append(", name=").append(name);
-        
-        if(description != null)
-        	builder.append(", descr=").append(description);
-        
-        if(creation != null)
-        	builder.append(", created=").append(creation);
-        
-        if(lastUpdate != null)
-        	builder.append(", updated=").append(lastUpdate);
-        
-        if(metadata != null)
-        	builder.append(", meta=").append(metadata);
-        
-        if(attribute != null)
-        	builder.append(", attr=").append(attribute);
-        
-        if(store != null)
-        	builder.append(", store=").append(store.toString());
-        
-        if(category != null)
-        	builder.append(", cat=").append(category.toString());
-        
+
+        if (description != null)
+            builder.append(", descr=").append(description);
+
+        if (creation != null)
+            builder.append(", created=").append(creation);
+
+        if (lastUpdate != null)
+            builder.append(", updated=").append(lastUpdate);
+
+        if (metadata != null)
+            builder.append(", meta=").append(metadata);
+
+        if (attribute != null)
+            builder.append(", attr=").append(attribute);
+
+        if (store != null)
+            builder.append(", store=").append(store.toString());
+
+        if (category != null)
+            builder.append(", cat=").append(category.toString());
+
         builder.append(']');
         return builder.toString();
-	}
+    }
 
 }

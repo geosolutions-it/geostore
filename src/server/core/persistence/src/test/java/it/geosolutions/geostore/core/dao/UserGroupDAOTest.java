@@ -28,94 +28,94 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
-/** 
+/**
  * Class UserGroupDAOTest.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public class UserGroupDAOTest extends BaseDAOTest {
 
-	final private static Logger LOGGER = Logger.getLogger(UserGroupDAOTest.class);
+    final private static Logger LOGGER = Logger.getLogger(UserGroupDAOTest.class);
 
-	/**
-	 * @throws Exception
-	 */
-	@Test
-	public void testPersistUserGroup() throws Exception {
-		
-		if(LOGGER.isDebugEnabled()){
-			LOGGER.debug("Persisting UserGroup");
-		}
-		
+    /**
+     * @throws Exception
+     */
+    @Test
+    public void testPersistUserGroup() throws Exception {
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting UserGroup");
+        }
+
         long securityId;
         long userId;
         long groupId;
-        
+
         //
         // PERSIST
         //
         {
-        	Category category = new Category();
-        	category.setName("MAP");
-        		
-        	categoryDAO.persist(category);
-        	
+            Category category = new Category();
+            category.setName("MAP");
+
+            categoryDAO.persist(category);
+
             assertEquals(1, categoryDAO.count(null));
-            assertEquals(1, categoryDAO.findAll().size());    
-            
-	        UserGroup group = new UserGroup();
-	        group.setGroupName("GROUP1");
-	        
-	        userGroupDAO.persist(group);
-	        groupId = group.getId();
-	        
+            assertEquals(1, categoryDAO.findAll().size());
+
+            UserGroup group = new UserGroup();
+            group.setGroupName("GROUP1");
+
+            userGroupDAO.persist(group);
+            groupId = group.getId();
+
             assertEquals(1, userGroupDAO.count(null));
-            assertEquals(1, userGroupDAO.findAll().size());    
-	        
-	        User user = new User();
-	        user.setGroup(group);
-	        user.setName("USER_NAME");
-	        user.setNewPassword("user");
-	        user.setRole(Role.ADMIN);
-	        
-	        userDAO.persist(user);
-	        userId = user.getId();
-	        
+            assertEquals(1, userGroupDAO.findAll().size());
+
+            User user = new User();
+            user.setGroup(group);
+            user.setName("USER_NAME");
+            user.setNewPassword("user");
+            user.setRole(Role.ADMIN);
+
+            userDAO.persist(user);
+            userId = user.getId();
+
             assertEquals(1, userDAO.count(null));
-            assertEquals(1, userDAO.findAll().size());   
-	        
+            assertEquals(1, userDAO.findAll().size());
+
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
-//            security.setCategory(category);
+            // security.setCategory(category);
             security.setGroup(group);
             security.setUser(user);
-            
-	        securityDAO.persist(security);
-	        securityId = security.getId();
+
+            securityDAO.persist(security);
+            securityId = security.getId();
 
             assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());   
+            assertEquals(1, securityDAO.findAll().size());
         }
 
         //
         // LOAD, REMOVE, CASCADING
         //
         {
-        	UserGroup loaded = userGroupDAO.find(groupId);
-        	assertNotNull("Can't retrieve UserGroup", loaded);   
-        	
-        	userGroupDAO.removeById(groupId);
-        	assertNull("User not deleted", userGroupDAO.find(groupId));     
-        	
-        	//
-        	// Cascading
-        	//
-            assertNull("User not deleted", userDAO.find(userId));            
-            assertNull("SecurityRule not deleted", securityDAO.find(securityId));    
+            UserGroup loaded = userGroupDAO.find(groupId);
+            assertNotNull("Can't retrieve UserGroup", loaded);
+
+            userGroupDAO.removeById(groupId);
+            assertNull("User not deleted", userGroupDAO.find(groupId));
+
+            //
+            // Cascading
+            //
+            assertNull("User not deleted", userDAO.find(userId));
+            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
         }
-        
-	}
+
+    }
 
 }

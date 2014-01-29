@@ -21,11 +21,11 @@ package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
 
-/** 
+/**
  * Interface SecurityDAO.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
 

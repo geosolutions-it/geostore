@@ -36,19 +36,19 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** 
+/**
  * Class UserList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-@XmlRootElement(name="UserList")
+@XmlRootElement(name = "UserList")
 public class UserList implements Iterable<User> {
-	
+
     private List<RESTUser> list;
 
     public UserList() {
-    	
+
     }
 
     /**
@@ -60,8 +60,8 @@ public class UserList implements Iterable<User> {
 
     /**
      * @return List<Category>
-     */ 
-    @XmlElement(name="User")
+     */
+    @XmlElement(name = "User")
     public List<RESTUser> getList() {
         return list;
     }
@@ -75,9 +75,7 @@ public class UserList implements Iterable<User> {
 
     @Override
     public Iterator<User> iterator() {
-        return list == null ?
-            Collections.EMPTY_LIST.iterator() :
-            list.iterator();
+        return list == null ? Collections.EMPTY_LIST.iterator() : list.iterator();
     }
-    
+
 }

@@ -38,7 +38,7 @@ import com.vividsolutions.jts.io.WKTWriter;
 
 /**
  * The Class XMultiPolygonAdapter.
- *
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public class XMultiPolygonAdapter extends XmlAdapter<String, MultiPolygon> {
@@ -51,7 +51,7 @@ public class XMultiPolygonAdapter extends XmlAdapter<String, MultiPolygon> {
         WKTReader wktReader = new WKTReader();
 
         Geometry the_geom = wktReader.read(val);
-        if ( the_geom.getSRID() == 0 ) {
+        if (the_geom.getSRID() == 0) {
             the_geom.setSRID(4326);
         }
 
@@ -67,9 +67,9 @@ public class XMultiPolygonAdapter extends XmlAdapter<String, MultiPolygon> {
      */
     @Override
     public String marshal(MultiPolygon the_geom) throws ParseException {
-        if ( the_geom != null ) {
+        if (the_geom != null) {
             WKTWriter wktWriter = new WKTWriter();
-            if ( the_geom.getSRID() == 0 ) {
+            if (the_geom.getSRID() == 0) {
                 the_geom.setSRID(4326);
             }
 

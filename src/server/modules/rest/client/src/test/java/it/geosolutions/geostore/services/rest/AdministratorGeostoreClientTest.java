@@ -23,144 +23,142 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 public class AdministratorGeostoreClientTest {
 
-	AdministratorGeoStoreClient geoStoreClient;
+    AdministratorGeoStoreClient geoStoreClient;
+
     private final static Logger LOGGER = Logger.getLogger(AdministratorGeostoreClientTest.class);
 
-	protected AdministratorGeoStoreClient createAdministratorClient() {
-		geoStoreClient = new AdministratorGeoStoreClient();
-		geoStoreClient
-				.setGeostoreRestUrl("http://localhost:9190/geostore/rest");
-		geoStoreClient.setUsername("admin");
-		geoStoreClient.setPassword("admin");
-		return geoStoreClient;
-	}
+    protected AdministratorGeoStoreClient createAdministratorClient() {
+        geoStoreClient = new AdministratorGeoStoreClient();
+        geoStoreClient.setGeostoreRestUrl("http://localhost:9190/geostore/rest");
+        geoStoreClient.setUsername("admin");
+        geoStoreClient.setPassword("admin");
+        return geoStoreClient;
+    }
 
-	protected boolean pingGeoStore(GeoStoreClient client) {
-		try {
-			client.getCategories();
-			return true;
-		} catch (Exception ex) {
-			LOGGER.debug("Error connecting to GeoStore", ex);
-			// ... and now for an awful example of heuristic.....
-			Throwable t = ex;
-			while (t != null) {
-				if (t instanceof ConnectException) {
-					LOGGER.warn("Testing GeoStore is offline");
-					return false;
-				}
-				t = t.getCause();
-			}
-			throw new RuntimeException("Unexpected exception: "
-					+ ex.getMessage(), ex);
-		}
-	}
+    protected boolean pingGeoStore(GeoStoreClient client) {
+        try {
+            client.getCategories();
+            return true;
+        } catch (Exception ex) {
+            LOGGER.debug("Error connecting to GeoStore", ex);
+            // ... and now for an awful example of heuristic.....
+            Throwable t = ex;
+            while (t != null) {
+                if (t instanceof ConnectException) {
+                    LOGGER.warn("Testing GeoStore is offline");
+                    return false;
+                }
+                t = t.getCause();
+            }
+            throw new RuntimeException("Unexpected exception: " + ex.getMessage(), ex);
+        }
+    }
 
-	@BeforeClass
-	public static void setUpClass() throws Exception {
-	}
+    @BeforeClass
+    public static void setUpClass() throws Exception {
+    }
 
-	@AfterClass
-	public static void tearDownClass() throws Exception {
-	}
+    @AfterClass
+    public static void tearDownClass() throws Exception {
+    }
 
-	@Before
-	public void before() throws Exception {
-		geoStoreClient = createAdministratorClient();
-		assumeTrue(pingGeoStore(geoStoreClient));
+    @Before
+    public void before() throws Exception {
+        geoStoreClient = createAdministratorClient();
+        assumeTrue(pingGeoStore(geoStoreClient));
 
-		// CLEAR
-		//removeAllResources(client);
-		//removeAllCategories(client);
-	}
+        // CLEAR
+        // removeAllResources(client);
+        // removeAllCategories(client);
+    }
 
-	@Test
-	public void getIdTest() {
+    @Test
+    public void getIdTest() {
 
-		// User user = geoStoreClient.getUser(1);
-		try {
-			User userd = geoStoreClient.getUserDetails();
-			System.out.println(userd.getId());
-		} catch (Exception e) {
-			fail();
-		}
+        // User user = geoStoreClient.getUser(1);
+        try {
+            User userd = geoStoreClient.getUserDetails();
+            System.out.println(userd.getId());
+        } catch (Exception e) {
+            fail();
+        }
 
-	}
+    }
 
-	@Test
-	public void getUsersTest() {
+    @Test
+    public void getUsersTest() {
 
-		// User user = geoStoreClient.getUser(1);
-		try {
-			UserList users = geoStoreClient.getUsers(1, 1);
-			System.out.println(users.getList().get(0).getName());
-			users = geoStoreClient.getUsers(2, 1);
-			System.out.println(users.getList().get(0).getName());
-		} catch (Exception e) {
-			fail();
-		}
+        // User user = geoStoreClient.getUser(1);
+        try {
+            UserList users = geoStoreClient.getUsers(1, 1);
+            System.out.println(users.getList().get(0).getName());
+            users = geoStoreClient.getUsers(2, 1);
+            System.out.println(users.getList().get(0).getName());
+        } catch (Exception e) {
+            fail();
+        }
 
-	}
+    }
 
-	@Test
-	public void createUserTest() {
+    @Test
+    public void createUserTest() {
 
-		// User user = geoStoreClient.getUser(1);
-		try {
-			User user = new User();
-			user.setName("testuser1");
-			user.setRole(Role.USER);
-			user.setNewPassword("testpw");
-			UserAttribute email = new UserAttribute();
-			email.setName("email");
-			email.setValue("test@geo-solutions.it");
+        // User user = geoStoreClient.getUser(1);
+        try {
+            User user = new User();
+            user.setName("testuser1");
+            user.setRole(Role.USER);
+            user.setNewPassword("testpw");
+            UserAttribute email = new UserAttribute();
+            email.setName("email");
+            email.setValue("test@geo-solutions.it");
 
-			List<UserAttribute> attrs = new ArrayList<UserAttribute>();
-			attrs.add(email);
-			user.setAttribute(attrs);
-			Long id = geoStoreClient.insert(user);
-			System.out.println(id);
-			User us = geoStoreClient.getUser(id,true);
-			user.getName().equals("testuser");
-			attrs = us.getAttribute();
-			assertNotNull("Missing attribute list",attrs);
-			assertTrue("Attributes missing",attrs.size()>0);
+            List<UserAttribute> attrs = new ArrayList<UserAttribute>();
+            attrs.add(email);
+            user.setAttribute(attrs);
+            Long id = geoStoreClient.insert(user);
+            System.out.println(id);
+            User us = geoStoreClient.getUser(id, true);
+            user.getName().equals("testuser");
+            attrs = us.getAttribute();
+            assertNotNull("Missing attribute list", attrs);
+            assertTrue("Attributes missing", attrs.size() > 0);
 
+        } catch (Exception e) {
+            fail();
+        }
+    }
 
-		} catch (Exception e) {
-			fail();
-		}
-	}
+    @Test
+    public void deleteUserTest() {
 
-	@Test
-	public void deleteUserTest() {
+        // geoStoreClient.deleteUser(new Long(8));
+    }
 
-		// geoStoreClient.deleteUser(new Long(8));
-	}
+    @Test
+    public void updateUserTest() {
 
-	@Test
-	public void updateUserTest() {
+        // User user = geoStoreClient.getUser(1);
+        try {
+            User user = new User();
+            user.setName("testuser1");
+            user.setRole(Role.USER);
+            user.setNewPassword("testpw");
+            UserAttribute email = new UserAttribute();
+            email.setName("email");
+            email.setValue("test1@geo-solutions.it");
 
-		// User user = geoStoreClient.getUser(1);
-		try {
-			User user = new User();
-			user.setName("testuser1");
-			user.setRole(Role.USER);
-			user.setNewPassword("testpw");
-			UserAttribute email = new UserAttribute();
-			email.setName("email");
-			email.setValue("test1@geo-solutions.it");
+            List<UserAttribute> attrs = new ArrayList<UserAttribute>();
+            attrs.add(email);
+            user.setAttribute(attrs);
+            geoStoreClient.update(new Long(3), user);
+            // System.out.println(id);
+            // RESTUser us = geoStoreClient.getUser(id);
+            user.getName().equals("testuser");
 
-			List<UserAttribute> attrs = new ArrayList<UserAttribute>();
-			attrs.add(email);
-			user.setAttribute(attrs);
-			geoStoreClient.update(new Long(3), user);
-			// System.out.println(id);
-			// RESTUser us = geoStoreClient.getUser(id);
-			user.getName().equals("testuser");
-
-		} catch (Exception e) {
-			fail();
-		}
-	}
+        } catch (Exception e) {
+            fail();
+        }
+    }
 
 }

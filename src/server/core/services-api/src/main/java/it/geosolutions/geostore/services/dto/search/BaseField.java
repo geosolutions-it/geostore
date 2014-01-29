@@ -31,27 +31,25 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlType
 public enum BaseField {
-	
-    CREATION("creation", Date.class),
-    ID("id", Long.class),
-    LASTUPDATE("lastUpdate", Date.class),    
-    NAME("name", String.class),    
-    DESCRIPTION("description", String.class),
-    METADATA("metadata", String.class);;
+
+    CREATION("creation", Date.class), ID("id", Long.class), LASTUPDATE("lastUpdate", Date.class), NAME(
+            "name", String.class), DESCRIPTION("description", String.class), METADATA("metadata",
+            String.class);
+    ;
 
     private String fieldName;
-    
-    @SuppressWarnings("rawtypes")
-	private Class type;
 
     @SuppressWarnings("rawtypes")
-	private BaseField(String name, Class type) {
+    private Class type;
+
+    @SuppressWarnings("rawtypes")
+    private BaseField(String name, Class type) {
         this.fieldName = name;
         this.type = type;
     }
 
     @SuppressWarnings("rawtypes")
-	public Class getType() {
+    public Class getType() {
         return type;
     }
 

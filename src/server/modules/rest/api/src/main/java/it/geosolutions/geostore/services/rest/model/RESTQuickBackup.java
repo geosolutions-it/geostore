@@ -42,13 +42,13 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @XmlRootElement(name = "Backup")
 public class RESTQuickBackup implements Serializable {
-	
+
     private Collection<RESTBackupCategory> categories = new LinkedList<RESTBackupCategory>();
 
     public RESTQuickBackup() {
     }
 
-    @XmlElement(name="category")
+    @XmlElement(name = "category")
     public Collection<RESTBackupCategory> getCategories() {
         return categories;
     }
@@ -61,20 +61,17 @@ public class RESTQuickBackup implements Serializable {
         categories.add(cat);
     }
 
-	@Override
-	public String toString() {		
+    @Override
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(getClass().getSimpleName()).append('[');
 
-        if(categories != null) {
-            sb.append("categories(")
-                .append(categories.size())
-                .append(")");
+        if (categories != null) {
+            sb.append("categories(").append(categories.size()).append(")");
             for (RESTBackupCategory cat : categories) {
-                sb.append('{')
-                    .append(cat.getName());
+                sb.append('{').append(cat.getName());
                 for (RESTBackupResource res : cat.getResources()) {
-                   sb.append('[').append(res.getResource().getName()).append(']');
+                    sb.append('[').append(res.getResource().getName()).append(']');
                 }
                 sb.append('}');
             }
@@ -82,13 +79,15 @@ public class RESTQuickBackup implements Serializable {
         }
         sb.append(']');
         return sb.toString();
-	}
-
+    }
 
     static public class RESTBackupCategory {
         Long id;
+
         String name;
+
         RESTBackupAuth auth;
+
         List<RESTBackupResource> resources = new LinkedList<RESTBackupResource>();
 
         public RESTBackupAuth getAuth() {
@@ -129,7 +128,6 @@ public class RESTQuickBackup implements Serializable {
 
     }
 
-
     static public class RESTBackupAuth {
         // TODO
     }
@@ -146,8 +144,6 @@ public class RESTQuickBackup implements Serializable {
         public void setResource(RESTResource resource) {
             this.resource = resource;
         }
-
-
 
     }
 }

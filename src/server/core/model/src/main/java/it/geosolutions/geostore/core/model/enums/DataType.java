@@ -30,12 +30,10 @@ package it.geosolutions.geostore.core.model.enums;
 
 /**
  * Enum DataType.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public enum DataType {
-    STRING,
-    NUMBER,
-    DATE;
+    STRING, NUMBER, DATE;
 }

@@ -33,20 +33,20 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * 
  */
-@XmlRootElement(name="StoredDataList")
+@XmlRootElement(name = "StoredDataList")
 public class StoredDataList {
-	
+
     private List<StoredData> list;
 
     public StoredDataList() {
-    	
+
     }
 
     public StoredDataList(List<StoredData> list) {
         this.list = list;
     }
 
-    @XmlElement(name="StoredData")
+    @XmlElement(name = "StoredData")
     public List<StoredData> getList() {
         return list;
     }
@@ -54,5 +54,5 @@ public class StoredDataList {
     public void setList(List<StoredData> list) {
         this.list = list;
     }
-    
+
 }

@@ -32,35 +32,31 @@ import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
  * Class UserDAOImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
-public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO
-{
+public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     private static final Logger LOGGER = Logger.getLogger(UserDAOImpl.class);
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
-    public void persist(User... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public void persist(User... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for User ... ");
         }
 
-        for (User user : entities)
-        {
+        for (User user : entities) {
             String newpw = user.getNewPassword();
-            if (newpw != null)
-            {
+            if (newpw != null) {
                 String enc = PwEncoder.encode(newpw);
                 user.setPassword(enc);
             }
@@ -69,34 +65,36 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO
         super.persist(entities);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
-    public List<User> findAll()
-    {
+    public List<User> findAll() {
         return super.findAll();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<User> search(ISearch search)
-    {
+    public List<User> search(ISearch search) {
         return super.search(search);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
-    public User merge(User entity)
-    {
+    public User merge(User entity) {
         String newpw = entity.getNewPassword();
-        if (newpw != null)
-        {
+        if (newpw != null) {
             String enc = PwEncoder.encode(newpw);
             entity.setPassword(enc);
         }
@@ -104,39 +102,40 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO
         return super.merge(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
-    public boolean remove(User entity)
-    {
+    public boolean remove(User entity) {
         return super.remove(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
-    public boolean removeById(Long id)
-    {
+    public boolean removeById(Long id) {
         return super.removeById(id);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
      */
     @Override
-    public User find(Long id)
-    {
+    public User find(Long id) {
         User user = super.find(id);
 
-        if (user != null)
-        {
+        if (user != null) {
             //
             // To load the LAZY list of the user attributes
             //
-            if (Hibernate.isInitialized(user))
-            {
+            if (Hibernate.isInitialized(user)) {
                 List<UserAttribute> attributes = user.getAttribute();
                 Hibernate.initialize(attributes);
             }
@@ -145,22 +144,20 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO
         return user;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#save(T[])
      */
     @Override
-    public User[] save(User... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public User[] save(User... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for User ... ");
         }
 
-        for (User user : entities)
-        {
+        for (User user : entities) {
             String newpw = user.getNewPassword();
-            if (newpw != null)
-            {
+            if (newpw != null) {
                 String enc = PwEncoder.encode(newpw);
                 user.setPassword(enc);
             }

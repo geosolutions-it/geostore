@@ -35,30 +35,29 @@ import javax.xml.bind.annotation.XmlRootElement;
  * 
  * @author ETj (etj at geo-solutions.it)
  */
-@XmlRootElement(name="AND")
+@XmlRootElement(name = "AND")
 public class AndFilter extends SearchFilter {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -4055325472578322312L;
-	
-	private List<SearchFilter> filters = new ArrayList<SearchFilter>();
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -4055325472578322312L;
+
+    private List<SearchFilter> filters = new ArrayList<SearchFilter>();
 
     public AndFilter() {
     }
 
-    public AndFilter(SearchFilter f1, SearchFilter f2, SearchFilter ...other) {
+    public AndFilter(SearchFilter f1, SearchFilter f2, SearchFilter... other) {
         filters.add(f1);
         filters.add(f2);
         filters.addAll(Arrays.asList(other));
     }
 
     // molto molto brutto, da cambiare se possibile
-    @XmlElements({
-            @XmlElement(name="ATTRIBUTE", type=AttributeFilter.class),
-            @XmlElement(name="OR", type=OrFilter.class),
-            @XmlElement(name="AND", type=AndFilter.class),
-            @XmlElement(name="FIELD", type=FieldFilter.class),
-            @XmlElement(name="CATEGORY", type=CategoryFilter.class)})
+    @XmlElements({ @XmlElement(name = "ATTRIBUTE", type = AttributeFilter.class),
+            @XmlElement(name = "OR", type = OrFilter.class),
+            @XmlElement(name = "AND", type = AndFilter.class),
+            @XmlElement(name = "FIELD", type = FieldFilter.class),
+            @XmlElement(name = "CATEGORY", type = CategoryFilter.class) })
     public List<SearchFilter> getFilters() {
         return filters;
     }
@@ -76,10 +75,9 @@ public class AndFilter extends SearchFilter {
         visitor.visit(this);
     }
 
-
     @Override
     public String toString() {
-        return getClass().getSimpleName()+"[" + filters + '}';
+        return getClass().getSimpleName() + "[" + filters + '}';
     }
 
 }

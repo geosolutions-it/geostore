@@ -39,12 +39,12 @@ public class GeoStorePrincipal implements Principal {
      * @param user
      */
     public GeoStorePrincipal(User user) {
-    	//
+        //
         // is using this ctor, caller may want to enforce user existance
         //
-    	if(user == null)
+        if (user == null)
             throw new NullPointerException("Null user");
-    	
+
         this.user = user;
     }
 
@@ -74,7 +74,9 @@ public class GeoStorePrincipal implements Principal {
         return user;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.security.Principal#getName()
      */
     @Override
@@ -86,7 +88,9 @@ public class GeoStorePrincipal implements Principal {
         return user == null;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -98,17 +102,20 @@ public class GeoStorePrincipal implements Principal {
             return false;
         }
         final GeoStorePrincipal other = (GeoStorePrincipal) obj;
-        if (this.user != other.user && (this.user == null || !this.user.getName().equals(other.user.getName()))) {
+        if (this.user != other.user
+                && (this.user == null || !this.user.getName().equals(other.user.getName()))) {
             return false;
         }
         return true;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#hashCode()
      */
     @Override
     public int hashCode() {
-        return user != null? user.getName().hashCode() : 42;
+        return user != null ? user.getName().hashCode() : 42;
     }
 }

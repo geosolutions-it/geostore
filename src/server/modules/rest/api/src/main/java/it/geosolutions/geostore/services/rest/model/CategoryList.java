@@ -37,19 +37,19 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** 
+/**
  * Class CategoryList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-@XmlRootElement(name="CategoryList")
+@XmlRootElement(name = "CategoryList")
 public class CategoryList implements Iterable<Category> {
-	
+
     private List<Category> list;
 
     public CategoryList() {
-    	
+
     }
 
     /**
@@ -61,8 +61,8 @@ public class CategoryList implements Iterable<Category> {
 
     /**
      * @return List<Category>
-     */ 
-    @XmlElement(name="Category")
+     */
+    @XmlElement(name = "Category")
     public List<Category> getList() {
         return list;
     }
@@ -76,9 +76,7 @@ public class CategoryList implements Iterable<Category> {
 
     @Override
     public Iterator<Category> iterator() {
-        return list == null ? 
-            Collections.EMPTY_LIST.iterator() :
-            list.iterator();
+        return list == null ? Collections.EMPTY_LIST.iterator() : list.iterator();
     }
-    
+
 }

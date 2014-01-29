@@ -19,7 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-
 import java.util.List;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
@@ -33,15 +32,13 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.Date;
 import org.apache.log4j.Logger;
 
-
 /**
  * Class StoredDataServiceImpl.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public class StoredDataServiceImpl implements StoredDataService
-{
+public class StoredDataServiceImpl implements StoredDataService {
 
     private static final Logger LOGGER = Logger.getLogger(StoredDataServiceImpl.class);
 
@@ -49,39 +46,32 @@ public class StoredDataServiceImpl implements StoredDataService
 
     private ResourceDAO resourceDAO;
 
-
     /**
      * @param resourceDAO the resourceDAO to set
      */
-    public void setResourceDAO(ResourceDAO resourceDAO)
-    {
+    public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
     /**
      * @param storedDataDAO
      */
-    public void setStoredDataDAO(StoredDataDAO storedDataDAO)
-    {
+    public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
         this.storedDataDAO = storedDataDAO;
     }
 
     @Override
-    public long update(long id, String data) throws NotFoundServiceEx
-    {
+    public long update(long id, String data) throws NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
 
-        if (resource == null)
-        {
+        if (resource == null) {
             throw new NotFoundServiceEx("Resource not found: " + id);
         }
 
         StoredData sData = storedDataDAO.find(id);
 
-        if (sData == null)
-        {
-            if (LOGGER.isInfoEnabled())
-            {
+        if (sData == null) {
+            if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("Data not found: " + id);
             }
 
@@ -90,9 +80,7 @@ public class StoredDataServiceImpl implements StoredDataService
             sData.setData(data);
             sData.setResource(resource);
             storedDataDAO.persist(sData);
-        }
-        else
-        {
+        } else {
             sData.setData(data);
             storedDataDAO.merge(sData);
         }
@@ -104,18 +92,16 @@ public class StoredDataServiceImpl implements StoredDataService
     }
 
     /**
-     *
+     * 
      * @param id
      * @return the StoredData or null if none was found with given id
      * @throws NotFoundServiceEx
      */
     @Override
-    public StoredData get(long id) throws NotFoundServiceEx
-    {
+    public StoredData get(long id) throws NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
 
-        if (resource == null)
-        {
+        if (resource == null) {
             throw new NotFoundServiceEx("Corresponding Resource not found: " + id);
         }
 
@@ -125,8 +111,7 @@ public class StoredDataServiceImpl implements StoredDataService
     }
 
     @Override
-    public boolean delete(long id)
-    {
+    public boolean delete(long id) {
         //
         // data on ancillary tables should be deleted by cascading
         //
@@ -134,23 +119,19 @@ public class StoredDataServiceImpl implements StoredDataService
     }
 
     @Override
-    public List<StoredData> getAll()
-    {
+    public List<StoredData> getAll() {
         List<StoredData> found = storedDataDAO.findAll();
 
         return found;
     }
 
     @Override
-    public List<StoredData> getAllFull()
-    {
+    public List<StoredData> getAllFull() {
         List<StoredData> found = storedDataDAO.findAll();
 
-        for (StoredData data : found)
-        {
+        for (StoredData data : found) {
             Resource resource = data.getResource();
-            if (resource != null)
-            {
+            if (resource != null) {
                 List<SecurityRule> security = resourceDAO.findSecurityRules(resource.getId());
                 resource.setSecurity(security);
 
@@ -163,8 +144,7 @@ public class StoredDataServiceImpl implements StoredDataService
     }
 
     @Override
-    public List<SecurityRule> getUserSecurityRule(String name, long resourceId)
-    {
+    public List<SecurityRule> getUserSecurityRule(String name, long resourceId) {
         return storedDataDAO.findUserSecurityRule(name, resourceId);
     }
 

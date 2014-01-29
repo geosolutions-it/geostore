@@ -34,14 +34,16 @@ import com.googlecode.genericdao.search.Search;
 
 /**
  * Class CategoryServiceImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 public class CategoryServiceImpl implements CategoryService {
 
     private static final Logger LOGGER = Logger.getLogger(CategoryServiceImpl.class);
+
     private CategoryDAO categoryDAO;
+
     private SecurityDAO securityDAO;
 
     /**
@@ -58,7 +60,9 @@ public class CategoryServiceImpl implements CategoryService {
         this.categoryDAO = categoryDAO;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#insert(it.geosolutions.geostore.core.model.Category)
      */
     @Override
@@ -76,22 +80,24 @@ public class CategoryServiceImpl implements CategoryService {
 
         categoryDAO.persist(cat);
 
-//        //
-//        // Persisting SecurityRule
-//        //
-//        List<SecurityRule> rules = category.getSecurity();
-//
-//        if (rules != null) {
-//            for (SecurityRule rule : rules) {
-//                rule.setCategory(cat);
-//                securityDAO.persist(rule);
-//            }
-//        }
+        // //
+        // // Persisting SecurityRule
+        // //
+        // List<SecurityRule> rules = category.getSecurity();
+        //
+        // if (rules != null) {
+        // for (SecurityRule rule : rules) {
+        // rule.setCategory(cat);
+        // securityDAO.persist(rule);
+        // }
+        // }
 
         return cat.getId();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#update(it.geosolutions.geostore.core.model.Category)
      */
     @Override
@@ -99,7 +105,9 @@ public class CategoryServiceImpl implements CategoryService {
         throw new BadRequestServiceEx("Category can not be updated !");
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#get(long)
      */
     @Override
@@ -109,26 +117,30 @@ public class CategoryServiceImpl implements CategoryService {
         return category;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#get(long)
      */
     @Override
     public Category get(String name) throws BadRequestServiceEx {
-        if(name == null) {
+        if (name == null) {
             throw new BadRequestServiceEx("Category name must be specified !");
         }
 
         Search searchCriteria = new Search(Category.class);
         searchCriteria.addFilterEqual("name", name);
         List<Category> categories = categoryDAO.search(searchCriteria);
-        if(categories.size() > 1) {
-            LOGGER.warn("Found " + categories.size() + " categories with name '"+name+"'");
+        if (categories.size() > 1) {
+            LOGGER.warn("Found " + categories.size() + " categories with name '" + name + "'");
         }
 
         return categories.isEmpty() ? null : categories.get(0);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#delete(long)
      */
     @Override
@@ -136,7 +148,9 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryDAO.removeById(id);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -160,7 +174,9 @@ public class CategoryServiceImpl implements CategoryService {
         return found;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#getCount(java.lang.String)
      */
     @Override
@@ -174,7 +190,9 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryDAO.count(searchCriteria);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.CategoryService#getUserSecurityRule(java.lang.String, long)
      */
     @Override

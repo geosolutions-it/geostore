@@ -50,7 +50,9 @@ public class GeoStoreSecurityContext implements SecurityContext {
         return principal;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.apache.cxf.security.SecurityContext#isUserInRole(java.lang.String)
      */
     @Override
@@ -65,17 +67,17 @@ public class GeoStoreSecurityContext implements SecurityContext {
      * @return boolean
      */
     public boolean isUserInRoleAux(String role) {
-    	if(Role.GUEST.name().equals(role)) {
-    		if(principal.isGuest())
-    			return true;
-    	} else {
-    		if(principal.isGuest())
-    			return false;
-    		else
-    			return principal.getUser().getRole().name().equals(role);
-    	}
+        if (Role.GUEST.name().equals(role)) {
+            if (principal.isGuest())
+                return true;
+        } else {
+            if (principal.isGuest())
+                return false;
+            else
+                return principal.getUser().getRole().name().equals(role);
+        }
 
-    	return false;
+        return false;
     }
 
 }

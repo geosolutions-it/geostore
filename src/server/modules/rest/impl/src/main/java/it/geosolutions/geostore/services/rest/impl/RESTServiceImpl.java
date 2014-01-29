@@ -37,42 +37,42 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
 
-/** 
+/**
  * Class RESTServiceImpl.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class RESTServiceImpl {
-	
-    private final static Logger LOGGER = Logger.getLogger(RESTServiceImpl.class);
 
+    private final static Logger LOGGER = Logger.getLogger(RESTServiceImpl.class);
 
     /**
      * @return User - The authenticated user that is accessing this service, or null if guest access.
      */
     protected User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if(sc == null)
+        if (sc == null)
             throw new InternalErrorWebEx("Missing auth info");
         else {
             Principal principal = sc.getUserPrincipal();
-            if(principal == null){
-    			if(LOGGER.isInfoEnabled())
-    				LOGGER.info("Missing auth principal");
-    			throw new InternalErrorWebEx("Missing auth principal");
-            }
-                
-            if( ! (principal instanceof GeoStorePrincipal )){
-    			if(LOGGER.isInfoEnabled())
-    				LOGGER.info("Missing auth principal");
-    			throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")");
+            if (principal == null) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Missing auth principal");
+                throw new InternalErrorWebEx("Missing auth principal");
             }
 
-            GeoStorePrincipal gsp = (GeoStorePrincipal)principal;
-            
+            if (!(principal instanceof GeoStorePrincipal)) {
+                if (LOGGER.isInfoEnabled())
+                    LOGGER.info("Missing auth principal");
+                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
+                        + ")");
+            }
+
+            GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
+
             //
             // may be null if guest
             //
-            User user = gsp.getUser(); 
+            User user = gsp.getUser();
 
             LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
             return user;

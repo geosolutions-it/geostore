@@ -41,7 +41,7 @@ import static org.junit.Assume.*;
 import static org.junit.Assert.*;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 abstract public class BaseGeoStoreClientTest {
@@ -52,8 +52,6 @@ abstract public class BaseGeoStoreClientTest {
 
     public BaseGeoStoreClientTest() {
     }
-
-
 
     @BeforeClass
     public static void setUpClass() throws Exception {
@@ -81,21 +79,20 @@ abstract public class BaseGeoStoreClientTest {
         return client;
     }
 
-
     protected RESTResource createSampleResource(Long catId) {
         String timeid = Long.toString(System.currentTimeMillis());
 
         RESTStoredData storedData = new RESTStoredData();
-        storedData.setData("test stored data #"+timeid);
+        storedData.setData("test stored data #" + timeid);
 
         List<ShortAttribute> attrList = new ArrayList<ShortAttribute>();
-        attrList.add(new ShortAttribute("stringAtt", "attVal"+timeid, DataType.STRING));
+        attrList.add(new ShortAttribute("stringAtt", "attVal" + timeid, DataType.STRING));
         attrList.add(ShortAttribute.createDateAttribute("dateAtt", new Date()));
         attrList.add(new ShortAttribute("longAtt", timeid, DataType.NUMBER));
 
         RESTResource resource = new RESTResource();
         resource.setCategory(new RESTCategory(catId));
-        resource.setName("rest_test_resource_"+timeid);
+        resource.setName("rest_test_resource_" + timeid);
         resource.setStore(storedData);
         resource.setAttribute(attrList);
 
@@ -106,8 +103,8 @@ abstract public class BaseGeoStoreClientTest {
         SearchFilter filter = new FieldFilter(BaseField.NAME, "*", SearchOperator.IS_NOT_NULL);
         {
             ShortResourceList resources = client.searchResources(filter);
-            if(resources.getList() != null) {
-                LOGGER.info("Found " + resources.getList().size() +" resources");
+            if (resources.getList() != null) {
+                LOGGER.info("Found " + resources.getList().size() + " resources");
                 for (ShortResource shortResource : resources.getList()) {
                     LOGGER.info("Found resource " + shortResource + " . Deleting...");
                     client.deleteResource(shortResource.getId());
@@ -119,15 +116,15 @@ abstract public class BaseGeoStoreClientTest {
         {
             ShortResourceList resources = client.searchResources(filter);
             assertNull("Not all resources have been deleted", resources.getList());
-//            assertEquals("Not all resources have been deleted", 0, resources.getList().size());
+            // assertEquals("Not all resources have been deleted", 0, resources.getList().size());
         }
     }
 
     protected void removeAllCategories(GeoStoreClient client) {
         {
             CategoryList categories = client.getCategories();
-            if(categories.getList() != null) {
-                LOGGER.info("Found " + categories.getList().size() +" categories");
+            if (categories.getList() != null) {
+                LOGGER.info("Found " + categories.getList().size() + " categories");
                 for (Category category : categories.getList()) {
                     LOGGER.info("Found category " + category + " . Deleting...");
                     client.deleteCategory(category.getId());
@@ -139,10 +136,9 @@ abstract public class BaseGeoStoreClientTest {
         {
             CategoryList categories = client.getCategories();
             assertNull("Not all categories have been deleted", categories.getList());
-//            assertEquals("Not all categories have been deleted", 0, categories.getList().size());
+            // assertEquals("Not all categories have been deleted", 0, categories.getList().size());
         }
     }
-
 
     protected boolean pingGeoStore(GeoStoreClient client) {
         try {
@@ -150,10 +146,10 @@ abstract public class BaseGeoStoreClientTest {
             return true;
         } catch (Exception ex) {
             LOGGER.debug("Error connecting to GeoStore", ex);
-            //... and now for an awful example of heuristic.....
+            // ... and now for an awful example of heuristic.....
             Throwable t = ex;
-            while(t!=null) {
-                if(t instanceof ConnectException) {
+            while (t != null) {
+                if (t instanceof ConnectException) {
                     LOGGER.warn("Testing GeoStore is offline");
                     return false;
                 }

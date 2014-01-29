@@ -36,19 +36,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-/** 
+/**
  * Class ResourceList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-@XmlRootElement(name="ResourceList")
+@XmlRootElement(name = "ResourceList")
 public class ResourceList {
 
     private List<Resource> list;
 
     public ResourceList() {
-    	
+
     }
 
     /**
@@ -60,8 +60,8 @@ public class ResourceList {
 
     /**
      * @return List<ShortResource>
-     */ 
-    @XmlElement(name="Resource")
+     */
+    @XmlElement(name = "Resource")
     public List<Resource> getList() {
         return list;
     }
@@ -77,5 +77,5 @@ public class ResourceList {
     public boolean isEmpty() {
         return list == null || list.isEmpty();
     }
-    
+
 }

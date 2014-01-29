@@ -55,13 +55,12 @@ import org.hibernate.annotations.Index;
 
 /**
  * Class User.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "User")
-@Table(name = "gs_user", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"name"})})
+@Table(name = "gs_user", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
 @XmlRootElement(name = "User")
 public class User implements Serializable {
@@ -70,6 +69,7 @@ public class User implements Serializable {
      * The Constant serialVersionUID.
      */
     private static final long serialVersionUID = -138056245004697133L;
+
     /**
      * The id.
      */
@@ -103,6 +103,7 @@ public class User implements Serializable {
      */
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
+
     @ManyToOne(optional = true)
     @Index(name = "idx_user_group")
     @ForeignKey(name = "fk_user_ugroup")
@@ -111,7 +112,7 @@ public class User implements Serializable {
     /**
      * @return the id
      */
-    //@XmlTransient
+    // @XmlTransient
     public Long getId() {
         return id;
     }
@@ -175,10 +176,10 @@ public class User implements Serializable {
     }
 
     /**
-     * <STRONG>DON'T USE THIS METHOD</STRONG>
-     * <BR>You will probably break the password by using this method.
-     * <BR>Please use the {@link setNewPassword()} method instead.
-     *
+     * <STRONG>DON'T USE THIS METHOD</STRONG> <BR>
+     * You will probably break the password by using this method. <BR>
+     * Please use the {@link setNewPassword()} method instead.
+     * 
      * @param password the password to set
      */
     public void setPassword(String password) {
@@ -193,11 +194,11 @@ public class User implements Serializable {
     }
 
     /**
-     * Set the cleartext password.
-     * <BR> Before being persisted, the password will be automatically encoded, and will be accessible
-     * with {@link getPassword()}.
-     * <P> Please note that this is NOT a persisted field
-     *
+     * Set the cleartext password. <BR>
+     * Before being persisted, the password will be automatically encoded, and will be accessible with {@link getPassword()}.
+     * <P>
+     * Please note that this is NOT a persisted field
+     * 
      * @param newPassword the cleartext newPassword
      */
     public void setNewPassword(String newPassword) {
@@ -240,21 +241,21 @@ public class User implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if ( id != null ) {
+        if (id != null) {
             builder.append("id=").append(id);
         }
 
-        if ( name != null ) {
+        if (name != null) {
             builder.append(", ");
             builder.append("name=").append(name);
         }
 
-        if ( group != null ) {
+        if (group != null) {
             builder.append(", ");
             builder.append("group=").append(group.toString());
         }
 
-        if ( role != null ) {
+        if (role != null) {
             builder.append(", ");
             builder.append("role=").append(role);
         }
@@ -271,16 +272,13 @@ public class User implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result)
-                + ((attribute == null) ? 0 : attribute.hashCode());
+        result = (prime * result) + ((attribute == null) ? 0 : attribute.hashCode());
         result = (prime * result) + ((group == null) ? 0 : group.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
-        result = (prime * result)
-                + ((password == null) ? 0 : password.hashCode());
+        result = (prime * result) + ((password == null) ? 0 : password.hashCode());
         result = (prime * result) + ((role == null) ? 0 : role.hashCode());
-        result = (prime * result)
-                + ((security == null) ? 0 : security.hashCode());
+        result = (prime * result) + ((security == null) ? 0 : security.hashCode());
 
         return result;
     }
@@ -290,60 +288,60 @@ public class User implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if ( this == obj ) {
+        if (this == obj) {
             return true;
         }
-        if ( obj == null ) {
+        if (obj == null) {
             return false;
         }
-        if ( getClass() != obj.getClass() ) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
 
         User other = (User) obj;
-        if ( attribute == null ) {
-            if ( other.attribute != null ) {
+        if (attribute == null) {
+            if (other.attribute != null) {
                 return false;
             }
-        } else if ( !attribute.equals(other.attribute) ) {
+        } else if (!attribute.equals(other.attribute)) {
             return false;
         }
-        if ( group == null ) {
-            if ( other.group != null ) {
+        if (group == null) {
+            if (other.group != null) {
                 return false;
             }
-        } else if ( !group.equals(other.group) ) {
+        } else if (!group.equals(other.group)) {
             return false;
         }
-        if ( id == null ) {
-            if ( other.id != null ) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if ( !id.equals(other.id) ) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
-        if ( name == null ) {
-            if ( other.name != null ) {
+        if (name == null) {
+            if (other.name != null) {
                 return false;
             }
-        } else if ( !name.equals(other.name) ) {
+        } else if (!name.equals(other.name)) {
             return false;
         }
-        if ( password == null ) {
-            if ( other.password != null ) {
+        if (password == null) {
+            if (other.password != null) {
                 return false;
             }
-        } else if ( !password.equals(other.password) ) {
+        } else if (!password.equals(other.password)) {
             return false;
         }
-        if ( role != other.role ) {
+        if (role != other.role) {
             return false;
         }
-        if ( security == null ) {
-            if ( other.security != null ) {
+        if (security == null) {
+            if (other.security != null) {
                 return false;
             }
-        } else if ( !security.equals(other.security) ) {
+        } else if (!security.equals(other.security)) {
             return false;
         }
 

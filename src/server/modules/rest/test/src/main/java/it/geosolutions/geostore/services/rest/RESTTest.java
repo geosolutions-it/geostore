@@ -28,13 +28,15 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class RESTTest implements InitializingBean {
 
     private final static Logger LOGGER = Logger.getLogger(RESTTest.class);
+
     protected UserService userService;
+
     protected CategoryService categoryService;
 
     @Override
@@ -45,7 +47,7 @@ public class RESTTest implements InitializingBean {
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
             LOGGER.info("No category found. Creating default.");
-            for (String name : new String[]{"TestCategory1", "TestCategory2"}) {
+            for (String name : new String[] { "TestCategory1", "TestCategory2" }) {
                 Category c = new Category();
                 c.setName(name);
                 categoryService.insert(c);
@@ -78,7 +80,7 @@ public class RESTTest implements InitializingBean {
         }
     }
 
-    //==========================================================================
+    // ==========================================================================
 
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;

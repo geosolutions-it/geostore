@@ -41,14 +41,13 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class GeoStoreClientTest extends BaseGeoStoreClientTest {
     private final static Logger LOGGER = Logger.getLogger(GeoStoreClientTest.class);
 
     final String DEFAULTCATEGORYNAME = "TestCategory1";
-
 
     @Test
     public void testRemoveAllAttribs() {
@@ -70,7 +69,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
         RESTResource origResource = new RESTResource();
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
-        origResource.setName("rest_test_resource_"+timeid);
+        origResource.setName("rest_test_resource_" + timeid);
         origResource.setStore(storedData);
         origResource.setAttribute(attrList);
 
@@ -104,7 +103,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         // once updated, there should be no attribs in the resource
         origResource.setAttribute(new ArrayList<ShortAttribute>());
         assertTrue(origResource.getAttribute().isEmpty());
-        
+
         client.updateResource(rid, origResource);
 
         // test getResource
@@ -120,7 +119,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
     }
 
     @Test
-//    @Ignore
+    // @Ignore
     public void testInsertResource() {
 
         final String KEY_STRING = "stringAtt";
@@ -142,7 +141,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
         RESTResource origResource = new RESTResource();
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
-        origResource.setName("rest_test_resource_"+timeid);
+        origResource.setName("rest_test_resource_" + timeid);
         origResource.setStore(storedData);
         origResource.setAttribute(attrList);
 
@@ -160,7 +159,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
             Attribute satt, datt;
 
-            if(loadedAttrs.get(0).getType() == DataType.STRING) {
+            if (loadedAttrs.get(0).getType() == DataType.STRING) {
                 satt = loadedAttrs.get(0);
                 datt = loadedAttrs.get(1);
             } else {
@@ -178,11 +177,12 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
         }
         // test Search
-        SearchFilter searchFilter = new FieldFilter(BaseField.NAME, "%"+timeid, SearchOperator.LIKE);
+        SearchFilter searchFilter = new FieldFilter(BaseField.NAME, "%" + timeid,
+                SearchOperator.LIKE);
         ShortResourceList rlist = client.searchResources(searchFilter);
         assertNotNull(rlist);
         assertEquals(1, rlist.getList().size());
-        assertEquals(rid, (Long)rlist.getList().get(0).getId());
+        assertEquals(rid, (Long) rlist.getList().get(0).getId());
     }
 
     @Test
@@ -211,7 +211,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
             RESTResource origResource = new RESTResource();
             origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
-            origResource.setName("rest_test_resource_"+timeid);
+            origResource.setName("rest_test_resource_" + timeid);
             origResource.setStore(storedData);
             origResource.setAttribute(attrList);
 
@@ -219,9 +219,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         }
         System.out.println("RESOURCE has ID " + rid);
 
-
         // test getResource
-        String name1= "rest_test_resource_" + Long.toString(System.currentTimeMillis());
+        String name1 = "rest_test_resource_" + Long.toString(System.currentTimeMillis());
         {
             RESTResource updResource = new RESTResource();
             updResource.setName(name1);
@@ -229,7 +228,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             List<ShortAttribute> attrList = new ArrayList<ShortAttribute>();
             attrList.add(new ShortAttribute("string1", "value1", DataType.STRING)); // same
             attrList.add(new ShortAttribute("string2", "value2.2", DataType.STRING)); // updated
-            //attrList.add(new ShortAttribute("string3", "value3", DataType.STRING)); //removed
+            // attrList.add(new ShortAttribute("string3", "value3", DataType.STRING)); //removed
             attrList.add(new ShortAttribute("string4", "value4", DataType.STRING)); // added
 
             updResource.setAttribute(attrList);
@@ -237,14 +236,14 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         }
 
         {
-           Resource loaded = client.getResource(rid);
-           System.out.println("RESOURCE: " + loaded);
+            Resource loaded = client.getResource(rid);
+            System.out.println("RESOURCE: " + loaded);
 
             // test reloaded attrs
             List<Attribute> loadedAttrs = loaded.getAttribute();
             assertEquals(3, loadedAttrs.size());
 
-            Map<String,String> attMap = new HashMap<String, String>();
+            Map<String, String> attMap = new HashMap<String, String>();
             for (Attribute attribute : loadedAttrs) {
                 attMap.put(attribute.getName(), attribute.getTextValue());
             }
@@ -263,9 +262,9 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
                 fail("Undetected error");
             } catch (UniformInterfaceException e) {
                 String response = "COULD NOT READ RESPONSE";
-                try{
+                try {
                     response = IOUtils.toString(e.getResponse().getEntityInputStream());
-                } catch(Exception e2) {
+                } catch (Exception e2) {
                     LOGGER.warn("Error reading response: " + e2.getMessage());
                 }
                 LOGGER.info("Error condition successfully detected: " + response);
@@ -287,7 +286,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
 
         String timeid = Long.toString(System.currentTimeMillis());
-        res.setName("rest_test_resource_"+timeid);
+        res.setName("rest_test_resource_" + timeid);
 
         Long id = client.insert(res);
 
@@ -297,17 +296,17 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
     }
 
-//    @Test
-//    public void testGetResource() {
-//        GeoStoreClient client = createClient();
-//        Resource resource = client.getResource(261l);
-//        System.out.println("Resource is " + resource);
-//        if(resource.getAttribute() != null) {
-//            System.out.println("Attributes " + resource.getAttribute());
-//        } else {
-//            System.out.println("No attrs");
-//        }
-//    }
+    // @Test
+    // public void testGetResource() {
+    // GeoStoreClient client = createClient();
+    // Resource resource = client.getResource(261l);
+    // System.out.println("Resource is " + resource);
+    // if(resource.getAttribute() != null) {
+    // System.out.println("Attributes " + resource.getAttribute());
+    // } else {
+    // System.out.println("No attrs");
+    // }
+    // }
 
     @Test
     public void testClearAll() {
@@ -328,7 +327,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         }
     }
 
-
     @Test
     public void testGetResourceFull() {
 
@@ -339,7 +337,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         RESTStoredData storedData = new RESTStoredData();
         storedData.setData(DATA);
 
-        
         RESTResource origResource = new RESTResource();
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
         origResource.setName("rest_test_resource_getFull");
@@ -361,13 +358,11 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertNull(loaded.getData());
         }
 
-
         {
             Resource loaded = client.getResource(rid, true);
             System.out.println("RESOURCE: " + loaded);
             assertNotNull(loaded.getData());
         }
-
 
     }
 

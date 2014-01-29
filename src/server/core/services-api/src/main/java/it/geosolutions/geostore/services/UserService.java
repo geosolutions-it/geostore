@@ -35,14 +35,14 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.List;
 
-/** 
+/**
  * Class UserInterface.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 public interface UserService {
-	
+
     /**
      * @param user
      * @return long
@@ -55,7 +55,7 @@ public interface UserService {
      * @param user
      * @return long
      * @throws NotFoundServiceEx
-     * @throws BadRequestServiceEx 
+     * @throws BadRequestServiceEx
      */
     long update(User user) throws NotFoundServiceEx, BadRequestServiceEx;
 
@@ -68,16 +68,16 @@ public interface UserService {
     /**
      * @param id
      * @return User
-     */ 
+     */
     User get(long id);
 
-	/**
-	 * @param name
-	 * @return User
-	 * @throws NotFoundWebEx
-	 */
-	public User get(String name) throws NotFoundServiceEx;
-	
+    /**
+     * @param name
+     * @return User
+     * @throws NotFoundWebEx
+     */
+    public User get(String name) throws NotFoundServiceEx;
+
     /**
      * @param page
      * @param entries
@@ -94,7 +94,8 @@ public interface UserService {
      * @return List<User>
      * @throws BadRequestServiceEx
      */
-    List<User> getAll(Integer page, Integer entries, String nameLike, boolean includeAttributes) throws BadRequestServiceEx;
+    List<User> getAll(Integer page, Integer entries, String nameLike, boolean includeAttributes)
+            throws BadRequestServiceEx;
 
     /**
      * @param nameLike
@@ -102,11 +103,11 @@ public interface UserService {
      */
     long getCount(String nameLike);
 
-	/**
-	 * @param id
-	 * @param attributes
-	 * @throws NotFoundServiceEx 
-	 */
-	void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx;
-    
+    /**
+     * @param id
+     * @param attributes
+     * @throws NotFoundServiceEx
+     */
+    void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx;
+
 }

@@ -51,7 +51,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class FilterUnmarshalTest extends TestCase {
@@ -69,11 +69,11 @@ public class FilterUnmarshalTest extends TestCase {
 
     @Test
     public void testGetContext() throws JDOMException, IOException {
-         SearchFilter searchFilter = new AndFilter(
-                new FieldFilter(BaseField.NAME, "%", SearchOperator.LIKE),
+        SearchFilter searchFilter = new AndFilter(new FieldFilter(BaseField.NAME, "%",
+                SearchOperator.LIKE),
                 new CategoryFilter("theCategoryName", SearchOperator.EQUAL_TO),
-                new AttributeFilter("theLayerName", "layer", DataType.STRING, SearchOperator.EQUAL_TO)
-                );
+                new AttributeFilter("theLayerName", "layer", DataType.STRING,
+                        SearchOperator.EQUAL_TO));
         StringWriter writer = new StringWriter();
         JAXB.marshal(searchFilter, writer);
         String xml = writer.toString();
@@ -132,8 +132,8 @@ public class FilterUnmarshalTest extends TestCase {
         c2.getResources().add(createBKResource("resY", "cat2"));
         bk.addCategory(c2);
 
-//        JAXBContext context = GeoStoreJAXBContext.getContext();
-//        context.createMarshaller().marshal(bk, System.out);
+        // JAXBContext context = GeoStoreJAXBContext.getContext();
+        // context.createMarshaller().marshal(bk, System.out);
 
         StringWriter writer = new StringWriter();
         JAXB.marshal(bk, writer);
@@ -145,7 +145,7 @@ public class FilterUnmarshalTest extends TestCase {
 
     protected static RESTBackupResource createBKResource(String name, String catName) {
         RESTBackupResource r1 = new RESTBackupResource();
-        r1.setResource(createRESTResource(name,catName));
+        r1.setResource(createRESTResource(name, catName));
         return r1;
     }
 
@@ -154,7 +154,7 @@ public class FilterUnmarshalTest extends TestCase {
         rr1.setName(name);
         rr1.setCategory(new RESTCategory(catName));
         rr1.setAttribute(new ArrayList<ShortAttribute>());
-        rr1.getAttribute().add(new ShortAttribute("att_x_"+name, "test", DataType.STRING));
+        rr1.getAttribute().add(new ShortAttribute("att_x_" + name, "test", DataType.STRING));
         return rr1;
     }
 

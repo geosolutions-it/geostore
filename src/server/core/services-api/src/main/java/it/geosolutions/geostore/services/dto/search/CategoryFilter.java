@@ -28,81 +28,84 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Filter by category name
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 @XmlRootElement(name = "CategoryFilter")
 public class CategoryFilter extends SearchFilter implements Serializable {
-	
-	private String name;
-		
+
+    private String name;
+
     private SearchOperator operator;
 
-	/**
+    /**
 	 * 
 	 */
-	public CategoryFilter() {		
-	}
+    public CategoryFilter() {
+    }
 
-	/**
-	 * @param name
-	 * @param operator
-	 */
-	public CategoryFilter(String name, SearchOperator operator) {
-		this.name = name;
+    /**
+     * @param name
+     * @param operator
+     */
+    public CategoryFilter(String name, SearchOperator operator) {
+        this.name = name;
         setOperator(operator);
-	}
+    }
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @return the operator
-	 */
-	public SearchOperator getOperator() {
-		return operator;
-	}
+    /**
+     * @return the operator
+     */
+    public SearchOperator getOperator() {
+        return operator;
+    }
 
-	/**
-	 * @param operator the operator to set
-	 */
-	public final void setOperator(SearchOperator operator) {
+    /**
+     * @param operator the operator to set
+     */
+    public final void setOperator(SearchOperator operator) {
         checkOperator(operator);
-		this.operator = operator;
-	}
+        this.operator = operator;
+    }
 
-	public static void checkOperator(SearchOperator operator) {
-        if(operator != SearchOperator.EQUAL_TO && operator != SearchOperator.LIKE)
+    public static void checkOperator(SearchOperator operator) {
+        if (operator != SearchOperator.EQUAL_TO && operator != SearchOperator.LIKE)
             throw new IllegalArgumentException("Only EQUAL or LIKE operator are acceptable");
-	}
+    }
 
     @Override
     public void accept(FilterVisitor visitor) throws BadRequestServiceEx, InternalErrorServiceEx {
         visitor.visit(this);
     }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
-        builder.append(operator!=null?operator:"!op!");
+        builder.append(operator != null ? operator : "!op!");
         builder.append(' ');
-        builder.append(name!=null?name:"!name!");
+        builder.append(name != null ? name : "!name!");
         builder.append(']');
         return builder.toString();
-	}
-	
+    }
+
 }

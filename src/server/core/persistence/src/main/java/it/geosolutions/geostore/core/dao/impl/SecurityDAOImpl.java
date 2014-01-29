@@ -29,76 +29,79 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
  * Class SecurityDAOImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
-public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements SecurityDAO
-{
+public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements SecurityDAO {
 
     private static final Logger LOGGER = Logger.getLogger(SecurityDAOImpl.class);
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
-    public void persist(SecurityRule... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public void persist(SecurityRule... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for Security ... ");
         }
 
         super.persist(entities);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
-    public List<SecurityRule> findAll()
-    {
+    public List<SecurityRule> findAll() {
         return super.findAll();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<SecurityRule> search(ISearch search)
-    {
+    public List<SecurityRule> search(ISearch search) {
         return super.search(search);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
-    public SecurityRule merge(SecurityRule entity)
-    {
+    public SecurityRule merge(SecurityRule entity) {
         return super.merge(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
-    public boolean remove(SecurityRule entity)
-    {
+    public boolean remove(SecurityRule entity) {
         return super.remove(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
-    public boolean removeById(Long id)
-    {
+    public boolean removeById(Long id) {
         return super.removeById(id);
     }
 

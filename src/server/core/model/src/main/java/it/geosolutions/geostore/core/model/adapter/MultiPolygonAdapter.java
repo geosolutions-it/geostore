@@ -31,12 +31,10 @@ package it.geosolutions.geostore.core.model.adapter;
 
 import com.vividsolutions.jts.geom.MultiPolygon;
 
-
 /**
  * The Class MultiPolygonAdapter.
  * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
-public class MultiPolygonAdapter extends GeometryAdapter<MultiPolygon>
-{
+public class MultiPolygonAdapter extends GeometryAdapter<MultiPolygon> {
 }

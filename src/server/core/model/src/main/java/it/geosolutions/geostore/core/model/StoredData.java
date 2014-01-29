@@ -44,10 +44,10 @@ import org.hibernate.annotations.Index;
 
 /**
  * Class StoredData.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
 @Entity(name = "StoreData")
 @Table(name = "gs_stored_data")
@@ -60,7 +60,7 @@ public class StoredData implements Serializable {
     @Id
     private Long id;
 
-    @Column(name="stored_data", nullable = false, updatable = true, length = 500000)
+    @Column(name = "stored_data", nullable = false, updatable = true, length = 500000)
     private String data;
 
     @OneToOne(optional = false)
@@ -121,7 +121,7 @@ public class StoredData implements Serializable {
 
         builder.append("id=").append(id);
 
-        if ( data != null ) {
+        if (data != null) {
             builder.append(", ");
             builder.append("data=").append(data);
         }
@@ -140,8 +140,7 @@ public class StoredData implements Serializable {
         int result = 1;
         result = (prime * result) + ((data == null) ? 0 : data.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
-        result = (prime * result)
-                + ((resource == null) ? 0 : resource.hashCode());
+        result = (prime * result) + ((resource == null) ? 0 : resource.hashCode());
 
         return result;
     }
@@ -151,36 +150,36 @@ public class StoredData implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if ( this == obj ) {
+        if (this == obj) {
             return true;
         }
-        if ( obj == null ) {
+        if (obj == null) {
             return false;
         }
-        if ( getClass() != obj.getClass() ) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
 
         StoredData other = (StoredData) obj;
-        if ( data == null ) {
-            if ( other.data != null ) {
+        if (data == null) {
+            if (other.data != null) {
                 return false;
             }
-        } else if ( !data.equals(other.data) ) {
+        } else if (!data.equals(other.data)) {
             return false;
         }
-        if ( id == null ) {
-            if ( other.id != null ) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if ( !id.equals(other.id) ) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
-        if ( resource == null ) {
-            if ( other.resource != null ) {
+        if (resource == null) {
+            if (other.resource != null) {
                 return false;
             }
-        } else if ( !resource.equals(other.resource) ) {
+        } else if (!resource.equals(other.resource)) {
             return false;
         }
 

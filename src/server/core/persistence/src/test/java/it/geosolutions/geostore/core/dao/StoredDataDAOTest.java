@@ -20,7 +20,6 @@
 
 package it.geosolutions.geostore.core.dao;
 
-
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
@@ -44,37 +43,37 @@ public class StoredDataDAOTest extends BaseDAOTest {
         final String NAME2 = "SECOND_DATA";
 
         long id;
-        
+
         //
         // PERSIST test
         //
-        {        	
-        	Category category = new Category();
-        	category.setName("MAP");
-        		
-        	categoryDAO.persist(category);
-        	
+        {
+            Category category = new Category();
+            category.setName("MAP");
+
+            categoryDAO.persist(category);
+
             assertEquals(1, categoryDAO.count(null));
             assertEquals(1, categoryDAO.findAll().size());
-        	
+
             Resource resource = new Resource();
             resource.setName(NAME1);
             resource.setCreation(new Date());
             resource.setCategory(category);
-            
+
             resourceDAO.persist(resource);
-            
+
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());
-            
+
             StoredData data = new StoredData();
             data.setData(NAME1);
             data.setResource(resource);
             data.setId(resource.getId());
-            
+
             storedDataDAO.persist(data);
             id = data.getId();
-            
+
             assertEquals(1, storedDataDAO.count(null));
             assertEquals(1, storedDataDAO.findAll().size());
             assertEquals(data.getId(), resource.getId());
@@ -82,7 +81,7 @@ public class StoredDataDAOTest extends BaseDAOTest {
 
         //
         // LOAD and UPDATE tests
-        // 
+        //
         {
             StoredData loaded = storedDataDAO.find(id);
             assertNotNull("Can't retrieve data", loaded);
@@ -102,7 +101,7 @@ public class StoredDataDAOTest extends BaseDAOTest {
         assertNull("Data not deleted", storedDataDAO.find(id));
     }
 
-    public void testBigData(){
+    public void testBigData() {
         final int CAPACITY = 500000;
 
         // create ancillary data
@@ -121,10 +120,10 @@ public class StoredDataDAOTest extends BaseDAOTest {
         assertEquals(1, resourceDAO.count(null));
         assertEquals(1, resourceDAO.findAll().size());
 
-        // build big data 
+        // build big data
         StringBuilder sb = new StringBuilder(CAPACITY);
         for (int i = 0; i < CAPACITY; i++) {
-            sb.append(i%10);
+            sb.append(i % 10);
         }
 
         System.out.println("SB is " + sb.length() + " chars long");
@@ -142,7 +141,6 @@ public class StoredDataDAOTest extends BaseDAOTest {
             assertNotNull("Can't retrieve data", loaded);
             assertEquals(CAPACITY, loaded.getData().length());
         }
-
 
     }
 

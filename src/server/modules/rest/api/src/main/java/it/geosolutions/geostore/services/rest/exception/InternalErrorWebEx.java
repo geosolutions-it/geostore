@@ -22,15 +22,15 @@ package it.geosolutions.geostore.services.rest.exception;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class InternalErrorWebEx extends GeoStoreWebEx {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 9014519381293787498L;
-	
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 9014519381293787498L;
+
     public InternalErrorWebEx(String message) {
         super(Response.Status.INTERNAL_SERVER_ERROR, message);
-     }
+    }
 }

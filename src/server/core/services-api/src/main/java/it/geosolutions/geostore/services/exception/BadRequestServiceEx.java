@@ -20,16 +20,16 @@
 package it.geosolutions.geostore.services.exception;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class BadRequestServiceEx extends GeoStoreServiceException {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -1177678311337052026L;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -1177678311337052026L;
 
-	public BadRequestServiceEx(String message) {
+    public BadRequestServiceEx(String message) {
         super(message);
-     }
+    }
 
 }

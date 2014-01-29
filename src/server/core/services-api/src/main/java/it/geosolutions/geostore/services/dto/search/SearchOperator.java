@@ -28,21 +28,21 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlType
 public enum SearchOperator {
-	
-	GREATER_THAN_OR_EQUAL_TO,
-	
-	GREATER_THAN,
-	
-	LESS_THAN,
-	
-	LESS_THAN_OR_EQUAL_TO,
-	
-	EQUAL_TO,
-	
-	LIKE,
-	
-	IS_NULL,
-	
-	IS_NOT_NULL;
-	
+
+    GREATER_THAN_OR_EQUAL_TO,
+
+    GREATER_THAN,
+
+    LESS_THAN,
+
+    LESS_THAN_OR_EQUAL_TO,
+
+    EQUAL_TO,
+
+    LIKE,
+
+    IS_NULL,
+
+    IS_NOT_NULL;
+
 }

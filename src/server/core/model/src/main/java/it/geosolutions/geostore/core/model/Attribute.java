@@ -59,169 +59,171 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Index;
 
-/** 
+/**
  * Class Attribute.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Attribute")
-@Table(name = "gs_attribute",
-    uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"name", "resource_id"})})
+@Table(name = "gs_attribute", uniqueConstraints = { @UniqueConstraint(columnNames = { "name",
+        "resource_id" }) })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_attribute")
 @XmlRootElement(name = "Attribute")
 public class Attribute implements Serializable {
-	
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -1298676702253831972L;
 
-	@Id
-	@GeneratedValue
-	private Long id;
-	
-	@Column(name = "name", nullable = false, updatable = true)
-	@Index(name = "idx_attribute_name")
-	private String name;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -1298676702253831972L;
 
-	@Column(name = "attribute_text", nullable = true, updatable = true)
-	@Index(name = "idx_attribute_text")
-	private String textValue;
-	
-	@Column(name = "attribute_number", nullable = true, updatable = true)
-	@Index(name = "idx_attribute_number")
-	private Double numberValue;
-	
-	@Column(name = "attribute_date", nullable = true, updatable = true)
-	@Index(name = "idx_attribute_date")
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date dateValue;
-	
-	@Column(name = "attribute_type", nullable = false, updatable = false)
-	@Index(name = "idx_attribute_type")
-	@Enumerated(EnumType.STRING)
-	private DataType type;
-	
-	@ManyToOne(optional = false)
-	@Index(name = "idx_attribute_resource")
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(name = "name", nullable = false, updatable = true)
+    @Index(name = "idx_attribute_name")
+    private String name;
+
+    @Column(name = "attribute_text", nullable = true, updatable = true)
+    @Index(name = "idx_attribute_text")
+    private String textValue;
+
+    @Column(name = "attribute_number", nullable = true, updatable = true)
+    @Index(name = "idx_attribute_number")
+    private Double numberValue;
+
+    @Column(name = "attribute_date", nullable = true, updatable = true)
+    @Index(name = "idx_attribute_date")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date dateValue;
+
+    @Column(name = "attribute_type", nullable = false, updatable = false)
+    @Index(name = "idx_attribute_type")
+    @Enumerated(EnumType.STRING)
+    private DataType type;
+
+    @ManyToOne(optional = false)
+    @Index(name = "idx_attribute_resource")
     @ForeignKey(name = "fk_attribute_resource")
-	private Resource resource;
+    private Resource resource;
 
     /**
      * Only used for XML un/marshalling
      */
     public final static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
 
-	/**
-	 * @throws Exception
-	 */
-	@PreUpdate
-	@PrePersist
-	public void onPreUpdate() throws Exception {
-        if(textValue == null && numberValue == null && dateValue == null) {
-			throw new NullPointerException("Null value not allowed in attribute: " + this.toString());
+    /**
+     * @throws Exception
+     */
+    @PreUpdate
+    @PrePersist
+    public void onPreUpdate() throws Exception {
+        if (textValue == null && numberValue == null && dateValue == null) {
+            throw new NullPointerException("Null value not allowed in attribute: "
+                    + this.toString());
 
-        } else if((this.textValue == null && (this.numberValue != null ^ this.dateValue != null)) ||
-				(this.numberValue == null && (this.textValue != null ^ this.dateValue != null)) ||
-				(this.dateValue == null && (this.textValue != null ^ this.numberValue != null))){
-			this.type = this.textValue != null ? DataType.STRING : (this.numberValue != null ? DataType.NUMBER : DataType.DATE);
+        } else if ((this.textValue == null && (this.numberValue != null ^ this.dateValue != null))
+                || (this.numberValue == null && (this.textValue != null ^ this.dateValue != null))
+                || (this.dateValue == null && (this.textValue != null ^ this.numberValue != null))) {
+            this.type = this.textValue != null ? DataType.STRING
+                    : (this.numberValue != null ? DataType.NUMBER : DataType.DATE);
 
-		} else {
-			throw new Exception("Only one DataType can be not-null inside the Attribute entity: " + this.toString());
+        } else {
+            throw new Exception("Only one DataType can be not-null inside the Attribute entity: "
+                    + this.toString());
 
-		}
-	}
+        }
+    }
 
-	/**
-	 * @return the id
-	 */
-	@XmlTransient
-	public long getId() {
-		return id;
-	}
+    /**
+     * @return the id
+     */
+    @XmlTransient
+    public long getId() {
+        return id;
+    }
 
-	/**
-	 * @param id the id to set
-	 */
-	public void setId(long id) {
-		this.id = id;
-	}
-	
-	/**
-	 * @return the attribute
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @param id the id to set
+     */
+    public void setId(long id) {
+        this.id = id;
+    }
 
-	/**
-	 * @param name the attribute to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @return the attribute
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @return the textValue
-	 */
-	@XmlTransient
-	public String getTextValue() {
-		return textValue;
-	}
+    /**
+     * @param name the attribute to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @param textValue the textValue to set
-	 */
-	public void setTextValue(String textValue) {
-		this.textValue = textValue;
-	}
+    /**
+     * @return the textValue
+     */
+    @XmlTransient
+    public String getTextValue() {
+        return textValue;
+    }
 
-	/**
-	 * @return the numberValue
-	 */
-	@XmlTransient
-	public Double getNumberValue() {
-		return numberValue;
-	}
+    /**
+     * @param textValue the textValue to set
+     */
+    public void setTextValue(String textValue) {
+        this.textValue = textValue;
+    }
 
-	/**
-	 * @param numberValue the numberValue to set
-	 */
-	public void setNumberValue(Double numberValue) {
-		this.numberValue = numberValue;
-	}
+    /**
+     * @return the numberValue
+     */
+    @XmlTransient
+    public Double getNumberValue() {
+        return numberValue;
+    }
 
-	/**
-	 * @return the dateValue
-	 */
-	@XmlTransient
-	public Date getDateValue() {
-		return dateValue;
-	}
+    /**
+     * @param numberValue the numberValue to set
+     */
+    public void setNumberValue(Double numberValue) {
+        this.numberValue = numberValue;
+    }
 
-	/**
-	 * @param dateValue the dateValue to set
-	 */
-	public void setDateValue(Date dateValue) {
-		this.dateValue = dateValue;
-	}
+    /**
+     * @return the dateValue
+     */
+    @XmlTransient
+    public Date getDateValue() {
+        return dateValue;
+    }
+
+    /**
+     * @param dateValue the dateValue to set
+     */
+    public void setDateValue(Date dateValue) {
+        this.dateValue = dateValue;
+    }
 
     /**
      * Only used for XML marshalling
      */
-	@Transient
-	@XmlElement
+    @Transient
+    @XmlElement
     public String getValue() {
 
-        switch(type) {
-            case DATE:
-                return DATE_FORMAT.format(dateValue);
-            case NUMBER:
-                return numberValue.toString();
-            case STRING:
-                return textValue.toString();
-            default:
-                throw new IllegalStateException("Unknown type " + type);
+        switch (type) {
+        case DATE:
+            return DATE_FORMAT.format(dateValue);
+        case NUMBER:
+            return numberValue.toString();
+        case STRING:
+            return textValue.toString();
+        default:
+            throw new IllegalStateException("Unknown type " + type);
         }
     }
 
@@ -229,7 +231,7 @@ public class Attribute implements Serializable {
      * Only used for XML unmarshalling
      */
     protected void setValue(String text) {
-        if(type != null) {
+        if (type != null) {
             setValue(text, type);
         } else {
             throw new IllegalStateException("Setting value with no type selected");
@@ -237,170 +239,171 @@ public class Attribute implements Serializable {
     }
 
     protected void setValue(String text, DataType type) {
-        switch(type) {
-            case DATE:
-                try {
-                    dateValue = DATE_FORMAT.parse(text);
-                } catch (Exception e) {
-                    throw new IllegalArgumentException("Can't parse date ["+text+"]", e);
-                }
-                break;
-            case NUMBER:
-                try {
-                    numberValue = Double.valueOf(text);
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Can't parse double ["+text+"]", e);
-                }
-                break;
-            case STRING:
-                textValue = text;
-                break;
-            default:
-                throw new IllegalStateException("Unknown type " + type);
+        switch (type) {
+        case DATE:
+            try {
+                dateValue = DATE_FORMAT.parse(text);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Can't parse date [" + text + "]", e);
+            }
+            break;
+        case NUMBER:
+            try {
+                numberValue = Double.valueOf(text);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Can't parse double [" + text + "]", e);
+            }
+            break;
+        case STRING:
+            textValue = text;
+            break;
+        default:
+            throw new IllegalStateException("Unknown type " + type);
         }
 
-
     }
-	/**
-     * THe XMLAttribute annotation is to make sure that type will be unmarshalled before
-     * value.
-     *
-	 * @return the type
-	 */
+
+    /**
+     * THe XMLAttribute annotation is to make sure that type will be unmarshalled before value.
+     * 
+     * @return the type
+     */
     @XmlAttribute
-	public DataType getType() {
-		return type;
-	}
+    public DataType getType() {
+        return type;
+    }
 
-	/**
-	 * @param type the type to set
-	 */
-	public void setType(DataType type) {
-		this.type = type;
-	}
-	
-	/**
-	 * @return the resource
-	 */
-	@XmlTransient
-	public Resource getResource() {
-		return resource;
-	}
+    /**
+     * @param type the type to set
+     */
+    public void setType(DataType type) {
+        this.type = type;
+    }
 
-	/**
-	 * @param resource the resource to set
-	 */
-	public void setResource(Resource resource) {
-		this.resource = resource;
-	}
+    /**
+     * @return the resource
+     */
+    @XmlTransient
+    public Resource getResource() {
+        return resource;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {		
+    /**
+     * @param resource the resource to set
+     */
+    public void setResource(Resource resource) {
+        this.resource = resource;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if (id != null){
-        	builder.append("id=").append(id);
+        if (id != null) {
+            builder.append("id=").append(id);
         } else
-        	builder.append("id is null");
+            builder.append("id is null");
 
-        if (name != null){
-        	builder.append(", name=").append(name);
+        if (name != null) {
+            builder.append(", name=").append(name);
         }
 
-        if (textValue != null){
-        	builder.append(", textValue=").append(textValue);
+        if (textValue != null) {
+            builder.append(", textValue=").append(textValue);
         }
 
-        if(numberValue != null){
-        	builder.append(", numberValue=").append(numberValue);
+        if (numberValue != null) {
+            builder.append(", numberValue=").append(numberValue);
         }
 
-        if(dateValue != null){
-        	builder.append(", dateValue=").append(dateValue);
+        if (dateValue != null) {
+            builder.append(", dateValue=").append(dateValue);
         }
 
-        if(textValue == null && numberValue == null&& dateValue == null) {
-        	builder.append(", value is null");
+        if (textValue == null && numberValue == null && dateValue == null) {
+            builder.append(", value is null");
         }
 
-        if(type != null){
-        	builder.append(", type=").append(type);
+        if (type != null) {
+            builder.append(", type=").append(type);
         }
 
         builder.append(']');
         return builder.toString();
-	}
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((dateValue == null) ? 0 : dateValue.hashCode());
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result
-				+ ((numberValue == null) ? 0 : numberValue.hashCode());
-		result = prime * result
-				+ ((resource == null) ? 0 : resource.hashCode());
-		result = prime * result
-				+ ((textValue == null) ? 0 : textValue.hashCode());
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		return result;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((dateValue == null) ? 0 : dateValue.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        result = prime * result + ((numberValue == null) ? 0 : numberValue.hashCode());
+        result = prime * result + ((resource == null) ? 0 : resource.hashCode());
+        result = prime * result + ((textValue == null) ? 0 : textValue.hashCode());
+        result = prime * result + ((type == null) ? 0 : type.hashCode());
+        return result;
+    }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Attribute other = (Attribute) obj;
-		if (dateValue == null) {
-			if (other.dateValue != null)
-				return false;
-		} else if (!dateValue.equals(other.dateValue))
-			return false;
-		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		if (numberValue == null) {
-			if (other.numberValue != null)
-				return false;
-		} else if (!numberValue.equals(other.numberValue))
-			return false;
-		if (resource == null) {
-			if (other.resource != null)
-				return false;
-		} else if (!resource.equals(other.resource))
-			return false;
-		if (textValue == null) {
-			if (other.textValue != null)
-				return false;
-		} else if (!textValue.equals(other.textValue))
-			return false;
-		if (type != other.type)
-			return false;
-		return true;
-	}
-	
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#equals(java.lang.Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Attribute other = (Attribute) obj;
+        if (dateValue == null) {
+            if (other.dateValue != null)
+                return false;
+        } else if (!dateValue.equals(other.dateValue))
+            return false;
+        if (id == null) {
+            if (other.id != null)
+                return false;
+        } else if (!id.equals(other.id))
+            return false;
+        if (name == null) {
+            if (other.name != null)
+                return false;
+        } else if (!name.equals(other.name))
+            return false;
+        if (numberValue == null) {
+            if (other.numberValue != null)
+                return false;
+        } else if (!numberValue.equals(other.numberValue))
+            return false;
+        if (resource == null) {
+            if (other.resource != null)
+                return false;
+        } else if (!resource.equals(other.resource))
+            return false;
+        if (textValue == null) {
+            if (other.textValue != null)
+                return false;
+        } else if (!textValue.equals(other.textValue))
+            return false;
+        if (type != other.type)
+            return false;
+        return true;
+    }
+
 }

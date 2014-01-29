@@ -37,15 +37,18 @@ import com.googlecode.genericdao.search.Search;
 
 /**
  * Class UserServiceImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = Logger.getLogger(UserServiceImpl.class);
+
     private UserDAO userDAO;
+
     private UserAttributeDAO userAttributeDAO;
+
     private UserGroupDAO userGroupDAO;
 
     /**
@@ -69,7 +72,9 @@ public class UserServiceImpl implements UserService {
         this.userDAO = userDAO;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#insert(it.geosolutions.geostore.core.model.User)
      */
     @Override
@@ -129,7 +134,9 @@ public class UserServiceImpl implements UserService {
         return u.getId();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#update(it.geosolutions.geostore.core.model.User)
      */
     @Override
@@ -170,7 +177,9 @@ public class UserServiceImpl implements UserService {
         return orig.getId();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#updateAttributes(long, java.util.List)
      */
     @Override
@@ -184,7 +193,7 @@ public class UserServiceImpl implements UserService {
         // Removing old attributes
         //
         List<UserAttribute> oldList = user.getAttribute();
-//        Iterator<UserAttribute> iterator;
+        // Iterator<UserAttribute> iterator;
 
         if (oldList != null) {
             for (UserAttribute a : oldList) {
@@ -201,7 +210,9 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#get(long)
      */
     @Override
@@ -211,7 +222,9 @@ public class UserServiceImpl implements UserService {
         return user;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#get(java.lang.String)
      */
     @Override
@@ -219,17 +232,18 @@ public class UserServiceImpl implements UserService {
         Search searchCriteria = new Search(User.class);
         searchCriteria.addFilterEqual("name", name);
         searchCriteria.addFetch("attribute");
-        
 
         List<User> users = userDAO.search(searchCriteria);
-        if( ! users.isEmpty()) {
+        if (!users.isEmpty()) {
             return users.get(0);
         } else {
             throw new NotFoundServiceEx("User not found with name: " + name);
         }
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#delete(long)
      */
     @Override
@@ -237,7 +251,9 @@ public class UserServiceImpl implements UserService {
         return userDAO.removeById(id);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -260,12 +276,15 @@ public class UserServiceImpl implements UserService {
 
         return found;
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public List<User> getAll(Integer page, Integer entries, String nameLike, boolean includeAttributes) throws BadRequestServiceEx {
+    public List<User> getAll(Integer page, Integer entries, String nameLike,
+            boolean includeAttributes) throws BadRequestServiceEx {
 
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together.");
@@ -279,17 +298,17 @@ public class UserServiceImpl implements UserService {
         }
 
         searchCriteria.addSortAsc("name");
-        
-	    if (nameLike != null) {
-	    	searchCriteria.addFilterILike("name", nameLike);
-	    }
+
+        if (nameLike != null) {
+            searchCriteria.addFilterILike("name", nameLike);
+        }
 
         List<User> found = userDAO.search(searchCriteria);
         found = this.configUserList(found, includeAttributes);
-        
+
         return found;
     }
-    
+
     /**
      * @param list
      * @param includeAttributes
@@ -297,26 +316,28 @@ public class UserServiceImpl implements UserService {
      */
     private List<User> configUserList(List<User> list, boolean includeAttributes) {
         List<User> uList = new ArrayList<User>(list.size());
-        
+
         for (User user : list) {
-        	User u = new User();
-        	u.setGroup(user.getGroup());
-        	u.setId(user.getId());
-        	u.setName(user.getName());
-        	u.setPassword(user.getPassword());
-        	u.setRole(user.getRole());
-            
-            if(includeAttributes){
-            	u.setAttribute(user.getAttribute());
+            User u = new User();
+            u.setGroup(user.getGroup());
+            u.setId(user.getId());
+            u.setName(user.getName());
+            u.setPassword(user.getPassword());
+            u.setRole(user.getRole());
+
+            if (includeAttributes) {
+                u.setAttribute(user.getAttribute());
             }
-            
+
             uList.add(u);
         }
 
         return uList;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see it.geosolutions.geostore.services.UserService#getCount(java.lang.String)
      */
     @Override

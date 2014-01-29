@@ -46,17 +46,19 @@ import org.apache.log4j.Logger;
 
 /**
  * Class SearchConverter.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public class SearchConverter implements FilterVisitor {
 
     private static final Map<SearchOperator, Integer> ops_rest_trg;
+
     private static final Logger LOGGER = Logger.getLogger(SearchConverter.class);
 
     static {
-        Map<SearchOperator, Integer> ops = new EnumMap<SearchOperator, Integer>(SearchOperator.class);
+        Map<SearchOperator, Integer> ops = new EnumMap<SearchOperator, Integer>(
+                SearchOperator.class);
         ops.put(SearchOperator.EQUAL_TO, Filter.OP_EQUAL);
         ops.put(SearchOperator.GREATER_THAN_OR_EQUAL_TO, Filter.OP_GREATER_OR_EQUAL);
         ops.put(SearchOperator.GREATER_THAN, Filter.OP_GREATER_THAN);
@@ -75,7 +77,8 @@ public class SearchConverter implements FilterVisitor {
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
-    public static Search convert(SearchFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
+    public static Search convert(SearchFilter filter) throws BadRequestServiceEx,
+            InternalErrorServiceEx {
         SearchConverter sc = new SearchConverter();
         filter.accept(sc);
 
@@ -88,14 +91,14 @@ public class SearchConverter implements FilterVisitor {
 
         return trgSearch;
     }
+
     private Filter trgFilter;
 
     private SearchConverter() {
     }
 
     /*
-     * (non-Javadoc) @see
-     * it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.AndFilter)
+     * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.AndFilter)
      */
     @Override
     public void visit(AndFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
@@ -110,7 +113,7 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     *
+     * 
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
@@ -130,40 +133,38 @@ public class SearchConverter implements FilterVisitor {
             Object value = null;
 
             switch (filter.getType()) {
-                case DATE:
-                    fieldValueName = "dateValue";
+            case DATE:
+                fieldValueName = "dateValue";
 
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-                    try {
-                        value = sdf.parse(filter.getValue());
-                    } catch (ParseException e) {
-                        throw new InternalErrorServiceEx("Error parsing attribute date value");
-                    }
+                try {
+                    value = sdf.parse(filter.getValue());
+                } catch (ParseException e) {
+                    throw new InternalErrorServiceEx("Error parsing attribute date value");
+                }
 
-                    break;
-                case NUMBER:
-                    fieldValueName = "numberValue";
+                break;
+            case NUMBER:
+                fieldValueName = "numberValue";
 
-                    try {
-                        value = Double.valueOf(filter.getValue());
-                    } catch (NumberFormatException ex) {
-                        throw new InternalErrorServiceEx("Error parsing attribute number value");
-                    }
+                try {
+                    value = Double.valueOf(filter.getValue());
+                } catch (NumberFormatException ex) {
+                    throw new InternalErrorServiceEx("Error parsing attribute number value");
+                }
 
-                    break;
-                case STRING:
-                    fieldValueName = "textValue";
-                    value = filter.getValue();
+                break;
+            case STRING:
+                fieldValueName = "textValue";
+                value = filter.getValue();
 
-                    break;
-                default:
-                    throw new IllegalStateException("Unknown type " + filter.getType());
+                break;
+            default:
+                throw new IllegalStateException("Unknown type " + filter.getType());
             }
 
-            trgFilter = Filter.some("attribute",
-                    Filter.and(
-                    Filter.equal("name", filter.getName()),
+            trgFilter = Filter.some("attribute", Filter.and(Filter.equal("name", filter.getName()),
                     new Filter(fieldValueName, value, trg_op)));
 
         } else {
@@ -173,7 +174,7 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     *
+     * 
      * @throws InternalErrorServiceEx
      */
     @SuppressWarnings("rawtypes")
@@ -201,7 +202,7 @@ public class SearchConverter implements FilterVisitor {
             } catch (ParseException e) {
                 throw new InternalErrorServiceEx("Error parsing attribute date value");
             }
-        } else if (type == Long.class) {            
+        } else if (type == Long.class) {
             try {
                 f.setValue(Long.parseLong(value));
             } catch (NumberFormatException e) {
@@ -216,7 +217,7 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     *
+     * 
      * @throws InternalErrorServiceEx
      */
     @Override
@@ -238,8 +239,7 @@ public class SearchConverter implements FilterVisitor {
     }
 
     /*
-     * (non-Javadoc) @see
-     * it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.NotFilter)
+     * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.NotFilter)
      */
     @Override
     public void visit(NotFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
@@ -252,8 +252,7 @@ public class SearchConverter implements FilterVisitor {
     }
 
     /*
-     * (non-Javadoc) @see
-     * it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.OrFilter)
+     * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.OrFilter)
      */
     @Override
     public void visit(OrFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {

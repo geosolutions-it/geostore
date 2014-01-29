@@ -36,19 +36,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-/** 
+/**
  * Class ShortResourceList.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-@XmlRootElement(name="ResourceList")
+@XmlRootElement(name = "ResourceList")
 public class ShortResourceList {
 
     private List<ShortResource> list;
 
     public ShortResourceList() {
-    	
+
     }
 
     /**
@@ -60,8 +60,8 @@ public class ShortResourceList {
 
     /**
      * @return List<ShortResource>
-     */ 
-    @XmlElement(name="Resource")
+     */
+    @XmlElement(name = "Resource")
     public List<ShortResource> getList() {
         return list;
     }
@@ -77,5 +77,5 @@ public class ShortResourceList {
     public boolean isEmpty() {
         return list == null || list.isEmpty();
     }
-    
+
 }

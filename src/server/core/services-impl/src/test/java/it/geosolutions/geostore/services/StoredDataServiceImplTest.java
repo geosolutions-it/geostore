@@ -30,7 +30,7 @@ import org.junit.Test;
 
 /**
  * Class StoredDataServiceImplTest.
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -85,7 +85,6 @@ public class StoredDataServiceImplTest extends ServiceTestBase {
             assertNotNull(loadedRes.getLastUpdate());
         }
 
-
         {
             StoredData loadedData = storedDataService.get(id);
             assertNotNull(loadedData);
@@ -95,7 +94,6 @@ public class StoredDataServiceImplTest extends ServiceTestBase {
             loadedData.setData(DATA2);
             storedDataService.update(loadedData.getId(), loadedData.getData());
         }
-
 
         {
             StoredData loaded = storedDataService.get(id);

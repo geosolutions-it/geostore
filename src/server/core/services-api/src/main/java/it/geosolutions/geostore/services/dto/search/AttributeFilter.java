@@ -27,123 +27,123 @@ import java.io.Serializable;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-
 /**
- * Class Search. 
+ * Class Search.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 @XmlRootElement(name = "Attribute")
 public class AttributeFilter extends SearchFilter implements Serializable {
-	
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = -2067611261095378628L;
 
-	private String name;
-	
-	private String value;
-	
-	private DataType type;
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = -2067611261095378628L;
+
+    private String name;
+
+    private String value;
+
+    private DataType type;
 
     private SearchOperator operator;
 
-
-	/**
+    /**
 	 * 
 	 */
-	public AttributeFilter() {
-		
-	}
+    public AttributeFilter() {
 
-	/**
-	 * @param name
-	 * @param value
-	 * @param type
-	 * @param operator
-	 */
-	public AttributeFilter(String name, String value, DataType type, SearchOperator operator) {
-		this.name = name;
-		this.value = value;
-		this.type = type;
-		this.operator = operator;
-	}
+    }
 
-	/**
-	 * @return the name
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @param name
+     * @param value
+     * @param type
+     * @param operator
+     */
+    public AttributeFilter(String name, String value, DataType type, SearchOperator operator) {
+        this.name = name;
+        this.value = value;
+        this.type = type;
+        this.operator = operator;
+    }
 
-	/**
-	 * @param name the name to set
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @return the value
-	 */
-	public String getValue() {
-		return value;
-	}
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @param value the value to set
-	 */
-	public void setValue(String value) {
-		this.value = value;
-	}
+    /**
+     * @return the value
+     */
+    public String getValue() {
+        return value;
+    }
 
-	/**
-	 * @return the type
-	 */
-	public DataType getType() {
-		return type;
-	}
+    /**
+     * @param value the value to set
+     */
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-	/**
-	 * @param type the type to set
-	 */
-	public void setType(DataType type) {
-		this.type = type;
-	}
+    /**
+     * @return the type
+     */
+    public DataType getType() {
+        return type;
+    }
 
-	/**
-	 * @return the operator
-	 */
-	public SearchOperator getOperator() {
-		return operator;
-	}
+    /**
+     * @param type the type to set
+     */
+    public void setType(DataType type) {
+        this.type = type;
+    }
 
-	/**
-	 * @param operator the operator to set
-	 */
-	public void setOperator(SearchOperator operator) {
-		this.operator = operator;
-	}
+    /**
+     * @return the operator
+     */
+    public SearchOperator getOperator() {
+        return operator;
+    }
+
+    /**
+     * @param operator the operator to set
+     */
+    public void setOperator(SearchOperator operator) {
+        this.operator = operator;
+    }
 
     @Override
     public void accept(FilterVisitor visitor) throws BadRequestServiceEx, InternalErrorServiceEx {
         visitor.visit(this);
     }
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
-        builder.append('<').append(type!=null?type:"!type!").append('>');
-        builder.append(name!=null?name:"!name!");
+        builder.append('<').append(type != null ? type : "!type!").append('>');
+        builder.append(name != null ? name : "!name!");
         builder.append(' ');
-        builder.append(operator!=null?operator:"!op!");
+        builder.append(operator != null ? operator : "!op!");
         builder.append(' ');
-        builder.append(value!=null?value:"!value!");        
+        builder.append(value != null ? value : "!value!");
         builder.append(']');
         return builder.toString();
-	}
-	
+    }
+
 }

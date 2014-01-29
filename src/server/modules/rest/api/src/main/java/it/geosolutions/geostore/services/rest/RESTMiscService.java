@@ -43,43 +43,36 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
-
 /**
- * Interface RESTMiscService.
- * Experimental operations go here.
- *
+ * Interface RESTMiscService. Experimental operations go here.
+ * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
- 
+
 public interface RESTMiscService {
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}/data")
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    String getData(
-    		@Context SecurityContext sc,
-    		@PathParam("cname") String cname,
-    		@PathParam("rname") String rname)
-                throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String getData(@Context SecurityContext sc, @PathParam("cname") String cname,
+            @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
+            InternalErrorWebEx;
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}")
-    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    Resource getResource(
-    		@Context SecurityContext sc,
-    		@PathParam("cname") String cname,
-    		@PathParam("rname") String rname)
-                throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    Resource getResource(@Context SecurityContext sc, @PathParam("cname") String cname,
+            @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
+            InternalErrorWebEx;
 
     @GET
     @Path("/category/name/{cname}/resources/")
-    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    ShortResourceList getResourcesByCategory(
-      @Context SecurityContext sc,
-      @PathParam("cname") String cname)
-                throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
-    
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    ShortResourceList getResourcesByCategory(@Context SecurityContext sc,
+            @PathParam("cname") String cname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
+            InternalErrorWebEx;
+
 }

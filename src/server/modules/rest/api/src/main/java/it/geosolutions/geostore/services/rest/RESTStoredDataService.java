@@ -40,7 +40,7 @@ import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 
 /**
  * Interface RESTStoredDataService.Operations on {@link StoredData StoredData}s.
- *
+ * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -54,22 +54,21 @@ public interface RESTStoredDataService {
      */
     @PUT
     @Path("/{id}")
-    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON})
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER"})
-    long update(
-    		@Context SecurityContext sc,
-    		@PathParam("id") long id,
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN,
+            MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER" })
+    long update(@Context SecurityContext sc, @PathParam("id") long id,
             @Multipart("data") String data) throws NotFoundWebEx;
 
     /**
      * @return StoredDataList
      */
-//    @GET
-//    @Path("/")
-//    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-//    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-//    StoredDataList getAll(@Context SecurityContext sc);
+    // @GET
+    // @Path("/")
+    // @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
+    // @RolesAllowed({"ADMIN", "USER", "GUEST"})
+    // StoredDataList getAll(@Context SecurityContext sc);
 
     /**
      * @param id
@@ -77,10 +76,8 @@ public interface RESTStoredDataService {
      */
     @DELETE
     @Path("/{id}")
-    @RolesAllowed({"ADMIN", "USER"})
-    void delete(
-    		@Context SecurityContext sc,
-    		@PathParam("id") long id) throws NotFoundWebEx;
+    @RolesAllowed({ "ADMIN", "USER" })
+    void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
      * @param id
@@ -89,11 +86,9 @@ public interface RESTStoredDataService {
      */
     @GET
     @Path("/{id}")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    String get(
-    		@Context SecurityContext sc,
-    		@Context HttpHeaders headers,
-    		@PathParam("id") long id) throws NotFoundWebEx;
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String get(@Context SecurityContext sc, @Context HttpHeaders headers, @PathParam("id") long id)
+            throws NotFoundWebEx;
 
 }

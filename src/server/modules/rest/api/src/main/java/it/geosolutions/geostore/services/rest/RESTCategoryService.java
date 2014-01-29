@@ -50,7 +50,7 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 
-/** 
+/**
  * Interface RESTCategoryService.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
@@ -61,17 +61,16 @@ public interface RESTCategoryService {
     /**
      * @param category
      * @return long
-     * @throws NotFoundServiceEx 
-     * @throws BadRequestServiceEx 
+     * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx
      */
     @POST
     @Path("/")
-    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN"})
-    long insert(
-    		@Context SecurityContext sc, 
-    		@Multipart("category") Category category) throws BadRequestServiceEx, NotFoundServiceEx;
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN" })
+    long insert(@Context SecurityContext sc, @Multipart("category") Category category)
+            throws BadRequestServiceEx, NotFoundServiceEx;
 
     /**
      * @param id
@@ -81,23 +80,19 @@ public interface RESTCategoryService {
      */
     @PUT
     @Path("/category/{id}")
-    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
-    @RolesAllowed({"ADMIN"})
-    long update(
-    		@Context SecurityContext sc, 
-    		@PathParam("id") long id,
-    		@Multipart("category") Category category) throws NotFoundWebEx;
-    
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @RolesAllowed({ "ADMIN" })
+    long update(@Context SecurityContext sc, @PathParam("id") long id,
+            @Multipart("category") Category category) throws NotFoundWebEx;
+
     /**
      * @param id
      * @throws NotFoundWebEx
      */
     @DELETE
     @Path("/category/{id}")
-    @RolesAllowed({"ADMIN"})
-    void delete(
-    		@Context SecurityContext sc, 
-    		@PathParam("id") long id) throws NotFoundWebEx;
+    @RolesAllowed({ "ADMIN" })
+    void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
      * @param id
@@ -106,11 +101,9 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/category/{id}")
-    @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    Category get(
-    		@Context SecurityContext sc, 
-    		@PathParam("id") long id) throws NotFoundWebEx;
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    Category get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
      * @param page
@@ -120,12 +113,10 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/")
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    CategoryList getAll(
-    		@Context SecurityContext sc, 
-            @QueryParam("page") Integer page,
-            @QueryParam("entries") Integer entries)throws BadRequestWebEx;
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    CategoryList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
+            @QueryParam("entries") Integer entries) throws BadRequestWebEx;
 
     /**
      * @param nameLike
@@ -133,9 +124,7 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/count/{nameLike}")
-    @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    long getCount(
-    		@Context SecurityContext sc, 
-    		@PathParam("nameLike") String nameLike);
-    
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);
+
 }

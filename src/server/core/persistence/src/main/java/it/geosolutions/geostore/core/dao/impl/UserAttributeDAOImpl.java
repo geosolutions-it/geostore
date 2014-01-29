@@ -29,76 +29,79 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-
 /**
  * Class UserAttributeDAOImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
-public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implements UserAttributeDAO
-{
+public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implements UserAttributeDAO {
 
     private static final Logger LOGGER = Logger.getLogger(UserAttributeDAOImpl.class);
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
-    public void persist(UserAttribute... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public void persist(UserAttribute... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for UserAttribute ... ");
         }
 
         super.persist(entities);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
-    public List<UserAttribute> findAll()
-    {
+    public List<UserAttribute> findAll() {
         return super.findAll();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<UserAttribute> search(ISearch search)
-    {
+    public List<UserAttribute> search(ISearch search) {
         return super.search(search);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
-    public UserAttribute merge(UserAttribute entity)
-    {
+    public UserAttribute merge(UserAttribute entity) {
         return super.merge(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
-    public boolean remove(UserAttribute entity)
-    {
+    public boolean remove(UserAttribute entity) {
         return super.remove(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
-    public boolean removeById(Long id)
-    {
+    public boolean removeById(Long id) {
         return super.removeById(id);
     }
 

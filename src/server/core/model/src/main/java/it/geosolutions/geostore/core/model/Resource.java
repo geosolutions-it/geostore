@@ -58,13 +58,12 @@ import org.hibernate.annotations.Index;
 
 /**
  * Class Resource.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Resource")
-@Table(name = "gs_resource", uniqueConstraints = {
-	    @UniqueConstraint(columnNames = {"name"})})
+@Table(name = "gs_resource", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
 @XmlRootElement(name = "Resource")
 public class Resource implements Serializable, CycleRecoverable {
@@ -216,7 +215,7 @@ public class Resource implements Serializable, CycleRecoverable {
     /**
      * @return the data
      */
-//    @XmlTransient
+    // @XmlTransient
     public StoredData getData() {
         return data;
     }
@@ -265,41 +264,41 @@ public class Resource implements Serializable, CycleRecoverable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if ( name != null ) {
+        if (name != null) {
             builder.append("name=").append(name);
         }
 
-        if ( description != null ) {
+        if (description != null) {
             builder.append(", ");
             builder.append("description=").append(description);
         }
 
-        if ( creation != null ) {
+        if (creation != null) {
             builder.append(", ");
             builder.append("creation=").append(creation);
         }
 
-        if ( lastUpdate != null ) {
+        if (lastUpdate != null) {
             builder.append(", ");
             builder.append("lastUpdate=").append(lastUpdate);
         }
 
-        if ( metadata != null ) {
+        if (metadata != null) {
             builder.append(", ");
             builder.append("metadata=").append(metadata);
         }
 
-        if ( attribute != null ) {
+        if (attribute != null) {
             builder.append(", ");
             builder.append("attribute=").append(attribute.toString());
         }
 
-        if ( data != null ) {
+        if (data != null) {
             builder.append(", ");
             builder.append("data=").append(data.toString());
         }
 
-        if ( category != null ) {
+        if (category != null) {
             builder.append(", ");
             builder.append("category=").append(category.toString());
         }
@@ -316,23 +315,16 @@ public class Resource implements Serializable, CycleRecoverable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result)
-                + ((attribute == null) ? 0 : attribute.hashCode());
-        result = (prime * result)
-                + ((category == null) ? 0 : category.hashCode());
-        result = (prime * result)
-                + ((creation == null) ? 0 : creation.hashCode());
+        result = (prime * result) + ((attribute == null) ? 0 : attribute.hashCode());
+        result = (prime * result) + ((category == null) ? 0 : category.hashCode());
+        result = (prime * result) + ((creation == null) ? 0 : creation.hashCode());
         result = (prime * result) + ((data == null) ? 0 : data.hashCode());
-        result = (prime * result)
-                + ((description == null) ? 0 : description.hashCode());
+        result = (prime * result) + ((description == null) ? 0 : description.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
-        result = (prime * result)
-                + ((lastUpdate == null) ? 0 : lastUpdate.hashCode());
-        result = (prime * result)
-                + ((metadata == null) ? 0 : metadata.hashCode());
+        result = (prime * result) + ((lastUpdate == null) ? 0 : lastUpdate.hashCode());
+        result = (prime * result) + ((metadata == null) ? 0 : metadata.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
-        result = (prime * result)
-                + ((security == null) ? 0 : security.hashCode());
+        result = (prime * result) + ((security == null) ? 0 : security.hashCode());
 
         return result;
     }
@@ -342,85 +334,85 @@ public class Resource implements Serializable, CycleRecoverable {
      */
     @Override
     public boolean equals(Object obj) {
-        if ( this == obj ) {
+        if (this == obj) {
             return true;
         }
-        if ( obj == null ) {
+        if (obj == null) {
             return false;
         }
-        if ( getClass() != obj.getClass() ) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
 
         Resource other = (Resource) obj;
-        if ( attribute == null ) {
-            if ( other.attribute != null ) {
+        if (attribute == null) {
+            if (other.attribute != null) {
                 return false;
             }
-        } else if ( !attribute.equals(other.attribute) ) {
+        } else if (!attribute.equals(other.attribute)) {
             return false;
         }
-        if ( category == null ) {
-            if ( other.category != null ) {
+        if (category == null) {
+            if (other.category != null) {
                 return false;
             }
-        } else if ( !category.equals(other.category) ) {
+        } else if (!category.equals(other.category)) {
             return false;
         }
-        if ( creation == null ) {
-            if ( other.creation != null ) {
+        if (creation == null) {
+            if (other.creation != null) {
                 return false;
             }
-        } else if ( !creation.equals(other.creation) ) {
+        } else if (!creation.equals(other.creation)) {
             return false;
         }
-        if ( data == null ) {
-            if ( other.data != null ) {
+        if (data == null) {
+            if (other.data != null) {
                 return false;
             }
-        } else if ( !data.equals(other.data) ) {
+        } else if (!data.equals(other.data)) {
             return false;
         }
-        if ( description == null ) {
-            if ( other.description != null ) {
+        if (description == null) {
+            if (other.description != null) {
                 return false;
             }
-        } else if ( !description.equals(other.description) ) {
+        } else if (!description.equals(other.description)) {
             return false;
         }
-        if ( id == null ) {
-            if ( other.id != null ) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if ( !id.equals(other.id) ) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
-        if ( lastUpdate == null ) {
-            if ( other.lastUpdate != null ) {
+        if (lastUpdate == null) {
+            if (other.lastUpdate != null) {
                 return false;
             }
-        } else if ( !lastUpdate.equals(other.lastUpdate) ) {
+        } else if (!lastUpdate.equals(other.lastUpdate)) {
             return false;
         }
-        if ( metadata == null ) {
-            if ( other.metadata != null ) {
+        if (metadata == null) {
+            if (other.metadata != null) {
                 return false;
             }
-        } else if ( !metadata.equals(other.metadata) ) {
+        } else if (!metadata.equals(other.metadata)) {
             return false;
         }
-        if ( name == null ) {
-            if ( other.name != null ) {
+        if (name == null) {
+            if (other.name != null) {
                 return false;
             }
-        } else if ( !name.equals(other.name) ) {
+        } else if (!name.equals(other.name)) {
             return false;
         }
-        if ( security == null ) {
-            if ( other.security != null ) {
+        if (security == null) {
+            if (other.security != null) {
                 return false;
             }
-        } else if ( !security.equals(other.security) ) {
+        } else if (!security.equals(other.security)) {
             return false;
         }
 

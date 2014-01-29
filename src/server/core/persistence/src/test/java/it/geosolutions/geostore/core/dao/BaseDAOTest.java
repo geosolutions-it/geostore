@@ -42,16 +42,23 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public abstract class BaseDAOTest extends TestCase {
-	
+
     protected final Logger LOGGER;
 
     protected static StoredDataDAO storedDataDAO;
+
     protected static ResourceDAO resourceDAO;
+
     protected static AttributeDAO attributeDAO;
+
     protected static CategoryDAO categoryDAO;
+
     protected static SecurityDAO securityDAO;
+
     protected static UserAttributeDAO userAttributeDAO;
+
     protected static UserDAO userDAO;
+
     protected static UserGroupDAO userGroupDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
@@ -59,29 +66,28 @@ public abstract class BaseDAOTest extends TestCase {
     public BaseDAOTest() {
         LOGGER = Logger.getLogger(getClass());
 
-        synchronized(BaseDAOTest.class) {
-            if(ctx == null) {
-                String[] paths = {
-                        "applicationContext.xml"
-//                         ,"applicationContext-test.xml"
+        synchronized (BaseDAOTest.class) {
+            if (ctx == null) {
+                String[] paths = { "applicationContext.xml"
+                // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
-                storedDataDAO = (StoredDataDAO)ctx.getBean("storedDataDAO");
-                resourceDAO = (ResourceDAO)ctx.getBean("resourceDAO");
-                attributeDAO = (AttributeDAO)ctx.getBean("attributeDAO");     
-                categoryDAO = (CategoryDAO)ctx.getBean("categoryDAO"); 
-                securityDAO = (SecurityDAO)ctx.getBean("securityDAO"); 
-                userAttributeDAO = (UserAttributeDAO)ctx.getBean("userAttributeDAO"); 
-                userDAO = (UserDAO)ctx.getBean("userDAO"); 
-                userGroupDAO = (UserGroupDAO)ctx.getBean("userGroupDAO"); 
+                storedDataDAO = (StoredDataDAO) ctx.getBean("storedDataDAO");
+                resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
+                attributeDAO = (AttributeDAO) ctx.getBean("attributeDAO");
+                categoryDAO = (CategoryDAO) ctx.getBean("categoryDAO");
+                securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
+                userAttributeDAO = (UserAttributeDAO) ctx.getBean("userAttributeDAO");
+                userDAO = (UserDAO) ctx.getBean("userDAO");
+                userGroupDAO = (UserGroupDAO) ctx.getBean("userGroupDAO");
             }
         }
     }
 
     @Override
     protected void setUp() throws Exception {
-        LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + getName() );
+        LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + getName());
         super.setUp();
         removeAll();
         LOGGER.info("##### Ending setup for " + getName() + " ###----------------------");
@@ -102,56 +108,57 @@ public abstract class BaseDAOTest extends TestCase {
     protected void removeAll() {
         removeAllResource();
         removeAllStoredData();
-        removeAllAttribute();        
+        removeAllAttribute();
         removeAllUserAttribute();
         removeAllCategory();
         removeAllUserGroup();
     }
 
-	private void removeAllUserGroup() {
+    private void removeAllUserGroup() {
         List<UserGroup> list = userGroupDAO.findAll();
         for (UserGroup item : list) {
-        	LOGGER.info("Removing " + item.getId());
+            LOGGER.info("Removing " + item.getId());
             boolean ret = userGroupDAO.remove(item);
             assertTrue("UserGroup not removed", ret);
         }
 
-        assertEquals("UserGroup have not been properly deleted", 0, userGroupDAO.count(null));		
-	}
+        assertEquals("UserGroup have not been properly deleted", 0, userGroupDAO.count(null));
+    }
 
-	private void removeAllCategory() {
+    private void removeAllCategory() {
         List<Category> list = categoryDAO.findAll();
         for (Category item : list) {
-        	LOGGER.info("Removing " + item.getId());
+            LOGGER.info("Removing " + item.getId());
             boolean ret = categoryDAO.remove(item);
             assertTrue("Category not removed", ret);
         }
 
-        assertEquals("Category have not been properly deleted", 0, categoryDAO.count(null));		
-	}
+        assertEquals("Category have not been properly deleted", 0, categoryDAO.count(null));
+    }
 
-	private void removeAllUserAttribute() {
+    private void removeAllUserAttribute() {
         List<UserAttribute> list = userAttributeDAO.findAll();
         for (UserAttribute item : list) {
-        	LOGGER.info("Removing " + item.getId());
+            LOGGER.info("Removing " + item.getId());
             boolean ret = userAttributeDAO.remove(item);
             assertTrue("UserAttribute not removed", ret);
         }
 
-        assertEquals("UserAttribute have not been properly deleted", 0, userAttributeDAO.count(null));		
-	}
+        assertEquals("UserAttribute have not been properly deleted", 0,
+                userAttributeDAO.count(null));
+    }
 
-	protected void removeAllStoredData() {
+    protected void removeAllStoredData() {
         List<StoredData> list = storedDataDAO.findAll();
         for (StoredData item : list) {
-        	LOGGER.info("Removing " + item.getId());
+            LOGGER.info("Removing " + item.getId());
             boolean ret = storedDataDAO.remove(item);
             assertTrue("StoredData not removed", ret);
         }
 
         assertEquals("StoredData have not been properly deleted", 0, storedDataDAO.count(null));
     }
-	
+
     private void removeAllResource() {
         List<Resource> list = resourceDAO.findAll();
         for (Resource item : list) {
@@ -161,17 +168,17 @@ public abstract class BaseDAOTest extends TestCase {
         }
 
         assertEquals("Resource have not been properly deleted", 0, resourceDAO.count(null));
-	}
-    
+    }
+
     private void removeAllAttribute() {
         List<Attribute> list = attributeDAO.findAll();
         for (Attribute item : list) {
-        	LOGGER.info("Removing " + item.getId());
+            LOGGER.info("Removing " + item.getId());
             boolean ret = attributeDAO.remove(item);
             assertTrue("DataType not removed", ret);
         }
 
         assertEquals("DataType have not been properly deleted", 0, attributeDAO.count(null));
-	}
+    }
 
 }

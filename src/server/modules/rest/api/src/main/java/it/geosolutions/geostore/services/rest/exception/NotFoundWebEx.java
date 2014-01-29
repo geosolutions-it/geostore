@@ -22,15 +22,15 @@ package it.geosolutions.geostore.services.rest.exception;
 import javax.ws.rs.core.Response;
 
 /**
- *
+ * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class NotFoundWebEx extends GeoStoreWebEx {
 
-	/** The Constant serialVersionUID. */
-	private static final long serialVersionUID = 1263563388095079971L;
-	
+    /** The Constant serialVersionUID. */
+    private static final long serialVersionUID = 1263563388095079971L;
+
     public NotFoundWebEx(String message) {
         super(Response.Status.NOT_FOUND, message);
-     }
+    }
 }

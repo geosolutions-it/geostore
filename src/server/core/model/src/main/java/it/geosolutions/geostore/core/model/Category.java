@@ -49,13 +49,12 @@ import org.hibernate.annotations.Index;
 
 /**
  * Class Category.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Category")
-@Table(name = "gs_category", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"name"})})
+@Table(name = "gs_category", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
 @XmlRootElement(name = "Category")
 public class Category implements Serializable {
@@ -76,11 +75,11 @@ public class Category implements Serializable {
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<Resource> resource;
 
-//    /*
-//     * Only To allow the CASCADING operation
-//     */
-//    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-//    private List<SecurityRule> security;
+    // /*
+    // * Only To allow the CASCADING operation
+    // */
+    // @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    // private List<SecurityRule> security;
 
     /**
      * @return the id
@@ -111,20 +110,20 @@ public class Category implements Serializable {
         this.resource = resource;
     }
 
-//    /**
-//     * @return the security
-//     */
-//    @XmlTransient
-//    public List<SecurityRule> getSecurity() {
-//        return security;
-//    }
-//
-//    /**
-//     * @param security the security to set
-//     */
-//    public void setSecurity(List<SecurityRule> security) {
-//        this.security = security;
-//    }
+    // /**
+    // * @return the security
+    // */
+    // @XmlTransient
+    // public List<SecurityRule> getSecurity() {
+    // return security;
+    // }
+    //
+    // /**
+    // * @param security the security to set
+    // */
+    // public void setSecurity(List<SecurityRule> security) {
+    // this.security = security;
+    // }
 
     /**
      * @return the name
@@ -140,7 +139,6 @@ public class Category implements Serializable {
         this.name = name;
     }
 
-
     /*
      * (non-Javadoc) @see java.lang.Object#toString()
      */
@@ -149,11 +147,11 @@ public class Category implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if ( id != null ) {
+        if (id != null) {
             builder.append("id=").append(id);
         }
 
-        if ( name != null ) {
+        if (name != null) {
             builder.append(", ");
             builder.append("name=").append(name);
         }
@@ -172,10 +170,9 @@ public class Category implements Serializable {
         int result = 1;
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
-        result = (prime * result)
-                + ((resource == null) ? 0 : resource.hashCode());
-//        result = (prime * result)
-//                + ((security == null) ? 0 : security.hashCode());
+        result = (prime * result) + ((resource == null) ? 0 : resource.hashCode());
+        // result = (prime * result)
+        // + ((security == null) ? 0 : security.hashCode());
 
         return result;
     }
@@ -185,45 +182,45 @@ public class Category implements Serializable {
      */
     @Override
     public boolean equals(Object obj) {
-        if ( this == obj ) {
+        if (this == obj) {
             return true;
         }
-        if ( obj == null ) {
+        if (obj == null) {
             return false;
         }
-        if ( getClass() != obj.getClass() ) {
+        if (getClass() != obj.getClass()) {
             return false;
         }
 
         Category other = (Category) obj;
-        if ( id == null ) {
-            if ( other.id != null ) {
+        if (id == null) {
+            if (other.id != null) {
                 return false;
             }
-        } else if ( !id.equals(other.id) ) {
+        } else if (!id.equals(other.id)) {
             return false;
         }
-        if ( name == null ) {
-            if ( other.name != null ) {
+        if (name == null) {
+            if (other.name != null) {
                 return false;
             }
-        } else if ( !name.equals(other.name) ) {
+        } else if (!name.equals(other.name)) {
             return false;
         }
-        if ( resource == null ) {
-            if ( other.resource != null ) {
+        if (resource == null) {
+            if (other.resource != null) {
                 return false;
             }
-        } else if ( !resource.equals(other.resource) ) {
+        } else if (!resource.equals(other.resource)) {
             return false;
         }
-//        if ( security == null ) {
-//            if ( other.security != null ) {
-//                return false;
-//            }
-//        } else if ( !security.equals(other.security) ) {
-//            return false;
-//        }
+        // if ( security == null ) {
+        // if ( other.security != null ) {
+        // return false;
+        // }
+        // } else if ( !security.equals(other.security) ) {
+        // return false;
+        // }
 
         return true;
     }

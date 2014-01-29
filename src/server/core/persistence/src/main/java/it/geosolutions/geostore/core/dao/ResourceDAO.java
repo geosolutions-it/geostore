@@ -36,15 +36,13 @@ import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 
-
 /**
  * Interface ResourceDAO. Public interface to define operations on Resource
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
+ * 
  */
-public interface ResourceDAO extends RestrictedGenericDAO<Resource>
-{
+public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
 
     /**
      * @param userName
@@ -65,8 +63,8 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource>
      */
     public List<Attribute> findAttributes(long resourceId);
 
-	/**
-	 * @param search
-	 */
-	public void removeResources(ISearch search);
+    /**
+     * @param search
+     */
+    public void removeResources(ISearch search);
 }

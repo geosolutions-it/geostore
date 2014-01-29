@@ -43,56 +43,55 @@ import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 
-
 /**
  * Class ResourceDAOImpl.
- *
+ * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
-public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements ResourceDAO
-{
+public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements ResourceDAO {
 
     private static final Logger LOGGER = Logger.getLogger(ResourceDAOImpl.class);
 
-    /* (non-Javadoc)
-    * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
-    */
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
+     */
     @Override
-    public void persist(Resource... entities)
-    {
-        if (LOGGER.isDebugEnabled())
-        {
+    public void persist(Resource... entities) {
+        if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for Resource ... ");
         }
 
         int size = entities.length;
 
         Date creation = new Date();
-        for (int i = 0; i < size; i++)
-        {
+        for (int i = 0; i < size; i++) {
             entities[i].setCreation(creation);
         }
 
         super.persist(entities);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
-    public List<Resource> findAll()
-    {
+    public List<Resource> findAll() {
         return super.findAll();
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
      */
     @Override
-    public Resource find(Long id)
-    {
+    public Resource find(Long id) {
         return super.find(id);
     }
 
@@ -102,15 +101,14 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
      * @return List<SecurityRule>
      */
     @Override
-    public List<SecurityRule> findUserSecurityRule(String userName, long resourceId)
-    {
+    public List<SecurityRule> findUserSecurityRule(String userName, long resourceId) {
         Search searchCriteria = new Search(Resource.class);
         searchCriteria.addField("security");
 
-        Filter securityFilter = Filter.some("security",
-                Filter.and(
-                    Filter.equal("resource.id", resourceId),
-                    Filter.equal("user.name", userName)));
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(Filter.equal("resource.id", resourceId),
+                        Filter.equal("user.name", userName)));
         searchCriteria.addFilter(securityFilter);
 
         return super.search(searchCriteria);
@@ -121,8 +119,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
      * @return List<SecurityRule>
      */
     @Override
-    public List<SecurityRule> findSecurityRules(long resourceId)
-    {
+    public List<SecurityRule> findSecurityRules(long resourceId) {
         Search searchCriteria = new Search(Resource.class);
         searchCriteria.addField("security");
 
@@ -138,8 +135,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
      * @return List<Attribute>
      */
     @Override
-    public List<Attribute> findAttributes(long resourceId)
-    {
+    public List<Attribute> findAttributes(long resourceId) {
         Search searchCriteria = new Search(Resource.class);
         searchCriteria.addField("attribute");
 
@@ -150,52 +146,57 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
         return super.search(searchCriteria);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
     @Override
-    public List<Resource> search(ISearch search)
-    {
+    public List<Resource> search(ISearch search) {
         return super.search(search);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
-    public Resource merge(Resource entity)
-    {
+    public Resource merge(Resource entity) {
         entity.setLastUpdate(new Date());
 
         return super.merge(entity);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
-    public boolean remove(Resource entity)
-    {
+    public boolean remove(Resource entity) {
         return super.remove(entity);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
-    public void removeResources(ISearch search)
-    {
-    	List<Resource> resources = super.search(search);
-    	super.remove(resources.toArray(new Resource[1]));  
+    public void removeResources(ISearch search) {
+        List<Resource> resources = super.search(search);
+        super.remove(resources.toArray(new Resource[1]));
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
-    public boolean removeById(Long id)
-    {
+    public boolean removeById(Long id) {
         return super.removeById(id);
     }
 
