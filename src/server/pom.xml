@@ -42,6 +42,8 @@
         <cxf-version>2.3.2</cxf-version>
         <activemq-version>5.3.0.4-fuse</activemq-version>
 
+		<jersey-version>2.5.1</jersey-version>
+		
         <!--
         spring-security-core 3.0.4 requires spring-core 3.x, otherwise we'd normally use 2.5.6, which
         is what the rest of the app uses
@@ -325,6 +327,21 @@
             </dependency>
 
 		    <!-- =========================================================== -->
+		    <!--     JERSEY                                                  -->
+		    <!-- =========================================================== -->
+            <dependency>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>${jersey-version}</version>
+            </dependency>
+
+			<dependency>
+				<groupId>org.glassfish.jersey.ext</groupId>
+				<artifactId>jersey-spring3</artifactId>
+				<version>${jersey-version}</version>
+			</dependency>
+		
+		    <!-- =========================================================== -->
 		    <!--     APACHE CXF                                              -->
 		    <!-- =========================================================== -->
             <dependency>
@@ -406,7 +423,12 @@
 				<artifactId>cxf-rt-ws-security</artifactId>
 				<version>${cxf-version}</version>
 			</dependency>
-		
+			<dependency>
+				<groupId>com.google.code.cxf-spring-security</groupId>
+				<artifactId>cxf-spring-security</artifactId>
+				<version>${cxf-version}</version>
+			</dependency>
+
             <!-- =========================================================== -->
             <!--     Velocity                                                -->
             <!-- =========================================================== -->

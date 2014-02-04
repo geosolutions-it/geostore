@@ -34,7 +34,6 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -42,6 +41,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
+
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTMiscService. Experimental operations go here.
@@ -54,7 +55,8 @@ public interface RESTMiscService {
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}/data")
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String getData(@Context SecurityContext sc, @PathParam("cname") String cname,
             @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
             InternalErrorWebEx;
@@ -62,7 +64,8 @@ public interface RESTMiscService {
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}")
     @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     Resource getResource(@Context SecurityContext sc, @PathParam("cname") String cname,
             @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
             InternalErrorWebEx;
@@ -70,7 +73,8 @@ public interface RESTMiscService {
     @GET
     @Path("/category/name/{cname}/resources/")
     @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResourceList getResourcesByCategory(@Context SecurityContext sc,
             @PathParam("cname") String cname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
             InternalErrorWebEx;

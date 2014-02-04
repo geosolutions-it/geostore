@@ -40,7 +40,6 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
-import it.geosolutions.geostore.services.rest.utils.GeoStorePrincipal;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -50,6 +49,7 @@ import java.util.List;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 /**
  * Class RESTUserServiceImpl.
@@ -337,6 +337,9 @@ public class RESTUserServiceImpl implements RESTUserService {
                 throw new InternalErrorWebEx("Missing auth principal");
             }
 
+            /**
+             * OLD STUFF
+             *
             if (!(principal instanceof GeoStorePrincipal)) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Mismatching auth principal");
@@ -353,6 +356,23 @@ public class RESTUserServiceImpl implements RESTUserService {
             User user = gsp.getUser();
 
             LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
+            **/
+            
+            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Mismatching auth principal");
+                }
+                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
+                        + ")");
+            }
+            
+            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
+
+            User user = new User();
+            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
+            
+            LOGGER.info("Accessing service with user " + user.getName());
+            
             return user;
         }
     }

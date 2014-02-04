@@ -58,6 +58,7 @@ import net.sf.json.JSONObject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 /**
  * Class RESTExtJsServiceImpl.
@@ -319,9 +320,13 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
                 throw new InternalErrorWebEx("Missing auth principal");
             }
 
+            /**
+             * OLD STUFF
+             *
             if (!(principal instanceof GeoStorePrincipal)) {
-                if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Missing auth principal");
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Mismatching auth principal");
+                }
                 throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
                         + ")");
             }
@@ -334,6 +339,23 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
             User user = gsp.getUser();
 
             LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
+            **/
+            
+            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Mismatching auth principal");
+                }
+                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
+                        + ")");
+            }
+            
+            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
+
+            User user = new User();
+            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
+            
+            LOGGER.info("Accessing service with user " + user.getName());
+            
             return user;
         }
     }
