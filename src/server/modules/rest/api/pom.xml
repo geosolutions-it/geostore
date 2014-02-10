@@ -62,10 +62,10 @@
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
         </dependency>
-		<dependency>
+		<!-- dependency>
 			<groupId>com.google.code.cxf-spring-security</groupId>
 			<artifactId>cxf-spring-security</artifactId>
-		</dependency>
+		</dependency -->
 
         <!-- needed for @RolesAllowed 
         <dependency>
@@ -73,6 +73,36 @@
             <artifactId>jsr250-api</artifactId>
             <version>1.0</version>
         </dependency>-->
+
+        <!-- ================================================================-->
+        <!-- Spring Security -->
+        <!-- ================================================================-->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-config</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-ldap</artifactId>
+        </dependency>
+		<!-- LDAP Deps -->
+		<dependency>
+			<groupId>org.apache.directory.server</groupId>
+			<artifactId>apacheds-all</artifactId>
+		</dependency>
+		<dependency>    
+			<groupId>org.apache.directory.shared</groupId>    
+            <artifactId>shared-ldap</artifactId>    
+        </dependency> 
+        <!-- =============================================================== -->
 		
 		<dependency>
             <groupId>javax.annotation</groupId>

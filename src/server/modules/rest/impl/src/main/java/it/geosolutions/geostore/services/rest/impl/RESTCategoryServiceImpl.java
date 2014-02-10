@@ -45,7 +45,6 @@ import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-import it.geosolutions.geostore.services.rest.utils.GeoStorePrincipal;
 
 import java.security.Principal;
 import java.util.List;
