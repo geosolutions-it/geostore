@@ -94,14 +94,26 @@
             <artifactId>spring-security-ldap</artifactId>
         </dependency>
 		<!-- LDAP Deps -->
-		<dependency>
+		<!-- dependency>
 			<groupId>org.apache.directory.server</groupId>
 			<artifactId>apacheds-all</artifactId>
 		</dependency>
 		<dependency>    
 			<groupId>org.apache.directory.shared</groupId>    
             <artifactId>shared-ldap</artifactId>    
-        </dependency> 
+        </dependency --> 
+			<dependency>
+				<groupId>org.apache.directory.server</groupId>
+				<artifactId>apacheds-all</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+			</dependency>
         <!-- =============================================================== -->
 		
 		<dependency>
