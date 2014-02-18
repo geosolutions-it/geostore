@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright (C) 2007 - 2010 GeoSolutions S.A.S.
+ http://www.geo-solutions.it
+
+ GPLv3 + Classpath exception
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses />.
+ -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>it.geosolutions.geostore</groupId>
+        <artifactId>geostore-core</artifactId>
+        <version>1.2-SNAPSHOT</version>
+    </parent>
+
+    <groupId>it.geosolutions.geostore</groupId>
+    <artifactId>geostore-services-api</artifactId>
+    <packaging>jar</packaging>
+    <name>GeoStore - Core - Services API</name>
+    
+    <dependencies>
+    
+        <!-- ================================================================-->
+        <!-- GeoStore -->
+        <!-- ================================================================-->
+        <dependency>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-model</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>cglib</groupId>
+                    <artifactId>cglib</artifactId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hibernate-core</artifactId>
+                    <groupId>org.hibernate</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hibernate</artifactId>
+                    <groupId>org.hibernate</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hibernate-commons-annotations</artifactId>
+                    <groupId>org.hibernate</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hibernate-spatial</artifactId>
+                    <groupId>org.hibernatespatial</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>hibernate-spatial-postgis</artifactId>
+                    <groupId>org.hibernatespatial</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- ================================================================-->
+       	<!-- APACHE COMMONS -->
+        <!-- ================================================================-->
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+        </dependency>
+
+   		<!-- 4J UTILS -->
+<!--        <dependency>-->
+<!--            <groupId>org.slf4j</groupId>-->
+<!--            <artifactId>slf4j-log4j12</artifactId>-->
+<!--            <exclusions>-->
+<!--                <exclusion>-->
+<!--                    <groupId>org.slf4j</groupId>-->
+<!--                    <artifactId>slf4j-api</artifactId>-->
+<!--                </exclusion>-->
+<!--            </exclusions>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+	
+        <!-- ================================================================-->
+    	<!-- SPRING -->
+        <!-- ================================================================-->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jmx</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    
+	
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
+    	      
+        <!-- ================================================================-->
+        <!-- CXF -->
+        <!-- ================================================================-->
+<!--        <dependency>
+            <groupId>javax.xml.ws</groupId>
+            <artifactId>jaxws-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>jsr311-api</artifactId>
+            <version>1.1.1</version>
+        </dependency>-->
+<!--        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-frontend-jaxrs</artifactId>
+        </dependency>-->
+
+
+<!--        <dependency>
+            <groupId>com.vividsolutions</groupId>
+            <artifactId>jts</artifactId>
+        </dependency>-->
+
+        <!-- ================================================================-->
+        <!-- JUnit -->
+        <!-- ================================================================-->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+  
+    <build>
+
+        <plugins>
+            <!-- Attach sources ============================================ -->
+            <plugin>
+                <inherited>true</inherited>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+</project>

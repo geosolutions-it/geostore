@@ -1,0 +1,70 @@
+-------------------------------------------------------------------------------
+Test set: it.geosolutions.geostore.services.rest.SecurityTest
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 7.636 sec <<< FAILURE!
+testFirst(it.geosolutions.geostore.services.rest.SecurityTest)  Time elapsed: 7.593 sec  <<< ERROR!
+org.apache.cxf.jaxrs.client.ClientWebApplicationException: org.apache.cxf.interceptor.Fault: Could not send Message.
+	at org.apache.cxf.jaxrs.client.WebClient.handleResponse(WebClient.java:643)
+	at org.apache.cxf.jaxrs.client.WebClient.doChainedInvocation(WebClient.java:628)
+	at org.apache.cxf.jaxrs.client.WebClient.doInvoke(WebClient.java:595)
+	at org.apache.cxf.jaxrs.client.WebClient.invoke(WebClient.java:240)
+	at org.apache.cxf.jaxrs.client.WebClient.get(WebClient.java:266)
+	at it.geosolutions.geostore.services.rest.SecurityTest.waitForWADL(SecurityTest.java:85)
+	at it.geosolutions.geostore.services.rest.SecurityTest.setUp(SecurityTest.java:51)
+	at junit.framework.TestCase.runBare(TestCase.java:132)
+	at junit.framework.TestResult$1.protect(TestResult.java:110)
+	at junit.framework.TestResult.runProtected(TestResult.java:128)
+	at junit.framework.TestResult.run(TestResult.java:113)
+	at junit.framework.TestCase.run(TestCase.java:124)
+	at junit.framework.TestSuite.runTest(TestSuite.java:232)
+	at junit.framework.TestSuite.run(TestSuite.java:227)
+	at org.junit.internal.runners.JUnit38ClassRunner.run(JUnit38ClassRunner.java:81)
+	at org.apache.maven.surefire.junit4.JUnit4TestSet.execute(JUnit4TestSet.java:62)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.executeTestSet(AbstractDirectoryTestSuite.java:140)
+	at org.apache.maven.surefire.suite.AbstractDirectoryTestSuite.execute(AbstractDirectoryTestSuite.java:127)
+	at org.apache.maven.surefire.Surefire.run(Surefire.java:177)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:39)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+	at java.lang.reflect.Method.invoke(Method.java:597)
+	at org.apache.maven.surefire.booter.SurefireBooter.runSuitesInProcess(SurefireBooter.java:338)
+	at org.apache.maven.surefire.booter.SurefireBooter.main(SurefireBooter.java:997)
+Caused by: org.apache.cxf.interceptor.Fault: Could not send Message.
+	at org.apache.cxf.interceptor.MessageSenderInterceptor$MessageSenderEndingInterceptor.handleMessage(MessageSenderInterceptor.java:64)
+	at org.apache.cxf.phase.PhaseInterceptorChain.doIntercept(PhaseInterceptorChain.java:255)
+	at org.apache.cxf.jaxrs.client.WebClient.doChainedInvocation(WebClient.java:615)
+	... 23 more
+Caused by: java.net.ConnectException: ConnectException invoking http://localhost:9000/rest/categories?_wadl&_type=xml: Connection refused: connect
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:39)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:27)
+	at java.lang.reflect.Constructor.newInstance(Constructor.java:513)
+	at org.apache.cxf.transport.http.HTTPConduit$WrappedOutputStream.mapException(HTTPConduit.java:2107)
+	at org.apache.cxf.transport.http.HTTPConduit$WrappedOutputStream.close(HTTPConduit.java:2092)
+	at org.apache.cxf.transport.AbstractConduit.close(AbstractConduit.java:56)
+	at org.apache.cxf.transport.http.HTTPConduit.close(HTTPConduit.java:697)
+	at org.apache.cxf.interceptor.MessageSenderInterceptor$MessageSenderEndingInterceptor.handleMessage(MessageSenderInterceptor.java:62)
+	... 25 more
+Caused by: java.net.ConnectException: Connection refused: connect
+	at java.net.PlainSocketImpl.socketConnect(Native Method)
+	at java.net.PlainSocketImpl.doConnect(PlainSocketImpl.java:351)
+	at java.net.PlainSocketImpl.connectToAddress(PlainSocketImpl.java:213)
+	at java.net.PlainSocketImpl.connect(PlainSocketImpl.java:200)
+	at java.net.SocksSocketImpl.connect(SocksSocketImpl.java:366)
+	at java.net.Socket.connect(Socket.java:529)
+	at sun.net.NetworkClient.doConnect(NetworkClient.java:158)
+	at sun.net.www.http.HttpClient.openServer(HttpClient.java:411)
+	at sun.net.www.http.HttpClient.openServer(HttpClient.java:525)
+	at sun.net.www.http.HttpClient.<init>(HttpClient.java:208)
+	at sun.net.www.http.HttpClient.New(HttpClient.java:291)
+	at sun.net.www.http.HttpClient.New(HttpClient.java:310)
+	at sun.net.www.protocol.http.HttpURLConnection.getNewHttpClient(HttpURLConnection.java:987)
+	at sun.net.www.protocol.http.HttpURLConnection.plainConnect(HttpURLConnection.java:923)
+	at sun.net.www.protocol.http.HttpURLConnection.connect(HttpURLConnection.java:841)
+	at sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1195)
+	at java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:379)
+	at org.apache.cxf.transport.http.HTTPConduit$WrappedOutputStream.handleResponseInternal(HTTPConduit.java:2224)
+	at org.apache.cxf.transport.http.HTTPConduit$WrappedOutputStream.handleResponse(HTTPConduit.java:2193)
+	at org.apache.cxf.transport.http.HTTPConduit$WrappedOutputStream.close(HTTPConduit.java:2037)
+	... 28 more
+

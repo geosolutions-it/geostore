@@ -49,7 +49,7 @@ import org.springframework.security.access.annotation.Secured;
  * 
  * @author ETj (etj at geo-solutions.it)
  */
-//@RolesAllowed({ "ADMIN" })
+// @RolesAllowed({ "ADMIN" })
 @Secured({ "ROLE_ADMIN" })
 public interface RESTBackupService {
 
@@ -61,14 +61,14 @@ public interface RESTBackupService {
     @GET
     @Path("/full")
     @Produces({ MediaType.TEXT_PLAIN })
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     String backup(@Context SecurityContext sc);
 
     @PUT
     @Path("/full/{token}")
     @Produces({ MediaType.TEXT_PLAIN })
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     String restore(@Context SecurityContext sc, @PathParam("token") String token);
 
@@ -80,7 +80,7 @@ public interface RESTBackupService {
     @GET
     @Path("/quick")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     RESTQuickBackup quickBackup(@Context SecurityContext sc) throws BadRequestServiceEx;
 
@@ -92,7 +92,7 @@ public interface RESTBackupService {
     @PUT
     @Path("/quick")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     String quickRestore(@Context SecurityContext sc, @Multipart("backup") RESTQuickBackup backup)
             throws BadRequestServiceEx;

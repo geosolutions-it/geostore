@@ -62,7 +62,7 @@ import org.springframework.security.access.annotation.Secured;
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-//@RolesAllowed({ "ADMIN" })
+// @RolesAllowed({ "ADMIN" })
 @Secured({ "ROLE_ADMIN" })
 public interface RESTResourceService {
 
@@ -76,7 +76,7 @@ public interface RESTResourceService {
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     // @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @Produces({ MediaType.TEXT_PLAIN })
-    //@RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("resource") RESTResource resource)
             throws InternalErrorWebEx;
@@ -91,7 +91,7 @@ public interface RESTResourceService {
     @PUT
     @Path("/resource/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    //@RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id,
             @Multipart("resource") RESTResource resource) throws NotFoundWebEx, BadRequestWebEx;
@@ -103,7 +103,7 @@ public interface RESTResourceService {
      */
     @DELETE
     @Path("/resource/{id}")
-    //@RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
@@ -113,7 +113,7 @@ public interface RESTResourceService {
      */
     @DELETE
     @Path("/")
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     void deleteResources(@Context SecurityContext sc, @Multipart("filter") SearchFilter filter)
             throws BadRequestWebEx, InternalErrorWebEx;
@@ -126,7 +126,7 @@ public interface RESTResourceService {
     @GET
     @Path("/resource/{id}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     Resource get(@Context SecurityContext sc, @PathParam("id") long id,
             @QueryParam("full") @DefaultValue("false") boolean full)
@@ -142,7 +142,7 @@ public interface RESTResourceService {
     @GET
     @Path("/")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResourceList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries) throws BadRequestWebEx;
@@ -157,7 +157,7 @@ public interface RESTResourceService {
     @GET
     @Path("/search/{nameLike}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResourceList getList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
             @QueryParam("page") Integer page, @QueryParam("entries") Integer entries)
@@ -172,7 +172,7 @@ public interface RESTResourceService {
     @Path("/search")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     @Deprecated
     ShortResourceList getResources(@Context SecurityContext sc,
@@ -194,7 +194,7 @@ public interface RESTResourceService {
     @Path("/search/list")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ResourceList getResourcesList(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries,
@@ -208,7 +208,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/count/{nameLike}")
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);
 
@@ -220,7 +220,7 @@ public interface RESTResourceService {
     @GET
     @Path("/resource/{id}/attributes")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortAttributeList getAttributes(@Context SecurityContext sc, @PathParam("id") long id)
             throws NotFoundWebEx;
@@ -234,7 +234,7 @@ public interface RESTResourceService {
     @GET
     @Path("/resource/{id}/attributes/{name}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String getAttribute(@Context SecurityContext sc, @PathParam("id") long id,
             @PathParam("name") String name) throws NotFoundWebEx;
@@ -250,7 +250,7 @@ public interface RESTResourceService {
     @PUT
     @Path("/resource/{id}/attributes/{name}/{value}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long updateAttribute(@Context SecurityContext sc, @PathParam("id") long id,
             @PathParam("name") String name, @PathParam("value") String value);

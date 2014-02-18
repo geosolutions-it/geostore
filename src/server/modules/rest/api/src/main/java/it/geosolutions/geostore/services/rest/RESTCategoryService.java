@@ -68,7 +68,7 @@ public interface RESTCategoryService {
     @Path("/")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("category") Category category)
             throws BadRequestServiceEx, NotFoundServiceEx;
@@ -82,7 +82,7 @@ public interface RESTCategoryService {
     @PUT
     @Path("/category/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id,
             @Multipart("category") Category category) throws NotFoundWebEx;
@@ -93,7 +93,7 @@ public interface RESTCategoryService {
      */
     @DELETE
     @Path("/category/{id}")
-    //@RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
@@ -105,7 +105,7 @@ public interface RESTCategoryService {
     @GET
     @Path("/category/{id}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     Category get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
@@ -118,7 +118,7 @@ public interface RESTCategoryService {
     @GET
     @Path("/")
     @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     CategoryList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries) throws BadRequestWebEx;
@@ -129,7 +129,7 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/count/{nameLike}")
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);
 

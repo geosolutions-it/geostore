@@ -32,81 +32,79 @@ import org.junit.Test;
 
 /**
  * 
- * Test for AutoUserCreateGeostoreAuthenticationInterceptor. Test different
- * configurations for the interceptor
+ * Test for AutoUserCreateGeostoreAuthenticationInterceptor. Test different configurations for the interceptor
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
 public class AutoUserCreateGeostoreAuthenticationInterceptorTest extends
-		BaseAuthenticationInterceptorTest {
+        BaseAuthenticationInterceptorTest {
 
-	/**
-	 * Access denied for a new user if the interceptor doesn't create new users
-	 */
-	@Test(expected = AccessDeniedException.class)
-	public void testNotCreateUsers() {
-		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
-		interceptor.setAutoCreateUsers(false);
-		interceptor.setUserService(userService);
-		interceptor.handleMessage(getMockedMessage("test", "", null));
-	}
+    /**
+     * Access denied for a new user if the interceptor doesn't create new users
+     */
+    @Test(expected = AccessDeniedException.class)
+    public void testNotCreateUsers() {
+        AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
+        interceptor.setAutoCreateUsers(false);
+        interceptor.setUserService(userService);
+        interceptor.handleMessage(getMockedMessage("test", "", null));
+    }
 
-	/**
-	 * Create a user with a empty password
-	 */
-	@Test
-	public void testCreateUsers() {
-		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
-		interceptor.setAutoCreateUsers(true);
-		interceptor.setNewUsersPassword(NewPasswordStrategy.NONE);
-		interceptor.setUserService(userService);
-		interceptor.handleMessage(getMockedMessage("test", "", null));
-		try {
-			User user = userService.get("test");
-			assertNotNull(user);
-		} catch (NotFoundServiceEx e) {
-			fail("Couldn't found user");
-		}
-	}
+    /**
+     * Create a user with a empty password
+     */
+    @Test
+    public void testCreateUsers() {
+        AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
+        interceptor.setAutoCreateUsers(true);
+        interceptor.setNewUsersPassword(NewPasswordStrategy.NONE);
+        interceptor.setUserService(userService);
+        interceptor.handleMessage(getMockedMessage("test", "", null));
+        try {
+            User user = userService.get("test");
+            assertNotNull(user);
+        } catch (NotFoundServiceEx e) {
+            fail("Couldn't found user");
+        }
+    }
 
-	/**
-	 * Create a user with password as user name
-	 */
-	@Test
-	public void testCreateUsersStrategyUserName() {
-		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
-		interceptor.setAutoCreateUsers(true);
-		interceptor.setNewUsersPassword(NewPasswordStrategy.USERNAME);
-		interceptor.setUserService(userService);
-		interceptor.handleMessage(getMockedMessage("test2", "test2", null));
-		try {
-			User user = userService.get("test2");
-			assertNotNull(user);
-		} catch (NotFoundServiceEx e) {
-			fail("Couldn't found user");
-		}
-	}
+    /**
+     * Create a user with password as user name
+     */
+    @Test
+    public void testCreateUsersStrategyUserName() {
+        AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
+        interceptor.setAutoCreateUsers(true);
+        interceptor.setNewUsersPassword(NewPasswordStrategy.USERNAME);
+        interceptor.setUserService(userService);
+        interceptor.handleMessage(getMockedMessage("test2", "test2", null));
+        try {
+            User user = userService.get("test2");
+            assertNotNull(user);
+        } catch (NotFoundServiceEx e) {
+            fail("Couldn't found user");
+        }
+    }
 
-	/**
-	 * Create a user with password from a header
-	 */
-	@Test
-	public void testCreateUsersStrategyFromHeader() {
-		AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
-		interceptor.setAutoCreateUsers(true);
-		interceptor.setNewUsersPassword(NewPasswordStrategy.FROMHEADER);
-		interceptor.setNewUsersPasswordHeader("newPassword");
-		interceptor.setUserService(userService);
-		Map<String, String> headers = new HashMap<String, String>();
-		headers.put("newPassword", "test3pass");
-		interceptor.handleMessage(getMockedMessage("test3", "test3pass",
-				headers));
-		try {
-			User user = userService.get("test3");
-			assertNotNull(user);
-		} catch (NotFoundServiceEx e) {
-			fail("Couldn't found user");
-		}
-	}
+    /**
+     * Create a user with password from a header
+     */
+    @Test
+    public void testCreateUsersStrategyFromHeader() {
+        AutoUserCreateGeostoreAuthenticationInterceptor interceptor = new AutoUserCreateGeostoreAuthenticationInterceptor();
+        interceptor.setAutoCreateUsers(true);
+        interceptor.setNewUsersPassword(NewPasswordStrategy.FROMHEADER);
+        interceptor.setNewUsersPasswordHeader("newPassword");
+        interceptor.setUserService(userService);
+        Map<String, String> headers = new HashMap<String, String>();
+        headers.put("newPassword", "test3pass");
+        interceptor.handleMessage(getMockedMessage("test3", "test3pass", headers));
+        try {
+            User user = userService.get("test3");
+            assertNotNull(user);
+        } catch (NotFoundServiceEx e) {
+            fail("Couldn't found user");
+        }
+    }
 
 }

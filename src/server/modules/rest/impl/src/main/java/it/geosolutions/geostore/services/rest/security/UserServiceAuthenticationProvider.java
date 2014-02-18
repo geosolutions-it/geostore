@@ -49,12 +49,13 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
     public Authentication authenticate(Authentication authentication) {
         String pw = (String) authentication.getCredentials();
         String us = (String) authentication.getPrincipal();
-        
+
         // We use the credentials for all the session in the GeoStore client
         User user = null;
         try {
             user = userService.get(us);
-            System.out.println("US: " + us + " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
+            System.out.println("US: " + us + " PW: " + PwEncoder.encode(pw) + " -- "
+                    + user.getPassword());
             if (!user.getPassword().equals(PwEncoder.encode(pw))) {
                 throw new BadCredentialsException(UNAUTHORIZED_MSG);
             }

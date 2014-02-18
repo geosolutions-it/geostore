@@ -29,53 +29,51 @@ import java.util.Map;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
+import org.apache.log4j.Logger;
 import org.junit.Before;
 
 /**
  * 
- * Test for AuthenticationInterceptors. It use a mocked user service and a
- * mocked message
+ * Test for AuthenticationInterceptors. It use a mocked user service and a mocked message
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
 public abstract class BaseAuthenticationInterceptorTest {
 
-	protected UserService userService;
+    protected final Logger LOGGER = Logger.getLogger(getClass());
 
-	@Before
-	public void init() {
-		userService = new MockedUserService();
-	}
+    protected UserService userService;
 
-	/**
-	 * Mock a message to be handled by the interceptor
-	 * 
-	 * @param username
-	 *            for the authorization policy
-	 * @param password
-	 *            for the authorization policy
-	 * @param headers
-	 *            for the request
-	 * 
-	 * @return Message to be handled
-	 */
-	protected Message getMockedMessage(String username, String password,
-			Map<String, String> headers) {
-		MessageImpl messageImpl = (MessageImpl) new MessageImpl();
-		AuthorizationPolicy policy = new AuthorizationPolicy();
-		policy.setUserName(username);
-		policy.setPassword(password);
-		if (headers != null) {
-			Map<String, List<String>> mockedHeaders = new HashMap<String, List<String>>();
-			for (String key : headers.keySet()) {
-				List<String> value = new LinkedList<String>();
-				value.add(headers.get(key));
-				mockedHeaders.put(key, value);
-			}
-			messageImpl.put(Message.PROTOCOL_HEADERS, mockedHeaders);
-		}
-		messageImpl.put(AuthorizationPolicy.class, policy);
-		return messageImpl;
-	}
+    @Before
+    public void init() {
+        userService = new MockedUserService();
+    }
+
+    /**
+     * Mock a message to be handled by the interceptor
+     * 
+     * @param username for the authorization policy
+     * @param password for the authorization policy
+     * @param headers for the request
+     * 
+     * @return Message to be handled
+     */
+    protected Message getMockedMessage(String username, String password, Map<String, String> headers) {
+        MessageImpl messageImpl = (MessageImpl) new MessageImpl();
+        AuthorizationPolicy policy = new AuthorizationPolicy();
+        policy.setUserName(username);
+        policy.setPassword(password);
+        if (headers != null) {
+            Map<String, List<String>> mockedHeaders = new HashMap<String, List<String>>();
+            for (String key : headers.keySet()) {
+                List<String> value = new LinkedList<String>();
+                value.add(headers.get(key));
+                mockedHeaders.put(key, value);
+            }
+            messageImpl.put(Message.PROTOCOL_HEADERS, mockedHeaders);
+        }
+        messageImpl.put(AuthorizationPolicy.class, policy);
+        return messageImpl;
+    }
 
 }

@@ -55,7 +55,7 @@ public interface RESTMiscService {
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}/data")
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String getData(@Context SecurityContext sc, @PathParam("cname") String cname,
             @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
@@ -64,7 +64,7 @@ public interface RESTMiscService {
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}")
     @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     Resource getResource(@Context SecurityContext sc, @PathParam("cname") String cname,
             @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
@@ -73,7 +73,7 @@ public interface RESTMiscService {
     @GET
     @Path("/category/name/{cname}/resources/")
     @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    //@RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResourceList getResourcesByCategory(@Context SecurityContext sc,
             @PathParam("cname") String cname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
