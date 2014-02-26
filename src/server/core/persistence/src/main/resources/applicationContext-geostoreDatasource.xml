@@ -22,13 +22,13 @@
         <property name="order" value="0"/>
         <property name="locations">
             <list>
-                <value>classpath:geostore-datasource.dummy.properties</value>
-                <value>classpath*:geostore-datasource.properties</value>
+                <value>classpath:geostore.properties</value>
+                <value>classpath*:geostore.properties</value>
             </list>
         </property>
         <property name="ignoreResourceNotFound" value="false"/>
 	</bean>
-
+	
     <bean class="org.springframework.beans.factory.config.PropertyOverrideConfigurer">
         <property name="ignoreResourceNotFound" value="true"/>
         <property name="order" value="5"/>

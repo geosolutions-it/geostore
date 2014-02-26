@@ -1,17 +1,18 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>it.geosolutions.geostore</groupId>
-        <artifactId>geostore-web</artifactId>
-        <version>1.2-SNAPSHOT</version>
-    </parent>
+	<parent>
+		<groupId>it.geosolutions.geostore</groupId>
+		<artifactId>geostore-web</artifactId>
+		<version>1.2-SNAPSHOT</version>
+	</parent>
 
-    <groupId>it.geosolutions.geostore</groupId>
-    <artifactId>geostore-webapp</artifactId>
-    <packaging>war</packaging>
+	<groupId>it.geosolutions.geostore</groupId>
+	<artifactId>geostore-webapp</artifactId>
+	<packaging>war</packaging>
 
-    <name>GeoStore - Webapp</name>
+	<name>GeoStore - Webapp</name>
 
 	<developers>
 		<developer>
@@ -24,114 +25,136 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
-	
+
 	<dependencies>
-        <!-- ================================================================-->
-        <!-- GeoStore modules -->
-        <!-- ================================================================-->
-        <dependency>
-            <groupId>it.geosolutions.geostore</groupId>
-            <artifactId>geostore-persistence</artifactId>
-        </dependency>
-        <!-- =============================================================== -->
-
-        <!-- ================================================================-->
-        <!-- Spring Security -->
-        <!-- ================================================================-->
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-config</artifactId>
-        </dependency>
-        <!-- =============================================================== -->
-        
+		<!-- ================================================================ -->
+		<!-- GeoStore modules -->
+		<!-- ================================================================ -->
 		<dependency>
-        	<groupId>it.geosolutions.geostore</groupId>
-        	<artifactId>geostore-rest-impl</artifactId>
-        </dependency>
+			<groupId>it.geosolutions.geostore</groupId>
+			<artifactId>geostore-persistence</artifactId>
+		</dependency>
+		<!-- =============================================================== -->
 
+		<dependency>
+			<groupId>it.geosolutions.geostore</groupId>
+			<artifactId>geostore-rest-impl</artifactId>
+		</dependency>
+
+		<!-- Avoids java.lang.ClassNotFoundException: com.sun.ws.rs.ext.RuntimeDelegateImpl -->
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-frontend-jaxrs</artifactId>
+			<!-- <scope>test</scope> -->
+		</dependency>
+
+		<!-- =========================================================== -->
+		<!-- TEST -->
+		<!-- <dependency> -->
+		<!-- <groupId>javax.servlet</groupId> -->
+		<!-- <artifactId>servlet-api</artifactId> -->
+		<!-- <scope>provided</scope> -->
+		<!-- </dependency> -->
+
+		<dependency>
+			<groupId>commons-httpclient</groupId>
+			<artifactId>commons-httpclient</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.cxf</groupId>
+			<artifactId>cxf-rt-transports-http-jetty</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- JUnit -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
-	
-	<!-- if you want to create a new profile for support another DB create a profile including JDBC dependency and right esclusion/inclusion rule for load the right override file -->
+
+	<!-- if you want to create a new profile for support another DB create a 
+		profile including JDBC dependency and right esclusion/inclusion rule for 
+		load the right override file -->
 	<!-- Profile for supporting Postgres -->
 	<profiles>
 		<profile>
 			<id>postgres</id>
-		    <build>
-		    	<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
-		    	<plugins>
-			      <plugin>
-			        <artifactId>maven-antrun-plugin</artifactId>
-			        <version>1.1</version>
-			        <executions>
-			          <execution>
-			            <phase>process-classes</phase>
-			            <configuration>
-			              <tasks>
-			                <copy file="src/main/resources/db-conf/postgres.properties" tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties" overwrite="true" verbose="true"/>
-			              </tasks>
-			            </configuration>
-			            <goals>
-			              <goal>run</goal>
-			            </goals>
-			          </execution>
-			        </executions>
-			      </plugin>
-		    	</plugins>
-		    </build>
-		    
-		    <dependencies>
-			    <!-- POSTGRESQL database driver -->
-		        <dependency>
-		            <groupId>postgresql</groupId>
-		            <artifactId>postgresql</artifactId>
-		        </dependency>
-	        </dependencies>
-	    </profile>
-		
+			<build>
+				<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
+				<plugins>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<phase>process-classes</phase>
+								<configuration>
+									<tasks>
+										<copy file="src/main/resources/db-conf/postgres.properties"
+											tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties"
+											overwrite="true" verbose="true" />
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+			<dependencies>
+				<!-- POSTGRESQL database driver -->
+				<dependency>
+					<groupId>postgresql</groupId>
+					<artifactId>postgresql</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
+
 		<profile>
 			<id>oracle</id>
-		    <build>
-		    	<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
-		    	<plugins>
-			      <plugin>
-			        <artifactId>maven-antrun-plugin</artifactId>
-			        <version>1.1</version>
-			        <executions>
-			          <execution>
-			            <phase>process-classes</phase>
-			            <configuration>
-			              <tasks>
-			                <copy file="src/main/resources/db-conf/oracle.properties" tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties" overwrite="true" verbose="true"/>
-			              </tasks>
-			            </configuration>
-			            <goals>
-			              <goal>run</goal>
-			            </goals>
-			          </execution>
-			        </executions>
-			      </plugin>
-		    	</plugins>
-		    </build>
-		    
-		    <dependencies>
+			<build>
+				<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
+				<plugins>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<phase>process-classes</phase>
+								<configuration>
+									<tasks>
+										<copy file="src/main/resources/db-conf/oracle.properties"
+											tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties"
+											overwrite="true" verbose="true" />
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+			<dependencies>
 				<!-- ORACLE database driver -->
 				<dependency>
 					<groupId>com.oracle</groupId>
 					<artifactId>ojdbc6</artifactId>
 					<version>11.2.0</version>
 				</dependency>
-	        </dependencies>
-	    </profile>
-		
-        <profile>
+			</dependencies>
+		</profile>
+
+		<profile>
 			<id>extjs</id>
 			<dependencies>
 				<dependency>
@@ -139,13 +162,11 @@
 					<artifactId>geostore-rest-extjs</artifactId>
 				</dependency>
 			</dependencies>
-        </profile>
+		</profile>
 	</profiles>
 
-
-
 	<build>
-        <finalName>geostore</finalName>
+		<finalName>geostore</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -170,7 +191,7 @@
 				<artifactId>maven-jetty-plugin</artifactId>
 				<version>6.1.20</version>
 				<configuration>
-<!--					<webAppSourceDirectory>${basedir}/war</webAppSourceDirectory>-->
+					<!-- <webAppSourceDirectory>${basedir}/war</webAppSourceDirectory> -->
 					<webAppConfig>
 						<contextPath>/geostore</contextPath>
 					</webAppConfig>
@@ -187,6 +208,6 @@
 		</plugins>
 
 	</build>
-	
+
 
 </project>

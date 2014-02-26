@@ -31,37 +31,38 @@ import org.junit.Test;
  * 
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public class BasicGeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInterceptorTest{
-	
-	private final String USERNAME = "test";
-	private final String PASSWORD = "test";
+public class BasicGeoStoreAuthenticationInterceptorTest extends BaseAuthenticationInterceptorTest {
 
-	/**
-	 * Access denied for a new user
-	 */
-	@Test(expected = AccessDeniedException.class)
-	public void testNotCreatesUser() {
-		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
-		interceptor.setUserService(userService);
-		interceptor.handleMessage(getMockedMessage(USERNAME, PASSWORD, null));
-	}
+    private final String USERNAME = "test";
 
-	/**
-	 * When the user exists, shouldn't throw any exception
-	 */
-	@Test
-	public void testCreatedUser() {
-		GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
-		interceptor.setUserService(userService);
-		User user = new User();
-		user.setName(USERNAME);
-		user.setNewPassword(PASSWORD);
-		try {
-			userService.insert(user);
-		} catch (Exception e) {
-			fail("Couldn't create user");
-		}
-		interceptor.handleMessage(getMockedMessage(USERNAME, PASSWORD, null));
-	}
+    private final String PASSWORD = "test";
+
+    /**
+     * Access denied for a new user
+     */
+    @Test(expected = AccessDeniedException.class)
+    public void testNotCreatesUser() {
+        GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
+        interceptor.setUserService(userService);
+        interceptor.handleMessage(getMockedMessage(USERNAME, PASSWORD, null));
+    }
+
+    /**
+     * When the user exists, shouldn't throw any exception
+     */
+    @Test
+    public void testCreatedUser() {
+        GeoStoreAuthenticationInterceptor interceptor = new GeoStoreAuthenticationInterceptor();
+        interceptor.setUserService(userService);
+        User user = new User();
+        user.setName(USERNAME);
+        user.setNewPassword(PASSWORD);
+        try {
+            userService.insert(user);
+        } catch (Exception e) {
+            fail("Couldn't create user");
+        }
+        interceptor.handleMessage(getMockedMessage(USERNAME, PASSWORD, null));
+    }
 
 }

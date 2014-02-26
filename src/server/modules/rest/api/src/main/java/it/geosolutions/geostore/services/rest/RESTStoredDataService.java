@@ -21,9 +21,7 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import it.geosolutions.geostore.services.rest.model.StoredDataList;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -37,6 +35,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTStoredDataService.Operations on {@link StoredData StoredData}s.
@@ -57,7 +56,8 @@ public interface RESTStoredDataService {
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN,
             MediaType.APPLICATION_JSON })
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id,
             @Multipart("data") String data) throws NotFoundWebEx;
 
@@ -76,7 +76,8 @@ public interface RESTStoredDataService {
      */
     @DELETE
     @Path("/{id}")
-    @RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
@@ -87,7 +88,8 @@ public interface RESTStoredDataService {
     @GET
     @Path("/{id}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String get(@Context SecurityContext sc, @Context HttpHeaders headers, @PathParam("id") long id)
             throws NotFoundWebEx;
 

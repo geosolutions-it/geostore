@@ -34,7 +34,6 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.UserList;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -50,6 +49,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTUserInterface.
@@ -63,26 +63,30 @@ public interface RESTUserService {
     @Path("/")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
+    @Secured({ "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("user") User user)
             throws BadRequestServiceEx, NotFoundServiceEx;
 
     @PUT
     @Path("/user/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    @RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("user") User user)
             throws NotFoundWebEx;
 
     @DELETE
     @Path("/user/{id}")
-    @RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
+    @Secured({ "ROLE_ADMIN" })
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     @GET
     @Path("/user/{id}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
+    @Secured({ "ROLE_ADMIN" })
     User get(@Context SecurityContext sc, @PathParam("id") long id,
             @QueryParam("includeattributes") @DefaultValue("false") boolean includeAttributes)
             throws NotFoundWebEx;
@@ -90,33 +94,38 @@ public interface RESTUserService {
     @GET
     @Path("/search/{name}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
+    @Secured({ "ROLE_ADMIN" })
     User get(@Context SecurityContext sc, @PathParam("name") String name,
             @QueryParam("includeattributes") @DefaultValue("false") boolean includeAttributes)
             throws NotFoundWebEx;
 
     @GET
     @Path("/")
-    @RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
+    @Secured({ "ROLE_ADMIN" })
     UserList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries) throws BadRequestWebEx;
 
     @GET
     @Path("/count/{nameLike}")
-    @RolesAllowed({ "ADMIN" })
+    // @RolesAllowed({ "ADMIN" })
+    @Secured({ "ROLE_ADMIN" })
     long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);
 
     @GET
     @Path("/user/details/")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     User getAuthUserDetails(@Context SecurityContext sc,
             @QueryParam("includeattributes") @DefaultValue("false") boolean includeAttributes);
 
     @GET
     @Path("/search/list/{nameLike}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER" })
+    // @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     UserList getUserList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
             @QueryParam("page") Integer page, @QueryParam("entries") Integer entries,
             @QueryParam("includeattributes") @DefaultValue("false") boolean includeAttributes)

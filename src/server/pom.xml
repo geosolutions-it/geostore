@@ -42,15 +42,17 @@
         <cxf-version>2.3.2</cxf-version>
         <activemq-version>5.3.0.4-fuse</activemq-version>
 
+		<jersey-version>2.5.1</jersey-version>
+		
         <!--
         spring-security-core 3.0.4 requires spring-core 3.x, otherwise we'd normally use 2.5.6, which
         is what the rest of the app uses
         -->
-        <spring-version>3.0.4.RELEASE</spring-version>
+        <spring-version>3.0.5.RELEASE</spring-version>
 	 
         <!-- 2.5.6.SEC01 is the version used by smix-->
         <!-- 2.5.5       is the version used by memberService-->
-        <spring-security-version>3.0.4.RELEASE</spring-security-version>
+        <spring-security-version>3.0.5.RELEASE</spring-security-version>
 
         <camel-version>1.6.1.2-fuse</camel-version>
 
@@ -325,6 +327,21 @@
             </dependency>
 
 		    <!-- =========================================================== -->
+		    <!--     JERSEY                                                  -->
+		    <!-- =========================================================== -->
+            <dependency>
+                <groupId>org.glassfish.jersey.containers</groupId>
+                <artifactId>jersey-container-servlet</artifactId>
+                <version>${jersey-version}</version>
+            </dependency>
+
+			<dependency>
+				<groupId>org.glassfish.jersey.ext</groupId>
+				<artifactId>jersey-spring3</artifactId>
+				<version>${jersey-version}</version>
+			</dependency>
+		
+		    <!-- =========================================================== -->
 		    <!--     APACHE CXF                                              -->
 		    <!-- =========================================================== -->
             <dependency>
@@ -406,7 +423,12 @@
 				<artifactId>cxf-rt-ws-security</artifactId>
 				<version>${cxf-version}</version>
 			</dependency>
-		
+			<dependency>
+				<groupId>com.google.code.cxf-spring-security</groupId>
+				<artifactId>cxf-spring-security</artifactId>
+				<version>${cxf-version}</version>
+			</dependency>
+
             <!-- =========================================================== -->
             <!--     Velocity                                                -->
             <!-- =========================================================== -->
@@ -546,7 +568,48 @@
                 <artifactId>spring-security-config</artifactId>
                 <version>${spring-security-version}</version>
             </dependency>
+			
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-ldap</artifactId>
+                <version>${spring-security-version}</version>
+            </dependency>
 
+			<!-- LDAP Deps -->
+			<!-- dependency>
+				<groupId>org.apache.directory.server</groupId>
+				<artifactId>apacheds-all</artifactId>
+				<version>1.5.5</version>
+			</dependency>
+			<dependency>    
+				<groupId>org.apache.directory.shared</groupId>    
+				<artifactId>shared-ldap</artifactId>    
+				<version>0.9.16</version>    
+			</dependency -->
+			
+			<dependency>
+				<groupId>org.apache.directory.server</groupId>
+				<artifactId>apacheds-all</artifactId>
+				<version>1.5.5</version>
+				<type>jar</type>
+				<scope>compile</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-api</artifactId>
+				<version>1.5.6</version>
+				<type>jar</type>
+				<scope>compile</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>slf4j-log4j12</artifactId>
+				<version>1.5.6</version>
+				<type>jar</type>
+				<scope>compile</scope>
+			</dependency>
+			
+			
 		    <!-- =========================================================== -->
 		    <!--     JAVAX PERSISTENCE                                       -->
 		    <!-- =========================================================== -->
