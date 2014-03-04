@@ -76,15 +76,6 @@
 			<ref bean="jsonProvider" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
-
-		<!-- Comment when using Spring Security auth managers -->
-		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
-			<bean
-				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-				<property name="securedObject" ref="restStoredDataService" />
-			</bean>
-		</jaxrs:inInterceptors>
 	</jaxrs:server>
 
 	<jaxrs:server id="geoStoreRESTResource" address="/resources">
@@ -102,15 +93,6 @@
 			<ref bean="jaxbContextResolver" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
-
-		<!-- Comment when using Spring Security auth managers -->
-		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
-			<bean
-				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-				<property name="securedObject" ref="restResourceService" />
-			</bean>
-		</jaxrs:inInterceptors>
 	</jaxrs:server>
 
 	<jaxrs:server id="geoStoreRESTCategory" address="/categories">
@@ -127,15 +109,6 @@
 			<ref bean="jsonProvider" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
-
-		<!-- Comment when using Spring Security auth managers -->
-		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
-			<bean
-				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-				<property name="securedObject" ref="restCategoryService" />
-			</bean>
-		</jaxrs:inInterceptors>
 	</jaxrs:server>
 
 	<jaxrs:server id="geoStoreRESTUser" address="/users">
@@ -152,17 +125,13 @@
 			<ref bean="jsonProvider" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
-
-		<!-- Comment when using Spring Security auth managers -->
-		<jaxrs:inInterceptors>
-			<!-- Auto create users interceptor (uncomment to allow users autocreation 
-				for /users requests) <ref bean="autoCreateUsersInterceptor"/> -->
-			<ref bean="geostoreAuthInterceptor" />
-			<bean
-				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-				<property name="securedObject" ref="restUserService" />
-			</bean>
-		</jaxrs:inInterceptors>
+		
+		<!-- Is the following interceptor still needed to allow autocreation of auth users???
+		     anyway the autocreation of auth users must be modified to work with spring security -->
+<!-- 		<jaxrs:inInterceptors> -->
+<!-- 			<ref bean="autoCreateUsersInterceptor"/> -->
+<!-- 		</jaxrs:inInterceptors> -->
+		
 	</jaxrs:server>
 
 	<jaxrs:server id="geoStoreRESTMisc" address="/misc">
@@ -179,15 +148,6 @@
 			<ref bean="jsonProvider" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
-
-		<!-- Comment when using Spring Security auth managers -->
-		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
-			<bean
-				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-				<property name="securedObject" ref="restMiscService" />
-			</bean>
-		</jaxrs:inInterceptors>
 	</jaxrs:server>
 
 	<jaxrs:server id="geoStoreRESTBackup" address="/backup">
@@ -205,15 +165,6 @@
 			<ref bean="jaxbContextResolver" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
-
-		<!-- Comment when using Spring Security auth managers -->
-		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
-			<bean
-				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-				<property name="securedObject" ref="restBackupService" />
-			</bean>
-		</jaxrs:inInterceptors>
 	</jaxrs:server>
 
 
@@ -255,21 +206,17 @@
 			</list>
 		</property>
 	</bean>
-
-	<!-- Basic authentication interceptor -->
-	<bean id="geostoreAuthInterceptor"
-		class="it.geosolutions.geostore.services.rest.utils.GeoStoreAuthenticationInterceptor">
-		<property name="userService" ref="userService" />
-	</bean>
-
-	<!-- Auto create users interceptor -->
-	<bean id="autoCreateUsersInterceptor"
-		class="it.geosolutions.geostore.services.rest.utils.AutoUserCreateGeostoreAuthenticationInterceptor">
-		<property name="autoCreateUsers" value="true" />
-		<property name="newUsersRole" value="USER" />
-		<property name="newUsersPassword" value="NONE" />
-		<property name="newUsersPasswordHeader" value="" />
-		<property name="userService" ref="userService" />
-	</bean>
+	
+	<!-- Is the following interceptor still needed to allow autocreation of auth users???
+     anyway the autocreation of auth users must be modified to work with spring security -->
+	<!-- Auto create users interceptor, check also  -->
+<!-- 	<bean id="autoCreateUsersInterceptor" -->
+<!-- 		class="it.geosolutions.geostore.services.rest.utils.AutoUserCreateGeostoreAuthenticationInterceptor"> -->
+<!-- 		<property name="autoCreateUsers" value="true" /> -->
+<!-- 		<property name="newUsersRole" value="USER" /> -->
+<!-- 		<property name="newUsersPassword" value="NONE" /> -->
+<!-- 		<property name="newUsersPasswordHeader" value="" /> -->
+<!-- 		<property name="userService" ref="userService" /> -->
+<!-- 	</bean> -->
 
 </beans>
