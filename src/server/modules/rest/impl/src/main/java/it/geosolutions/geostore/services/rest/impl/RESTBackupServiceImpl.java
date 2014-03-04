@@ -31,7 +31,6 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
-import it.geosolutions.geostore.services.StoredDataService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -47,19 +46,18 @@ import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCa
 import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.utils.Convert;
-import java.util.HashMap;
+
 import java.util.List;
-import java.util.Map;
 
 import javax.ws.rs.core.SecurityContext;
-import org.apache.commons.collections.CollectionUtils;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 
 /** 
  *
  */
-public class RESTBackupServiceImpl implements RESTBackupService {
+public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackupService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTBackupServiceImpl.class);
 

@@ -59,7 +59,7 @@ import org.springframework.security.core.GrantedAuthority;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * 
  */
-public class RESTUserServiceImpl implements RESTUserService {
+public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTUserServiceImpl.class);
 
@@ -321,68 +321,6 @@ public class RESTUserServiceImpl implements RESTUserService {
         }
 
         return ret;
-    }
-
-    /**
-     * @return User - The authenticated user that is accessing this service, or null if guest access.
-     */
-    private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if (sc == null) {
-            throw new InternalErrorWebEx("Missing auth info");
-        } else {
-            Principal principal = sc.getUserPrincipal();
-            if (principal == null) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Missing auth principal");
-                }
-                throw new InternalErrorWebEx("Missing auth principal");
-            }
-
-            /**
-             * OLD STUFF
-             * 
-             * if (!(principal instanceof GeoStorePrincipal)) { if (LOGGER.isInfoEnabled()) { LOGGER.info("Mismatching auth principal"); } throw new
-             * InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")"); }
-             * 
-             * GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
-             * 
-             * // // may be null if guest // User user = gsp.getUser();
-             * 
-             * LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
-             **/
-
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Mismatching auth principal");
-                }
-                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
-                        + ")");
-            }
-
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
-
-            User user = new User();
-            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
-
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
-                }
-            }
-
-            LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                    + user.getRole());
-
-            return user;
-        }
     }
 
     @Override

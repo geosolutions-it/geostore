@@ -225,9 +225,10 @@ public class RESTCategoryServiceImpl implements RESTCategoryService {
         else {
             Principal principal = sc.getUserPrincipal();
             if (principal == null) {
-                if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Missing auth principal");
-                throw new InternalErrorWebEx("Missing auth principal");
+                principal = new UsernamePasswordAuthenticationToken("guest","");
+                if (LOGGER.isDebugEnabled()){
+                    LOGGER.debug("Missing auth principal, set it to the guest One...");
+                }
             }
 
             /**
