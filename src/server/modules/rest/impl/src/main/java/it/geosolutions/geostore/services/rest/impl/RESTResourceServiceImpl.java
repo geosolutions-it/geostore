@@ -55,7 +55,6 @@ import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,9 +62,6 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
 
 /**
  * Class RESTResourceServiceImpl.
