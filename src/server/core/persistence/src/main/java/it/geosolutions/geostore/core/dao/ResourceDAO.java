@@ -50,6 +50,14 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @return List<SecurityRule>
      */
     public List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
+    
+    /**
+     * 
+     * @param userName
+     * @param resourceId
+     * @return
+     */
+    public List<SecurityRule> findGroupSecurityRule(String userName, long resourceId);
 
     /**
      * @param resourceId

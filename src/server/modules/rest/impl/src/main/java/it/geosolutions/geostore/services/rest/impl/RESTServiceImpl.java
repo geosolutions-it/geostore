@@ -27,8 +27,10 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
 import java.security.Principal;
@@ -45,12 +47,17 @@ import org.springframework.security.core.authority.GrantedAuthorityImpl;
 /**
  * Class RESTServiceImpl.
  * 
+ * This is the super class for each RESTServices implementation 
+ * 
  * @author ETj (etj at geo-solutions.it)
+ * @author DamianoG
  */
-public class RESTServiceImpl {
+public abstract class RESTServiceImpl{
 
     private final static Logger LOGGER = Logger.getLogger(RESTServiceImpl.class);
 
+    protected abstract SecurityService getSecurityService();
+    
     /**
      * @return User - The authenticated user that is accessing this service, or null if guest access.
      */
@@ -75,28 +82,98 @@ public class RESTServiceImpl {
 
             UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
 
-            User user = new User();
-            user.setName(usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
-
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
-                }
-            }
-
+            //DamianoG 06/03/2014 Why create a new Instance when we can deal with the object taken from the DB? Being the instance taken from DB Transient we avoid problems saving security rules...
+//            User user = new User();
+//            user.setName(usrToken.getName());
+//            for (GrantedAuthority authority : usrToken.getAuthorities()) {
+//                if (authority != null) {
+//                    if (authority.getAuthority() != null
+//                            && authority.getAuthority().contains("ADMIN"))
+//                        user.setRole(Role.ADMIN);
+//
+//                    if (authority.getAuthority() != null
+//                            && authority.getAuthority().contains("USER") && user.getRole() == null)
+//                        user.setRole(Role.USER);
+//
+//                    if (user.getRole() == null)
+//                        user.setRole(Role.GUEST);
+//                }
+//            }
+            User user = (User)usrToken.getPrincipal();
+            
             LOGGER.info("Accessing service with user " + user.getName() + " and role "
                     + user.getRole());
 
             return user;
         }
+    }
+    
+    /**
+     * This operation is responsible for check if a resource is accessible to an user to perform WRITE operations (update/delete). 
+     * this operation must checks first if the user has the right permissions then, if not, check if its group is allowed.
+     * 
+     * @param resource
+     * @return boolean
+     */
+    public boolean resourceAccessWrite(User authUser, long resourceId) {
+        if (authUser.getRole().equals(Role.ADMIN)) {
+            return true;
+        } else {
+            List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
+                    authUser.getName(), resourceId);
+
+            if (userSecurityRules != null && userSecurityRules.size() > 0){
+                SecurityRule sr = userSecurityRules.get(0);
+                if (sr.isCanWrite()){
+                    return true;
+                }
+            }
+            
+            List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
+                    authUser.getName(), resourceId);
+
+            if (groupSecurityRules != null && groupSecurityRules.size() > 0){
+                SecurityRule sr = groupSecurityRules.get(0);
+                if (sr.isCanWrite()){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * This operation is responsible for check if a resource is accessible to an user to perform READ operations. 
+     * this operation must checks first if the user has the right permissions then, if not, check if its group is allowed. 
+     * 
+     * @param resource
+     * @return boolean
+     */
+    public boolean resourceAccessRead(User authUser, long resourceId) {
+        if (authUser.getRole().equals(Role.ADMIN)) {
+            return true;
+        } else {
+            List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
+                    authUser.getName(), resourceId);
+
+            if (userSecurityRules != null && userSecurityRules.size() > 0){
+                SecurityRule sr = userSecurityRules.get(0);
+                if (sr.isCanRead()){
+                    return true;
+                }
+            }
+            
+            List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
+                    authUser.getName(), resourceId);
+
+            if (groupSecurityRules != null && groupSecurityRules.size() > 0){
+                SecurityRule sr = groupSecurityRules.get(0);
+                if (sr.isCanRead()){
+                    return true;
+                }
+            }
+        }
+        return false;    
     }
     
     /**
@@ -111,7 +188,10 @@ public class RESTServiceImpl {
         if (LOGGER.isDebugEnabled()){
             LOGGER.debug("Missing auth principal, set it to the guest One...");
         }
-        Principal principal = new UsernamePasswordAuthenticationToken("guest","", authorities);
+        User guest = new User();
+        guest.setName("guest");
+        guest.setRole(Role.GUEST);
+        Principal principal = new UsernamePasswordAuthenticationToken(guest,"", authorities);
         return principal;
     }
 }

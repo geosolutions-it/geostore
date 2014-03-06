@@ -199,4 +199,12 @@ public class CategoryServiceImpl implements CategoryService {
     public List<SecurityRule> getUserSecurityRule(String userName, long categoryId) {
         return categoryDAO.findUserSecurityRule(userName, categoryId);
     }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> getGroupSecurityRule(String userName, long categoryId) {
+        return categoryDAO.findGroupSecurityRule(userName, categoryId);
+    }
 }

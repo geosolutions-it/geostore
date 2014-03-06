@@ -29,7 +29,6 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -46,7 +45,7 @@ import java.util.List;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
-public interface ResourceService {
+public interface ResourceService extends SecurityService{
 
     // ==========================================================================
     // Basic operations
@@ -194,12 +193,5 @@ public interface ResourceService {
      */
     public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx;
-
-    /**
-     * @param userName
-     * @param resourceId
-     * @return List<SecurityRule>
-     */
-    List<SecurityRule> getUserSecurityRule(String userName, long resourceId);
 
 }

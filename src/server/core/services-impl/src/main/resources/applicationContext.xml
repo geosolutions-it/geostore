@@ -24,4 +24,7 @@
     <bean id="userService" class="it.geosolutions.geostore.services.UserServiceImpl">
     </bean>
     
+    <bean id="userGroupService" class="it.geosolutions.geostore.services.UserGroupServiceImpl">
+    </bean>
+    
 </beans>

@@ -200,4 +200,21 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
         return super.removeById(id);
     }
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> findGroupSecurityRule(String userName, long resourceId) {
+        Search searchCriteria = new Search(Resource.class);
+        searchCriteria.addField("security");
+
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(Filter.equal("resource.id", resourceId),
+                        Filter.equal("user.group.groupName", userName)));
+        searchCriteria.addFilter(securityFilter);
+
+        return super.search(searchCriteria);
+    }
+
 }

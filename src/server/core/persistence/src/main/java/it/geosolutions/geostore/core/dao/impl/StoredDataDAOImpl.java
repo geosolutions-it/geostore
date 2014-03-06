@@ -92,4 +92,21 @@ public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements Stor
         return super.search(searchCriteria);
     }
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.StoredDataDAO#findGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> findGroupSecurityRule(String name, long resourceId) {
+        Search searchCriteria = new Search(StoredData.class);
+        searchCriteria.addField("resource.security");
+
+        Filter securityFilter = Filter.some(
+                "resource.security",
+                Filter.and(Filter.equal("resource.security.resource.id", resourceId),
+                        Filter.equal("resource.security.user.namegroup.groupName", name)));
+        searchCriteria.addFilter(securityFilter);
+
+        return super.search(searchCriteria);
+    }
+
 }

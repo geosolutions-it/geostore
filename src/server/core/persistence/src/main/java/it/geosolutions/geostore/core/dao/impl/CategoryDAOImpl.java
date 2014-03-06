@@ -127,4 +127,21 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
         return super.search(searchCriteria);
     }
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.CategoryDAO#findGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> findGroupSecurityRule(String userName, long categoryId) {
+        Search searchCriteria = new Search(Category.class);
+        searchCriteria.addField("security");
+
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(Filter.equal("category.id", categoryId),
+                        Filter.equal("user.group.groupName", userName)));
+        searchCriteria.addFilter(securityFilter);
+
+        return super.search(searchCriteria);
+    }
+
 }

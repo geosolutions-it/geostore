@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,48 +19,47 @@
  */
 package it.geosolutions.geostore.services;
 
-import it.geosolutions.geostore.core.model.StoredData;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.List;
 
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
 /**
- * Interafce StoredDataService. Operations on {@link StoredData StoredData}s.
- * 
- * @author Emanuele Tajariol (etj at geo-solutions.it)
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
+ * @author DamianoG
+ *
  */
-public interface StoredDataService extends SecurityService{
+public interface UserGroupService {
 
     /**
+     * 
+     * @param userGroup
+     * @return
+     * @throws BadRequestServiceEx
+     */
+    long insert(UserGroup userGroup) throws BadRequestServiceEx;
+    
+    /**
+     * 
      * @param id
-     * @param data
-     * @return long
      * @throws NotFoundServiceEx
      */
-    long update(long id, String data) throws NotFoundServiceEx;
-
+    void delete(long id) throws NotFoundServiceEx;
+    
     /**
-     * @param id
-     * @return boolean
-     */
-    boolean delete(long id);
-
-    /**
-     * @param id
-     * @return StoredData
+     * 
+     * @param userId
+     * @param groupId
      * @throws NotFoundServiceEx
      */
-    StoredData get(long id) throws NotFoundServiceEx;
-
+    void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx;
+    
     /**
-     * @return List<StoredData>
+     * 
+     * @param page
+     * @param entries
+     * @return
+     * @throws BadRequestServiceEx
      */
-    List<StoredData> getAll();
-
-    /**
-     * @return List<StoredData>
-     */
-    List<StoredData> getAllFull();
-
+    List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
 }

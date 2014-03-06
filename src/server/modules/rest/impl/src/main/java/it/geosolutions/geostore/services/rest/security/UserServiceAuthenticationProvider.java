@@ -69,7 +69,7 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
             // return null;
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
             authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
-            Authentication a = new UsernamePasswordAuthenticationToken(us, pw, authorities);
+            Authentication a = new UsernamePasswordAuthenticationToken(user, pw, authorities);
             // a.setAuthenticated(true);
             return a;
         } else {

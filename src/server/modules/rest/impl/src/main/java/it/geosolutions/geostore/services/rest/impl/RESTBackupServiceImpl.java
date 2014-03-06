@@ -31,6 +31,7 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -52,6 +53,7 @@ import java.util.List;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 
 /** 
@@ -208,6 +210,14 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
 
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        throw new NotImplementedException("This method is not implemented yet...");
     }
 
 }
