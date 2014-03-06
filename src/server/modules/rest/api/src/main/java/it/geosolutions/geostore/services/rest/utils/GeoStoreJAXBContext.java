@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
+
 import javax.xml.bind.JAXBContext;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -95,6 +97,7 @@ public class GeoStoreJAXBContext {
     private static List<Class<? extends Serializable>> getModelClasses() {
         return Arrays.asList(it.geosolutions.geostore.core.model.Attribute.class,
                 it.geosolutions.geostore.core.model.Category.class,
+                it.geosolutions.geostore.core.model.UserGroup.class,
                 it.geosolutions.geostore.core.model.Resource.class,
                 it.geosolutions.geostore.core.model.SecurityRule.class,
                 it.geosolutions.geostore.core.model.StoredData.class,
@@ -124,6 +127,7 @@ public class GeoStoreJAXBContext {
     private static List<Class<?>> getRESTclasses() {
         return Arrays
                 .asList(it.geosolutions.geostore.services.rest.model.CategoryList.class,
+                        it.geosolutions.geostore.services.rest.model.UserGroupList.class,
                         it.geosolutions.geostore.services.rest.model.RESTResource.class,
                         it.geosolutions.geostore.services.rest.model.RESTCategory.class,
                         it.geosolutions.geostore.services.rest.model.StoredDataList.class,

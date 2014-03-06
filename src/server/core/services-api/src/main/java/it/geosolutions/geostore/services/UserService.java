@@ -109,5 +109,14 @@ public interface UserService {
      * @throws NotFoundServiceEx
      */
     void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx;
+    
+    /**
+     * Persist the special Users, those that implies special behavior (Like GUEST)
+     * 
+     * For obvious reasons this Method MUST NOT exposed through the rest interface.
+     * 
+     * @return true if the persist operation finish with success, false otherwise  
+     */
+    public boolean insertSpecialUsers();
 
 }

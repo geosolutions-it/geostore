@@ -150,4 +150,13 @@ public class MockedUserService implements UserService {
         // Don't needed
     }
 
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.UserService#insertSpecialUsers()
+     */
+    @Override
+    public boolean insertSpecialUsers() {
+     // Don't needed
+        return false;
+    }
+
 }

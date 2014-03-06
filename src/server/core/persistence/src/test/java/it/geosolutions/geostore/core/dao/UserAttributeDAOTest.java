@@ -19,6 +19,9 @@
  */
 package it.geosolutions.geostore.core.dao;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -56,16 +59,22 @@ public class UserAttributeDAOTest extends BaseDAOTest {
         // PERSIST
         //
         {
-            UserGroup group = new UserGroup();
-            group.setGroupName("GROUP1");
+            Set<UserGroup> groups = new HashSet<UserGroup>();
+            UserGroup g1 = new UserGroup();
+            g1.setGroupName("GROUP1");
+            UserGroup g2 = new UserGroup();
+            g2.setGroupName("GROUP2");
+            groups.add(g1);
+            groups.add(g2);
 
-            userGroupDAO.persist(group);
+            userGroupDAO.persist(g1);
+            userGroupDAO.persist(g2);
 
-            assertEquals(1, userGroupDAO.count(null));
-            assertEquals(1, userGroupDAO.findAll().size());
+            assertEquals(2, userGroupDAO.count(null));
+            assertEquals(2, userGroupDAO.findAll().size());
 
             User user = new User();
-            user.setGroup(group);
+            user.setGroups(groups);
             user.setName("USER_NAME");
             user.setNewPassword("user");
             user.setRole(Role.ADMIN);

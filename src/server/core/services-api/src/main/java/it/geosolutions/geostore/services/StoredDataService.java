@@ -19,11 +19,10 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.List;
-
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
+import java.util.List;
 
 /**
  * Interafce StoredDataService. Operations on {@link StoredData StoredData}s.
@@ -31,7 +30,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public interface StoredDataService {
+public interface StoredDataService extends SecurityService{
 
     /**
      * @param id
@@ -63,12 +62,5 @@ public interface StoredDataService {
      * @return List<StoredData>
      */
     List<StoredData> getAllFull();
-
-    /**
-     * @param name
-     * @param resourceId
-     * @return List<SecurityRule>
-     */
-    List<SecurityRule> getUserSecurityRule(String name, long resourceId);
 
 }

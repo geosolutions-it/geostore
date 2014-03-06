@@ -38,6 +38,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -408,20 +409,36 @@ public class ResourceServiceImpl implements ResourceService {
             // This to inform the client in HTTP response result.
             // ///////////////////////////////////////////////////////////////////////
             if (authUser != null) {
-                List<SecurityRule> securities = resource.getSecurity();
-                Iterator<SecurityRule> iterator = securities.iterator();
-
-                while (iterator.hasNext()) {
-                    SecurityRule rule = iterator.next();
-                    User owner = rule.getUser();
-
-                    if (owner.getId().equals(authUser.getId())
-                            || authUser.getRole().equals(Role.ADMIN)) {
-                        if (rule.isCanWrite()) {
-                            shortResource.setCanEdit(true);
-                            shortResource.setCanDelete(true);
-
-                            break;
+                if(authUser.getRole().equals(Role.ADMIN)){
+                    shortResource.setCanEdit(true);
+                    shortResource.setCanDelete(true);
+                }
+                else{
+                    List<SecurityRule> securities = resource.getSecurity();
+                    Iterator<SecurityRule> iterator = securities.iterator();
+                    
+                    while (iterator.hasNext()) {
+                        SecurityRule rule = iterator.next();
+                        User owner = rule.getUser();
+                        UserGroup userGroup = rule.getGroup();
+                        if(owner != null){
+                            if (owner.getId().equals(authUser.getId())) {
+                                if (rule.isCanWrite()) {
+                                    shortResource.setCanEdit(true);
+                                    shortResource.setCanDelete(true);
+        
+                                    break;
+                                }
+                            }
+                        } else if(userGroup != null){
+                            if (authUser.getGroups() != null && authUser.getGroups().contains(userGroup.getGroupName())) {
+                                if (rule.isCanWrite()) {
+                                    shortResource.setCanEdit(true);
+                                    shortResource.setCanDelete(true);
+        
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -647,8 +664,20 @@ public class ResourceServiceImpl implements ResourceService {
         return resources;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see it.geosolutions.geostore.services.SecurityService#getUserSecurityRule(java.lang.String, long)
+     */
     @Override
     public List<SecurityRule> getUserSecurityRule(String userName, long resourceId) {
         return resourceDAO.findUserSecurityRule(userName, resourceId);
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long resourceId) {
+        return resourceDAO.findGroupSecurityRule(groupNames, resourceId);
     }
 }

@@ -29,8 +29,8 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -43,10 +43,8 @@ import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
-import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
-import it.geosolutions.geostore.services.rest.utils.GeoStorePrincipal;
 
-import java.security.Principal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -59,8 +57,6 @@ import net.sf.json.JSONObject;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Class RESTExtJsServiceImpl.
@@ -68,7 +64,7 @@ import org.springframework.security.core.GrantedAuthority;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * 
  */
-public class RESTExtJsServiceImpl implements RESTExtJsService {
+public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTExtJsServiceImpl.class);
 
@@ -216,11 +212,21 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
             List<Resource> resources = resourceService.getResources(filter, page, limit,
                     includeAttributes, false, authUser);
 
+            // Here the Read permission on each resource must be checked due to will be returned the full Resource not just a ShortResource
+            // N.B. This is a bad method to check the permissions on each requested resource, it can perform 2 database access for each resource.
+            // Possible optimization -> When retrieving the resources, add to "filter" also another part to load only the allowed resources. 
+            List<Resource> allowedResources = new ArrayList<Resource>();  
+            for(Resource r : resources){
+                if(resourceAccessRead(authUser, r.getId())){
+                    allowedResources.add(r);
+                }
+            }
+            
             long count = 0;
-            if (resources != null && resources.size() > 0)
+            if (allowedResources != null && allowedResources.size() > 0)
                 count = resourceService.getCountByFilter(filter);
 
-            ExtResourceList list = new ExtResourceList(count, resources);
+            ExtResourceList list = new ExtResourceList(count, allowedResources);
             return list;
 
         } catch (InternalErrorServiceEx e) {
@@ -308,67 +314,6 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
         return jsonObj;
     }
 
-    /**
-     * @return User - The authenticated user that is accessing this service, or null if guest access.
-     */
-    private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if (sc == null)
-            throw new InternalErrorWebEx("Missing auth info");
-        else {
-            Principal principal = sc.getUserPrincipal();
-            if (principal == null) {
-                if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Missing auth principal");
-                throw new InternalErrorWebEx("Missing auth principal");
-            }
-
-            /**
-             * OLD STUFF
-             * 
-             * if (!(principal instanceof GeoStorePrincipal)) { if (LOGGER.isInfoEnabled()) { LOGGER.info("Mismatching auth principal"); } throw new
-             * InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")"); }
-             * 
-             * GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
-             * 
-             * // // may be null if guest // User user = gsp.getUser();
-             * 
-             * LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
-             **/
-
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Mismatching auth principal");
-                }
-                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
-                        + ")");
-            }
-
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
-
-            User user = new User();
-            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
-
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
-                }
-            }
-
-            LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                    + user.getRole());
-
-            return user;
-        }
-    }
-
     @Override
     public ExtUserList getUsersList(SecurityContext sc, String nameLike, Integer start,
             Integer limit, boolean includeAttributes) throws BadRequestWebEx {
@@ -402,5 +347,13 @@ public class RESTExtJsServiceImpl implements RESTExtJsService {
 
             return null;
         }
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        return resourceService;
     }
 }

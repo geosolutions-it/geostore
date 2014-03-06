@@ -143,9 +143,21 @@ public class StoredDataServiceImpl implements StoredDataService {
         return found;
     }
 
+    /*
+     * (non-Javadoc)
+     * @see it.geosolutions.geostore.services.SecurityService#getUserSecurityRule(java.lang.String, long)
+     */
     @Override
-    public List<SecurityRule> getUserSecurityRule(String name, long resourceId) {
-        return storedDataDAO.findUserSecurityRule(name, resourceId);
+    public List<SecurityRule> getUserSecurityRule(String name, long storedDataId) {
+        return storedDataDAO.findUserSecurityRule(name, storedDataId);
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long storedDataId) {
+        return storedDataDAO.findGroupSecurityRule(groupNames, storedDataId);
     }
 
 }

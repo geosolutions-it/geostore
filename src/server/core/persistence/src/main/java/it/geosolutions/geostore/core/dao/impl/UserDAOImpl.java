@@ -22,11 +22,13 @@ package it.geosolutions.geostore.core.dao.impl;
 import com.googlecode.genericdao.search.ISearch;
 
 import java.util.List;
+import java.util.Set;
 
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
+import it.geosolutions.geostore.core.model.UserGroup;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
@@ -138,6 +140,8 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
             if (Hibernate.isInitialized(user)) {
                 List<UserAttribute> attributes = user.getAttribute();
                 Hibernate.initialize(attributes);
+                Set<UserGroup> groups = user.getGroups();
+                Hibernate.initialize(groups);
             }
         }
 

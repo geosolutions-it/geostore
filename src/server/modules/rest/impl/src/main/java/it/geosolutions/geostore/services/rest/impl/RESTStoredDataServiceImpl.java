@@ -19,10 +19,9 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.StoredDataService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTStoredDataService;
@@ -32,11 +31,9 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 
 import java.io.StringReader;
-import java.security.Principal;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -53,8 +50,6 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Class RESTStoredDataServiceImpl.
@@ -75,6 +70,14 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
     }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        return storedDataService; 
+    }
 
     /*
      * (non-Javadoc)
@@ -92,7 +95,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             //
             boolean canUpdate = false;
             User authUser = extractAuthUser(sc);
-            canUpdate = resourceAccess(authUser, id); // The ID is also the resource ID
+            canUpdate = resourceAccessWrite(authUser, id); // The ID is also the resource ID
 
             if (canUpdate) {
                 storedDataService.update(id, data);
@@ -127,7 +130,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         //
         boolean canDelete = false;
         User authUser = extractAuthUser(sc);
-        canDelete = resourceAccess(authUser, id);
+        canDelete = resourceAccessWrite(authUser, id);
 
         if (canDelete) {
             boolean ret = storedDataService.delete(id);
@@ -278,27 +281,4 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             throw new BadRequestWebEx("Bad id");
         }
     }
-
-    /**
-     * Check if the user can access the requested resource (is own resource or not ?) in order to update it.
-     * 
-     * @param resource
-     * @return boolean
-     */
-    private boolean resourceAccess(User authUser, long resourceId) {
-        boolean canAccess = false;
-
-        if (authUser.getRole().equals(Role.ADMIN)) {
-            canAccess = true;
-        } else {
-            List<SecurityRule> securityRules = storedDataService.getUserSecurityRule(
-                    authUser.getName(), resourceId);
-
-            if (securityRules != null && !securityRules.isEmpty())
-                canAccess = true;
-        }
-
-        return canAccess;
-    }
-
 }

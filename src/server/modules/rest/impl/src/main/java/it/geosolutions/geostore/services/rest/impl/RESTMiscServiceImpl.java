@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.StoredDataService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
@@ -53,6 +54,7 @@ import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 
 /**
@@ -202,6 +204,14 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        throw new NotImplementedException("This method is not implemented yet...");
     }
 
 }

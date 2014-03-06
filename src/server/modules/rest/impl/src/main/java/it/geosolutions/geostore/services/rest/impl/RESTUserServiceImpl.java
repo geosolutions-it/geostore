@@ -31,6 +31,7 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -43,9 +44,11 @@ import it.geosolutions.geostore.services.rest.model.UserList;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 
 /**
@@ -130,9 +133,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     userUpdated = true;
                 }
 
-                UserGroup group = user.getGroup();
-                if (group != null) {
-                    old.setGroup(group);
+                Set<UserGroup> groups = user.getGroups();
+                if (groups != null) {
+                    old.setGroups(groups);
                     userUpdated = true;
                 }
             } else if (old.getName().equals(authUser.getName())) { // Check if the User is the same
@@ -219,7 +222,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         ret.setName(authUser.getName());
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
-        ret.setGroup(authUser.getGroup());
+        ret.setGroups(authUser.getGroups());
         if (includeAttributes) {
             ret.setAttribute(authUser.getAttribute());
         }
@@ -306,7 +309,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 ret.setName(authUser.getName());
                 // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
                 ret.setRole(authUser.getRole());
-                ret.setGroup(authUser.getGroup());
+                ret.setGroups(authUser.getGroups());
                 if (includeAttributes) {
                     ret.setAttribute(authUser.getAttribute());
                 }
@@ -341,5 +344,13 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        throw new NotImplementedException("This method is not implemented yet...");
     }
 }

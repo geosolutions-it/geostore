@@ -58,6 +58,10 @@
 	<bean id="restBackupService"
 		class="it.geosolutions.geostore.services.rest.impl.RESTBackupServiceImpl">
 	</bean>
+	
+	<bean id="restUserGroupService"
+		class="it.geosolutions.geostore.services.rest.impl.RESTUserGroupServiceImpl">
+	</bean>
 
 	<!-- ==================================================================== -->
 	<!-- === REST Services ================================================== -->
@@ -131,7 +135,22 @@
 <!-- 		<jaxrs:inInterceptors> -->
 <!-- 			<ref bean="autoCreateUsersInterceptor"/> -->
 <!-- 		</jaxrs:inInterceptors> -->
-		
+	</jaxrs:server>
+
+	<jaxrs:server id="geoStoreRESTUserGroup" address="/usersgroup">
+		<jaxrs:serviceBeans>
+			<ref bean="restUserGroupService" />
+		</jaxrs:serviceBeans>
+
+		<jaxrs:features>
+			<cxf:logging />
+		</jaxrs:features>
+
+		<jaxrs:providers>
+			<ref bean="jaxbXmlProvider" />
+			<ref bean="jsonProvider" />
+			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
+		</jaxrs:providers>
 	</jaxrs:server>
 
 	<jaxrs:server id="geoStoreRESTMisc" address="/misc">

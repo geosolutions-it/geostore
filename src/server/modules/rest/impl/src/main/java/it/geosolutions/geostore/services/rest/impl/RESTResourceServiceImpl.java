@@ -33,8 +33,8 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
@@ -81,6 +81,14 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        return resourceService;
+    }
 
     /*
      * (non-Javadoc)
@@ -98,13 +106,17 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         User authUser = extractAuthUser(sc);
 
-        SecurityRule securityRule = new SecurityRule();
-        securityRule.setCanRead(true);
-        securityRule.setCanWrite(true);
-        securityRule.setUser(authUser);
-
+        // This list holds the security rules for this resources
+        // By default when a resource is inserted are create 2 rules: 
+        // ONE is related to the User that insert the rule and THE OTHER ONE is related to its group
         List<SecurityRule> securities = new ArrayList<SecurityRule>();
-        securities.add(securityRule);
+        
+        // User Security rule: the user that insert the resource (the "owner") is allowed to Read and Write the resources
+        SecurityRule userSecurityRule = new SecurityRule();
+        userSecurityRule.setCanRead(true);
+        userSecurityRule.setCanWrite(true);
+        userSecurityRule.setUser(authUser);
+        securities.add(userSecurityRule);
 
         Resource r = Convert.convertResource(resource);
         r.setSecurity(securities);
@@ -157,7 +169,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             //
             boolean canUpdate = false;
             User authUser = extractAuthUser(sc);
-            canUpdate = resourceAccess(authUser, old.getId());
+            canUpdate = resourceAccessWrite(authUser, old.getId());
 
             if (canUpdate) {
                 if (resource.getDescription() != null)
@@ -208,7 +220,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         //
         boolean canDelete = false;
         User authUser = extractAuthUser(sc);
-        canDelete = resourceAccess(authUser, id);
+        canDelete = resourceAccessWrite(authUser, id);
 
         if (canDelete) {
             boolean ret = resourceService.delete(id);
@@ -242,12 +254,21 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     @Override
     public Resource get(SecurityContext sc, long id, boolean fullResource) throws NotFoundWebEx {
 
+        //
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id);
+        if(!canRead){
+            throw new ForbiddenErrorWebEx("This user cannot read this resource !");
+        }
+        
         if (fullResource) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Retrieving a full resource");
             List<Resource> resourcesFull;
             try {
-                User authUser = extractAuthUser(sc);
                 SearchFilter filter = new FieldFilter(BaseField.ID, Long.toString(id),
                         SearchOperator.EQUAL_TO);
                 resourcesFull = resourceService.getResourcesFull(filter, authUser);
@@ -391,7 +412,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         boolean canUpdate = false;
         try {
             User authUser = extractAuthUser(sc);
-            canUpdate = resourceAccess(authUser, resource.getId());
+            canUpdate = resourceAccessWrite(authUser, resource.getId());
 
             if (canUpdate)
                 return resourceService.updateAttribute(id, name, value);
@@ -448,29 +469,4 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             throw new InternalErrorWebEx(e.getMessage());
         }
     }
-
-    /**
-     * Check if the user can access the requested resource (is own resource or not ?) in order to update it.
-     * 
-     * @param resource
-     * @return boolean
-     */
-    private boolean resourceAccess(User authUser, long resourceId) {
-        boolean canAccess = false;
-
-        if (authUser != null) {
-            if (authUser.getRole().equals(Role.ADMIN)) {
-                canAccess = true;
-            } else {
-                List<SecurityRule> securityRules = resourceService.getUserSecurityRule(
-                        authUser.getName(), resourceId);
-
-                if (securityRules != null && securityRules.size() > 0)
-                    canAccess = true;
-            }
-        }
-
-        return canAccess;
-    }
-
 }

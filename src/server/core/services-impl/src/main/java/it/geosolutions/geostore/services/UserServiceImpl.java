@@ -25,12 +25,17 @@ import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.cxf.common.util.StringUtils;
 import org.apache.log4j.Logger;
 
 import com.googlecode.genericdao.search.Search;
@@ -95,26 +100,29 @@ public class UserServiceImpl implements UserService {
         //
         // Checking User Group
         //
-        UserGroup group = user.getGroup();
-        if (group != null) {
-            String groupName = group.getGroupName();
-            if (groupName != null) {
-                //
-                // Searching the corresponding UserGroup
-                //
-                Search searchCriteria = new Search(UserGroup.class);
-                searchCriteria.addFilterEqual("groupName", groupName);
-
-                List<UserGroup> groups = userGroupDAO.search(searchCriteria);
-
-                if (groups.isEmpty()) {
-                    throw new NotFoundServiceEx("User group not found; " + user.getId());
+        Set<UserGroup> groups = user.getGroups();
+        List<String> groupNames = new ArrayList<String>();
+        if (groups != null && groups.size() > 0) {
+            for(UserGroup group : groups){
+                String groupName = group.getGroupName().toLowerCase();
+                groupNames.add(groupName);
+                if (StringUtils.isEmpty(groupName)) {
+                    throw new BadRequestServiceEx("The user group name must be specified! ");
                 }
-
-                u.setGroup(groups.get(0));
-            } else {
-                throw new BadRequestServiceEx("User group name must be specified ! ");
             }
+            //
+            // Searching the corresponding UserGroups
+            //
+            Search searchCriteria = new Search(UserGroup.class);
+            searchCriteria.addFilterIn("groupName", groupNames);
+
+            List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
+
+            if (existingGroups != null && groups.size() != existingGroups.size()) {
+                throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
+            }
+
+            u.setGroups(new HashSet<UserGroup>(existingGroups));            
         }
 
         userDAO.persist(u);
@@ -150,28 +158,28 @@ public class UserServiceImpl implements UserService {
         //
         // Checking User Group
         //
-        UserGroup group = user.getGroup();
-        if (group != null) {
-            String groupName = group.getGroupName();
-            if (groupName != null) {
-                //
-                // Searching the corresponding UserGroup
-                //
-                Search searchCriteria = new Search(UserGroup.class);
-                searchCriteria.addFilterEqual("groupName", groupName);
-
-                List<UserGroup> groups = userGroupDAO.search(searchCriteria);
-
-                if (groups.isEmpty()) {
-                    throw new NotFoundServiceEx("User group not found; " + user.getId());
+        Set<UserGroup> groups = user.getGroups();
+        List<String> groupNames = new ArrayList<String>();
+        if (groups != null && groups.size() > 0) {
+            for(UserGroup group : groups){
+                String groupName = group.getGroupName();
+                groupNames.add(groupName);
+                if (StringUtils.isEmpty(groupName)) {
+                    throw new BadRequestServiceEx("The user group name must be specified! ");
                 }
-
-                user.setGroup(groups.get(0));
-            } else {
-                throw new BadRequestServiceEx("User group name must be specified ! ");
             }
-        }
+            //
+            // Searching the corresponding UserGroups
+            //
+            Search searchCriteria = new Search(UserGroup.class);
+            searchCriteria.addFilterIn("groupName", groupNames);
 
+            List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
+
+            if (existingGroups != null && groups.size() == existingGroups.size()) {
+                throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
+            }            
+        }
         userDAO.merge(user);
 
         return orig.getId();
@@ -319,7 +327,7 @@ public class UserServiceImpl implements UserService {
 
         for (User user : list) {
             User u = new User();
-            u.setGroup(user.getGroup());
+            u.setGroups(user.getGroups());
             u.setId(user.getId());
             u.setName(user.getName());
             u.setPassword(user.getPassword());
@@ -349,5 +357,24 @@ public class UserServiceImpl implements UserService {
         }
 
         return userDAO.count(searchCriteria);
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.UserService#insertSpecialUsers()
+     */
+    @Override
+    public boolean insertSpecialUsers() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting Reserved Users... ");
+        }
+        
+        User u = new User();
+        u.setName(UserReservedNames.GUEST.toString().toLowerCase());
+        u.setRole(Role.GUEST);
+        userDAO.persist(u);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Special User '" + u.getName() + "' persisted!");
+        }
+        return true;
     }
 }

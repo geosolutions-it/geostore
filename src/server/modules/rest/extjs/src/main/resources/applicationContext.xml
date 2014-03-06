@@ -47,13 +47,7 @@
            <ref bean="jsonProvider"/>
            <ref bean="jaxbContextResolver"/>
         </jaxrs:providers>    
-        
-        <jaxrs:inInterceptors>
-            <ref bean="geostoreAuthInterceptor"/>
-            <bean class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
-               <property name="securedObject" ref="restExtJsService"/>
-            </bean>
-        </jaxrs:inInterceptors>      
+
     </jaxrs:server>
 	
 </beans>
