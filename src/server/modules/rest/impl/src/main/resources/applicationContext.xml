@@ -29,7 +29,12 @@
 	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
 	<import resource="classpath:META-INF/cxf/cxf-extension-jaxrs-binding.xml" />
 
-	<!-- === SEC ======================================================== -->
+	<!-- ==================================================================== -->
+	<!-- ======================== Spring Security =========================== -->
+	<!-- ==================================================================== -->
+	
+	<!-- Comment it if you want to use the old way. 
+		 Be carefull, you need to uncomment the geostoreAuthInterceptor too -->
 	<import resource="classpath*:geostore-spring-security.xml" />
 		
 	<!-- ==================================================================== -->
@@ -79,7 +84,7 @@
 
 		<!-- Comment when using Spring Security auth managers -->
 		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
+			<!-- Remove interceptor to use Spring security configuration <ref bean="geostoreAuthInterceptor" /> -->
 			<bean
 				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
 				<property name="securedObject" ref="restStoredDataService" />
@@ -105,7 +110,7 @@
 
 		<!-- Comment when using Spring Security auth managers -->
 		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
+			<!-- Remove interceptor to use Spring security configuration <ref bean="geostoreAuthInterceptor" /> -->
 			<bean
 				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
 				<property name="securedObject" ref="restResourceService" />
@@ -130,7 +135,10 @@
 
 		<!-- Comment when using Spring Security auth managers -->
 		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
+			<!-- Remove interceptor to use Spring security configuration 
+			<ref bean="geostoreAuthInterceptor" /> -->
+			<!-- Auto create users interceptor (uncomment to allow users autocreation for /users requests) 
+            <ref bean="autoCreateUsersInterceptor"/> -->
 			<bean
 				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
 				<property name="securedObject" ref="restCategoryService" />
@@ -157,7 +165,7 @@
 		<jaxrs:inInterceptors>
 			<!-- Auto create users interceptor (uncomment to allow users autocreation 
 				for /users requests) <ref bean="autoCreateUsersInterceptor"/> -->
-			<ref bean="geostoreAuthInterceptor" />
+			<!-- Remove interceptor to use Spring security configuration <ref bean="geostoreAuthInterceptor" /> -->
 			<bean
 				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
 				<property name="securedObject" ref="restUserService" />
@@ -182,7 +190,7 @@
 
 		<!-- Comment when using Spring Security auth managers -->
 		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
+			<!-- Remove interceptor to use Spring security configuration <ref bean="geostoreAuthInterceptor" /> -->
 			<bean
 				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
 				<property name="securedObject" ref="restMiscService" />
@@ -208,7 +216,7 @@
 
 		<!-- Comment when using Spring Security auth managers -->
 		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor" />
+			<!-- Remove interceptor to use Spring security configuration <ref bean="geostoreAuthInterceptor" /> -->
 			<bean
 				class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor">
 				<property name="securedObject" ref="restBackupService" />

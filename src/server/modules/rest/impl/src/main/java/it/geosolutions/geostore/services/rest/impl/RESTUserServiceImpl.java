@@ -40,6 +40,7 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
+import it.geosolutions.geostore.services.rest.utils.GeoStorePrincipal;
 
 import java.security.Principal;
 import java.util.ArrayList;
@@ -351,30 +352,42 @@ public class RESTUserServiceImpl implements RESTUserService {
              * LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
              **/
 
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+            // Allow old stuff while complete integration of the functionalities
+            User user = null;
+            if (principal instanceof GeoStorePrincipal){
+                // Old way (with GeoStoreAuthInterceptor)
+                GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
+                user = gsp.getUser();
+                if (LOGGER.isInfoEnabled()) {
+                    // may be null if guest 
+                    LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
+                }
+            }else if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+                // Unknown principal
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Mismatching auth principal");
                 }
                 throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
                         + ")");
-            }
+            }else{
+                // Spring security way
+                UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
+                user = new User();
+                user.setName(usrToken == null ? "GUEST" : usrToken.getName());
 
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
+                for (GrantedAuthority authority : usrToken.getAuthorities()) {
+                    if (authority != null) {
+                        if (authority.getAuthority() != null
+                                && authority.getAuthority().contains("ADMIN"))
+                            user.setRole(Role.ADMIN);
 
-            User user = new User();
-            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
+                        if (authority.getAuthority() != null
+                                && authority.getAuthority().contains("USER") && user.getRole() == null)
+                            user.setRole(Role.USER);
 
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
+                        if (user.getRole() == null)
+                            user.setRole(Role.GUEST);
+                    }
                 }
             }
 
