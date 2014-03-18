@@ -28,8 +28,11 @@
  */
 package it.geosolutions.geostore.core.model;
 
+import it.geosolutions.geostore.core.model.enums.Role;
+
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -39,18 +42,17 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import it.geosolutions.geostore.core.model.enums.Role;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
 import org.hibernate.annotations.Index;
 
 /**
@@ -104,10 +106,12 @@ public class User implements Serializable {
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
-    @ManyToOne(optional = true)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "gs_usergroups", 
+        joinColumns = { @JoinColumn(name = "user_id", nullable = false, updatable = false) },
+        inverseJoinColumns = { @JoinColumn(name = "group_id", nullable = false, updatable = false) })
     @Index(name = "idx_user_group")
-    @ForeignKey(name = "fk_user_ugroup")
-    private UserGroup group;
+    private Set<UserGroup> groups;
 
     /**
      * @return the id
@@ -127,15 +131,15 @@ public class User implements Serializable {
     /**
      * @return the group
      */
-    public UserGroup getGroup() {
-        return group;
+    public Set<UserGroup> getGroups() {
+        return groups;
     }
 
     /**
      * @param group the group to set
      */
-    public void setGroup(UserGroup group) {
-        this.group = group;
+    public void setGroups(Set<UserGroup> groups) {
+        this.groups = groups;
     }
 
     /**
@@ -250,9 +254,9 @@ public class User implements Serializable {
             builder.append("name=").append(name);
         }
 
-        if (group != null) {
+        if (groups != null) {
             builder.append(", ");
-            builder.append("group=").append(group.toString());
+            builder.append("group=").append(groups.toString());
         }
 
         if (role != null) {
@@ -273,7 +277,7 @@ public class User implements Serializable {
         final int prime = 31;
         int result = 1;
         result = (prime * result) + ((attribute == null) ? 0 : attribute.hashCode());
-        result = (prime * result) + ((group == null) ? 0 : group.hashCode());
+        //result = (prime * result) + ((groups == null) ? 0 : groups.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result) + ((password == null) ? 0 : password.hashCode());
@@ -306,11 +310,11 @@ public class User implements Serializable {
         } else if (!attribute.equals(other.attribute)) {
             return false;
         }
-        if (group == null) {
-            if (other.group != null) {
+        if (groups == null) {
+            if (other.groups != null) {
                 return false;
             }
-        } else if (!group.equals(other.group)) {
+        } else if (!groups.equals(other.groups)) {
             return false;
         }
         if (id == null) {

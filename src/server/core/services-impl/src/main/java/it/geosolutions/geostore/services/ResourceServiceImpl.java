@@ -431,16 +431,14 @@ public class ResourceServiceImpl implements ResourceService {
                                 }
                             }
                         } else if(userGroup != null){
-                            if (authUser.getGroup() != null && authUser.getGroup().equals(userGroup.getGroupName())) {
+                            if (authUser.getGroups() != null && authUser.getGroups().contains(userGroup.getGroupName())) {
                                 if (rule.isCanWrite()) {
-                                    shortResource.setCanEdit(false);
-                                    shortResource.setCanDelete(false);
+                                    shortResource.setCanEdit(true);
+                                    shortResource.setCanDelete(true);
         
                                     break;
                                 }
                             }
-                        } else{
-                            
                         }
                     }
                 }

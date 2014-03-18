@@ -29,6 +29,7 @@ import java.net.ConnectException;
 
 import org.apache.log4j.Logger;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -87,6 +88,7 @@ public class AutoCreateUsersTest {
      * Test auto create users with GeoStore client
      */
     @Test
+    @Ignore("Ignore this test until the user autocreation won't be restored")
     public void testAutoCreateUsers() {
 
         geoStoreClient.setUsername("test");

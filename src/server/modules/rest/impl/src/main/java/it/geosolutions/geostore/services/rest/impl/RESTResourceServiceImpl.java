@@ -58,6 +58,7 @@ import it.geosolutions.geostore.services.rest.utils.Convert;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -121,13 +122,15 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         // Group Security rule: the users that belongs to the owner group are allowed to read the resource but not to write
         // if the user is not assigned to any group simply skip this rule
-        UserGroup ug = authUser.getGroup();
-        if(ug != null){
-            SecurityRule groupSecurityRule = new SecurityRule();
-            groupSecurityRule.setCanRead(true);
-            groupSecurityRule.setCanWrite(false);
-            groupSecurityRule.setGroup(ug);
-            securities.add(groupSecurityRule);
+        Set<UserGroup> ugs = authUser.getGroups();
+        if(ugs != null && ugs.size() > 0){
+            for(UserGroup ug : ugs){
+                SecurityRule groupSecurityRule = new SecurityRule();
+                groupSecurityRule.setCanRead(true);
+                groupSecurityRule.setCanWrite(false);
+                groupSecurityRule.setGroup(ug);
+                securities.add(groupSecurityRule);
+            }
         }
 
         Resource r = Convert.convertResource(resource);

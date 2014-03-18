@@ -30,6 +30,7 @@ package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -37,6 +38,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -77,11 +79,10 @@ public class UserGroup implements Serializable {
     @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
-    /*
-     * Only To allow the CASCADING operation
-     */
-    @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
-    private List<User> users;
+
+    @ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
+    @Index(name = "idx_group_user")
+    private Set<User> users;
 
     /**
      * @return the id
@@ -131,14 +132,14 @@ public class UserGroup implements Serializable {
      * @return the users
      */
     @XmlTransient
-    public List<User> getUsers() {
+    public Set<User> getUsers() {
         return users;
     }
 
     /**
      * @param users the users to set
      */
-    public void setUsers(List<User> users) {
+    public void setUsers(Set<User> users) {
         this.users = users;
     }
 

@@ -44,6 +44,7 @@ import it.geosolutions.geostore.services.rest.model.UserList;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -132,9 +133,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     userUpdated = true;
                 }
 
-                UserGroup group = user.getGroup();
-                if (group != null) {
-                    old.setGroup(group);
+                Set<UserGroup> groups = user.getGroups();
+                if (groups != null) {
+                    old.setGroups(groups);
                     userUpdated = true;
                 }
             } else if (old.getName().equals(authUser.getName())) { // Check if the User is the same
@@ -221,7 +222,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         ret.setName(authUser.getName());
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
-        ret.setGroup(authUser.getGroup());
+        ret.setGroups(authUser.getGroups());
         if (includeAttributes) {
             ret.setAttribute(authUser.getAttribute());
         }
@@ -308,7 +309,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 ret.setName(authUser.getName());
                 // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
                 ret.setRole(authUser.getRole());
-                ret.setGroup(authUser.getGroup());
+                ret.setGroups(authUser.getGroups());
                 if (includeAttributes) {
                     ret.setAttribute(authUser.getAttribute());
                 }
