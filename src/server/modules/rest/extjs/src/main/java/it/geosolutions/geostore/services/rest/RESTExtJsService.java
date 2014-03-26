@@ -38,7 +38,6 @@ import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
-import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -52,6 +51,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTExtJsService.
@@ -71,7 +71,7 @@ public interface RESTExtJsService {
     @GET
     @Path("/search/{nameLike}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST" })
     String getAllResources(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
             @QueryParam("start") Integer start, @QueryParam("limit") Integer limit)
             throws BadRequestWebEx;
@@ -79,7 +79,7 @@ public interface RESTExtJsService {
     @GET
     @Path("/search/category/{categoryName}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST" })
     String getResourcesByCategory(@Context SecurityContext sc,
             @PathParam("categoryName") String categoryName, @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit) throws BadRequestWebEx, InternalErrorWebEx;
@@ -99,7 +99,7 @@ public interface RESTExtJsService {
     @Path("/search/list")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST" })
     ExtResourceList getExtResourcesList(@Context SecurityContext sc,
             @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
@@ -115,7 +115,7 @@ public interface RESTExtJsService {
     @GET
     @Path("/search/users/{nameLike}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_ADMIN"})
     ExtUserList getUsersList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
             @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes)
