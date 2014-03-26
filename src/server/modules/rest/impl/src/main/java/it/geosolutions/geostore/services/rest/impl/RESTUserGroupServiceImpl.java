@@ -21,15 +21,21 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.UserGroupService;
+import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTUserGroupService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
+import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 
 /**
@@ -49,7 +55,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
     public void setuserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
-    
+
     /* 
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserGroupService#insert(javax.ws.rs.core.SecurityContext, it.geosolutions.geostore.core.model.UserGroup)
      */
@@ -77,8 +83,14 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
      */
     @Override
     public void delete(SecurityContext sc, long id) throws NotFoundWebEx {
-        throw new NotImplementedException("This service is not implemented yet");
-        
+        if (id < 0) {
+            throw new BadRequestWebEx("The user group id you provide is < 0... not good...");
+        }
+        try {
+            userGroupService.delete(id);
+        } catch (NotFoundServiceEx e) {
+            throw new NotFoundWebEx(e.getMessage());
+        }
     }
 
     /* 
@@ -86,7 +98,14 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
      */
     @Override
     public void assignUserGroup(SecurityContext sc, long userId, long groupId) throws NotFoundWebEx {
-        throw new NotImplementedException("This service is not implemented yet");
+        if (userId < 0 || groupId < 0) {
+            throw new BadRequestWebEx("The user group or user id you provide is < 0... not good...");
+        }
+        try {
+            userGroupService.assignUserGroup(userId, groupId);
+        } catch (NotFoundServiceEx e) {
+            throw new NotFoundWebEx(e.getMessage());
+        }
     }
 
     /* (non-Javadoc)
@@ -95,16 +114,48 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
     @Override
     public UserGroupList getAll(SecurityContext sc, Integer page, Integer entries)
             throws BadRequestWebEx {
-
         try {
-            return new UserGroupList(userGroupService.getAll(page, entries));
+            List<UserGroup> returnList = userGroupService.getAll(page, entries);
+            List<RESTUserGroup> ugl = new ArrayList<RESTUserGroup>();
+            for(UserGroup ug : returnList){
+                RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), ug.getUsers());
+                ugl.add(rug);
+            }
+            return new UserGroupList(ugl);
         } catch (BadRequestServiceEx e) {
             LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());
         }
-        
     }
 
-    
-
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.RESTUserGroupService#updateSecurityRules(it.geosolutions.geostore.core.model.UserGroup, java.util.List, boolean, boolean)
+     */
+    @Override
+    public ShortResourceList updateSecurityRules(SecurityContext sc, ShortResourceList resourcesToSet, Long groupId,
+            Boolean canRead, Boolean canWrite) throws BadRequestWebEx, NotFoundWebEx {
+        List<ShortResource> srll = new ArrayList<ShortResource>();
+        if(groupId == null || groupId < 0){
+            throw new BadRequestWebEx("The groupId is null or less than 0...");
+        }
+        if(resourcesToSet == null || resourcesToSet.isEmpty()){
+            throw new BadRequestWebEx("The resources set provided is null or empty...");
+        }
+        List<ShortResource> sl = resourcesToSet.getList();
+        List<Long> slOnlyIds = new ArrayList<Long>();
+        for(ShortResource sr : sl){
+            if(sr.getId() < 0){
+                throw new BadRequestWebEx("One or more ids in resource set is less than 0... check the resources list.");
+            }
+            slOnlyIds.add(sr.getId());
+        }
+        try {
+            srll = userGroupService.updateSecurityRules(groupId, slOnlyIds, canRead, canWrite);
+        } catch (NotFoundServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new NotFoundWebEx(e.getMessage());
+        }
+        ShortResourceList srl = new ShortResourceList(srll);
+        return srl;
+    }
 }

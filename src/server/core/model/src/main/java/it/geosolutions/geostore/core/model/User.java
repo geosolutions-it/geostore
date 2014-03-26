@@ -107,7 +107,7 @@ public class User implements Serializable {
     private List<SecurityRule> security;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "gs_usergroups", 
+    @JoinTable(name = "gs_usergroup_members", 
         joinColumns = { @JoinColumn(name = "user_id", nullable = false, updatable = false) },
         inverseJoinColumns = { @JoinColumn(name = "group_id", nullable = false, updatable = false) })
     @Index(name = "idx_user_group")

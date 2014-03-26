@@ -156,8 +156,8 @@ public class StoredDataServiceImpl implements StoredDataService {
      * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
      */
     @Override
-    public List<SecurityRule> getGroupSecurityRule(String groupName, long storedDataId) {
-        return storedDataDAO.findGroupSecurityRule(groupName, storedDataId);
+    public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long storedDataId) {
+        return storedDataDAO.findGroupSecurityRule(groupNames, storedDataId);
     }
 
 }

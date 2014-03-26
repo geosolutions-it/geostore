@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
@@ -36,6 +37,7 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -129,15 +131,23 @@ public abstract class RESTServiceImpl{
                 }
             }
             
-            List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
-                    authUser.getName(), resourceId);
-
-            if (groupSecurityRules != null && groupSecurityRules.size() > 0){
-                SecurityRule sr = groupSecurityRules.get(0);
-                if (sr.isCanWrite()){
-                    return true;
+            List<String> groupNames = extratcGroupNames(authUser.getGroups());
+            if(groupNames != null && groupNames.size() > 0){
+                List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
+                        groupNames, resourceId);
+    
+                if (groupSecurityRules != null && groupSecurityRules.size() > 0){
+                    // Check if at least one user group has write permission
+                    for(SecurityRule sr : groupSecurityRules){
+                        if (sr.isCanWrite()){
+                            return true;
+                        }
+                    }
                 }
             }
+            // SIMULATION OF DEFAULT GROUP
+            // Since a default group concept has been introduced to mantain the backward compatibility with older versions of geostore
+            // we have to return FALSE if the user is not the owner of the resource or it hasn't any group associations... Basically we have to do nothing here!
         }
         return false;
     }
@@ -163,14 +173,26 @@ public abstract class RESTServiceImpl{
                 }
             }
             
-            List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
-                    authUser.getName(), resourceId);
-
-            if (groupSecurityRules != null && groupSecurityRules.size() > 0){
-                SecurityRule sr = groupSecurityRules.get(0);
-                if (sr.isCanRead()){
-                    return true;
+            List<String> groupNames = extratcGroupNames(authUser.getGroups());
+            if(groupNames != null && groupNames.size() > 0){
+                List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
+                        groupNames, resourceId);
+    
+                if (groupSecurityRules != null && groupSecurityRules.size() > 0){
+                    // Check if at least one user group has read permission
+                    for(SecurityRule sr : groupSecurityRules){
+                        if (sr.isCanRead()){
+                            return true;
+                        }
+                    }
                 }
+            }
+            else{
+                // SIMULATION OF DEFAULT GROUP
+                // OK. if I'm here the User is not the owner and it has no group associated
+                // so in order to maintain backward compatibility with older geostore versions
+                // allow read permission
+                return true;
             }
         }
         return false;    
@@ -193,5 +215,19 @@ public abstract class RESTServiceImpl{
         guest.setRole(Role.GUEST);
         Principal principal = new UsernamePasswordAuthenticationToken(guest,"", authorities);
         return principal;
+    }
+    
+    /**
+     * Given a GroupNames Set returns a List that contains all the group names
+     * 
+     * @param groups
+     * @return
+     */
+    public static List<String> extratcGroupNames(Set<UserGroup> groups){
+        List<String> groupNames = new ArrayList<String>();
+        for(UserGroup ug : groups){
+            groupNames.add(ug.getGroupName());
+        }
+        return groupNames;
     }
 }

@@ -45,6 +45,6 @@ public interface StoredDataDAO extends RestrictedGenericDAO<StoredData> {
      * @param resourceId
      * @return
      */
-    List<SecurityRule> findGroupSecurityRule(String name, long resourceId);
+    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId);
 
 }

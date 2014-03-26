@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.UserGroup;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -34,7 +35,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "UserGroupList")
 public class UserGroupList implements Iterable<UserGroup> {
 
-    private List<UserGroup> list;
+    private List<RESTUserGroup> list;
 
     public UserGroupList() {
     }
@@ -42,22 +43,27 @@ public class UserGroupList implements Iterable<UserGroup> {
     /**
      * @param list
      */
-    public UserGroupList(List<UserGroup> list) {
+    public UserGroupList(List<RESTUserGroup> list) {
         super();
-        this.list = list;
+        if(list != null){
+            this.list = list;
+        }
+        else{
+            this.list = new ArrayList<RESTUserGroup>();
+        }
     }
 
     /**
      * @return the userGroup
      */
-    public List<UserGroup> getUserGroupList() {
+    public List<RESTUserGroup> getUserGroupList() {
         return list;
     }
 
     /**
      * @param userGroup the userGroup to set
      */
-    public void setUserGroupList(List<UserGroup> userGroup) {
+    public void setUserGroupList(List<RESTUserGroup> userGroup) {
         this.list = userGroup;
     }
 

@@ -19,17 +19,18 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.Date;
-import java.util.List;
-
+import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
+import java.util.List;
 
 import junit.framework.TestCase;
 
@@ -52,6 +53,10 @@ public class ServiceTestBase extends TestCase {
     protected static CategoryService categoryService;
 
     protected static UserService userService;
+    
+    protected static UserGroupService userGroupService;
+    
+    protected static ResourceDAO resourceDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
 
@@ -72,6 +77,8 @@ public class ServiceTestBase extends TestCase {
                 resourceService = (ResourceService) ctx.getBean("resourceService");
                 categoryService = (CategoryService) ctx.getBean("categoryService");
                 userService = (UserService) ctx.getBean("userService");
+                userGroupService = (UserGroupService) ctx.getBean("userGroupService");
+                resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
             }
         }
     }
@@ -94,6 +101,7 @@ public class ServiceTestBase extends TestCase {
         assertNotNull(resourceService);
         assertNotNull(categoryService);
         assertNotNull(userService);
+        assertNotNull(userGroupService);
     }
 
     /**
@@ -106,8 +114,26 @@ public class ServiceTestBase extends TestCase {
         removeAllStoredData();
         removeAllCategory();
         removeAllUser();
+        removeAllUserGroup();
     }
 
+    /**
+     * @throws BadRequestServiceEx
+     * @throws NotFoundServiceEx 
+     */
+    private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
+        List<UserGroup> list = userGroupService.getAll(null, null);
+        for (UserGroup item : list) {
+            LOGGER.info("Removing User: " + item.getGroupName());
+
+            boolean ret = userGroupService.delete(item.getId());
+            assertTrue("Group not removed", ret);
+        }
+
+        assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
+    }
+
+    
     /**
      * @throws BadRequestServiceEx
      */

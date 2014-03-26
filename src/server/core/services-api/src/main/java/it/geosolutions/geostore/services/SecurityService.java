@@ -44,7 +44,7 @@ public interface SecurityService {
      * @param entityId entityId the Id of the entity (f.e. Resource, Category, StoredData...) that the underlying implementation will be responsible for retrieve security rules
      * @return
      */
-    List<SecurityRule> getGroupSecurityRule(String groupName, long entityId);
+    List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long entityId);
 
 
 }

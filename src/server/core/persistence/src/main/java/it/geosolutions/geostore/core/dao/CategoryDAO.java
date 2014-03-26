@@ -45,5 +45,5 @@ public interface CategoryDAO extends RestrictedGenericDAO<Category> {
      * @param categoryId
      * @return
      */
-    List<SecurityRule> findGroupSecurityRule(String userName, long categoryId);
+    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long categoryId);
 }

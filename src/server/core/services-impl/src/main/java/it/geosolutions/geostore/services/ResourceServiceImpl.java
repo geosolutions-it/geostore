@@ -677,7 +677,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
      */
     @Override
-    public List<SecurityRule> getGroupSecurityRule(String groupName, long resourceId) {
-        return resourceDAO.findGroupSecurityRule(groupName, resourceId);
+    public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long resourceId) {
+        return resourceDAO.findGroupSecurityRule(groupNames, resourceId);
     }
 }

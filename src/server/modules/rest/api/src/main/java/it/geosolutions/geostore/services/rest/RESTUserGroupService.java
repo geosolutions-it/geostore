@@ -22,12 +22,14 @@ package it.geosolutions.geostore.services.rest;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -70,4 +72,11 @@ public interface RESTUserGroupService {
     @Secured({ "ROLE_ADMIN" })
     UserGroupList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries) throws BadRequestWebEx;
+    
+    @PUT
+    @Path("/update_security_rules/{groupId}/{canRead}/{canWrite}")
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })    
+    @Secured({ "ROLE_ADMIN" })
+    ShortResourceList updateSecurityRules(@Context SecurityContext sc, @Multipart("resourcelist")ShortResourceList resourcesToSet, @PathParam("groupId") Long groupId, @PathParam("canRead") Boolean canRead, @PathParam("canWrite") Boolean canWrite) throws BadRequestWebEx, NotFoundWebEx;
 }

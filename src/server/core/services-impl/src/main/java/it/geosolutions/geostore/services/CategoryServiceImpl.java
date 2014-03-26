@@ -204,7 +204,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
      */
     @Override
-    public List<SecurityRule> getGroupSecurityRule(String userName, long categoryId) {
+    public List<SecurityRule> getGroupSecurityRule(List<String> userName, long categoryId) {
         return categoryDAO.findGroupSecurityRule(userName, categoryId);
     }
 }

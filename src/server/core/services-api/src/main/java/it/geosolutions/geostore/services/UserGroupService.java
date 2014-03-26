@@ -19,11 +19,12 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.List;
-
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
+import java.util.List;
 
 /**
  * @author DamianoG
@@ -44,7 +45,7 @@ public interface UserGroupService {
      * @param id
      * @throws NotFoundServiceEx
      */
-    void delete(long id) throws NotFoundServiceEx;
+    boolean delete(long id) throws NotFoundServiceEx;
     
     /**
      * 
@@ -62,4 +63,16 @@ public interface UserGroupService {
      * @throws BadRequestServiceEx
      */
     List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
+    
+    /**
+     * 
+     * @param groupId
+     * @param resourcesToSet
+     * @param canRead
+     * @param canWrite
+     * @return
+     * @throws BadRequestWebEx
+     * @throws NotFoundWebEx
+     */
+    List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite) throws NotFoundServiceEx;
 }

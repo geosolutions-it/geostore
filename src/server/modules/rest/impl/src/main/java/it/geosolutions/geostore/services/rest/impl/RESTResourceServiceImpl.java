@@ -269,12 +269,21 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     @Override
     public Resource get(SecurityContext sc, long id, boolean fullResource) throws NotFoundWebEx {
 
+        //
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id);
+        if(!canRead){
+            throw new ForbiddenErrorWebEx("This user cannot read this resource !");
+        }
+        
         if (fullResource) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Retrieving a full resource");
             List<Resource> resourcesFull;
             try {
-                User authUser = extractAuthUser(sc);
                 SearchFilter filter = new FieldFilter(BaseField.ID, Long.toString(id),
                         SearchOperator.EQUAL_TO);
                 resourcesFull = resourceService.getResourcesFull(filter, authUser);
