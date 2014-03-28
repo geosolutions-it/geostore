@@ -27,9 +27,11 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -100,6 +102,13 @@ public class UserGroupServiceImpl implements UserGroupService{
             throw new BadRequestServiceEx("The provided UserGroup instance is null or group Name is not specified!");
         }
         
+        if(!GroupReservedNames.isAllowedName(userGroup.getGroupName())){
+            throw new ReservedUserGroupNameEx("The usergroup name you try to save: '" + userGroup.getGroupName() + "' is a reserved name!");
+        }
+        
+        //Force the groupname to lower case
+        userGroup.setGroupName(userGroup.getGroupName().toLowerCase());
+        
         userGroupDAO.persist(userGroup);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("UserGroup '" + userGroup.getGroupName() + "' persisted!");
@@ -112,11 +121,14 @@ public class UserGroupServiceImpl implements UserGroupService{
      * @see it.geosolutions.geostore.services.UserGroupService#delete(long)
      */
     @Override
-    public boolean delete(long id) throws NotFoundServiceEx {
+    public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
         UserGroup group = userGroupDAO.find(id);
         if(group == null){
             LOGGER.error("Can't find usergroup with id '" + id + "'");
             throw new NotFoundServiceEx("Can't find usergroup with id '" + id + "'");
+        }
+        if(!GroupReservedNames.isAllowedName(group.getGroupName())){
+            throw new BadRequestServiceEx("Delete a special usergroup ('" + group.getGroupName() + "' in this case) isn't possible");
         }
         Set<User> users = group.getUsers();
         for(User u : users){
@@ -193,8 +205,8 @@ public class UserGroupServiceImpl implements UserGroupService{
                 
                 ShortResource out = new ShortResource(resource);
                 // In this case the short resource to return is not related to the permission available by the user
-                // who call the service (like in other service) but can Delete/Edit are setted as the rule updated.
-                out.setCanDelete(canRead);
+                // who call the service (like in other service) but can Delete/Edit are set as the rule updated.
+                out.setCanDelete(canWrite);
                 out.setCanEdit(canWrite);
                 updated.add(out);
             }
@@ -206,8 +218,8 @@ public class UserGroupServiceImpl implements UserGroupService{
                 
                 ShortResource out = new ShortResource(resource);
                 // In this case the short resource to return is not related to the permission available by the user
-                // who call the sevrice (like in other service) but can Delete/Edit are setted as the rule updated.
-                out.setCanDelete(canRead);
+                // who call the sevrice (like in other service) but can Delete/Edit are set as the rule updated.
+                out.setCanDelete(canWrite);
                 out.setCanEdit(canWrite);
                 updated.add(out);
             }
@@ -223,5 +235,20 @@ public class UserGroupServiceImpl implements UserGroupService{
             }
         }
         return null;
+    }
+    
+
+    public boolean insertSpecialUsersGroups(){
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting Reserved UsersGroup... ");
+        }
+        
+        UserGroup ug = new UserGroup();
+        ug.setGroupName(GroupReservedNames.ALLRESOURCES.toString().toLowerCase());
+        userGroupDAO.persist(ug);
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' persisted!");
+        }
+        return true;
     }
 }

@@ -293,6 +293,47 @@ public class AdministratorGeostoreClientTest{
     }
     
     @Test
+    public void specialGroupTest(){
+        
+        UserGroupList ugl = geoStoreClient.getUserGroups(1, 1000);
+        assertEquals(1, ugl.getUserGroupList().size());
+        assertEquals("allresources", ugl.getUserGroupList().get(0).getGroupName());
+        createDefaultCategory();
+        ShortResource sr = createAResource();
+        
+        User u1 = new User();
+        u1.setName("u1");
+        u1.setRole(Role.USER);
+        u1.setNewPassword("u1");
+        long uID = geoStoreClient.insert(u1);
+        GeoStoreClient userGeoStoreClient = createUserClient("u1","u1");
+        
+        int u1StatusR = -1;
+        int u1StatusW = -1;
+        try{
+            userGeoStoreClient.getResource(sr.getId());
+        }
+        catch(UniformInterfaceException e){
+            u1StatusR = e.getResponse().getStatus();
+        }
+        assertEquals(403,u1StatusR);
+        try{
+            userGeoStoreClient.updateResource(sr.getId(), new RESTResource());
+        }
+        catch(UniformInterfaceException e){
+            u1StatusW = e.getResponse().getStatus();
+        }
+        assertEquals(403,u1StatusW);
+        
+        // Assign to user "u1" the special group "allresources" (that should have id = 1)
+        geoStoreClient.assignUserGroup(uID, 1);
+        // Now "u1" should be able to READ and WRITE the created resource.
+        userGeoStoreClient.getResource(sr.getId());
+        userGeoStoreClient.updateResource(sr.getId(), new RESTResource());
+           
+    }
+    
+    @Test
     public void updateSecurityRulesTest() {
         
         // Create a group

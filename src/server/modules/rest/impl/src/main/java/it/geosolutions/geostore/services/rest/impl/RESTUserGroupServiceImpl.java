@@ -90,6 +90,8 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
             userGroupService.delete(id);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
+        } catch (BadRequestServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
         }
     }
 

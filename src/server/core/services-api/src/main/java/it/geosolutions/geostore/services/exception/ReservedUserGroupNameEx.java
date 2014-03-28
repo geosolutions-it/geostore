@@ -17,28 +17,21 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.core.model.enums;
-
+package it.geosolutions.geostore.services.exception;
 
 /**
  * @author DamianoG
  *
  */
-public enum GroupReservedNames {
-    ALLRESOURCES;
-    
+public class ReservedUserGroupNameEx extends BadRequestServiceEx {
+
+    private static final long serialVersionUID = -4948918988222070783L;
+
     /**
-     * Given a candidate groupName this method checks if the name is allowed.
-     * This enum holds the list of reserved names. A groupname is not allowed if it matches ignoring the case
-     * at least one of the reserved names.
-     * 
-     * @param groupNameToCheck
-     * @return
+     * @param message
      */
-    public static boolean isAllowedName(String groupNameToCheck){
-        if(ALLRESOURCES.toString().equalsIgnoreCase(groupNameToCheck)){
-            return false;
-        }
-        return true;
+    public ReservedUserGroupNameEx(String message) {
+        super(message);
     }
+
 }

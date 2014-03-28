@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
@@ -56,6 +57,7 @@ public class UserGroupList implements Iterable<UserGroup> {
     /**
      * @return the userGroup
      */
+    @XmlElement(name = "UserGroup")
     public List<RESTUserGroup> getUserGroupList() {
         return list;
     }

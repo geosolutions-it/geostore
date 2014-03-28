@@ -21,17 +21,25 @@ package it.geosolutions.geostore.init;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
+import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-import it.geosolutions.geostore.services.rest.model.RESTUser;
+import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
+import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
+
 import java.io.File;
 import java.util.List;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -47,9 +55,13 @@ public class GeoStoreInit implements InitializingBean {
 
     protected CategoryService categoryService;
 
+    protected UserGroupService userGroupService;
+    
     protected File userListInitFile = null;
 
     protected File categoryListInitFile = null;
+    
+    protected File userGroupListInitFile = null;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -80,6 +92,19 @@ public class GeoStoreInit implements InitializingBean {
             }
         } else {
             LOGGER.info("Users already in db: " + userCnt);
+        }
+        
+        long userGroupCnt = userGroupService.getAll(null, null).size();
+        if (userGroupCnt == 0) {
+            LOGGER.warn("No usersgroup found.");
+            if (userGroupListInitFile != null) {
+                LOGGER.warn("Initializing users from file " + userGroupListInitFile);
+                initUsersGroup(userGroupListInitFile);
+            } else {
+                LOGGER.info("No usersgroup initializer defined.");
+            }
+        } else {
+            LOGGER.info("UsersGroup already in db: " + userCnt);
         }
     }
 
@@ -142,6 +167,42 @@ public class GeoStoreInit implements InitializingBean {
             throw new RuntimeException("Error while initting users.");
         }
     }
+    
+    private void initUsersGroup(File file) throws NotFoundServiceEx, BadRequestServiceEx {
+        try {
+            userGroupService.insertSpecialUsersGroups();
+            JAXBContext context = GeoStoreJAXBContext.getContext();
+            UserGroupList list = (UserGroupList) context.createUnmarshaller().unmarshal(file);
+            for (RESTUserGroup userGroup : list.getUserGroupList()) {
+                LOGGER.info("Adding user group " + userGroup);
+                UserGroup ug = new UserGroup();
+                ug.setGroupName(userGroup.getGroupName());
+                try{
+                userGroupService.insert(ug);
+                }
+                catch(ReservedUserGroupNameEx e){
+                    // If  a reserved username is in the init usergroup file log the exception and skip this insertion
+                    LOGGER.warn(e.getMessage());
+                }
+            }
+        } catch (JAXBException ex) {
+            throw new RuntimeException("Error reading usersgroup init file " + file, ex);
+        } catch (Exception e) {
+            LOGGER.error("Error while initting usersgroups. Rolling back.", e);
+            List<UserGroup> removeList;
+            try {
+                removeList = userGroupService.getAll(null, null);
+            } catch (BadRequestServiceEx ex) {
+                throw new RuntimeException(
+                        "Error while rolling back usergroup initialization. Your DB may now contain an incomplete usergroup list. Please check manually.",
+                        e);
+            }
+            for (UserGroup ug : removeList) {
+                userGroupService.delete(ug.getId());
+            }
+            throw new RuntimeException("Error while initting usersgroup.");
+        }
+    }
 
     private static JAXBContext getUserContext() {
 
@@ -169,6 +230,10 @@ public class GeoStoreInit implements InitializingBean {
     public void setCategoryListInitFile(File categoryListInitFile) {
         this.categoryListInitFile = categoryListInitFile;
     }
+    
+    public void setUserGroupListInitFile(File userGroupListInitFile) {
+        this.userGroupListInitFile = userGroupListInitFile;
+    }
 
     // ==========================================================================
 
@@ -179,4 +244,9 @@ public class GeoStoreInit implements InitializingBean {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
+    
+    public void setUserGroupService(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+    
 }

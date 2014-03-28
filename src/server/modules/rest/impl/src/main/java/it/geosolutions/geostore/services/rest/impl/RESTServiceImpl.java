@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
@@ -120,6 +121,8 @@ public abstract class RESTServiceImpl{
     public boolean resourceAccessWrite(User authUser, long resourceId) {
         if (authUser.getRole().equals(Role.ADMIN)) {
             return true;
+        } else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
+            return true;
         } else {
             List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
                     authUser.getName(), resourceId);
@@ -145,9 +148,6 @@ public abstract class RESTServiceImpl{
                     }
                 }
             }
-            // SIMULATION OF DEFAULT GROUP
-            // Since a default group concept has been introduced to mantain the backward compatibility with older versions of geostore
-            // we have to return FALSE if the user is not the owner of the resource or it hasn't any group associations... Basically we have to do nothing here!
         }
         return false;
     }
@@ -162,7 +162,10 @@ public abstract class RESTServiceImpl{
     public boolean resourceAccessRead(User authUser, long resourceId) {
         if (authUser.getRole().equals(Role.ADMIN)) {
             return true;
-        } else {
+        } else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
+            return true;
+        }
+        else {
             List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
                     authUser.getName(), resourceId);
 
@@ -186,13 +189,6 @@ public abstract class RESTServiceImpl{
                         }
                     }
                 }
-            }
-            else{
-                // SIMULATION OF DEFAULT GROUP
-                // OK. if I'm here the User is not the owner and it has no group associated
-                // so in order to maintain backward compatibility with older geostore versions
-                // allow read permission
-                return true;
             }
         }
         return false;    
@@ -229,5 +225,23 @@ public abstract class RESTServiceImpl{
             groupNames.add(ug.getGroupName());
         }
         return groupNames;
+    }
+    
+    /**
+     * Check if the provided user belongs to a group called as the groupname param.
+     * Please note that this method doesn't check if a group called as groupname really exist.
+     * 
+     * @param user
+     * @param groupname
+     * @return
+     */
+    public static boolean belongTo(User user, String groupname){
+        Set<UserGroup> groups = user.getGroups();
+        for(UserGroup ug : groups){
+            if(ug.getGroupName().equalsIgnoreCase(groupname)){
+                return true;
+            }
+        }
+        return false;
     }
 }

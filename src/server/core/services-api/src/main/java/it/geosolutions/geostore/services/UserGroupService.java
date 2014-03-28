@@ -44,8 +44,9 @@ public interface UserGroupService {
      * 
      * @param id
      * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx 
      */
-    boolean delete(long id) throws NotFoundServiceEx;
+    boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx;
     
     /**
      * 
@@ -75,4 +76,13 @@ public interface UserGroupService {
      * @throws NotFoundWebEx
      */
     List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite) throws NotFoundServiceEx;
+    
+    /**
+     * Persist the special UserGroups, those that implies special behavior
+     * 
+     * For obvious reasons this Method MUST NOT exposed through the rest interface.
+     * 
+     * @return true if the persist operation finish with success, false otherwise  
+     */
+    public boolean insertSpecialUsersGroups();
 }

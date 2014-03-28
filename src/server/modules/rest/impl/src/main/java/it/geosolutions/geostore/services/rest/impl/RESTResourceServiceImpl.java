@@ -33,7 +33,6 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -58,7 +57,6 @@ import it.geosolutions.geostore.services.rest.utils.Convert;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import javax.ws.rs.core.SecurityContext;
 
@@ -119,19 +117,6 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         userSecurityRule.setCanWrite(true);
         userSecurityRule.setUser(authUser);
         securities.add(userSecurityRule);
-
-        // Group Security rule: the users that belongs to the owner group are allowed to read the resource but not to write
-        // if the user is not assigned to any group simply skip this rule
-        Set<UserGroup> ugs = authUser.getGroups();
-        if(ugs != null && ugs.size() > 0){
-            for(UserGroup ug : ugs){
-                SecurityRule groupSecurityRule = new SecurityRule();
-                groupSecurityRule.setCanRead(true);
-                groupSecurityRule.setCanWrite(false);
-                groupSecurityRule.setGroup(ug);
-                securities.add(groupSecurityRule);
-            }
-        }
 
         Resource r = Convert.convertResource(resource);
         r.setSecurity(securities);
