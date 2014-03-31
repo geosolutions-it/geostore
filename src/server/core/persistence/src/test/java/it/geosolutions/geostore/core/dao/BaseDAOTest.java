@@ -24,10 +24,12 @@ import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.TestCase;
 
@@ -112,12 +114,29 @@ public abstract class BaseDAOTest extends TestCase {
         removeAllUserAttribute();
         removeAllCategory();
         removeAllUserGroup();
+        removeAllUser();
     }
 
+    private void removeAllUser() {
+        List<User> list = userDAO.findAll();
+        for (User item : list) {
+            LOGGER.info("Removing " + item.getId());
+            boolean ret = userDAO.remove(item);
+            assertTrue("User not removed", ret);
+        }
+
+        assertEquals("UserGroup have not been properly deleted", 0, userGroupDAO.count(null));
+    }
+    
     private void removeAllUserGroup() {
         List<UserGroup> list = userGroupDAO.findAll();
         for (UserGroup item : list) {
             LOGGER.info("Removing " + item.getId());
+            Set<User> users = item.getUsers();
+            for(User u : users){
+                u.getGroups().remove(item);
+                userDAO.merge(u);
+            }
             boolean ret = userGroupDAO.remove(item);
             assertTrue("UserGroup not removed", ret);
         }

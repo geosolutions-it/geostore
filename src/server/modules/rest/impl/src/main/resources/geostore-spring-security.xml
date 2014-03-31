@@ -18,45 +18,22 @@
 	<!-- ==================================================================== -->
 	<!-- === REST Security ================================================== -->
 	<!-- ==================================================================== -->
-	<security:global-method-security secured-annotations="enabled">
-
-		<!-- security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTStoredDataService.update(*))" access="ROLE_USER, ROLE_ADMIN" / -->
-		<!-- security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTStoredDataService.delete(*))" access="ROLE_USER, ROLE_ADMIN" / -->
-		<!-- security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTStoredDataService.get(*))" access="ROLE_USER, ROLE_ADMIN, ROLE_ANONYMOUS" / -->
-
-	</security:global-method-security>
+	<security:global-method-security secured-annotations="enabled" />
 
 	<security:http auto-config="true">
 		<security:http-basic />
-
-		<!-- security:intercept-url pattern="/secure/extreme/**" access="ROLE_SUPERVISOR" / -->
-		<!-- security:intercept-url pattern="/secure/**" access="IS_AUTHENTICATED_REMEMBERED" / -->
-		<!-- security:intercept-url pattern="/**" access="IS_AUTHENTICATED_ANONYMOUSLY" / -->
-
-		<security:form-login />
 		<security:anonymous />
-		<security:logout />
 	</security:http>
-
+	
+	<!-- GeoStore Auth Provider -->
 	<bean id="geoStoreUserServiceAuthenticationProvider"
 		class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
-		<!-- property name="userService" ref="userService" / -->
 	</bean>
 
-	<!-- GeoStore Auth Provider -->
+	<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 	<security:authentication-manager>
 		<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
 	</security:authentication-manager>
-
-	<!-- Simple Auth Provider -->
-	<!-- security:authentication-manager>
-		<security:authentication-provider>
-			<security:user-service>
-				<security:user name="bob" password="bobspassword" authorities="ROLE_USER" />
-				<security:user name="fred" password="fredspassword" authorities="ROLE_USER, ROLE_ADMIN" />
-			</security:user-service>
-		</security:authentication-provider>
-	</security:authentication-manager -->
 
 	<!-- LDAP Auth Provider -->
 	<!-- Simple namespace-based configuration -->

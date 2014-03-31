@@ -28,6 +28,8 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -55,7 +57,8 @@ public class UserDAOTest extends BaseDAOTest {
             LOGGER.debug("Persisting User");
         }
 
-        long securityId;
+        long securityId1;
+        long securityId2;
         long userId;
         long attributeId;
 
@@ -81,16 +84,22 @@ public class UserDAOTest extends BaseDAOTest {
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());
 
-            UserGroup group = new UserGroup();
-            group.setGroupName("GROUP1");
+            Set<UserGroup> groups = new HashSet<UserGroup>();
+            UserGroup g1 = new UserGroup();
+            g1.setGroupName("GROUP1");
+            UserGroup g2 = new UserGroup();
+            g2.setGroupName("GROUP2");
+            groups.add(g1);
+            groups.add(g2);
 
-            userGroupDAO.persist(group);
+            userGroupDAO.persist(g1);
+            userGroupDAO.persist(g2);
 
-            assertEquals(1, userGroupDAO.count(null));
-            assertEquals(1, userGroupDAO.findAll().size());
+            assertEquals(2, userGroupDAO.count(null));
+            assertEquals(2, userGroupDAO.findAll().size());
 
             User user = new User();
-            user.setGroup(group);
+            user.setGroups(groups);
             user.setName("USER_NAME");
             user.setNewPassword("user");
             user.setRole(Role.ADMIN);
@@ -112,18 +121,31 @@ public class UserDAOTest extends BaseDAOTest {
             assertEquals(1, userAttributeDAO.count(null));
             assertEquals(1, userAttributeDAO.findAll().size());
 
-            SecurityRule security = new SecurityRule();
-            security.setCanRead(true);
-            security.setCanWrite(true);
-            security.setResource(resource);
-            security.setGroup(group);
-            security.setUser(user);
+            SecurityRule security1 = new SecurityRule();
+            security1.setCanRead(true);
+            security1.setCanWrite(true);
+            security1.setResource(resource);
+            security1.setGroup(g1);
+            security1.setUser(user);
 
-            securityDAO.persist(security);
-            securityId = security.getId();
+            securityDAO.persist(security1);
+            securityId1 = security1.getId();
 
             assertEquals(1, securityDAO.count(null));
             assertEquals(1, securityDAO.findAll().size());
+            
+            SecurityRule security2 = new SecurityRule();
+            security2.setCanRead(true);
+            security2.setCanWrite(true);
+            security2.setResource(resource);
+            security2.setGroup(g2);
+
+            securityDAO.persist(security2);
+            securityId2 = security2.getId();
+
+            assertEquals(2, securityDAO.count(null));
+            assertEquals(2, securityDAO.findAll().size());
+
         }
 
         //
@@ -139,7 +161,8 @@ public class UserDAOTest extends BaseDAOTest {
             //
             // Cascading
             //
-            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
+            assertNull("SecurityRule not deleted", securityDAO.find(securityId1));
+            assertNotNull("Group SecurityRule deleted while deleting user...", securityDAO.find(securityId2));
             assertNull("UserAttribute not deleted", userAttributeDAO.find(attributeId));
         }
 

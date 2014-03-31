@@ -33,10 +33,12 @@ import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.googlecode.genericdao.search.Filter;
@@ -198,6 +200,52 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
     @Override
     public boolean removeById(Long id) {
         return super.removeById(id);
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
+        Search searchCriteria = new Search(Resource.class);
+        searchCriteria.addField("security");
+        
+        Filter securityFilter = Filter.some("security", Filter.equal("resource.id", resourceId));
+        //Advanced filters Filters doesn't work, I don't know why...
+//        Filter securityFilter = Filter.some(
+//                "security",
+//                Filter.and(Filter.equal("resource.id", resourceId),
+//                        Filter.in("group.groupName", groupNames),
+//                        Filter.isNotEmpty("group")));
+        
+        searchCriteria.addFilter(securityFilter);
+        List<SecurityRule> rules = super.search(searchCriteria);
+        //WORKAROUND
+        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
+        for(SecurityRule sr : rules){
+            if(sr.getGroup() != null && groupNames.contains(sr.getGroup().getGroupName())){
+                filteredRules.add(sr);
+            }
+        }
+        return filteredRules;
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findResources(java.util.List)
+     */
+    @Override
+    public List<Resource> findResources(List<Long> resourcesIds) {
+        Search search = new Search(Resource.class);
+        Filter filter = Filter.in("id", resourcesIds); 
+        search.addFilter(filter);
+        List<Resource> resourceToSet = super.search(search);
+        //Initialize Lazy collection
+        for(Resource resource : resourceToSet){
+            if(!Hibernate.isInitialized(resource.getSecurity())){
+                Hibernate.initialize(resource.getSecurity());
+            }
+        }
+        return resourceToSet;
     }
 
 }

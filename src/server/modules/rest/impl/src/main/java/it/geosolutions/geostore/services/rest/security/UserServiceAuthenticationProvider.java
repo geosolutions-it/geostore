@@ -7,6 +7,7 @@ import it.geosolutions.geostore.services.UserService;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -24,6 +25,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
  */
 public class UserServiceAuthenticationProvider implements AuthenticationProvider {
 
+    private final static Logger LOGGER = Logger.getLogger(UserServiceAuthenticationProvider.class);
+    
     /**
      * GeoStoreClient in the applicationContext
      */
@@ -54,13 +57,13 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
         User user = null;
         try {
             user = userService.get(us);
-            System.out.println("US: " + us + " PW: " + PwEncoder.encode(pw) + " -- "
+            LOGGER.info("US: " + us + " PW: " + PwEncoder.encode(pw) + " -- "
                     + user.getPassword());
-            if (!user.getPassword().equals(PwEncoder.encode(pw))) {
+            if (user.getPassword() == null || !user.getPassword().equals(PwEncoder.encode(pw))) {
                 throw new BadCredentialsException(UNAUTHORIZED_MSG);
             }
         } catch (Exception e) {
-            // user not found generic response.
+            LOGGER.info(USER_NOT_FOUND_MSG);
             user = null;
         }
 
@@ -69,7 +72,7 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
             // return null;
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
             authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
-            Authentication a = new UsernamePasswordAuthenticationToken(us, pw, authorities);
+            Authentication a = new UsernamePasswordAuthenticationToken(user, pw, authorities);
             // a.setAuthenticated(true);
             return a;
         } else {

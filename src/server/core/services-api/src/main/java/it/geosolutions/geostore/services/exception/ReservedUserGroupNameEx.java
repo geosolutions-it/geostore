@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -17,33 +17,21 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.core.dao;
-
-import java.util.List;
-
-import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.SecurityRule;
+package it.geosolutions.geostore.services.exception;
 
 /**
- * Interface CategoryDAO.
- * 
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
+ * @author DamianoG
+ *
  */
-public interface CategoryDAO extends RestrictedGenericDAO<Category> {
+public class ReservedUserGroupNameEx extends BadRequestServiceEx {
+
+    private static final long serialVersionUID = -4948918988222070783L;
 
     /**
-     * @param userName
-     * @param categoryId
-     * @return List<SecurityRule>
+     * @param message
      */
-    List<SecurityRule> findUserSecurityRule(String userName, long categoryId);
+    public ReservedUserGroupNameEx(String message) {
+        super(message);
+    }
 
-    /**
-     * 
-     * @param userName
-     * @param categoryId
-     * @return
-     */
-    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long categoryId);
 }

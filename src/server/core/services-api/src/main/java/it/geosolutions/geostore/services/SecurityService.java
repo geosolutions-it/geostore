@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -17,33 +17,34 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.core.dao;
+package it.geosolutions.geostore.services;
+
+import it.geosolutions.geostore.core.model.SecurityRule;
 
 import java.util.List;
 
-import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.SecurityRule;
-
 /**
- * Interface CategoryDAO.
- * 
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
+ * @author DamianoG
+ *
+ * This Interface defines operations to retrieve the security rules based on users and groups 
  */
-public interface CategoryDAO extends RestrictedGenericDAO<Category> {
-
-    /**
-     * @param userName
-     * @param categoryId
-     * @return List<SecurityRule>
-     */
-    List<SecurityRule> findUserSecurityRule(String userName, long categoryId);
-
+public interface SecurityService {
+    
     /**
      * 
      * @param userName
-     * @param categoryId
+     * @param entityId the Id of the entity (f.e. Resource, Category, StoredData...) that the underlying implementation will be responsible for retrieve security rules
      * @return
      */
-    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long categoryId);
+    List<SecurityRule> getUserSecurityRule(String userName, long entityId);
+    
+    /**
+     * 
+     * @param groupName
+     * @param entityId entityId the Id of the entity (f.e. Resource, Category, StoredData...) that the underlying implementation will be responsible for retrieve security rules
+     * @return
+     */
+    List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long entityId);
+
+
 }

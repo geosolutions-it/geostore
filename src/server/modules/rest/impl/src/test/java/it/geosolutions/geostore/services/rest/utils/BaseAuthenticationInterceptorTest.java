@@ -31,6 +31,7 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.apache.log4j.Logger;
 import org.junit.Before;
+import org.junit.Ignore;
 
 /**
  * 
@@ -44,6 +45,7 @@ public abstract class BaseAuthenticationInterceptorTest {
 
     protected UserService userService;
 
+    @Ignore
     @Before
     public void init() {
         userService = new MockedUserService();

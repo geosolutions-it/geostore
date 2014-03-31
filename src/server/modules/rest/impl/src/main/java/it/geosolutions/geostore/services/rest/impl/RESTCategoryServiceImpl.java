@@ -33,27 +33,20 @@
 package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.CategoryService;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTCategoryService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
-import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-
-import java.security.Principal;
-import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Class RESTCategoryServiceImpl.
@@ -61,7 +54,7 @@ import org.springframework.security.core.GrantedAuthority;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * 
  */
-public class RESTCategoryServiceImpl implements RESTCategoryService {
+public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCategoryService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTCategoryServiceImpl.class);
 
@@ -72,6 +65,14 @@ public class RESTCategoryServiceImpl implements RESTCategoryService {
      */
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        return categoryService;
     }
 
     /*
@@ -126,7 +127,7 @@ public class RESTCategoryServiceImpl implements RESTCategoryService {
             //
             boolean canUpdate = false;
             User authUser = extractAuthUser(sc);
-            canUpdate = resourceAccess(authUser, old.getId());
+            canUpdate = resourceAccessWrite(authUser, old.getId());
 
             if (canUpdate) {
                 id = categoryService.update(category);
@@ -153,7 +154,7 @@ public class RESTCategoryServiceImpl implements RESTCategoryService {
         //
         boolean canDelete = false;
         User authUser = extractAuthUser(sc);
-        canDelete = resourceAccess(authUser, id);
+        canDelete = resourceAccessWrite(authUser, id);
 
         if (canDelete) {
             boolean ret = categoryService.delete(id);
@@ -215,88 +216,4 @@ public class RESTCategoryServiceImpl implements RESTCategoryService {
         nameLike = nameLike.replaceAll("[*]", "%");
         return categoryService.getCount(nameLike);
     }
-
-    /**
-     * @return User - The authenticated user that is accessing this service, or null if guest access.
-     */
-    private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if (sc == null)
-            throw new InternalErrorWebEx("Missing auth info");
-        else {
-            Principal principal = sc.getUserPrincipal();
-            if (principal == null) {
-                if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Missing auth principal");
-                throw new InternalErrorWebEx("Missing auth principal");
-            }
-
-            /**
-             * OLD STUFF
-             * 
-             * if (!(principal instanceof GeoStorePrincipal)) { if (LOGGER.isInfoEnabled()) { LOGGER.info("Mismatching auth principal"); } throw new
-             * InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")"); }
-             * 
-             * GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
-             * 
-             * // // may be null if guest // User user = gsp.getUser();
-             * 
-             * LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
-             **/
-
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Mismatching auth principal");
-                }
-                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
-                        + ")");
-            }
-
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
-
-            User user = new User();
-            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
-
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
-                }
-            }
-
-            LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                    + user.getRole());
-
-            return user;
-        }
-    }
-
-    /**
-     * Check if the user can access the requested resource (is own resource or not ?) in order to update it.
-     * 
-     * @param resource
-     * @return boolean
-     */
-    private boolean resourceAccess(User authUser, long resourceId) {
-        boolean canAccess = false;
-
-        if (authUser.getRole().equals(Role.ADMIN)) {
-            canAccess = true;
-        } else {
-            List<SecurityRule> securityRules = categoryService.getUserSecurityRule(
-                    authUser.getName(), resourceId);
-
-            if (securityRules != null && securityRules.size() > 0)
-                canAccess = true;
-        }
-
-        return canAccess;
-    }
-
 }

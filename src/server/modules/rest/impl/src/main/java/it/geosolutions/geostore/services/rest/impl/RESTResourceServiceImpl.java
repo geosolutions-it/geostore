@@ -33,8 +33,8 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
@@ -55,7 +55,6 @@ import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,8 +62,6 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Class RESTResourceServiceImpl.
@@ -72,7 +69,7 @@ import org.springframework.security.core.GrantedAuthority;
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public class RESTResourceServiceImpl implements RESTResourceService {
+public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTResourceService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTResourceServiceImpl.class);
 
@@ -83,6 +80,14 @@ public class RESTResourceServiceImpl implements RESTResourceService {
      */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        return resourceService;
     }
 
     /*
@@ -101,13 +106,17 @@ public class RESTResourceServiceImpl implements RESTResourceService {
 
         User authUser = extractAuthUser(sc);
 
-        SecurityRule securityRule = new SecurityRule();
-        securityRule.setCanRead(true);
-        securityRule.setCanWrite(true);
-        securityRule.setUser(authUser);
-
+        // This list holds the security rules for this resources
+        // By default when a resource is inserted are create 2 rules: 
+        // ONE is related to the User that insert the rule and THE OTHER ONE is related to its group
         List<SecurityRule> securities = new ArrayList<SecurityRule>();
-        securities.add(securityRule);
+        
+        // User Security rule: the user that insert the resource (the "owner") is allowed to Read and Write the resources
+        SecurityRule userSecurityRule = new SecurityRule();
+        userSecurityRule.setCanRead(true);
+        userSecurityRule.setCanWrite(true);
+        userSecurityRule.setUser(authUser);
+        securities.add(userSecurityRule);
 
         Resource r = Convert.convertResource(resource);
         r.setSecurity(securities);
@@ -160,7 +169,7 @@ public class RESTResourceServiceImpl implements RESTResourceService {
             //
             boolean canUpdate = false;
             User authUser = extractAuthUser(sc);
-            canUpdate = resourceAccess(authUser, old.getId());
+            canUpdate = resourceAccessWrite(authUser, old.getId());
 
             if (canUpdate) {
                 if (resource.getDescription() != null)
@@ -211,7 +220,7 @@ public class RESTResourceServiceImpl implements RESTResourceService {
         //
         boolean canDelete = false;
         User authUser = extractAuthUser(sc);
-        canDelete = resourceAccess(authUser, id);
+        canDelete = resourceAccessWrite(authUser, id);
 
         if (canDelete) {
             boolean ret = resourceService.delete(id);
@@ -245,12 +254,21 @@ public class RESTResourceServiceImpl implements RESTResourceService {
     @Override
     public Resource get(SecurityContext sc, long id, boolean fullResource) throws NotFoundWebEx {
 
+        //
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id);
+        if(!canRead){
+            throw new ForbiddenErrorWebEx("This user cannot read this resource !");
+        }
+        
         if (fullResource) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Retrieving a full resource");
             List<Resource> resourcesFull;
             try {
-                User authUser = extractAuthUser(sc);
                 SearchFilter filter = new FieldFilter(BaseField.ID, Long.toString(id),
                         SearchOperator.EQUAL_TO);
                 resourcesFull = resourceService.getResourcesFull(filter, authUser);
@@ -394,7 +412,7 @@ public class RESTResourceServiceImpl implements RESTResourceService {
         boolean canUpdate = false;
         try {
             User authUser = extractAuthUser(sc);
-            canUpdate = resourceAccess(authUser, resource.getId());
+            canUpdate = resourceAccessWrite(authUser, resource.getId());
 
             if (canUpdate)
                 return resourceService.updateAttribute(id, name, value);
@@ -451,90 +469,4 @@ public class RESTResourceServiceImpl implements RESTResourceService {
             throw new InternalErrorWebEx(e.getMessage());
         }
     }
-
-    /**
-     * @return User - The authenticated user that is accessing this service, or null if guest access.
-     */
-    private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if (sc == null)
-            throw new InternalErrorWebEx("Missing auth info");
-        else {
-            Principal principal = sc.getUserPrincipal();
-            if (principal == null) {
-                if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Missing auth principal");
-                throw new InternalErrorWebEx("Missing auth principal");
-            }
-
-            /**
-             * OLD STUFF
-             * 
-             * if (!(principal instanceof GeoStorePrincipal)) { if (LOGGER.isInfoEnabled()) { LOGGER.info("Mismatching auth principal"); } throw new
-             * InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")"); }
-             * 
-             * GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
-             * 
-             * // // may be null if guest // User user = gsp.getUser();
-             * 
-             * LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
-             **/
-
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Mismatching auth principal");
-                }
-                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
-                        + ")");
-            }
-
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
-
-            User user = new User();
-            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
-
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
-                }
-            }
-
-            LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                    + user.getRole());
-
-            return user;
-        }
-    }
-
-    /**
-     * Check if the user can access the requested resource (is own resource or not ?) in order to update it.
-     * 
-     * @param resource
-     * @return boolean
-     */
-    private boolean resourceAccess(User authUser, long resourceId) {
-        boolean canAccess = false;
-
-        if (authUser != null) {
-            if (authUser.getRole().equals(Role.ADMIN)) {
-                canAccess = true;
-            } else {
-                List<SecurityRule> securityRules = resourceService.getUserSecurityRule(
-                        authUser.getName(), resourceId);
-
-                if (securityRules != null && securityRules.size() > 0)
-                    canAccess = true;
-            }
-        }
-
-        return canAccess;
-    }
-
 }
