@@ -3,7 +3,6 @@ package it.geosolutions.geostore.services.rest.security;
 import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserService;
-import it.geosolutions.geostore.services.rest.impl.RESTUserServiceImpl;
 
 import java.util.ArrayList;
 import java.util.List;

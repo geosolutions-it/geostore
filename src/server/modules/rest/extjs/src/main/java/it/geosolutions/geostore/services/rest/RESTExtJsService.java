@@ -71,7 +71,7 @@ public interface RESTExtJsService {
     @GET
     @Path("/search/{nameLike}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     String getAllResources(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
             @QueryParam("start") Integer start, @QueryParam("limit") Integer limit)
             throws BadRequestWebEx;
@@ -79,7 +79,7 @@ public interface RESTExtJsService {
     @GET
     @Path("/search/category/{categoryName}")
     @Produces({ MediaType.APPLICATION_JSON })
-    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     String getResourcesByCategory(@Context SecurityContext sc,
             @PathParam("categoryName") String categoryName, @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit) throws BadRequestWebEx, InternalErrorWebEx;
@@ -99,7 +99,7 @@ public interface RESTExtJsService {
     @Path("/search/list")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_GUEST" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     ExtResourceList getExtResourcesList(@Context SecurityContext sc,
             @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
