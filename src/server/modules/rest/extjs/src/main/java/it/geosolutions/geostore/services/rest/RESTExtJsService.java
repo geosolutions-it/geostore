@@ -38,6 +38,7 @@ import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -82,6 +83,23 @@ public interface RESTExtJsService {
     @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     String getResourcesByCategory(@Context SecurityContext sc,
             @PathParam("categoryName") String categoryName, @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit) throws BadRequestWebEx, InternalErrorWebEx;
+
+    @GET
+    @Path("/search/category/{categoryName}/{categorySearch}")
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String getResourcesByCategory(@Context SecurityContext sc,
+            @PathParam("categoryName") String categoryName, @PathParam("categorySearch") String categorySearch, @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit) throws BadRequestWebEx, InternalErrorWebEx;
+
+    @GET
+    @Path("/search/category/{categoryName}/{categorySearch}/{extraAttributes}")
+    @Produces({ MediaType.APPLICATION_JSON })
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String getResourcesByCategory(@Context SecurityContext sc,
+            @PathParam("categoryName") String categoryName, @PathParam("categorySearch") String categorySearch, 
+            @PathParam("extraAttributes") String extraAttributes, @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit) throws BadRequestWebEx, InternalErrorWebEx;
 
     /**
