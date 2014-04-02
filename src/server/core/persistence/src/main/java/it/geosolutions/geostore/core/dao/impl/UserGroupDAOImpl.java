@@ -19,15 +19,15 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
-import com.googlecode.genericdao.search.ISearch;
-
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.UserGroup;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.googlecode.genericdao.search.ISearch;
 
 /**
  * Class UserGroupDAOImpl.
@@ -62,6 +62,16 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
     @Override
     public List<UserGroup> findAll() {
         return super.findAll();
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
+     */
+    @Override
+    public UserGroup find(Long id) {
+        return super.find(id);
     }
 
     /*

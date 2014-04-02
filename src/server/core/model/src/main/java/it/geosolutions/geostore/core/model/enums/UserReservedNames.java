@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -17,33 +17,28 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.core.dao;
-
-import java.util.List;
-
-import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.SecurityRule;
+package it.geosolutions.geostore.core.model.enums;
 
 /**
- * Interface CategoryDAO.
- * 
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
+ * @author DamianoG
+ *
  */
-public interface CategoryDAO extends RestrictedGenericDAO<Category> {
-
+public enum UserReservedNames {
+    
+    GUEST;
+    
     /**
-     * @param userName
-     * @param categoryId
-     * @return List<SecurityRule>
-     */
-    List<SecurityRule> findUserSecurityRule(String userName, long categoryId);
-
-    /**
+     * Given a candidate userName this method checks if the name is allowed.
+     * This enum holds the list of reserved names. A username is not allowed if it matches ignoring the case
+     * at least one of the reserved names.
      * 
-     * @param userName
-     * @param categoryId
+     * @param groupNameToCheck
      * @return
      */
-    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long categoryId);
+    public static boolean isAllowedName(String groupNameToCheck){
+        if(GUEST.toString().equalsIgnoreCase(groupNameToCheck)){
+            return false;
+        }
+        return true;
+    }
 }

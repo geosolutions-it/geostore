@@ -25,6 +25,9 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.log4j.Logger;
 import org.junit.Test;
 
@@ -32,6 +35,7 @@ import org.junit.Test;
  * Class UserGroupDAOTest.
  * 
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
+ * @author DamianoG
  * 
  */
 public class UserGroupDAOTest extends BaseDAOTest {
@@ -48,9 +52,11 @@ public class UserGroupDAOTest extends BaseDAOTest {
             LOGGER.debug("Persisting UserGroup");
         }
 
-        long securityId;
-        long userId;
-        long groupId;
+        long securityId1;
+        long securityId2;
+        long userId1;
+        long groupId2;
+        User user2;
 
         //
         // PERSIST
@@ -64,56 +70,106 @@ public class UserGroupDAOTest extends BaseDAOTest {
             assertEquals(1, categoryDAO.count(null));
             assertEquals(1, categoryDAO.findAll().size());
 
-            UserGroup group = new UserGroup();
-            group.setGroupName("GROUP1");
+            Set<UserGroup> groups = new HashSet<UserGroup>();
+            UserGroup g1 = new UserGroup();
+            g1.setGroupName("GROUP1");
+            UserGroup g2 = new UserGroup();
+            g2.setGroupName("GROUP2");
+            groups.add(g1);
+            groups.add(g2);
 
-            userGroupDAO.persist(group);
-            groupId = group.getId();
+            userGroupDAO.persist(g1);
+            userGroupDAO.persist(g2);
+            groupId2 = g2.getId();
+            
+            assertEquals(2, userGroupDAO.count(null));
+            assertEquals(2, userGroupDAO.findAll().size());
 
-            assertEquals(1, userGroupDAO.count(null));
-            assertEquals(1, userGroupDAO.findAll().size());
+            //Create User1, associate to him group1 and group2 and set an example security rule 
+            User user1 = new User();
+            user1.setGroups(groups);
+            user1.setName("USER1_NAME");
+            user1.setNewPassword("user");
+            user1.setRole(Role.ADMIN);
 
-            User user = new User();
-            user.setGroup(group);
-            user.setName("USER_NAME");
-            user.setNewPassword("user");
-            user.setRole(Role.ADMIN);
-
-            userDAO.persist(user);
-            userId = user.getId();
-
-            assertEquals(1, userDAO.count(null));
+            userDAO.persist(user1);
+            userId1 = user1.getId();
+            
             assertEquals(1, userDAO.findAll().size());
+            assertEquals(1, userDAO.count(null));
+            
 
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
-            // security.setCategory(category);
-            security.setGroup(group);
-            security.setUser(user);
+            //Why set both user and group? just for test? The Application shouldn't allows that... 
+            security.setGroup(g1);
+            security.setUser(user1);
 
             securityDAO.persist(security);
-            securityId = security.getId();
+            securityId1 = security.getId();
 
             assertEquals(1, securityDAO.count(null));
             assertEquals(1, securityDAO.findAll().size());
+            
+            //Create User2, associate to him group2 and set an example security rule 
+            user2 = new User();
+            user2.setGroups(groups);
+            user2.setName("USER2_NAME");
+            user2.setNewPassword("user");
+            user2.setRole(Role.USER);
+
+            userDAO.persist(user2);
+            
+            assertEquals(2, userDAO.findAll().size());
+            assertEquals(2, userDAO.count(null));
+            
+
+            SecurityRule security2 = new SecurityRule();
+            security2.setCanRead(true);
+            security2.setCanWrite(true);
+            //Set a security rule just for the group (the GeoStore application logic creates another rule also for the owner user) 
+            security2.setGroup(g2);
+
+            securityDAO.persist(security2);
+            securityId2 = security2.getId();
+
+            assertEquals(2, securityDAO.count(null));
+            assertEquals(2, securityDAO.findAll().size());
+
         }
 
         //
         // LOAD, REMOVE, CASCADING
         //
         {
-            UserGroup loaded = userGroupDAO.find(groupId);
-            assertNotNull("Can't retrieve UserGroup", loaded);
-
-            userGroupDAO.removeById(groupId);
-            assertNull("User not deleted", userGroupDAO.find(groupId));
-
-            //
-            // Cascading
-            //
-            assertNull("User not deleted", userDAO.find(userId));
-            assertNull("SecurityRule not deleted", securityDAO.find(securityId));
+            // USER REMOVAL, the cascading on security rules relation  will remove also the related rules.
+            // The user is also the owner of the many2many relations with entity GROUP so the entry on that relation table is automatically deleted.
+            User user1 = userDAO.find(userId1);
+            userDAO.remove(user1);
+            assertEquals(1, securityDAO.count(null));
+            assertEquals(1, securityDAO.findAll().size());
+            assertEquals(1, userDAO.findAll().size());
+            assertEquals(1, userDAO.count(null));
+            assertEquals(2, userGroupDAO.findAll().size());
+            assertEquals(2, userGroupDAO.count(null));
+            assertNull("SecurityRule not deleted", securityDAO.find(securityId1));
+            assertNotNull("Group SecurityRule deleted... that's a mistake!", securityDAO.find(securityId2));
+            
+            // GROUP REMOVAL, being the entity USER the owner of the relation we should remove manually the entries in the relationship table
+            // removing the group association to all user
+            UserGroup group2 = userGroupDAO.find(groupId2);
+            Set<User> users = group2.getUsers();
+            assertEquals(1, users.size());
+            for(User u : users){
+                u.getGroups().remove(group2);
+                userDAO.merge(u);
+            }
+            userGroupDAO.remove(group2);
+            assertEquals(1, userGroupDAO.findAll().size());
+            assertEquals(1, userGroupDAO.count(null));
+            assertNull("Group SecurityRule not deleted", securityDAO.find(securityId2));
+            userDAO.remove(user2);
         }
 
     }

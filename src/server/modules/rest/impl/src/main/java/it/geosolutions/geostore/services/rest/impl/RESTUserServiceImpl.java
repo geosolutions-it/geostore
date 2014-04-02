@@ -31,26 +31,25 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTUserService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
-import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Class RESTUserServiceImpl.
@@ -59,7 +58,7 @@ import org.springframework.security.core.GrantedAuthority;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * 
  */
-public class RESTUserServiceImpl implements RESTUserService {
+public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTUserServiceImpl.class);
 
@@ -134,9 +133,9 @@ public class RESTUserServiceImpl implements RESTUserService {
                     userUpdated = true;
                 }
 
-                UserGroup group = user.getGroup();
-                if (group != null) {
-                    old.setGroup(group);
+                Set<UserGroup> groups = user.getGroups();
+                if (groups != null) {
+                    old.setGroups(groups);
                     userUpdated = true;
                 }
             } else if (old.getName().equals(authUser.getName())) { // Check if the User is the same
@@ -223,7 +222,7 @@ public class RESTUserServiceImpl implements RESTUserService {
         ret.setName(authUser.getName());
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
-        ret.setGroup(authUser.getGroup());
+        ret.setGroups(authUser.getGroups());
         if (includeAttributes) {
             ret.setAttribute(authUser.getAttribute());
         }
@@ -310,7 +309,7 @@ public class RESTUserServiceImpl implements RESTUserService {
                 ret.setName(authUser.getName());
                 // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
                 ret.setRole(authUser.getRole());
-                ret.setGroup(authUser.getGroup());
+                ret.setGroups(authUser.getGroups());
                 if (includeAttributes) {
                     ret.setAttribute(authUser.getAttribute());
                 }
@@ -321,68 +320,6 @@ public class RESTUserServiceImpl implements RESTUserService {
         }
 
         return ret;
-    }
-
-    /**
-     * @return User - The authenticated user that is accessing this service, or null if guest access.
-     */
-    private User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if (sc == null) {
-            throw new InternalErrorWebEx("Missing auth info");
-        } else {
-            Principal principal = sc.getUserPrincipal();
-            if (principal == null) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Missing auth principal");
-                }
-                throw new InternalErrorWebEx("Missing auth principal");
-            }
-
-            /**
-             * OLD STUFF
-             * 
-             * if (!(principal instanceof GeoStorePrincipal)) { if (LOGGER.isInfoEnabled()) { LOGGER.info("Mismatching auth principal"); } throw new
-             * InternalErrorWebEx("Mismatching auth principal (" + principal.getClass() + ")"); }
-             * 
-             * GeoStorePrincipal gsp = (GeoStorePrincipal) principal;
-             * 
-             * // // may be null if guest // User user = gsp.getUser();
-             * 
-             * LOGGER.info("Accessing service with user " + (user == null ? "GUEST" : user.getName()));
-             **/
-
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Mismatching auth principal");
-                }
-                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
-                        + ")");
-            }
-
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
-
-            User user = new User();
-            user.setName(usrToken == null ? "GUEST" : usrToken.getName());
-            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-                if (authority != null) {
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("ADMIN"))
-                        user.setRole(Role.ADMIN);
-
-                    if (authority.getAuthority() != null
-                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-                        user.setRole(Role.USER);
-
-                    if (user.getRole() == null)
-                        user.setRole(Role.GUEST);
-                }
-            }
-
-            LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                    + user.getRole());
-
-            return user;
-        }
     }
 
     @Override
@@ -407,5 +344,13 @@ public class RESTUserServiceImpl implements RESTUserService {
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        throw new NotImplementedException("This method is not implemented yet...");
     }
 }

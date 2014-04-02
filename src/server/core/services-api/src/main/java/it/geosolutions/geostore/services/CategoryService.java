@@ -29,7 +29,6 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
@@ -41,7 +40,7 @@ import java.util.List;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * 
  */
-public interface CategoryService {
+public interface CategoryService extends SecurityService{
 
     /**
      * @param category
@@ -90,12 +89,5 @@ public interface CategoryService {
      * @return long
      */
     long getCount(String nameLike);
-
-    /**
-     * @param userName
-     * @param categoryId
-     * @return List<SecurityRule>
-     */
-    List<SecurityRule> getUserSecurityRule(String userName, long categoryId);
 
 }
