@@ -24,6 +24,7 @@ import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
@@ -334,6 +335,108 @@ public class AdministratorGeostoreClientTest{
     }
     
     @Test
+    public void ListResourcesTest() {
+        
+        // Create a group
+        UserGroup ug = new UserGroup();
+        ug.setGroupName("g1");
+        long gid = geoStoreClient.insertUserGroup(ug);
+        
+        UserGroup anotherGroup = new UserGroup();
+        anotherGroup.setGroupName("g2");
+        long anotherGid = geoStoreClient.insertUserGroup(anotherGroup);
+        
+        Set<UserGroup> ugroups = new HashSet<UserGroup>();
+        ugroups.add(ug);
+        
+        // Create a user
+        User u1 = new User();
+        u1.setName("u1");
+        u1.setNewPassword("u1");
+        u1.setRole(Role.USER);
+        u1.setGroups(ugroups);
+        
+        geoStoreClient.insert(u1);
+        
+        // Create a resource with the user "user". So user will be the owner
+        createDefaultCategory();
+        ShortResource sr = createAResource();
+        ShortResource sr2 = createAResource();
+        ShortResource sr3 = createAResource();
+        ShortResource sr4 = createAResource();
+        
+        
+        // Ok, now it's time to test something.
+        GeoStoreClient u1Client = createUserClient("u1", "u1");
+        
+        // Since all resources inserted belong to user "user" and no groups security rules are added
+        // the user "u1" will see all resources as short resources and will contains canRead=false canWrite=false
+        ShortResourceList srl = u1Client.getAllShortResource(1, 1000);
+        assertEquals(4, srl.getList().size());
+        List<ShortResource> listG1 = new ArrayList<ShortResource>();
+        List<ShortResource> listG2 = new ArrayList<ShortResource>();
+        int i = 0;
+        for(ShortResource r : srl.getList()){
+            assertTrue(!r.isCanDelete());
+            assertTrue(!r.isCanEdit());
+            if(i<2){
+                listG1.add(r);
+            }else{
+                listG2.add(r);
+            }
+            i++;
+        }
+        
+        // trying to get all the resource list the user will get an empty list
+        SearchFilter filter = new FieldFilter(BaseField.NAME, "rest%", SearchOperator.LIKE);
+        ResourceList rl = u1Client.searchResources(filter, -1, -1, false, false);
+        assertNull(rl.getList());
+        
+        UserGroupList ugl = geoStoreClient.getUserGroups(1, 1000);
+        long ug1_id = -1;
+        long ug2_id = -1;
+        for(RESTUserGroup tmp_ug : ugl.getUserGroupList()){
+            if(tmp_ug.getGroupName().equalsIgnoreCase("g1")){
+                ug1_id = tmp_ug.getId();
+            }
+            if(tmp_ug.getGroupName().equalsIgnoreCase("g2")){
+                ug2_id = tmp_ug.getId();
+            }
+        }
+        
+        // Add group permissions to resources
+        long errorCode = -1;
+        try{
+            geoStoreClient.updateSecurityRules(new ShortResourceList(listG1), 787687l, true, true);
+        }
+        catch(UniformInterfaceException e){
+            errorCode = e.getResponse().getStatus();
+        }
+        assertEquals(404, errorCode);
+        
+        geoStoreClient.updateSecurityRules(new ShortResourceList(listG1), ug1_id, true, true);
+        geoStoreClient.updateSecurityRules(new  ShortResourceList(listG2), ug2_id, true, true);
+        
+        // Now the situation should be changed: I should have access to 2 resources
+        srl = u1Client.getAllShortResource(1, 1000);
+        assertEquals(4, srl.getList().size());
+        for(ShortResource r : srl.getList()){
+            if(r.getId() == listG1.get(0).getId() || r.getId() == listG1.get(1).getId()){
+                assertTrue(r.isCanDelete());
+                assertTrue(r.isCanEdit());
+            }
+            else{
+                assertTrue(!r.isCanDelete());
+                assertTrue(!r.isCanEdit());
+            }
+        }
+        
+        rl = u1Client.searchResources(filter, -1, -1, false, false);
+        assertEquals(2,rl.getList().size());
+        
+    }
+    
+    @Test
     public void updateSecurityRulesTest() {
         
         // Create a group
@@ -420,8 +523,13 @@ public class AdministratorGeostoreClientTest{
         List<ShortResource> srl = new ArrayList<ShortResource>();
         srl.add(sr);
         ShortResourceList srll = new ShortResourceList(srl);
+        
+        ShortResourceList srlf = geoStoreClient.getAllShortResource(1, 1000);
+        assertEquals(2, srlf.getList().size());
         geoStoreClient.updateSecurityRules(srll, gid, false, true);
         geoStoreClient.updateSecurityRules(srll, gid2, false, false);
+        srlf = geoStoreClient.getAllShortResource(1, 1000);
+        assertEquals(2, srlf.getList().size());
         
         // READ shouldn't allowed, WRITE allowed
         u1StatusW = -1;

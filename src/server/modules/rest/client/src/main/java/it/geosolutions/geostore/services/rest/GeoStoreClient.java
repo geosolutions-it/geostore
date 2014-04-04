@@ -122,6 +122,14 @@ public class GeoStoreClient {
         getBaseWebResource("resources", "resource", id).header("Content-Type", MediaType.TEXT_XML)
                 .put(resource);
     }
+    
+    public ShortResourceList getAllShortResource(Integer page, Integer entries) {
+        WebResource wr = getBaseWebResource("resources");
+        wr.queryParam("page", page.toString());
+        wr.queryParam("entries", entries.toString());
+        return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+                .get(ShortResourceList.class);
+    }
 
     // ==========================================================================
     // === DATA
