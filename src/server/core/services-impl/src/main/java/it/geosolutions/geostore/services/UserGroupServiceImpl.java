@@ -189,6 +189,10 @@ public class UserGroupServiceImpl implements UserGroupService{
         List<ShortResource> updated = new ArrayList<ShortResource>();
         UserGroup group = userGroupDAO.find(groupId);
         
+        if(group == null){
+            throw new NotFoundServiceEx("The usergroup id you provide doesn't exist!");
+        }
+        
         List<Resource> resourceToSet = resourceDAO.findResources(resourcesIds);
         
         for(Resource resource : resourceToSet){

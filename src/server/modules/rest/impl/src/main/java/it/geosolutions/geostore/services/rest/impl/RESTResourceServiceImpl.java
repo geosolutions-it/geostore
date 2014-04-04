@@ -372,7 +372,20 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         if (resource == null)
             throw new NotFoundWebEx("Resource not found");
 
-        return new ShortAttributeList(resourceService.getAttributes(id));
+        //
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id);
+
+        if (canRead) {
+            return new ShortAttributeList(resourceService.getAttributes(id));
+        } else {
+            throw new ForbiddenErrorWebEx(
+                    "This user cannot read this resource so neither its attributes!");
+        }
+
     }
 
     /*
@@ -386,12 +399,24 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         if (resource == null)
             throw new NotFoundWebEx("Resource not found");
 
-        ShortAttribute shAttribute = resourceService.getAttribute(id, name);
+        //
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id);
 
-        if (shAttribute == null)
-            throw new NotFoundWebEx("Resource attribute not found");
-
-        return shAttribute.getValue();
+        if (canRead) {
+            ShortAttribute shAttribute = resourceService.getAttribute(id, name);
+    
+            if (shAttribute == null)
+                throw new NotFoundWebEx("Resource attribute not found");
+    
+            return shAttribute.getValue();
+        } else {
+            throw new ForbiddenErrorWebEx(
+                    "This user cannot read this resource so neither its attributes!");
+        } 
     }
 
     /*
@@ -455,10 +480,19 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     public ResourceList getResourcesList(SecurityContext sc, Integer page, Integer entries,
             boolean includeAttributes, boolean includeData, SearchFilter filter) {
         User authUser = extractAuthUser(sc);
-
         try {
-            return new ResourceList(resourceService.getResources(filter, page, entries,
-                    includeAttributes, includeData, authUser));
+            List<Resource> resources = resourceService.getResources(filter, page, entries,
+                    includeAttributes, includeData, authUser);
+            List<Resource> allowedResources = new ArrayList<Resource>();
+            //
+            // Authorization check.
+            //
+            for (Resource r : resources) {
+                if (resourceAccessRead(authUser, r.getId())) {
+                    allowedResources.add(r);
+                }
+            }
+            return new ResourceList(allowedResources);
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(e.getMessage());
