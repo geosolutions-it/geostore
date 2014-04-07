@@ -51,7 +51,6 @@ import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -121,8 +120,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             nameLike = nameLike.replaceAll("[*]", "%");
-            List<ShortResource> resources = resourceService
-                    .getList(nameLike, page, limit, authUser);
+            List<ShortResource> resources = getShortResourcesAllowed(resourceService
+                    .getList(nameLike, page, limit, authUser), authUser);
 
             long count = 0;
             if (resources != null && resources.size() > 0)
@@ -212,8 +211,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             	filter = new AndFilter(filter, new FieldFilter(BaseField.NAME, categorySearch, SearchOperator.LIKE));
             }
 
-            List<Resource> resources = resourceService.getResources(filter, page, limit, true, false,
-                    authUser);
+            List<Resource> resources = getResourcesAllowed(resourceService.getResources(filter, page, limit, true, false,
+                    authUser), authUser);
 
             long count = 0;
             if (resources != null && resources.size() > 0)
@@ -268,24 +267,18 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            List<Resource> resources = resourceService.getResources(filter, page, limit,
-                    includeAttributes, false, authUser);
+            List<Resource> resources = getResourcesAllowed(resourceService.getResources(filter, page, limit,
+                    includeAttributes, false, authUser), authUser);
 
             // Here the Read permission on each resource must be checked due to will be returned the full Resource not just a ShortResource
             // N.B. This is a bad method to check the permissions on each requested resource, it can perform 2 database access for each resource.
-            // Possible optimization -> When retrieving the resources, add to "filter" also another part to load only the allowed resources. 
-            List<Resource> allowedResources = new ArrayList<Resource>();  
-            for(Resource r : resources){
-                if(resourceAccessRead(authUser, r.getId())){
-                    allowedResources.add(r);
-                }
-            }
-            
+            // Possible optimization -> When retrieving the resources, add to "filter" also another part to load only the allowed resources.
+
             long count = 0;
-            if (allowedResources != null && allowedResources.size() > 0)
+            if (resources != null && resources.size() > 0)
                 count = resourceService.getCountByFilter(filter);
 
-            ExtResourceList list = new ExtResourceList(count, allowedResources);
+            ExtResourceList list = new ExtResourceList(count, resources);
             return list;
 
         } catch (InternalErrorServiceEx e) {
