@@ -19,9 +19,9 @@
  */
 package it.geosolutions.geostore.services;
 
-import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -75,7 +75,7 @@ public class UserServiceImplTest extends ServiceTestBase {
             User loaded = userService.get(userId);
             assertNotNull(loaded);
             assertEquals(NAME, loaded.getName());
-            assertEquals("testPW", PwEncoder.decode(loaded.getPassword()));
+            assertTrue( PwEncoder.isPasswordValid(loaded.getPassword(),"testPW"));
             assertEquals(Role.USER, loaded.getRole());
 
             loaded.setNewPassword("testPW2");
@@ -88,7 +88,7 @@ public class UserServiceImplTest extends ServiceTestBase {
         {
             User loaded = userService.get(userId);
             assertNotNull(loaded);
-            assertEquals("testPW2", PwEncoder.decode(loaded.getPassword()));
+            assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(),"testPW2"));
         }
 
         //

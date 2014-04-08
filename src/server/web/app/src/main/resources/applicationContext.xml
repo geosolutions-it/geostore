@@ -22,8 +22,12 @@
         <property name="userListInitFile" value="classpath:sample_users.xml"/>
         <!-- Site specific initialization. Please specify a path in the ovr file-->
         <property name="categoryListInitFile" value="classpath:sample_categories.xml" />
+
         <!-- Site specific initialization. Please specify a path in the ovr file-->
         <property name="userGroupListInitFile" value="classpath:sample_groups.xml" />
+        <!-- The default password encoder -->
+        <property name="passwordEncoder" ref="${passwordEncoderUsed}"></property>	
+        
+        
     </bean>
-
 </beans>

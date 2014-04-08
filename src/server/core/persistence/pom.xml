@@ -42,7 +42,12 @@
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-model</artifactId>
         </dependency>
-
+         <dependency>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-security</artifactId>
+        </dependency>
+        
+        
         <!-- ================================================================-->
        	<!-- APACHE COMMONS -->
         <!-- ================================================================-->
@@ -112,7 +117,6 @@
 		    <groupId>org.springframework.security</groupId>
 		    <artifactId>spring-security-core</artifactId>
 		</dependency>-->
-
         <dependency>
             <groupId>javax.persistence</groupId>
             <artifactId>persistence-api</artifactId>

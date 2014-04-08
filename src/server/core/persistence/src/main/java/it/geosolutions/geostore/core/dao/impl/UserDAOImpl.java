@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.Set;
 
 import it.geosolutions.geostore.core.dao.UserDAO;
-import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;

@@ -34,10 +34,12 @@
     <packaging>pom</packaging>
   
     <modules>
+        <module>security</module>
         <module>model</module>
         <module>persistence</module>
         <module>services-api</module>
         <module>services-impl</module>
+        
 
 <!--        <module>webtest</module> -->
 <!--        <module>webgisstub</module> -->
