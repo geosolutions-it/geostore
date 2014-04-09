@@ -1,7 +1,7 @@
 package it.geosolutions.geostore.services.rest.security;
 
-import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.services.UserService;
 
 import java.util.ArrayList;
@@ -54,9 +54,8 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
         User user = null;
         try {
             user = userService.get(us);
-            LOGGER.info("US: " + us + " PW: " + PwEncoder.encode(pw) + " -- "
-                    + user.getPassword());
-            if (user.getPassword() == null || !user.getPassword().equals(PwEncoder.encode(pw))) {
+            LOGGER.info("US: " + us );//+ " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
+            if (user.getPassword() == null || !PwEncoder.isPasswordValid(user.getPassword(),pw)) {
                 throw new BadCredentialsException(UNAUTHORIZED_MSG);
             }
         } catch (Exception e) {

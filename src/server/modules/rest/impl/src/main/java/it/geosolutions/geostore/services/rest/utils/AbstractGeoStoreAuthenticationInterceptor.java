@@ -19,8 +19,8 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-import it.geosolutions.geostore.core.dao.util.PwEncoder;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.interceptor.Fault;
@@ -86,10 +86,10 @@ public abstract class AbstractGeoStoreAuthenticationInterceptor extends
                 LOGGER.error("Exception while checking pw: " + username, e);
                 throw new AccessDeniedException("Authorization error");
             }
-            encodedPw = PwEncoder.encode(password);
-            if (!encodedPw.equalsIgnoreCase(user.getPassword())) {
+            
+            if (!PwEncoder.isPasswordValid(user.getPassword(),password)) {
                 if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Bad pw for user " + username);
+                    LOGGER.info("Bad pw for user " + username );
                 throw new AccessDeniedException("Not authorized");
             }
 

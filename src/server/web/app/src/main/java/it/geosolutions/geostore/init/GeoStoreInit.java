@@ -21,7 +21,13 @@ package it.geosolutions.geostore.init;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
+
 import it.geosolutions.geostore.core.model.UserGroup;
+
+import it.geosolutions.geostore.core.security.password.GeoStoreAESEncoder;
+import it.geosolutions.geostore.core.security.password.GeoStorePasswordEncoder;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
+
 import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserGroupService;
@@ -30,8 +36,10 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
+
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
+
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
 
 import java.io.File;
@@ -41,6 +49,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
 import org.apache.log4j.Logger;
+
 import org.springframework.beans.factory.InitializingBean;
 
 /**
@@ -63,17 +72,27 @@ public class GeoStoreInit implements InitializingBean {
     
     protected File userGroupListInitFile = null;
 
-    @Override
+    /**
+     * The password encoder to be set as default
+     */
+    protected GeoStorePasswordEncoder passwordEncoder = null;
+    /**
+     * If set to true, the recoding of the password is automatic
+     */
+    protected boolean allowPasswordRecoding = false;
+
+	@Override
     public void afterPropertiesSet() throws Exception {
 
         LOGGER.info("===== Starting GeoStore services =====");
-
+        //initialize password encoding
+        initPasswordEncoding();
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
             LOGGER.warn("No category found.");
             if (categoryListInitFile != null) {
                 LOGGER.warn("Initializing categories from file " + categoryListInitFile);
-                initCategories(categoryListInitFile);
+                initCategories(categoryListInitFile);	
             } else {
                 LOGGER.info("No category initializer defined.");
             }
@@ -105,7 +124,60 @@ public class GeoStoreInit implements InitializingBean {
             }
         } else {
             LOGGER.info("UsersGroup already in db: " + userCnt);
+            
         }
+    }
+    
+    private void initPasswordEncoding(){
+    	LOGGER.info("=== Set up the security system   ====");
+    	LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
+        
+    	PwEncoder.setEncoder(this.passwordEncoder);
+    	//check and convert passwords
+    	try {
+			List<User> users = userService.getAll(0, 1);
+			if(users != null && users.size()>0){
+				//check password encription of the first user availabe
+				boolean responsible = this.passwordEncoder.isResponsibleForEncoding(users.get(0).getPassword());
+				
+				//if the current password encoder is the responsible for the encoding of the password 
+				//we suppose the conversion is already happended
+				if(responsible) return;
+				LOGGER.warn("=======================================================================================");
+				LOGGER.warn("   WARNING: USERS PASSWORDS ARE NOT SYNCRONIZED WITH THE CONFIGURED PASSWORD ENCODER   ");
+				LOGGER.warn("=======================================================================================");
+				//check if the password is old legacy, so GeoStoreAESEncoder is the responsible for the encoding
+				GeoStoreAESEncoder e = new GeoStoreAESEncoder();
+				boolean isLegacy = e.isResponsibleForEncoding(users.get(0).getPassword());
+				if(isLegacy){
+					if (!allowPasswordRecoding){
+						LOGGER.warn("To convert old passwords to new ones use geostoreInitializer.allowPasswordRecoding=true");
+						return;
+					}
+					LOGGER.info("Starting password conversion...");
+					for(User u : userService.getAll(null, null)){
+						String p = u.getPassword();
+						if (e.isResponsibleForEncoding(p)){
+							String dec = e.decode(p);
+							String enc = this.passwordEncoder.encodePassword(dec.toCharArray(), null);
+							u.setPassword(enc);
+							try {
+								userService.update(u);
+								LOGGER.info("UPDATED USER PASSWORD for the user:"+u.getName());
+							} catch (NotFoundServiceEx e1) {
+								LOGGER.error("===> ERROR updating user password for user" + u.getName() );
+								
+							}
+						}
+					}
+					LOGGER.info("Password conversion finished!");
+				}
+				
+			}
+		} catch (BadRequestServiceEx e) {
+			//error getting users is not a problem at this stage.
+			//e.printStackTrace();
+		}
     }
 
     private void initCategories(File file) {
@@ -246,8 +318,28 @@ public class GeoStoreInit implements InitializingBean {
         this.userService = userService;
     }
     
+
     public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
     
+    // ==========================================================================
+    
+    public GeoStorePasswordEncoder getPasswordEncoder() {
+		return passwordEncoder;
+	}
+
+	public void setPasswordEncoder(GeoStorePasswordEncoder passwordEncoder) {
+		this.passwordEncoder = passwordEncoder;
+	}
+
+	// ===========================================================================
+	public boolean isAllowPasswordRecoding() {
+		return allowPasswordRecoding;
+	}
+
+	public void setAllowPasswordRecoding(boolean allowPasswordRecoding) {
+		this.allowPasswordRecoding = allowPasswordRecoding;
+	}
+
 }
