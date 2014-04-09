@@ -273,7 +273,7 @@ public class UserGroupServiceImpl implements UserGroupService{
         }
         
         UserGroup ug = new UserGroup();
-        ug.setGroupName(GroupReservedNames.ALLRESOURCES.toString().toLowerCase());
+        ug.setGroupName(GroupReservedNames.EVERYONE.toString().toLowerCase());
         userGroupDAO.persist(ug);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' persisted!");

@@ -88,6 +88,12 @@ public interface RESTUserGroupService {
             throws NotFoundWebEx;
 
     @GET
+    @Path("/search/{usergroupName}")
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Secured({ "ROLE_ADMIN" })
+    RESTUserGroup get(@Context SecurityContext sc, @PathParam("usergroupName")String usergroupName) throws NotFoundWebEx, BadRequestWebEx ;
+    
+    @GET
     @Path("/")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN" })
