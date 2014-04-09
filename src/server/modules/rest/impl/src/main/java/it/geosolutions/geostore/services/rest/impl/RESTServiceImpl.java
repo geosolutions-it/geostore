@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -35,6 +36,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
@@ -257,5 +259,49 @@ public abstract class RESTServiceImpl{
             }
         }
         return false;
+    }
+    
+    /**
+     * Get resources filtered by authUser
+     * 
+     * @param resources
+     * @param authUser
+     * 
+     * @return resources allowed for auth user
+     */
+    public List<Resource> getResourcesAllowed(List<Resource> resources, User authUser){
+
+        List<Resource> allowedResources = new ArrayList<Resource>();
+        //
+        // Authorization check.
+        //
+        for (Resource r: resources) {
+            if (resourceAccessRead(authUser, r.getId())) {
+                allowedResources.add(r);
+            }
+        }
+        return allowedResources;
+    }
+
+    /**
+     * Get short resources filtered by authUser
+     * 
+     * @param resources
+     * @param authUser
+     * 
+     * @return short resources allowed for auth user
+     */
+    public List<ShortResource> getShortResourcesAllowed(List<ShortResource> resources, User authUser){
+
+        List<ShortResource> allowedResources = new ArrayList<ShortResource>();
+        //
+        // Authorization check.
+        //
+        for (ShortResource sr: resources) {
+            if (resourceAccessRead(authUser, sr.getId())) {
+                allowedResources.add(sr);
+            }
+        }
+        return allowedResources;
     }
 }
