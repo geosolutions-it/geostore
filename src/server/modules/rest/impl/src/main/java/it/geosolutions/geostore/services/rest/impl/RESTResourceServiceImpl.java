@@ -312,7 +312,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         nameLike = nameLike.replaceAll("[*]", "%");
 
         try {
-            return new ShortResourceList(resourceService.getList(nameLike, page, entries, authUser));
+            return new ShortResourceList(getShortResourcesAllowed(resourceService.getList(nameLike, page, entries, authUser), authUser));
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
@@ -329,7 +329,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         try {
-            return new ShortResourceList(resourceService.getAll(page, entries, authUser));
+            return new ShortResourceList(getShortResourcesAllowed(resourceService.getAll(page, entries, authUser), authUser));
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
@@ -458,7 +458,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         try {
-            return new ShortResourceList(resourceService.getResources(filter, authUser));
+            return new ShortResourceList(getShortResourcesAllowed(resourceService.getResources(filter, authUser), authUser));
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(e.getMessage());
@@ -481,18 +481,8 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             boolean includeAttributes, boolean includeData, SearchFilter filter) {
         User authUser = extractAuthUser(sc);
         try {
-            List<Resource> resources = resourceService.getResources(filter, page, entries,
-                    includeAttributes, includeData, authUser);
-            List<Resource> allowedResources = new ArrayList<Resource>();
-            //
-            // Authorization check.
-            //
-            for (Resource r : resources) {
-                if (resourceAccessRead(authUser, r.getId())) {
-                    allowedResources.add(r);
-                }
-            }
-            return new ResourceList(allowedResources);
+            return new ResourceList(getResourcesAllowed(resourceService.getResources(filter, page, entries,
+                    includeAttributes, includeData, authUser), authUser));
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(e.getMessage());

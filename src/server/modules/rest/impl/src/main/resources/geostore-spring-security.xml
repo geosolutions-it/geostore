@@ -20,7 +20,7 @@
 	<!-- ==================================================================== -->
 	<security:global-method-security secured-annotations="enabled" />
 
-	<security:http auto-config="true">
+	<security:http auto-config="true" create-session="never">
 		<security:http-basic />
 		<security:anonymous />
 	</security:http>
