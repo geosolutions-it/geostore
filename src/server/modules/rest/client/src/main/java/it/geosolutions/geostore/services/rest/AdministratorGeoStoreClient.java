@@ -2,6 +2,7 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
@@ -98,6 +99,15 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
         getBaseWebResource("usersgroup", "group", userId, usergroupId).post();
     }
 
+    public void deassignUserGroup(long userId, long usergroupId) {
+    	 getBaseWebResource("usersgroup", "group", userId, usergroupId).delete();
+		
+	}
+    
+    public RESTUserGroup getUserGroup(long usergroupId){
+    	return getBaseWebResource("usersgroup", "group", usergroupId).get(RESTUserGroup.class);
+    }
+    
     public UserGroupList getUserGroups(Integer page, Integer entries) {
         WebResource wr = getBaseWebResource("usersgroup");
         wr.queryParam("page", page.toString());
@@ -113,4 +123,11 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
                 .accept(MediaType.TEXT_XML).put(ShortResourceList.class, resourcesToSet);
         return updatedResources;
     }
+
+	public RESTUserGroup getUserGroup(String name) {
+		return getBaseWebResource("usersgroup", "group", "name",name).get(RESTUserGroup.class);
+		
+	}
+
+	
 }

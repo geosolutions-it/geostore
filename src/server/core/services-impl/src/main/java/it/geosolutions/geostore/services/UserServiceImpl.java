@@ -176,9 +176,12 @@ public class UserServiceImpl implements UserService {
 
             List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
 
-            if (existingGroups != null && groups.size() == existingGroups.size()) {
+            if (existingGroups == null || (existingGroups != null && groups.size() != existingGroups.size())) {
                 throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
-            }            
+            }
+            user.getGroups().clear();
+            user.getGroups().addAll(existingGroups);
+           
         }
         userDAO.merge(user);
 

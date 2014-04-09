@@ -160,6 +160,31 @@ public class UserGroupServiceImpl implements UserGroupService{
             userDAO.merge(targetUser);
         }
     }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.UserGroupService#deassignUserGroup(long, long)
+     */
+    @Override
+    public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx{
+        UserGroup groupToAssign = userGroupDAO.find(groupId);
+        User targetUser = userDAO.find(userId);
+        if(groupToAssign == null || targetUser == null){
+            throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");
+        }
+        if(targetUser.getGroups() != null){
+        	Set<UserGroup> ugs = targetUser.getGroups();
+        	for( UserGroup group : ugs){
+        		if( group.getId() == groupId){
+        			targetUser.getGroups().remove(group);
+        			userDAO.merge(targetUser);
+        			return;
+        		}
+        	}
+        	
+            
+        }
+      
+    }
 
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.UserGroupService#getAll(java.lang.Integer, java.lang.Integer)
@@ -255,4 +280,26 @@ public class UserGroupServiceImpl implements UserGroupService{
         }
         return true;
     }
+
+	@Override
+	public UserGroup get(long id) throws BadRequestServiceEx {
+		return userGroupDAO.find(id);
+	}
+
+	@Override
+	public UserGroup get(String name) {
+		//
+        // Searching the corresponding UserGroups
+        //
+        Search searchCriteria = new Search(UserGroup.class);
+        searchCriteria.addFilterEqual("groupName", name);
+
+        List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
+        if(existingGroups.size()>0){
+        	return existingGroups.get(0);
+        	
+        }
+        return null;
+		
+	}
 }

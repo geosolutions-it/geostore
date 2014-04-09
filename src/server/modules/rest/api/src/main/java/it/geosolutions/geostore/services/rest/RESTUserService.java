@@ -61,7 +61,7 @@ public interface RESTUserService {
 
     @POST
     @Path("/")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON  })
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
@@ -70,7 +70,7 @@ public interface RESTUserService {
 
     @PUT
     @Path("/user/{id}")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML,MediaType.APPLICATION_JSON  })
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("user") User user)

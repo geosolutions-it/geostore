@@ -34,9 +34,18 @@ import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
+import org.springframework.security.access.annotation.Secured;
+
+import com.googlecode.genericdao.search.Search;
 
 /**
  * @author DamianoG
@@ -96,6 +105,19 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
     }
 
     /* 
+     * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserGroupService#get(javax.ws.rs.core.SecurityContext, long)
+     */
+    @Override
+	public	RESTUserGroup get(SecurityContext sc, long id)
+			throws NotFoundWebEx {
+		try {
+			UserGroup g = userGroupService.get(id);
+			return new RESTUserGroup(g.getId(),g.getGroupName(),g.getUsers());
+		} catch (BadRequestServiceEx e) {
+			throw new BadRequestWebEx("UserGroup Not found");
+		}
+    }
+    /* 
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserGroupService#assignUserGroup(javax.ws.rs.core.SecurityContext, long, long)
      */
     @Override
@@ -105,6 +127,18 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
         }
         try {
             userGroupService.assignUserGroup(userId, groupId);
+        } catch (NotFoundServiceEx e) {
+            throw new NotFoundWebEx(e.getMessage());
+        }
+    }
+    
+    @Override
+    public void deassignUserGroup(SecurityContext sc, long userId, long groupId) throws NotFoundWebEx {
+        if (userId < 0 || groupId < 0) {
+            throw new BadRequestWebEx("The user group or user id you provide is < 0... not good...");
+        }
+        try {
+            userGroupService.deassignUserGroup(userId, groupId);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         }
@@ -160,4 +194,17 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
         ShortResourceList srl = new ShortResourceList(srll);
         return srl;
     }
+
+	@Override
+	public	RESTUserGroup get(SecurityContext sc,  String name)
+			throws NotFoundWebEx {
+		UserGroup ug = userGroupService.get(name);
+		if(ug != null){
+			return new RESTUserGroup(ug.getId(),ug.getGroupName(),ug.getUsers());
+		}
+		return null;
+	}
+
+	
+	
 }

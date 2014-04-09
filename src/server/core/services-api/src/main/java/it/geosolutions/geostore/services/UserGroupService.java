@@ -58,6 +58,14 @@ public interface UserGroupService {
     
     /**
      * 
+     * @param userId
+     * @param groupId
+     * @throws NotFoundServiceEx
+     */
+    void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx;
+    
+    /**
+     * 
      * @param page
      * @param entries
      * @return
@@ -65,6 +73,7 @@ public interface UserGroupService {
      */
     List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
     
+    UserGroup get(long id) throws BadRequestServiceEx;
     /**
      * 
      * @param groupId
@@ -85,4 +94,11 @@ public interface UserGroupService {
      * @return true if the persist operation finish with success, false otherwise  
      */
     public boolean insertSpecialUsersGroups();
+    /**
+     * Get The UserGroup from the name
+     * @param name
+     */
+    public UserGroup get(String name);
+
+	
 }

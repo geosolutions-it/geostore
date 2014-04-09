@@ -22,6 +22,7 @@ package it.geosolutions.geostore.services.rest;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 
@@ -47,9 +48,11 @@ import org.springframework.security.access.annotation.Secured;
  */
 public interface RESTUserGroupService {
 
+	
+	
     @POST
     @Path("/")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML,MediaType.APPLICATION_JSON })
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("userGroup") UserGroup userGroup)
@@ -60,10 +63,28 @@ public interface RESTUserGroupService {
     @Secured({ "ROLE_ADMIN" })
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
+    @GET
+	@Path("/group/{id}")
+    @Secured({ "ROLE_ADMIN" })
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    RESTUserGroup get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
+    
+    @GET
+	@Path("/group/name/{name}")
+    @Secured({ "ROLE_ADMIN" })
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    RESTUserGroup get(@Context SecurityContext sc, @PathParam("id") String name) throws NotFoundWebEx;
+    
     @POST
     @Path("/group/{userid}/{groupid}")
     @Secured({ "ROLE_ADMIN" })
     void assignUserGroup(@Context SecurityContext sc, @PathParam("userid") long userId, @PathParam("groupid") long groupId)
+            throws NotFoundWebEx;
+    
+    @DELETE
+    @Path("/group/{userid}/{groupid}")
+    @Secured({ "ROLE_ADMIN" })
+    void deassignUserGroup(@Context SecurityContext sc, @PathParam("userid") long userId, @PathParam("groupid") long groupId)
             throws NotFoundWebEx;
 
     @GET
@@ -75,7 +96,7 @@ public interface RESTUserGroupService {
     
     @PUT
     @Path("/update_security_rules/{groupId}/{canRead}/{canWrite}")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })    
     @Secured({ "ROLE_ADMIN" })
     ShortResourceList updateSecurityRules(@Context SecurityContext sc, @Multipart("resourcelist")ShortResourceList resourcesToSet, @PathParam("groupId") Long groupId, @PathParam("canRead") Boolean canRead, @PathParam("canWrite") Boolean canWrite) throws BadRequestWebEx, NotFoundWebEx;

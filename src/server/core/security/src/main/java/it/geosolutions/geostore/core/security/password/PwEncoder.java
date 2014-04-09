@@ -27,7 +27,7 @@ package it.geosolutions.geostore.core.security.password;
  */
 public class PwEncoder {
 
-    private static GeoStorePasswordEncoder encoder = new GeoStoreAESEncoder();
+    private static GeoStorePasswordEncoder encoder = new it.geosolutions.geostore.core.security.password.GeoStoreDigestPasswordEncoder();
     public static String encode(String msg) {
     	return encoder.encodePassword(msg.toCharArray(), null);
     }
