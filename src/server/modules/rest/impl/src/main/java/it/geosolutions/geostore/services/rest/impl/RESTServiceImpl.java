@@ -228,7 +228,7 @@ public abstract class RESTServiceImpl{
     }
     
     /**
-     * Given a GroupNames Set returns a List that contains all the group names
+     * Given a Group Set returns a List that contains all the group names
      * 
      * @param groups
      * @return

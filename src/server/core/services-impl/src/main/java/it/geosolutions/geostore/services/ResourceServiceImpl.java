@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -327,7 +328,8 @@ public class ResourceServiceImpl implements ResourceService {
         // for each resource in the list
         // //////////////////////////////////////////////////////////
         searchCriteria.addFetch("security");
-
+        searchCriteria.setDistinct(true);
+        
         List<Resource> found = resourceDAO.search(searchCriteria);
 
         return convertToShortList(found, authUser);
@@ -360,7 +362,8 @@ public class ResourceServiceImpl implements ResourceService {
         // for each resource in the list
         // //////////////////////////////////////////////////////////
         searchCriteria.addFetch("security");
-
+        searchCriteria.setDistinct(true);
+        
         List<Resource> found = resourceDAO.search(searchCriteria);
 
         return convertToShortList(found, authUser);
@@ -431,7 +434,8 @@ public class ResourceServiceImpl implements ResourceService {
                                 }
                             }
                         } else if(userGroup != null){
-                            if (authUser.getGroups() != null && authUser.getGroups().contains(userGroup.getGroupName())) {
+                            List<String> groups = extratcGroupNames(authUser.getGroups());
+                            if (groups.contains(userGroup.getGroupName())) {
                                 if (rule.isCanWrite()) {
                                     shortResource.setCanEdit(true);
                                     shortResource.setCanDelete(true);
@@ -448,6 +452,17 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         return swList;
+    }
+    
+    public static List<String> extratcGroupNames(Set<UserGroup> groups){
+        List<String> groupNames = new ArrayList<String>();
+        if(groups == null){
+            return groupNames;
+        }
+        for(UserGroup ug : groups){
+            groupNames.add(ug.getGroupName());
+        }
+        return groupNames;
     }
 
     /*
@@ -570,6 +585,9 @@ public class ResourceServiceImpl implements ResourceService {
             searchCriteria.setMaxResults(entries);
             searchCriteria.setPage(page);
         }
+        
+        searchCriteria.addFetch("security");
+        searchCriteria.setDistinct(true);
 
         List<Resource> resources = this.resourceDAO.search(searchCriteria);
         resources = this.configResourceList(resources, includeAttributes, includeData, authUser);
@@ -631,8 +649,9 @@ public class ResourceServiceImpl implements ResourceService {
         // addFetch to charge the corresponding security rules
         // for each resource in the list
         // //////////////////////////////////////////////////////////
-        searchCriteria.addFetch("security"); // TODO: Test this, should be runs
-
+        searchCriteria.addFetch("security");
+        searchCriteria.setDistinct(true);
+        
         List<Resource> resources = this.resourceDAO.search(searchCriteria);
 
         return convertToShortList(resources, authUser);
@@ -657,6 +676,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         Search searchCriteria = SearchConverter.convert(filter);
         searchCriteria.addFetch("security");
+        searchCriteria.setDistinct(true);
         searchCriteria.addFetch("data");
 
         List<Resource> resources = this.resourceDAO.search(searchCriteria);
