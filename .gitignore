@@ -16,6 +16,7 @@ src/target
 src/server/core/model/target
 src/server/core/persistence/target
 src/server/core/target
+src/server/core/security/target
 src/server/core/services-api/target
 src/server/core/services-impl/target
 src/server/modules/target
