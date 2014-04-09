@@ -28,3 +28,4 @@ src/server/modules/rest/test/target
 src/server/target
 src/server/web/app/target
 src/server/web/target
+src/server/core/security/target
