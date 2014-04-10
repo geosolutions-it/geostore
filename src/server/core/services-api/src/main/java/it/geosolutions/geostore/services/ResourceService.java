@@ -194,4 +194,23 @@ public interface ResourceService extends SecurityService{
     public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
+    /**
+     * Get filter count by filter and user
+     * @param filter
+     * @param user
+     * @return resources' count that the user has access
+     * @throws InternalErrorServiceEx 
+     * @throws BadRequestServiceEx 
+     */
+	long getCountByFilterAndUser(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx;
+
+    /**
+     * Get filter count by namerLike and user
+     * @param nameLike
+     * @param user
+     * @return resources' count that the user has access
+     * @throws BadRequestServiceEx 
+     */
+	long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx;
+
 }
