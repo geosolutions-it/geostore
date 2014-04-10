@@ -48,6 +48,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Index;
+import org.hibernate.annotations.Type;
 
 /**
  * Class Group.
@@ -79,8 +80,27 @@ public class UserGroup implements Serializable {
     @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
+    @Type(type="yes_no")
+    @Column(nullable = false,updatable =true)
+	private boolean enabled=true;
+    
+    /**
+     * 
+     * @return the enabled flag
+     */
+    public boolean isEnabled() {
+		return enabled;
+	}
 
-    @ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
+    /**
+     * set enabled flag
+     * @param enabled
+     */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	@ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
     @Index(name = "idx_group_user")
     private Set<User> users;
 

@@ -54,6 +54,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Index;
+import org.hibernate.annotations.Type;
 
 /**
  * Class User.
@@ -112,6 +113,10 @@ public class User implements Serializable {
         inverseJoinColumns = { @JoinColumn(name = "group_id", nullable = false, updatable = false) })
     @Index(name = "idx_user_group")
     private Set<UserGroup> groups;
+
+    @Type(type="yes_no")
+    @Column(nullable = false,updatable =true)
+	private boolean enabled=true;
 
     /**
      * @return the id
@@ -223,6 +228,22 @@ public class User implements Serializable {
         this.attribute = attribute;
     }
 
+    /**
+     * 
+     * @return the enabled flag
+     */
+    public boolean isEnabled() {
+		return enabled;
+	}
+
+    /**
+     * set enabled flag
+     * @param enabled
+     */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+	
     /**
      * @return the role
      */
