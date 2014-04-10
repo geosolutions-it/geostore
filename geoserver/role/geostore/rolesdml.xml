@@ -6,10 +6,10 @@
   <entry key="roles.count">
     SELECT sum(c) FROM (SELECT count(*)+1  AS c  FROM gs_usergroup UNION SELECT count(distinct user_role) AS c FROM gs_user )AS b  </entry>
   <entry key="roles.all">
-	SELECT groupname,'GEOSTORE' as parent from gs_usergroup UNION SELECT 'GEOSTORE',NULL UNION SELECT DISTINCT user_role,NULL from gs_user
+	SELECT replace(groupname, ' ', '_'),'GEOSTORE' as parent from gs_usergroup UNION SELECT 'GEOSTORE',NULL UNION SELECT DISTINCT user_role,NULL from gs_user
   </entry>
   <entry key="roles.keyed">
-	SELECT CASE WHEN ? IN (SELECT groupname FROM gs_usergroup) THEN 'GEOSTORE' ELSE NULL END
+	SELECT CASE WHEN ? IN (SELECT replace(groupname, ' ', '_') FROM gs_usergroup) THEN 'GEOSTORE' ELSE NULL END
   </entry>
   <entry key="roles.insert">
 	insert into gs_usergroup (id,groupname) values (nextval('hibernate_sequence'),?)
@@ -59,7 +59,7 @@
     select CASE WHEN ? = 'admin'  THEN 'ADMIN' ELSE 'USER' END,NULL
   </entry>
   <entry key="userroles.usersForRole">
-	SELECT u.name FROM (SELECT name,user_role FROM gs_user UNION (SELECT  u.name,g.groupname FROM gs_user u,gs_usergroup g, gs_usergroup_members m WHERE u.id=m.user_id AND g.id = m.group_id)    from user_roles where rolename = ?
+	SELECT u.name FROM  gs_user where role = ?
   </entry>
   <entry key="userroles.insert">
 	select NULL from gs_user where name = ?
@@ -80,25 +80,26 @@
 
 
   <entry key="grouproles.rolesForGroup">
-	SELECT DISTINCT g.groupname,'GEOSTORE' as parent  FROM gs_user u JOIN gs_usergroup_members m ON u.id = m.user_id JOIN  gs_usergroup g on m.group_id = g.id WHERE g.groupname= ? 
+	SELECT DISTINCT replace(g.groupname, ' ', '_'),'GEOSTORE' as parent  FROM gs_user u JOIN gs_usergroup_members m ON u.id = m.user_id JOIN  gs_usergroup g on m.group_id = g.id WHERE g.groupname = ? 
   </entry>
+  <!-- The group roles don't distinguish between spaces and underscores -->
   <entry key="grouproles.groupsForRole">
-	select groupname for gs_usergroup where groupname = ?
+	select groupname for gs_usergroup where groupname like (?,'_','%')
   </entry>
   <entry key="grouproles.insert">
-	insert into group_roles(rolename,groupname) values (?,?)
+	SELECT NULL where name=? AND name =?
   </entry>
   <entry key="grouproles.delete">
-	delete from group_roles where rolename=? and groupname = ?
+	SELECT NULL where name=? AND name =?
   </entry>
   <entry key="grouproles.deleteRole">
-	delete from group_roles where rolename=? 
+	SELECT NULL where name=?
   </entry>
   <entry key="grouproles.deleteGroup">
-	delete from group_roles where groupname = ?
+	SELECT NULL where name=?
   </entry>
     <entry key="grouproles.deleteAll">
-	delete from group_roles  
+	SELECT NULL where name=?
   </entry>
   
 	  

@@ -77,7 +77,6 @@
   <entry key="userprops.userCountHavingPropertyValue">
     select count(*) from gs_user_attribute p where  p.name = ? and p.string = ? 
   </entry>      
-  <!-- End Not Yet Implemented --> 
   <!--  end GeoServer version 2.3.0 -->  
   
   
