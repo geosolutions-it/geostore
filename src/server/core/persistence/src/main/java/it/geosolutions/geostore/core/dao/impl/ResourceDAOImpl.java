@@ -32,6 +32,8 @@ import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -247,5 +249,30 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
         }
         return resourceToSet;
     }
+
+    /**
+     * Get criteria count by user
+     * @param searchCriteria
+     * @param user
+     * @return resources' count that the user has access 
+     */
+	@Override
+	public long count(Search searchCriteria, User user) {
+        searchCriteria.addField("security");
+        
+        List<Long> groupsId = new ArrayList<Long>();
+        for(UserGroup group: user.getGroups()){
+        	groupsId.add(group.getId());
+        }
+
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(Filter.or(Filter.in("group.id", groupsId),
+                		Filter.equal("user.name", user.getName())),
+            		Filter.equal("canRead", true)
+                        ));
+        searchCriteria.addFilter(securityFilter);
+		return count(searchCriteria);
+	}
 
 }
