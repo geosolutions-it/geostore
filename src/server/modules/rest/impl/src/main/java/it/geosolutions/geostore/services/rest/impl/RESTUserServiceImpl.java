@@ -89,17 +89,17 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             // Parsing UserAttributes list
             //
             List<UserAttribute> usAttribute = user.getAttribute();
-
+        	//persist the user first
             if (usAttribute != null) {
-                if (usAttribute.size() > 0) {
-                    user.setAttribute(usAttribute);
-                }
+            	user.setAttribute(null);
             }
-
             id = userService.insert(user);
+            //insert attributes after user creation
             if (usAttribute != null) {
             	userService.updateAttributes(id, usAttribute);
             }
+            
+            
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         } catch (BadRequestServiceEx e) {
