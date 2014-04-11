@@ -97,6 +97,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             }
 
             id = userService.insert(user);
+            if (usAttribute != null) {
+            	userService.updateAttributes(id, usAttribute);
+            }
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         } catch (BadRequestServiceEx e) {
@@ -145,32 +148,32 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     userUpdated = true;
                 }
             }
+            //
+            // Creating a new User Attribute list (updated).
+            //
+            List<UserAttribute> attributeDto = user.getAttribute();
 
+            if (attributeDto != null) {
+                Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
+
+                List<UserAttribute> attributes = new ArrayList<UserAttribute>();
+                while (iteratorDto.hasNext()) {
+                    UserAttribute aDto = iteratorDto.next();
+
+                    UserAttribute a = new UserAttribute();
+                    a.setValue(aDto.getValue());
+                    a.setName(aDto.getName());
+                    attributes.add(a);
+                }
+
+                if (attributes.size() > 0) {
+                    userService.updateAttributes(id, attributes);
+                }
+            }
             if (userUpdated) {
                 id = userService.update(old);
 
-                //
-                // Creating a new User Attribute list (updated).
-                //
-                List<UserAttribute> attributeDto = user.getAttribute();
-
-                if (attributeDto != null) {
-                    Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
-
-                    List<UserAttribute> attributes = new ArrayList<UserAttribute>();
-                    while (iteratorDto.hasNext()) {
-                        UserAttribute aDto = iteratorDto.next();
-
-                        UserAttribute a = new UserAttribute();
-                        a.setValue(aDto.getValue());
-                        a.setName(aDto.getName());
-                        attributes.add(a);
-                    }
-
-                    if (attributes.size() > 0) {
-                        userService.updateAttributes(id, attributes);
-                    }
-                }
+               
 
                 return id;
             } else
@@ -304,6 +307,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             authUser = userService.get(authUser.getName());
 
             if (authUser != null) {
+        		if(authUser.getRole().equals(Role.GUEST)){
+        			throw new NotFoundWebEx("User not found");
+        		}
                 ret = new User();
                 ret.setId(authUser.getId());
                 ret.setName(authUser.getName());
