@@ -171,13 +171,13 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 }
             }
             if (userUpdated) {
+            	//attributes where updated before
+            	old.setAttribute(null);
                 id = userService.update(old);
-
-               
-
                 return id;
-            } else
+            } else {
                 return -1;
+            }
 
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
