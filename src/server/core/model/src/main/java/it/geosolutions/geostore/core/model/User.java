@@ -48,6 +48,8 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -136,6 +138,8 @@ public class User implements Serializable {
     /**
      * @return the group
      */
+    @XmlElementWrapper
+    @XmlElement(name="group")
     public Set<UserGroup> getGroups() {
         return groups;
     }
