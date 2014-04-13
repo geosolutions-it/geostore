@@ -85,31 +85,31 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
     // ==========================================================================
 
     public long insertUserGroup(UserGroup usergroup) {
-        String sid = getBaseWebResource("usersgroup").header("Content-Type", MediaType.TEXT_XML)
+        String sid = getBaseWebResource("usergroups").header("Content-Type", MediaType.TEXT_XML)
                 .accept(MediaType.TEXT_PLAIN).post(String.class, usergroup);
 
         return Long.parseLong(sid);
     }
 
     public void deleteUserGroup(long usergroupId) {
-        getBaseWebResource("usersgroup", "group", usergroupId).delete();
+        getBaseWebResource("usergroups", "group", usergroupId).delete();
     }
 
     public void assignUserGroup(long userId, long usergroupId) {
-        getBaseWebResource("usersgroup", "group", userId, usergroupId).post();
+        getBaseWebResource("usergroups", "group", userId, usergroupId).post();
     }
 
     public void deassignUserGroup(long userId, long usergroupId) {
-    	 getBaseWebResource("usersgroup", "group", userId, usergroupId).delete();
+    	 getBaseWebResource("usergroups", "group", userId, usergroupId).delete();
 		
 	}
     
     public RESTUserGroup getUserGroup(long usergroupId){
-    	return getBaseWebResource("usersgroup", "group", usergroupId).get(RESTUserGroup.class);
+    	return getBaseWebResource("usergroups", "group", usergroupId).get(RESTUserGroup.class);
     }
     
     public UserGroupList getUserGroups(Integer page, Integer entries) {
-        WebResource wr = getBaseWebResource("usersgroup");
+        WebResource wr = getBaseWebResource("usergroups");
         wr.queryParam("page", page.toString());
         wr.queryParam("entries", entries.toString());
         return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
@@ -118,14 +118,14 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
 
     public ShortResourceList updateSecurityRules(ShortResourceList resourcesToSet, Long groupId,
             boolean canRead, boolean canWrite) {
-        WebResource wr = getBaseWebResource("usersgroup","update_security_rules", groupId, canRead, canWrite);
+        WebResource wr = getBaseWebResource("usergroups","update_security_rules", groupId, canRead, canWrite);
         ShortResourceList updatedResources = wr.header("Content-Type", MediaType.TEXT_XML)
                 .accept(MediaType.TEXT_XML).put(ShortResourceList.class, resourcesToSet);
         return updatedResources;
     }
 
 	public RESTUserGroup getUserGroup(String name) {
-		return getBaseWebResource("usersgroup", "group", "name",name).get(RESTUserGroup.class);
+		return getBaseWebResource("usergroups", "group", "name",name).get(RESTUserGroup.class);
 		
 	}
 
