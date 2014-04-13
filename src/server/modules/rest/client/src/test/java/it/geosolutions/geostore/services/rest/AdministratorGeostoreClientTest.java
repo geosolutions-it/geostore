@@ -135,6 +135,39 @@ public class AdministratorGeostoreClientTest{
             System.out.println(users.getList().get(0).getName());
             users = geoStoreClient.getUsers(2, 1);
             System.out.println(users.getList().get(0).getName());
+            
+            UserGroup ug1 = new UserGroup();
+            ug1.setGroupName("testGroup1");
+            ug1.setDescription("testGroup1-Description");
+            UserGroup ug2 = new UserGroup();
+            ug2.setGroupName("testGroup2");
+            ug2.setDescription("testGroup2-Description");
+            UserGroup ug3 = new UserGroup();
+            ug3.setGroupName("testGroup3");
+            ug3.setDescription("testGroup3-Description");
+            geoStoreClient.insertUserGroup(ug1);
+            geoStoreClient.insertUserGroup(ug2);
+            geoStoreClient.insertUserGroup(ug3);
+            Set<UserGroup> ugs = new HashSet<UserGroup>();
+            ugs.add(ug1);
+            ugs.add(ug2);
+            ugs.add(ug3);
+            User user = new User();
+            user.setName("testuser111");
+            user.setRole(Role.USER);
+            user.setNewPassword("testpw");
+            UserAttribute email = new UserAttribute();
+            email.setName("email");
+            email.setValue("test@geo-solutions.it");
+            user.setGroups(ugs);
+            geoStoreClient.insert(user);
+            users = geoStoreClient.getUsers(3, 1);
+            for(RESTUser u : users.getList()){
+                if("testuser111".equals(u.getName())){
+                    assertEquals(3,u.getGroupsNames().size());     
+                }
+            }
+            
         } catch (Exception e) {
             fail();
         }
@@ -153,13 +186,27 @@ public class AdministratorGeostoreClientTest{
             UserAttribute email = new UserAttribute();
             email.setName("email");
             email.setValue("test@geo-solutions.it");
-
+            
+            UserGroup ug = new UserGroup();
+            ug.setGroupName("testGroup1");
+            ug.setDescription("testGroup1-Description");
+            geoStoreClient.insertUserGroup(ug);
+            Set<UserGroup> ugs = new HashSet<UserGroup>();
+            ugs.add(ug);
+            user.setGroups(ugs);
+            
             List<UserAttribute> attrs = new ArrayList<UserAttribute>();
             attrs.add(email);
             user.setAttribute(attrs);
             Long id = geoStoreClient.insert(user);
             System.out.println(id);
             User us = geoStoreClient.getUser(id, true);
+            //check assigned usergroup
+            assertEquals(1,us.getGroups().size());
+            UserGroup ugRetrieved = us.getGroups().iterator().next();
+            assertEquals("testGroup1-Description",ugRetrieved.getDescription());
+            assertNotNull(ugRetrieved.getId());
+            
             user.getName().equals("testuser");
             attrs = us.getAttribute();
             assertNotNull("Missing attribute list", attrs);

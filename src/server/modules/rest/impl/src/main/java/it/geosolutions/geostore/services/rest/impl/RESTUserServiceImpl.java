@@ -274,7 +274,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups());
                 restUSERList.add(restUser);
             }
 
@@ -342,7 +342,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups());
                 restUSERList.add(restUser);
             }
 
