@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <UserGroupList>
 	<UserGroup>
-		<groupName>allresources</groupName>
+		<groupName>testGroup1</groupName>
+		<description>description</description>
 		<restUsers />
 		<id />
 	</UserGroup>

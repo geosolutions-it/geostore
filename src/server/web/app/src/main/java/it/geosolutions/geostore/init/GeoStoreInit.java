@@ -244,6 +244,7 @@ public class GeoStoreInit implements InitializingBean {
                 LOGGER.info("Adding user group " + userGroup);
                 UserGroup ug = new UserGroup();
                 ug.setGroupName(userGroup.getGroupName());
+                ug.setDescription(userGroup.getDescription());
                 try{
                 userGroupService.insert(ug);
                 }
