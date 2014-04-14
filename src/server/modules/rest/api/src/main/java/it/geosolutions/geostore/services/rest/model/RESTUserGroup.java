@@ -55,7 +55,7 @@ public class RESTUserGroup implements Serializable{
         this.groupName = groupName;
         List<RESTUser> list = new ArrayList<RESTUser>();
         for(User u : users){
-            list.add(new RESTUser(u.getId(), u.getName(), u.getRole()));
+            list.add(new RESTUser(u.getId(), u.getName(), u.getRole(), u.getGroups()));
         }
         this.restUsers = new UserList(list); 
     }

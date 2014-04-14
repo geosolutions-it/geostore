@@ -137,7 +137,7 @@
 <!-- 		</jaxrs:inInterceptors> -->
 	</jaxrs:server>
 
-	<jaxrs:server id="geoStoreRESTUserGroup" address="/usersgroup">
+	<jaxrs:server id="geoStoreRESTUserGroup" address="/usergroups">
 		<jaxrs:serviceBeans>
 			<ref bean="restUserGroupService" />
 		</jaxrs:serviceBeans>

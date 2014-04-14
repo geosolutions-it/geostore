@@ -204,7 +204,4 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
 		}
 		return null;
 	}
-
-	
-	
 }

@@ -86,7 +86,7 @@ public interface RESTUserGroupService {
     @Secured({ "ROLE_ADMIN" })
     void deassignUserGroup(@Context SecurityContext sc, @PathParam("userid") long userId, @PathParam("groupid") long groupId)
             throws NotFoundWebEx;
-
+    
     @GET
     @Path("/")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })

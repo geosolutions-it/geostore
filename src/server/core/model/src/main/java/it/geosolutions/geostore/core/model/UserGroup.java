@@ -74,6 +74,9 @@ public class UserGroup implements Serializable {
     @Index(name = "idx_usergroup_name")
     private String groupName;
 
+    @Column(nullable = true, updatable = true, length = 200)
+    private String description;
+    
     /*
      * Only To allow the CASCADING operation
      */
@@ -82,23 +85,23 @@ public class UserGroup implements Serializable {
 
     @Type(type="yes_no")
     @Column(nullable = false,updatable =true)
-	private boolean enabled=true;
+    private boolean enabled=true;
     
     /**
      * 
      * @return the enabled flag
      */
     public boolean isEnabled() {
-		return enabled;
-	}
+        return enabled;
+    }
 
     /**
      * set enabled flag
      * @param enabled
      */
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
 
 	@ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
     @Index(name = "idx_group_user")
@@ -107,7 +110,7 @@ public class UserGroup implements Serializable {
     /**
      * @return the id
      */
-    @XmlTransient
+    //@XmlTransient
     public Long getId() {
         return id;
     }
@@ -161,6 +164,20 @@ public class UserGroup implements Serializable {
      */
     public void setUsers(Set<User> users) {
         this.users = users;
+    }
+    
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /*
