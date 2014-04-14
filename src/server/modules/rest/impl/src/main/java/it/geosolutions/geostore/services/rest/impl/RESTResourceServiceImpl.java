@@ -33,11 +33,8 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
-import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
@@ -78,8 +75,6 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     private final static Logger LOGGER = Logger.getLogger(RESTResourceServiceImpl.class);
 
     private ResourceService resourceService;
-
-    private UserGroupService userGroupService;
     
     /**
      * @param resourceService
@@ -87,15 +82,6 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
-    
-    /**
-     * @param userGroupService the userGroupService to set
-     */
-    public void setUserGroupService(UserGroupService userGroupService) {
-        this.userGroupService = userGroupService;
-    }
-
-
 
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
@@ -132,19 +118,6 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         userSecurityRule.setCanWrite(true);
         userSecurityRule.setUser(authUser);
         securities.add(userSecurityRule);
-        
-        // EVERYONE security rule: add a security rule to allow the special group EVERYONE to see all resources
-        UserGroup everyoneGroup;
-        try {
-            everyoneGroup = userGroupService.get(GroupReservedNames.EVERYONE.toString().toLowerCase());
-            SecurityRule everyoneSecurityRule = new SecurityRule();
-            everyoneSecurityRule.setCanRead(true);
-            everyoneSecurityRule.setCanWrite(false);
-            everyoneSecurityRule.setGroup(everyoneGroup);
-            securities.add(everyoneSecurityRule);
-        } catch (Exception e1) {
-            LOGGER.warn("The everyone group doesn't exist... skip the insertion of the related security rule for resource '" + resource.getName() + "'");
-        }
 
         Resource r = Convert.convertResource(resource);
         r.setSecurity(securities);
