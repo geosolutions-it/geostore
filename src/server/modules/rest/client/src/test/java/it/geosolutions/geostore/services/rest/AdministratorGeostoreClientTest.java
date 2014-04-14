@@ -412,6 +412,16 @@ public class AdministratorGeostoreClientTest{
     }
     
     @Test
+    public void testUserInitialization(){
+        UserList ul = geoStoreClient.getUsers(1,100);
+        assertEquals(2, ul.getList().size());
+        for(RESTUser u : ul.getList()){
+            assertEquals(1, u.getGroupsNames().size());
+            assertEquals("everyone",u.getGroupsNames().get(0));
+        }
+    }
+    
+    @Test
     public void everyoneGroupTest(){
         
         UserGroupList ugl = geoStoreClient.getUserGroups(1, 1000);
