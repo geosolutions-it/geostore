@@ -216,7 +216,7 @@ public abstract class RESTServiceImpl{
         List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
         authorities.add(new GrantedAuthorityImpl("ROLE_GUEST"));
         try {
-            User u = userService.get(UserReservedNames.GUEST.toString().toLowerCase());
+            User u = userService.get(UserReservedNames.GUEST.userName());
             return new UsernamePasswordAuthenticationToken(u,"", authorities);
         } catch (NotFoundServiceEx e) {
             if(LOGGER.isDebugEnabled()){

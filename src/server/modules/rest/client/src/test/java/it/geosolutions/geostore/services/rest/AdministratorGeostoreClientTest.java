@@ -320,12 +320,12 @@ public class AdministratorGeostoreClientTest{
         ug = new UserGroup();
         ug.setGroupName(restUG1.getGroupName());
         assertNotNull(ug);
-        assertEquals("usergrouptest1",ug.getGroupName());
+        assertEquals("usergroupTest1",ug.getGroupName());
         UserGroupList ugl = geoStoreClient.getUserGroups(0, 1000);
         List<RESTUserGroup> ugll = ugl.getUserGroupList();
         assertEquals(2, ugll.size());
         RESTUserGroup ug1 = ugll.get(1);
-        assertEquals("usergrouptest1", ug1.getGroupName());
+        assertEquals("usergroupTest1", ug1.getGroupName());
 
         List<RESTUser> userAssigned = ug1.getRestUsers().getList();
         assertEquals(null,userAssigned);
@@ -357,7 +357,7 @@ public class AdministratorGeostoreClientTest{
         ugll = ugl.getUserGroupList();
         assertEquals(2, ugll.size());
         ug1 = ugll.get(1);
-        assertEquals("usergrouptest1", ug1.getGroupName());
+        assertEquals("usergroupTest1", ug1.getGroupName());
         userAssigned = ug1.getRestUsers().getList();
         assertEquals(2,userAssigned.size());
         
@@ -370,7 +370,7 @@ public class AdministratorGeostoreClientTest{
         ugid = geoStoreClient.insertUserGroup(ug2);
         RESTUserGroup restUG = geoStoreClient.getUserGroup(ugid);
         assertNotNull(restUG);
-        assertEquals("usergrouptest2", restUG.getGroupName());
+        assertEquals("usergroupTest2", restUG.getGroupName());
         // usergrouptest1 user
         User us= geoStoreClient.getUser(userAssigned.get(0).getId());
         Set<UserGroup> usergroups2 = us.getGroups();
@@ -409,6 +409,16 @@ public class AdministratorGeostoreClientTest{
         geoStoreClient.deleteUser(uid2);
         ul = geoStoreClient.getUsers(0, 1000);
         assertEquals(2, ul.getList().size());
+    }
+    
+    @Test
+    public void testUserInitialization(){
+        UserList ul = geoStoreClient.getUsers(1,100);
+        assertEquals(2, ul.getList().size());
+        for(RESTUser u : ul.getList()){
+            assertEquals(1, u.getGroupsNames().size());
+            assertEquals("everyone",u.getGroupsNames().get(0));
+        }
     }
     
     @Test

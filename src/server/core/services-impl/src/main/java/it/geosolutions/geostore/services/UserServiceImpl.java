@@ -92,6 +92,9 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BadRequestServiceEx("User type must be specified !");
         }
+        if(!UserReservedNames.isAllowedName(user.getName())){
+            throw new BadRequestServiceEx("User name '" + user.getName() + "' is not allowed...");
+        }
 
         User u = new User();
         u.setName(user.getName());
@@ -106,7 +109,7 @@ public class UserServiceImpl implements UserService {
         List<UserGroup> existingGroups = new ArrayList<UserGroup>();
         if (groups != null && groups.size() > 0) {
             for(UserGroup group : groups){
-                String groupName = group.getGroupName().toLowerCase();
+                String groupName = group.getGroupName();
                 groupNames.add(groupName);
                 if (StringUtils.isEmpty(groupName)) {
                     throw new BadRequestServiceEx("The user group name must be specified! ");
@@ -126,7 +129,7 @@ public class UserServiceImpl implements UserService {
         }
         // Special Usergroup EVERYONE management
         Search search = new Search();
-        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.toString().toLowerCase());
+        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
         List<UserGroup> ugEveryone = userGroupDAO.search(search);
         if(ugEveryone == null || ugEveryone.size() != 1){
             // Only log the error at ERROR level and avoid block the user creation... 
@@ -384,8 +387,15 @@ public class UserServiceImpl implements UserService {
         }
         
         User u = new User();
-        u.setName(UserReservedNames.GUEST.toString().toLowerCase());
+        u.setName(UserReservedNames.GUEST.userName());
         u.setRole(Role.GUEST);
+        Search search = new Search();
+        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        List<UserGroup> userGroup = userGroupDAO.search(search);
+        if(userGroup.size() != 1){
+            LOGGER.warn("More than EVERYONE group is found...");
+        }
+        u.setGroups(new HashSet<UserGroup>(userGroup));
         userDAO.persist(u);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Special User '" + u.getName() + "' persisted!");

@@ -25,7 +25,17 @@ package it.geosolutions.geostore.core.model.enums;
  *
  */
 public enum GroupReservedNames {
-    EVERYONE;
+    EVERYONE ("everyone");
+    
+    private final String groupNameToPersist;
+    
+    GroupReservedNames(String groupNameToPersist){
+        this.groupNameToPersist = groupNameToPersist;
+    }
+    
+    public String groupName() {
+        return groupNameToPersist;
+    }
     
     /**
      * Given a candidate groupName this method checks if the name is allowed.
@@ -36,7 +46,7 @@ public enum GroupReservedNames {
      * @return
      */
     public static boolean isAllowedName(String groupNameToCheck){
-        if(EVERYONE.toString().equalsIgnoreCase(groupNameToCheck)){
+        if(EVERYONE.groupName().equalsIgnoreCase(groupNameToCheck)){
             return false;
         }
         return true;

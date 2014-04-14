@@ -106,8 +106,7 @@ public class UserGroupServiceImpl implements UserGroupService{
             throw new ReservedUserGroupNameEx("The usergroup name you try to save: '" + userGroup.getGroupName() + "' is a reserved name!");
         }
         
-        //Force the groupname to lower case
-        userGroup.setGroupName(userGroup.getGroupName().toLowerCase());
+        userGroup.setGroupName(userGroup.getGroupName());
         
         userGroupDAO.persist(userGroup);
         if (LOGGER.isDebugEnabled()) {
@@ -218,7 +217,7 @@ public class UserGroupServiceImpl implements UserGroupService{
             throw new NotFoundServiceEx("The usergroup id you provide doesn't exist!");
         }
         
-        if(group.getGroupName().equals(GroupReservedNames.EVERYONE.toString().toLowerCase())){
+        if(group.getGroupName().equals(GroupReservedNames.EVERYONE.groupName())){
             if(!canRead || canWrite){
                 LOGGER.error("You are trying to assign to a resource the following permissions for the group EVERYONE: [canRead='" + canRead + "',canWrite'" + canWrite + "'] but...");
                 LOGGER.error("...the group EVERYONE can be set only in this way: [canRead='true',canWrite='false'] .");
@@ -281,7 +280,7 @@ public class UserGroupServiceImpl implements UserGroupService{
         }
         
         UserGroup ug = new UserGroup();
-        ug.setGroupName(GroupReservedNames.EVERYONE.toString().toLowerCase());
+        ug.setGroupName(GroupReservedNames.EVERYONE.groupName());
         userGroupDAO.persist(ug);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' persisted!");
