@@ -209,13 +209,21 @@ public class UserGroupServiceImpl implements UserGroupService{
      */
     @Override
     public List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesIds, boolean canRead,
-            boolean canWrite) throws NotFoundServiceEx {
+            boolean canWrite) throws NotFoundServiceEx, BadRequestServiceEx {
         
         List<ShortResource> updated = new ArrayList<ShortResource>();
         UserGroup group = userGroupDAO.find(groupId);
         
         if(group == null){
             throw new NotFoundServiceEx("The usergroup id you provide doesn't exist!");
+        }
+        
+        if(group.getGroupName().equals(GroupReservedNames.EVERYONE.toString().toLowerCase())){
+            if(!canRead || canWrite){
+                LOGGER.error("You are trying to assign to a resource the following permissions for the group EVERYONE: [canRead='" + canRead + "',canWrite'" + canWrite + "'] but...");
+                LOGGER.error("...the group EVERYONE can be set only in this way: [canRead='true',canWrite='false'] .");
+                throw new BadRequestServiceEx("GroupEveryone cannot be set with this grants [canRead='" + canRead + "',canWrite'" + canWrite + "']");
+            }
         }
         
         List<Resource> resourceToSet = resourceDAO.findResources(resourcesIds);

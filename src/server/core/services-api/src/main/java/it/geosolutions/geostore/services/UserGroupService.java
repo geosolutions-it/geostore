@@ -81,10 +81,11 @@ public interface UserGroupService {
      * @param canRead
      * @param canWrite
      * @return
+     * @throws BadRequestServiceEx 
      * @throws BadRequestWebEx
      * @throws NotFoundWebEx
      */
-    List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite) throws NotFoundServiceEx;
+    List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite) throws NotFoundServiceEx, BadRequestServiceEx;
     
     /**
      * Persist the special UserGroups, those that implies special behavior

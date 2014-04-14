@@ -34,18 +34,9 @@ import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
-import org.springframework.security.access.annotation.Secured;
-
-import com.googlecode.genericdao.search.Search;
 
 /**
  * @author DamianoG
@@ -190,6 +181,9 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
         } catch (NotFoundServiceEx e) {
             LOGGER.error(e.getMessage(), e);
             throw new NotFoundWebEx(e.getMessage());
+        } catch (BadRequestServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new BadRequestWebEx(e.getMessage());
         }
         ShortResourceList srl = new ShortResourceList(srll);
         return srl;
