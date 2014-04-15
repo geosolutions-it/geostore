@@ -60,6 +60,7 @@ public class RESTUserGroup implements Serializable{
             list.add(new RESTUser(u.getId(), u.getName(), u.getRole(), u.getGroups()));
         }
         this.restUsers = new UserList(list); 
+        this.description = description;
     }
 
     /**
