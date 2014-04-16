@@ -19,26 +19,42 @@
  */
 package it.geosolutions.geostore.services.rest;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
-import it.geosolutions.geostore.services.dto.search.*;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import com.sun.jersey.api.client.UniformInterfaceException;
 
 /**
  * 
@@ -49,6 +65,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
     final String DEFAULTCATEGORYNAME = "TestCategory1";
 
+    
+    
     @Test
     public void testRemoveAllAttribs() {
 
@@ -412,6 +430,75 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
     }
 
+    @Test
+    public void testDefaultSecurityRules() {
+    	createDefaultCategory();
+
+        RESTResource res = new RESTResource();
+        res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
+
+        String timeid = Long.toString(System.currentTimeMillis());
+        res.setName("rest_test_resource_" + timeid);
+
+        Long id = client.insert(res);
+
+        SecurityRuleList rules = client.getSecurityRules(id);
+        assertNotNull(rules.getList());
+        assertEquals(1, rules.getList().size());
+    }
+    
+    @Test
+    public void testupdateSecurityRules() {
+    	AdministratorGeoStoreClient adminClient = new AdministratorGeoStoreClient();
+    	adminClient.setGeostoreRestUrl("http://localhost:9191/geostore/rest");
+    	adminClient.setUsername("admin");
+    	adminClient.setPassword("admin");
+    	
+    	createDefaultCategory();
+
+        RESTResource res = new RESTResource();
+        res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
+
+        String timeid = Long.toString(System.currentTimeMillis());
+        res.setName("rest_test_resource_" + timeid);
+
+        User u1 = new User();
+        u1.setName("u1_" + timeid);
+        u1.setRole(Role.USER);
+        Long userId = adminClient.insert(u1);
+        
+        UserGroup g1 = new UserGroup();
+        g1.setGroupName("g1_"  + timeid);
+        Long groupId = adminClient.insertUserGroup(g1);
+        
+        
+        Long id = client.insert(res);
+        List<SecurityRule> ruleList = new ArrayList<SecurityRule>();
+        
+        SecurityRule rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);   
+        User user = new User();
+        user.setId(userId);
+        rule.setUser(user);
+        ruleList.add(rule);
+        
+        rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(false); 
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
+        rule.setGroup(group);
+        ruleList.add(rule);
+        
+        SecurityRuleList rules = new SecurityRuleList(ruleList);
+        client.updateSecurityRules(id, rules);
+        
+        SecurityRuleList writtenRules = client.getSecurityRules(id);
+        assertNotNull(writtenRules.getList());
+        assertEquals(2, rules.getList().size());
+    }
+    
     protected Long createDefaultCategory() {
         Long catid = client.insert(new RESTCategory(DEFAULTCATEGORYNAME));
         assertNotNull(catid);

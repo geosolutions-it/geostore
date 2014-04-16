@@ -21,11 +21,16 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.AfterClass;
@@ -158,5 +163,109 @@ public class ResourceServiceImplTest extends ServiceTestBase {
             List<ShortResource> list = resourceService.getResources(filter, null);
             assertEquals(3, list.size());
         }
+    }
+    
+    @Test
+    public void testGetSecurityRules() throws Exception {
+    	long userId = createUser("user1", Role.USER, "password");
+    	User user = new User();
+    	user.setId(userId);
+    	
+    	long groupId = createGroup("group1");
+    	UserGroup group = new UserGroup();
+    	group.setId(groupId);
+    	
+    	List<SecurityRule> rules = new ArrayList<SecurityRule>();
+    	
+    	SecurityRule rule = new SecurityRule();
+    	rule.setUser(user);
+    	rule.setCanRead(true);
+    	rules.add(rule);
+    	
+    	rule = new SecurityRule();
+    	rule.setCanRead(true);
+    	rule.setCanWrite(true);
+    	rule.setGroup(group);
+    	rules.add(rule);
+    	
+    	long resourceId = createResource("name1", "description1", "MAP", rules);
+    	
+    	List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
+    	
+    	assertEquals(2, writtenRules.size());
+    	
+    	SecurityRule userRule = writtenRules.get(0);
+		assertNotNull(userRule.getUser());
+    	assertNull(userRule.getGroup());
+    	assertEquals((Long)userId, userRule.getUser().getId());
+    	assertEquals((Long)resourceId, userRule.getResource().getId());
+    	
+    	SecurityRule groupRule = writtenRules.get(1);
+		assertNotNull(groupRule.getGroup());
+    	assertNull(groupRule.getUser());
+    	assertEquals((Long)groupId, groupRule.getGroup().getId());
+    	assertEquals((Long)resourceId, groupRule.getResource().getId());
+    	
+    }
+    
+    @Test
+    public void testUpdateSecurityRules() throws Exception {
+    	long resourceId = createResource("name1", "description1", "MAP");
+    	
+    	List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
+    	assertEquals(0, writtenRules.size());
+    	
+    	List<SecurityRule> rules = new ArrayList<SecurityRule>();
+    	
+		long userId = createUser("user1", Role.USER, "password");
+		User user = new User();
+		user.setId(userId);
+		
+		long groupId = createGroup("group1");
+		UserGroup group = new UserGroup();
+		group.setId(groupId);
+		
+		long otherGroupId = createGroup("group2");
+		UserGroup othergroup = new UserGroup();
+		othergroup.setId(otherGroupId);
+
+    	SecurityRule rule = new SecurityRule();
+    	rule.setUser(user);
+    	rule.setCanRead(true);
+    	rules.add(rule);
+    	
+    	rule = new SecurityRule();
+    	rule.setCanRead(true);
+    	rule.setCanWrite(true);
+    	rule.setGroup(group);
+    	rules.add(rule);
+    	
+    	resourceService.updateSecurityRules(resourceId, rules);
+    	
+    	writtenRules = resourceService.getSecurityRules(resourceId);
+    	assertEquals(2, writtenRules.size());
+    	
+    	rules.clear();
+    	
+    	rule = new SecurityRule();
+    	rule.setUser(user);
+    	rule.setCanRead(true);
+    	rules.add(rule);
+    	
+    	rule = new SecurityRule();
+    	rule.setCanRead(true);
+    	rule.setCanWrite(true);
+    	rule.setGroup(group);
+    	rules.add(rule);
+    	rule = new SecurityRule();
+    	rule.setCanRead(true);
+    	rule.setCanWrite(true);
+    	rule.setGroup(othergroup);
+    	rules.add(rule);
+    	
+    	resourceService.updateSecurityRules(resourceId, rules);
+    	
+    	writtenRules = resourceService.getSecurityRules(resourceId);
+    	assertEquals(3, writtenRules.size());
     }
 }

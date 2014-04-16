@@ -33,6 +33,7 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -51,6 +52,7 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
@@ -493,4 +495,78 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             throw new InternalErrorWebEx(e.getMessage());
         }
     }
+
+	@Override
+	public void updateSecurityRules(SecurityContext sc, long id,
+			SecurityRuleList securityRules) {
+		//
+        // Authorization check.
+        //
+        boolean canWrite = false;
+        User authUser = extractAuthUser(sc);
+        canWrite = resourceAccessWrite(authUser, id);
+
+        if (canWrite) {
+        	ShortAttribute owner = resourceService.getAttribute(id, "owner");
+        	if((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
+	        	try {
+					resourceService.updateSecurityRules(id, Convert
+							.convertSecurityRuleList(securityRules.getList(), id));
+	        	} catch (BadRequestServiceEx e) {
+	                if (LOGGER.isInfoEnabled())
+	                    LOGGER.info(e.getMessage());
+	                throw new BadRequestWebEx(e.getMessage());
+	            } catch (InternalErrorServiceEx e) {
+	                if (LOGGER.isInfoEnabled())
+	                    LOGGER.info(e.getMessage());
+	                throw new InternalErrorWebEx(e.getMessage());
+	            } catch (NotFoundServiceEx e) {
+	            	if (LOGGER.isInfoEnabled())
+	                    LOGGER.info(e.getMessage());
+	                throw new NotFoundWebEx(e.getMessage());
+				}
+        	} else {
+        		throw new ForbiddenErrorWebEx(
+                        "This user cannot update this resource permissions!");
+        	}
+        } else {
+            throw new ForbiddenErrorWebEx(
+                    "This user cannot write this resource so neither its permissions!");
+        } 
+	}
+
+	@Override
+	public SecurityRuleList getSecurityRules(SecurityContext sc, long id) {
+		//
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id);
+
+        if (canRead) {
+        	ShortAttribute owner = resourceService.getAttribute(id, "owner");
+        	if((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
+	        	try {
+	        		return new SecurityRuleList(resourceService.getSecurityRules(id));    
+	        	} catch (BadRequestServiceEx e) {
+	                if (LOGGER.isInfoEnabled())
+	                    LOGGER.info(e.getMessage());
+	                throw new BadRequestWebEx(e.getMessage());
+	            } catch (InternalErrorServiceEx e) {
+	                if (LOGGER.isInfoEnabled())
+	                    LOGGER.info(e.getMessage());
+	                throw new InternalErrorWebEx(e.getMessage());
+	            }
+        	} else {
+        		throw new ForbiddenErrorWebEx(
+                        "This user cannot read this resource permissions!");
+        	}
+        } else {
+            throw new ForbiddenErrorWebEx(
+                    "This user cannot read this resource so neither its permissions!");
+        } 
+		
+		
+	}
 }

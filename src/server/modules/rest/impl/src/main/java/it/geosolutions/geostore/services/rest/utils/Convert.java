@@ -22,15 +22,21 @@ package it.geosolutions.geostore.services.rest.utils;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
+
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.commons.collections.CollectionUtils;
 
 /**
@@ -117,5 +123,34 @@ public class Convert {
         }
         return attributes;
     }
+
+	public static List<SecurityRule> convertSecurityRuleList(
+			List<RESTSecurityRule> list, Long resourceId) {
+		List<SecurityRule> rules = new ArrayList<SecurityRule>(list.size());
+		for(RESTSecurityRule rule : list) {
+			SecurityRule securityRule = new SecurityRule();
+			Resource resource = new Resource();
+			resource.setId(resourceId);
+			securityRule.setResource(resource);
+			
+			if(rule.getUser() != null) {
+				User user = new User();
+				user.setId(rule.getUser().getId());
+				securityRule.setUser(user);
+			}
+			
+			if(rule.getGroup() != null) {
+				UserGroup group = new UserGroup();
+				group.setId(rule.getGroup().getId());
+				securityRule.setGroup(group);
+			}
+			
+			securityRule.setCanRead(rule.isCanRead());
+			securityRule.setCanWrite(rule.isCanWrite());
+			
+			rules.add(securityRule);
+		}
+		return rules;
+	}
 
 }

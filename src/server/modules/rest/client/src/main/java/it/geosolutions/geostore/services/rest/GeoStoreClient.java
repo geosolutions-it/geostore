@@ -19,9 +19,6 @@
  */
 package it.geosolutions.geostore.services.rest;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.WebResource;
-import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -29,8 +26,14 @@ import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+
 import javax.ws.rs.core.MediaType;
+
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 
 /**
  * 
@@ -129,6 +132,18 @@ public class GeoStoreClient {
         wr.queryParam("entries", entries.toString());
         return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
                 .get(ShortResourceList.class);
+    }
+    
+    public SecurityRuleList getSecurityRules(Long resourceId) {
+    	WebResource wr = getBaseWebResource("resources", "resource", resourceId, "permissions");
+    	return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+                .get(SecurityRuleList.class);
+    }
+    
+    public void updateSecurityRules(Long resourceId, SecurityRuleList rules) {
+    	 getBaseWebResource("resources", "resource", resourceId, "permissions")
+    	 	.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_PLAIN)
+    	 	.post(rules);
     }
 
     // ==========================================================================

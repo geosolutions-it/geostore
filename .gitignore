@@ -18,6 +18,7 @@ src/server/core/persistence/target
 src/server/core/target
 src/server/core/services-api/target
 src/server/core/services-impl/target
+src/server/core/security/target
 src/server/modules/target
 src/server/modules/rest/api/target
 src/server/modules/rest/client/target
