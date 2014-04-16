@@ -731,7 +731,38 @@ public class ResourceServiceImpl implements ResourceService {
 		} else {
 			throw new NotFoundServiceEx("Resource not found " + id);
 		}
+	}
 		
 		
+    /**
+     * Get filter count by filter and user
+     * @param filter
+     * @param user
+     * @return resources' count that the user has access
+     * @throws InternalErrorServiceEx 
+     * @throws BadRequestServiceEx 
+     */
+	public long getCountByFilterAndUser(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx{
+        Search searchCriteria = SearchConverter.convert(filter);
+        return resourceDAO.count(searchCriteria, user);
+	}
+
+    /**
+     * Get filter count by namerLike and user
+     * @param nameLike
+     * @param user
+     * @return resources' count that the user has access
+     * @throws InternalErrorServiceEx 
+     * @throws BadRequestServiceEx 
+     */
+	public long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx{
+
+        Search searchCriteria = new Search(Resource.class);
+
+        if (nameLike != null) {
+            searchCriteria.addFilterILike("name", nameLike);
+        }
+
+        return resourceDAO.count(searchCriteria, user);
 	}
 }

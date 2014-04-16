@@ -48,6 +48,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Index;
+import org.hibernate.annotations.Type;
 
 /**
  * Class Group.
@@ -73,21 +74,43 @@ public class UserGroup implements Serializable {
     @Index(name = "idx_usergroup_name")
     private String groupName;
 
+    @Column(nullable = true, updatable = true, length = 200)
+    private String description;
+    
     /*
      * Only To allow the CASCADING operation
      */
     @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
+    @Type(type="yes_no")
+    @Column(nullable = false,updatable =true)
+    private boolean enabled=true;
+    
+    /**
+     * 
+     * @return the enabled flag
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
 
-    @ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
+    /**
+     * set enabled flag
+     * @param enabled
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+	@ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
     @Index(name = "idx_group_user")
     private Set<User> users;
 
     /**
      * @return the id
      */
-    @XmlTransient
+    //@XmlTransient
     public Long getId() {
         return id;
     }
@@ -141,6 +164,20 @@ public class UserGroup implements Serializable {
      */
     public void setUsers(Set<User> users) {
         this.users = users;
+    }
+    
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     /*

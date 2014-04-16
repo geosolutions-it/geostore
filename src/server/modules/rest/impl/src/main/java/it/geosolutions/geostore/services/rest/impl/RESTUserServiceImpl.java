@@ -89,14 +89,17 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             // Parsing UserAttributes list
             //
             List<UserAttribute> usAttribute = user.getAttribute();
-
+        	//persist the user first
             if (usAttribute != null) {
-                if (usAttribute.size() > 0) {
-                    user.setAttribute(usAttribute);
-                }
+            	user.setAttribute(null);
             }
-
             id = userService.insert(user);
+            //insert attributes after user creation
+            if (usAttribute != null) {
+            	userService.updateAttributes(id, usAttribute);
+            }
+            
+            
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         } catch (BadRequestServiceEx e) {
@@ -132,7 +135,10 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     old.setRole(nr);
                     userUpdated = true;
                 }
-
+                if(old.isEnabled() != user.isEnabled()){
+                	old.setEnabled(user.isEnabled());
+                	userUpdated = true;
+                }
                 Set<UserGroup> groups = user.getGroups();
                 if (groups != null) {
                     old.setGroups(groups);
@@ -145,36 +151,36 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     userUpdated = true;
                 }
             }
+            //
+            // Creating a new User Attribute list (updated).
+            //
+            List<UserAttribute> attributeDto = user.getAttribute();
 
-            if (userUpdated) {
-                id = userService.update(old);
+            if (attributeDto != null) {
+                Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
 
-                //
-                // Creating a new User Attribute list (updated).
-                //
-                List<UserAttribute> attributeDto = user.getAttribute();
+                List<UserAttribute> attributes = new ArrayList<UserAttribute>();
+                while (iteratorDto.hasNext()) {
+                    UserAttribute aDto = iteratorDto.next();
 
-                if (attributeDto != null) {
-                    Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
-
-                    List<UserAttribute> attributes = new ArrayList<UserAttribute>();
-                    while (iteratorDto.hasNext()) {
-                        UserAttribute aDto = iteratorDto.next();
-
-                        UserAttribute a = new UserAttribute();
-                        a.setValue(aDto.getValue());
-                        a.setName(aDto.getName());
-                        attributes.add(a);
-                    }
-
-                    if (attributes.size() > 0) {
-                        userService.updateAttributes(id, attributes);
-                    }
+                    UserAttribute a = new UserAttribute();
+                    a.setValue(aDto.getValue());
+                    a.setName(aDto.getName());
+                    attributes.add(a);
                 }
 
+                if (attributes.size() > 0) {
+                    userService.updateAttributes(id, attributes);
+                }
+            }
+            if (userUpdated) {
+            	//attributes where updated before
+            	old.setAttribute(null);
+                id = userService.update(old);
                 return id;
-            } else
+            } else {
                 return -1;
+            }
 
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
@@ -222,6 +228,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         ret.setName(authUser.getName());
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
+        ret.setEnabled(authUser.isEnabled());
         ret.setGroups(authUser.getGroups());
         if (includeAttributes) {
             ret.setAttribute(authUser.getAttribute());
@@ -271,7 +278,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups());
                 restUSERList.add(restUser);
             }
 
@@ -304,6 +311,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             authUser = userService.get(authUser.getName());
 
             if (authUser != null) {
+        		if(authUser.getRole().equals(Role.GUEST)){
+        			throw new NotFoundWebEx("User not found");
+        		}
                 ret = new User();
                 ret.setId(authUser.getId());
                 ret.setName(authUser.getName());
@@ -336,7 +346,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole());
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups());
                 restUSERList.add(restUser);
             }
 

@@ -28,9 +28,13 @@
  */
 package it.geosolutions.geostore.services.rest.model;
 
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -53,6 +57,8 @@ public class RESTUser implements Serializable {
 
     private Role role;
 
+    private List<String> groupsNames;
+    
     public RESTUser() {
     }
 
@@ -75,11 +81,17 @@ public class RESTUser implements Serializable {
      * @param name
      * @param role
      */
-    public RESTUser(Long id, String name, Role role) {
+    public RESTUser(Long id, String name, Role role, Set<UserGroup> groups) {
         super();
         this.id = id;
         this.name = name;
         this.role = role;
+        groupsNames = new ArrayList<String>();
+        if(groups != null){
+            for(UserGroup ug : groups){
+                groupsNames.add(ug.getGroupName());
+            }
+        }
     }
 
     /**
@@ -122,6 +134,20 @@ public class RESTUser implements Serializable {
      */
     public void setRole(Role role) {
         this.role = role;
+    }
+    
+    /**
+     * @return the groupsNames
+     */
+    public List<String> getGroupsNames() {
+        return groupsNames;
+    }
+
+    /**
+     * @param groupsNames the groupsNames to set
+     */
+    public void setGroupsNames(List<String> groupsNames) {
+        this.groupsNames = groupsNames;
     }
 
     /*

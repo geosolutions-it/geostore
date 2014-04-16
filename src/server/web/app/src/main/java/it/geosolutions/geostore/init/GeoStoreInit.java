@@ -21,13 +21,10 @@ package it.geosolutions.geostore.init;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
-
 import it.geosolutions.geostore.core.model.UserGroup;
-
 import it.geosolutions.geostore.core.security.password.GeoStoreAESEncoder;
 import it.geosolutions.geostore.core.security.password.GeoStorePasswordEncoder;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
-
 import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserGroupService;
@@ -36,10 +33,8 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
-
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
 
 import java.io.File;
@@ -49,7 +44,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
 import org.apache.log4j.Logger;
-
 import org.springframework.beans.factory.InitializingBean;
 
 /**
@@ -100,6 +94,20 @@ public class GeoStoreInit implements InitializingBean {
             LOGGER.info("Categories already in db: " + catCnt);
         }
 
+        long userGroupCnt = userGroupService.getAll(null, null).size();
+        if (userGroupCnt == 0) {
+            LOGGER.warn("No usersgroup found.");
+            if (userGroupListInitFile != null) {
+                LOGGER.warn("Initializing users from file " + userGroupListInitFile);
+                initUsersGroup(userGroupListInitFile);
+            } else {
+                LOGGER.info("No usersgroup initializer defined.");
+            }
+        } else {
+            LOGGER.info("UsersGroup already in db: " + userGroupCnt);
+            
+        }
+        
         long userCnt = userService.getCount(null);
         if (userCnt == 0) {
             LOGGER.warn("No user found.");
@@ -111,20 +119,6 @@ public class GeoStoreInit implements InitializingBean {
             }
         } else {
             LOGGER.info("Users already in db: " + userCnt);
-        }
-        
-        long userGroupCnt = userGroupService.getAll(null, null).size();
-        if (userGroupCnt == 0) {
-            LOGGER.warn("No usersgroup found.");
-            if (userGroupListInitFile != null) {
-                LOGGER.warn("Initializing users from file " + userGroupListInitFile);
-                initUsersGroup(userGroupListInitFile);
-            } else {
-                LOGGER.info("No usersgroup initializer defined.");
-            }
-        } else {
-            LOGGER.info("UsersGroup already in db: " + userCnt);
-            
         }
     }
     
@@ -250,6 +244,7 @@ public class GeoStoreInit implements InitializingBean {
                 LOGGER.info("Adding user group " + userGroup);
                 UserGroup ug = new UserGroup();
                 ug.setGroupName(userGroup.getGroupName());
+                ug.setDescription(userGroup.getDescription());
                 try{
                 userGroupService.insert(ug);
                 }

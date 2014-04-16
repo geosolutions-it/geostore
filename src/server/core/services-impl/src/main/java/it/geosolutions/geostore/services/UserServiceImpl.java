@@ -25,6 +25,7 @@ import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -91,10 +92,14 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BadRequestServiceEx("User type must be specified !");
         }
+        if(!UserReservedNames.isAllowedName(user.getName())){
+            throw new BadRequestServiceEx("User name '" + user.getName() + "' is not allowed...");
+        }
 
         User u = new User();
         u.setName(user.getName());
         u.setNewPassword(user.getNewPassword());
+        u.setEnabled(user.isEnabled());
         u.setRole(user.getRole());
 
         //
@@ -102,9 +107,10 @@ public class UserServiceImpl implements UserService {
         //
         Set<UserGroup> groups = user.getGroups();
         List<String> groupNames = new ArrayList<String>();
+        List<UserGroup> existingGroups = new ArrayList<UserGroup>();
         if (groups != null && groups.size() > 0) {
             for(UserGroup group : groups){
-                String groupName = group.getGroupName().toLowerCase();
+                String groupName = group.getGroupName();
                 groupNames.add(groupName);
                 if (StringUtils.isEmpty(groupName)) {
                     throw new BadRequestServiceEx("The user group name must be specified! ");
@@ -116,14 +122,24 @@ public class UserServiceImpl implements UserService {
             Search searchCriteria = new Search(UserGroup.class);
             searchCriteria.addFilterIn("groupName", groupNames);
 
-            List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
+            existingGroups = userGroupDAO.search(searchCriteria);
 
             if (existingGroups != null && groups.size() != existingGroups.size()) {
                 throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
-            }
-
-            u.setGroups(new HashSet<UserGroup>(existingGroups));            
+            }            
         }
+        // Special Usergroup EVERYONE management
+        Search search = new Search();
+        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        List<UserGroup> ugEveryone = userGroupDAO.search(search);
+        if(ugEveryone == null || ugEveryone.size() != 1){
+            // Only log the error at ERROR level and avoid block the user creation... 
+            LOGGER.error("No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '" + user.getName() + "'");
+        }
+        else{
+            existingGroups.add(ugEveryone.get(0));
+        }
+        u.setGroups(new HashSet<UserGroup>(existingGroups));
 
         userDAO.persist(u);
 
@@ -176,9 +192,12 @@ public class UserServiceImpl implements UserService {
 
             List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
 
-            if (existingGroups != null && groups.size() == existingGroups.size()) {
+            if (existingGroups == null || (existingGroups != null && groups.size() != existingGroups.size())) {
                 throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
-            }            
+            }
+            user.getGroups().clear();
+            user.getGroups().addAll(existingGroups);
+           
         }
         userDAO.merge(user);
 
@@ -369,8 +388,15 @@ public class UserServiceImpl implements UserService {
         }
         
         User u = new User();
-        u.setName(UserReservedNames.GUEST.toString().toLowerCase());
+        u.setName(UserReservedNames.GUEST.userName());
         u.setRole(Role.GUEST);
+        Search search = new Search();
+        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        List<UserGroup> userGroup = userGroupDAO.search(search);
+        if(userGroup.size() != 1){
+            LOGGER.warn("More than EVERYONE group is found...");
+        }
+        u.setGroups(new HashSet<UserGroup>(userGroup));
         userDAO.persist(u);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Special User '" + u.getName() + "' persisted!");

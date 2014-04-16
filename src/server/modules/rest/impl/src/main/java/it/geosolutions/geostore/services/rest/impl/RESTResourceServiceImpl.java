@@ -70,20 +70,21 @@ import org.apache.log4j.Logger;
  * 
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
+ * @author DamianoG
  */
 public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTResourceService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTResourceServiceImpl.class);
 
     private ResourceService resourceService;
-
+    
     /**
      * @param resourceService
      */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
-    
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
      */

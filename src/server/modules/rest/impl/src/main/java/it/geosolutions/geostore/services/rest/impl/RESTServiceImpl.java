@@ -31,7 +31,6 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import it.geosolutions.geostore.services.SecurityService;
@@ -131,9 +130,11 @@ public abstract class RESTServiceImpl{
     public boolean resourceAccessWrite(User authUser, long resourceId) {
         if (authUser.getRole().equals(Role.ADMIN)) {
             return true;
-        } else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
-            return true;
-        } else {
+        } 
+//        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
+//            return true;
+//        } 
+        else {
             List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
                     authUser.getName(), resourceId);
 
@@ -172,9 +173,10 @@ public abstract class RESTServiceImpl{
     public boolean resourceAccessRead(User authUser, long resourceId) {
         if (authUser.getRole().equals(Role.ADMIN)) {
             return true;
-        } else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
-            return true;
-        }
+        } 
+//        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
+//            return true;
+//        }
         else {
             List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
                     authUser.getName(), resourceId);
@@ -214,7 +216,7 @@ public abstract class RESTServiceImpl{
         List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
         authorities.add(new GrantedAuthorityImpl("ROLE_GUEST"));
         try {
-            User u = userService.get(UserReservedNames.GUEST.toString().toLowerCase());
+            User u = userService.get(UserReservedNames.GUEST.userName());
             return new UsernamePasswordAuthenticationToken(u,"", authorities);
         } catch (NotFoundServiceEx e) {
             if(LOGGER.isDebugEnabled()){

@@ -28,13 +28,15 @@
  */
 package it.geosolutions.geostore.core.dao;
 
-import java.util.List;
-
-import com.googlecode.genericdao.search.ISearch;
-
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
+
+import java.util.List;
+
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 
 /**
  * Interface ResourceDAO. Public interface to define operations on Resource
@@ -80,4 +82,12 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @param resourcesIDs A list of resources Ids to search
      */
     public List<Resource> findResources(List<Long> resourcesIds);
+
+    /**
+     * Get criteria count by user
+     * @param searchCriteria
+     * @param user
+     * @return resources' count that the user has access 
+     */
+	public long count(Search searchCriteria, User user);
 }

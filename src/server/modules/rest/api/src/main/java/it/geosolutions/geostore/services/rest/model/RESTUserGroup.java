@@ -44,20 +44,23 @@ public class RESTUserGroup implements Serializable{
     
     private UserList restUsers;
     
+    private String description;
+    
     public RESTUserGroup() {}
 
     /**
      * @param id
      * @param groupName
      */
-    public RESTUserGroup(Long id, String groupName, Set<User> users) {
+    public RESTUserGroup(Long id, String groupName, Set<User> users, String description) {
         this.id = id;
         this.groupName = groupName;
         List<RESTUser> list = new ArrayList<RESTUser>();
         for(User u : users){
-            list.add(new RESTUser(u.getId(), u.getName(), u.getRole()));
+            list.add(new RESTUser(u.getId(), u.getName(), u.getRole(), u.getGroups()));
         }
         this.restUsers = new UserList(list); 
+        this.description = description;
     }
 
     /**
@@ -100,6 +103,27 @@ public class RESTUserGroup implements Serializable{
      */
     public void setRestUsers(UserList restUsers) {
         this.restUsers = restUsers;
+    }
+    
+    /**
+     * @return the description
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description the description to set
+     */
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    /**
+     * @return the serialversionuid
+     */
+    public static long getSerialversionuid() {
+        return serialVersionUID;
     }
 
     @Override

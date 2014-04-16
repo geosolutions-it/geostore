@@ -48,12 +48,15 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Index;
+import org.hibernate.annotations.Type;
 
 /**
  * Class User.
@@ -113,6 +116,10 @@ public class User implements Serializable {
     @Index(name = "idx_user_group")
     private Set<UserGroup> groups;
 
+    @Type(type="yes_no")
+    @Column(nullable = false,updatable =true)
+	private boolean enabled=true;
+
     /**
      * @return the id
      */
@@ -131,6 +138,8 @@ public class User implements Serializable {
     /**
      * @return the group
      */
+    @XmlElementWrapper
+    @XmlElement(name="group")
     public Set<UserGroup> getGroups() {
         return groups;
     }
@@ -223,6 +232,22 @@ public class User implements Serializable {
         this.attribute = attribute;
     }
 
+    /**
+     * 
+     * @return the enabled flag
+     */
+    public boolean isEnabled() {
+		return enabled;
+	}
+
+    /**
+     * set enabled flag
+     * @param enabled
+     */
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+	
     /**
      * @return the role
      */

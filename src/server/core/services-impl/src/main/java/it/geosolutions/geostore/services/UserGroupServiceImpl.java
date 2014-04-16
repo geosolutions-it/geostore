@@ -106,8 +106,7 @@ public class UserGroupServiceImpl implements UserGroupService{
             throw new ReservedUserGroupNameEx("The usergroup name you try to save: '" + userGroup.getGroupName() + "' is a reserved name!");
         }
         
-        //Force the groupname to lower case
-        userGroup.setGroupName(userGroup.getGroupName().toLowerCase());
+        userGroup.setGroupName(userGroup.getGroupName());
         
         userGroupDAO.persist(userGroup);
         if (LOGGER.isDebugEnabled()) {
@@ -160,6 +159,31 @@ public class UserGroupServiceImpl implements UserGroupService{
             userDAO.merge(targetUser);
         }
     }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.UserGroupService#deassignUserGroup(long, long)
+     */
+    @Override
+    public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx{
+        UserGroup groupToAssign = userGroupDAO.find(groupId);
+        User targetUser = userDAO.find(userId);
+        if(groupToAssign == null || targetUser == null){
+            throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");
+        }
+        if(targetUser.getGroups() != null){
+        	Set<UserGroup> ugs = targetUser.getGroups();
+        	for( UserGroup group : ugs){
+        		if( group.getId() == groupId){
+        			targetUser.getGroups().remove(group);
+        			userDAO.merge(targetUser);
+        			return;
+        		}
+        	}
+        	
+            
+        }
+      
+    }
 
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.UserGroupService#getAll(java.lang.Integer, java.lang.Integer)
@@ -184,13 +208,21 @@ public class UserGroupServiceImpl implements UserGroupService{
      */
     @Override
     public List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesIds, boolean canRead,
-            boolean canWrite) throws NotFoundServiceEx {
+            boolean canWrite) throws NotFoundServiceEx, BadRequestServiceEx {
         
         List<ShortResource> updated = new ArrayList<ShortResource>();
         UserGroup group = userGroupDAO.find(groupId);
         
         if(group == null){
             throw new NotFoundServiceEx("The usergroup id you provide doesn't exist!");
+        }
+        
+        if(group.getGroupName().equals(GroupReservedNames.EVERYONE.groupName())){
+            if(!canRead || canWrite){
+                LOGGER.error("You are trying to assign to a resource the following permissions for the group EVERYONE: [canRead='" + canRead + "',canWrite'" + canWrite + "'] but...");
+                LOGGER.error("...the group EVERYONE can be set only in this way: [canRead='true',canWrite='false'] .");
+                throw new BadRequestServiceEx("GroupEveryone cannot be set with this grants [canRead='" + canRead + "',canWrite'" + canWrite + "']");
+            }
         }
         
         List<Resource> resourceToSet = resourceDAO.findResources(resourcesIds);
@@ -248,11 +280,33 @@ public class UserGroupServiceImpl implements UserGroupService{
         }
         
         UserGroup ug = new UserGroup();
-        ug.setGroupName(GroupReservedNames.ALLRESOURCES.toString().toLowerCase());
+        ug.setGroupName(GroupReservedNames.EVERYONE.groupName());
         userGroupDAO.persist(ug);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' persisted!");
         }
         return true;
     }
+
+	@Override
+	public UserGroup get(long id) throws BadRequestServiceEx {
+		return userGroupDAO.find(id);
+	}
+
+	@Override
+	public UserGroup get(String name) {
+		//
+        // Searching the corresponding UserGroups
+        //
+        Search searchCriteria = new Search(UserGroup.class);
+        searchCriteria.addFilterEqual("groupName", name);
+
+        List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
+        if(existingGroups.size()>0){
+        	return existingGroups.get(0);
+        	
+        }
+        return null;
+		
+	}
 }
