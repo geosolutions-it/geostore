@@ -701,6 +701,39 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceDAO.findGroupSecurityRule(groupNames, resourceId);
     }
 
+	@Override
+	public List<SecurityRule> getSecurityRules(long id)
+			throws BadRequestServiceEx, InternalErrorServiceEx {
+		return resourceDAO.findSecurityRules(id);
+	}
+
+	@Override
+	public void updateSecurityRules(long id, List<SecurityRule> rules)
+			throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx {
+		Resource resource = resourceDAO.find(id);
+		
+				
+		if(resource != null) {
+			Search searchCriteria = new Search();
+			searchCriteria.addFilterEqual("resource.id", id);
+
+	        List<SecurityRule> resourceRules = this.securityDAO.search(searchCriteria);
+
+			// remove previous rules
+			for(SecurityRule rule : resourceRules) {
+				securityDAO.remove(rule);
+			}
+			// insert new rules
+			for(SecurityRule rule : rules) {
+				rule.setResource(resource);
+				securityDAO.persist(rule);
+			}
+		} else {
+			throw new NotFoundServiceEx("Resource not found " + id);
+		}
+	}
+		
+		
     /**
      * Get filter count by filter and user
      * @param filter

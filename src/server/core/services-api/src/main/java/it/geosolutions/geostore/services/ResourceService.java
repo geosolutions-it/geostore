@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -194,6 +195,29 @@ public interface ResourceService extends SecurityService{
     public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
+
+    /**
+     * Returns the list of security rules for the resource.
+     * 
+     * @param resources
+     * @return
+     */
+    public List<SecurityRule> getSecurityRules(long id)
+    		throws BadRequestServiceEx, InternalErrorServiceEx;
+    
+    /**
+     * Replaces the list of security rules for the given resource.
+     * 
+     * @param id
+     * @param rules
+     * @throws BadRequestServiceEx
+     * @throws InternalErrorServiceEx
+     * @throws NotFoundServiceEx 
+     */
+    public void updateSecurityRules(long id, List<SecurityRule> rules)
+    		throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx;
+    
+    
     /**
      * Get filter count by filter and user
      * @param filter
@@ -212,5 +236,6 @@ public interface ResourceService extends SecurityService{
      * @throws BadRequestServiceEx 
      */
 	long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx;
+
 
 }

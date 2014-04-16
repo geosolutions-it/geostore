@@ -22,6 +22,7 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -225,6 +226,30 @@ public class ServiceTestBase extends TestCase {
 
         return resourceService.insert(resource);
     }
+    
+    /**
+     * @param name
+     * @param creation
+     * @param description
+     * @param storedData
+     * @return long
+     * @throws Exception
+     */
+    protected long createResource(String name, String description, String catName, List<SecurityRule> rules) throws Exception {
+
+        Category category = new Category();
+        category.setName(catName);
+
+        categoryService.insert(category);
+
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setDescription(description);
+        resource.setCategory(category);
+        resource.setSecurity(rules);
+
+        return resourceService.insert(resource);
+    }
 
     protected long createResource(String name, String description, Category category)
             throws Exception {
@@ -263,5 +288,19 @@ public class ServiceTestBase extends TestCase {
         user.setNewPassword(password);
 
         return userService.insert(user);
+    }
+    
+    /**
+     * @param name
+     * @param role
+     * @param password
+     * @return long
+     * @throws Exception
+     */
+    protected long createGroup(String name) throws Exception {
+        UserGroup group = new UserGroup();
+        group.setGroupName(name);
+
+        return userGroupService.insert(group);
     }
 }
