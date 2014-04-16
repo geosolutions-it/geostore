@@ -99,6 +99,7 @@ public class UserServiceImpl implements UserService {
         User u = new User();
         u.setName(user.getName());
         u.setNewPassword(user.getNewPassword());
+        u.setEnabled(user.isEnabled());
         u.setRole(user.getRole());
 
         //

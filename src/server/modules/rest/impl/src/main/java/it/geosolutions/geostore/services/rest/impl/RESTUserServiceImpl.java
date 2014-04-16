@@ -135,7 +135,10 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     old.setRole(nr);
                     userUpdated = true;
                 }
-
+                if(old.isEnabled() != user.isEnabled()){
+                	old.setEnabled(user.isEnabled());
+                	userUpdated = true;
+                }
                 Set<UserGroup> groups = user.getGroups();
                 if (groups != null) {
                     old.setGroups(groups);
@@ -225,6 +228,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         ret.setName(authUser.getName());
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
+        ret.setEnabled(authUser.isEnabled());
         ret.setGroups(authUser.getGroups());
         if (includeAttributes) {
             ret.setAttribute(authUser.getAttribute());
