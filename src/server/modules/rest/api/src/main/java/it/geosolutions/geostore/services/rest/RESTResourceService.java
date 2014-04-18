@@ -29,6 +29,8 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
@@ -36,6 +38,7 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
@@ -255,4 +258,22 @@ public interface RESTResourceService {
     long updateAttribute(@Context SecurityContext sc, @PathParam("id") long id,
             @PathParam("name") String name, @PathParam("value") String value);
 
+    /**
+     * 
+     * @param sc
+     * @param id
+     * @param securityRules
+     */
+    @POST
+    @Path("/resource/{id}/permissions")
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
+    void updateSecurityRules(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("rules") SecurityRuleList securityRules);
+    
+    
+    @GET
+    @Path("/resource/{id}/permissions")
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
+    SecurityRuleList getSecurityRules(@Context SecurityContext sc, @PathParam("id") long id);
 }
