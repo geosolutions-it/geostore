@@ -20,11 +20,14 @@
 	<!-- ==================================================================== -->
 	<security:global-method-security secured-annotations="enabled" />
 
-	<security:http auto-config="true" create-session="never">
-		<security:http-basic />
+	<security:http auto-config="true" create-session="never" >
+		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
 		<security:anonymous />
 	</security:http>
-	
+	<!-- Entry point -->
+	<bean id="restAuthenticationEntryPoint" class="it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint" >
+		<property name="realmName" value="GeoStore"></property>
+	</bean>
 	<!-- GeoStore Auth Provider -->
 	<bean id="geoStoreUserServiceAuthenticationProvider"
 		class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
