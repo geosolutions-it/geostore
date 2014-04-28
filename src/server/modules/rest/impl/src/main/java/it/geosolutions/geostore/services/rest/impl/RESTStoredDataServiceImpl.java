@@ -159,6 +159,16 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         if (id == -1)
             return "dummy payload";
 
+        //
+        // Authorization check.
+        //
+        boolean canRead = false;
+        User authUser = extractAuthUser(sc);
+        canRead = resourceAccessRead(authUser, id); // The ID is also the resource ID
+        if(!canRead){
+            throw new ForbiddenErrorWebEx("This user cannot read this stored data !");
+        }
+        
         StoredData storedData;
         try {
             storedData = storedDataService.get(id);

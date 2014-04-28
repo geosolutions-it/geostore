@@ -412,6 +412,36 @@ public class AdministratorGeostoreClientTest{
     }
     
     @Test
+    public void testStoredDataServices(){
+        
+        // Create a resource with Stored Data using the user "User"
+        createDefaultCategory();
+        ShortResource sr = createAResource();
+        
+        GeoStoreClient userGeoStoreClient = createUserClient("user","user");
+        String data = userGeoStoreClient.getData(sr.getId());
+        assertEquals("we wish you a merry xmas and a happy new year", data);
+        
+        //try to get the related Stored Data with the user "u1", must not be possible due to authorization rules
+        User u1 = new User();
+        u1.setName("u1");
+        u1.setRole(Role.USER);
+        u1.setNewPassword("u1");
+        Set<User> userSet = new HashSet<User>();
+        userSet.add(u1);
+        geoStoreClient.insert(u1);
+        userGeoStoreClient = createUserClient("u1","u1");
+        int u1StatusR = -1;
+        try{
+            userGeoStoreClient.getData(sr.getId());
+        }
+        catch(UniformInterfaceException e){
+            u1StatusR = e.getResponse().getStatus();
+        }
+        assertEquals(403,u1StatusR);
+    }
+    
+    @Test
     public void testUserInitialization(){
         UserList ul = geoStoreClient.getUsers(1,100);
         assertEquals(2, ul.getList().size());
