@@ -11,6 +11,7 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -439,6 +440,30 @@ public class AdministratorGeostoreClientTest{
             u1StatusR = e.getResponse().getStatus();
         }
         assertEquals(403,u1StatusR);
+    }
+    
+    @Test
+    public void testEVERYONEassignment(){
+        RESTUserGroup ug = geoStoreClient.getUserGroup(GroupReservedNames.EVERYONE.toString());
+        User u = geoStoreClient.getUser("user");
+        
+        int errorCode = -1;
+        try{
+            geoStoreClient.assignUserGroup(u.getId(), ug.getId());
+        }
+        catch(UniformInterfaceException e){
+            errorCode = e.getResponse().getStatus();
+        }
+        assertEquals(404,errorCode);
+        
+        errorCode = -1;
+        try{
+            geoStoreClient.deassignUserGroup(u.getId(), ug.getId());
+        }
+        catch(UniformInterfaceException e){
+            errorCode = e.getResponse().getStatus();
+        }
+        assertEquals(404,errorCode);
     }
     
     @Test

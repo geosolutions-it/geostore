@@ -30,6 +30,11 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
         return getBaseWebResource("users", "user", id).get(User.class);
 
     }
+    
+    public User getUser(String name) {
+        return getBaseWebResource("users", "search", name).get(User.class);
+
+    }
 
     public User getUser(long id, Boolean includeAttributes) {
         WebResource wr = getBaseWebResource("users", "user", id);
