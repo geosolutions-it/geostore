@@ -29,6 +29,7 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 
 import java.io.Serializable;
@@ -81,7 +82,7 @@ public class RESTUser implements Serializable {
      * @param name
      * @param role
      */
-    public RESTUser(Long id, String name, Role role, Set<UserGroup> groups) {
+    public RESTUser(Long id, String name, Role role, Set<UserGroup> groups, boolean allGroups) {
         super();
         this.id = id;
         this.name = name;
@@ -89,7 +90,9 @@ public class RESTUser implements Serializable {
         groupsNames = new ArrayList<String>();
         if(groups != null){
             for(UserGroup ug : groups){
-                groupsNames.add(ug.getGroupName());
+                if(allGroups || GroupReservedNames.isAllowedName(ug.getGroupName())){
+                    groupsNames.add(ug.getGroupName());
+                }
             }
         }
     }

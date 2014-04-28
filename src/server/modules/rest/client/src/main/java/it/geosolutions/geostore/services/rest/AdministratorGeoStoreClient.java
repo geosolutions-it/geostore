@@ -113,10 +113,11 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
     	return getBaseWebResource("usergroups", "group", usergroupId).get(RESTUserGroup.class);
     }
     
-    public UserGroupList getUserGroups(Integer page, Integer entries) {
+    public UserGroupList getUserGroups(Integer page, Integer entries, boolean all) {
         WebResource wr = getBaseWebResource("usergroups");
-        wr.queryParam("page", page.toString());
-        wr.queryParam("entries", entries.toString());
+        wr = wr.queryParam("page", page.toString());
+        wr = wr.queryParam("entries", entries.toString());
+        wr = wr.queryParam("all", ""+all);
         return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
                 .get(UserGroupList.class);
     }
