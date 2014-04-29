@@ -579,12 +579,6 @@
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-ldap</artifactId>
                 <version>${spring-security-version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.directory.server</groupId>
-                        <artifactId>apacheds-all</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <!-- crypto libs -->
             <dependency>
