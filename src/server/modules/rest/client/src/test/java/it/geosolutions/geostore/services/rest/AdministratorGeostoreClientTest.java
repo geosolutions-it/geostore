@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -22,10 +23,12 @@ import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
@@ -443,7 +446,42 @@ public class AdministratorGeostoreClientTest{
     }
     
     @Test
-    public void testEVERYONEassignment(){
+    public void testEVERYONEassignmentResources(){
+        // Create a resource with Stored Data using the user "User"
+        createDefaultCategory();
+        ShortResource sr = createAResource();
+        
+        SecurityRuleList srlFinal = geoStoreUserClient.getSecurityRules(sr.getId());
+        assertEquals(1, srlFinal.getList().size());
+        
+        SecurityRuleList srl = new SecurityRuleList();
+        RESTSecurityRule everyoneRule = new RESTSecurityRule();
+        Resource r = new Resource();
+        r.setId(sr.getId());
+        everyoneRule.setCanRead(true);
+        everyoneRule.setCanWrite(true);
+        
+        RESTUserGroup everyoneGroup = geoStoreClient.getUserGroup(GroupReservedNames.EVERYONE.toString());
+        RESTUserGroup ug = new RESTUserGroup();
+        ug.setGroupName(GroupReservedNames.EVERYONE.toString());
+        ug.setId(everyoneGroup.getId());
+        everyoneRule.setGroup(ug);
+        
+        List<RESTSecurityRule> restSR = new ArrayList<RESTSecurityRule>();
+        restSR.add(everyoneRule);
+        restSR.add(srlFinal.getList().get(0));
+        
+        srl.setList(restSR);
+        
+        geoStoreUserClient.updateSecurityRules(sr.getId(), srl);
+        
+        srlFinal = geoStoreUserClient.getSecurityRules(sr.getId()); 
+        assertEquals(2, srlFinal.getList().size());
+        
+    }
+    
+    @Test
+    public void testEVERYONEassignmentUsers(){
         RESTUserGroup ug = geoStoreClient.getUserGroup(GroupReservedNames.EVERYONE.toString());
         User u = geoStoreClient.getUser("user");
         
@@ -884,4 +922,6 @@ public class AdministratorGeostoreClientTest{
             // assertEquals("Not all categories have been deleted", 0, categories.getList().size());
         }
     }
+    
+    
 }

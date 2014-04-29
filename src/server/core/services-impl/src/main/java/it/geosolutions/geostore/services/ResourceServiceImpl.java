@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -71,6 +72,8 @@ public class ResourceServiceImpl implements ResourceService {
 
     private static final Logger LOGGER = Logger.getLogger(ResourceServiceImpl.class);
 
+    private UserGroupDAO userGroupDAO;
+    
     private ResourceDAO resourceDAO;
 
     private AttributeDAO attributeDAO;
@@ -114,6 +117,13 @@ public class ResourceServiceImpl implements ResourceService {
      */
     public void setCategoryDAO(CategoryDAO categoryDAO) {
         this.categoryDAO = categoryDAO;
+    }
+    
+    /**
+     * @param userGroupDAO the userGroupDAO to set
+     */
+    public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
+        this.userGroupDAO = userGroupDAO;
     }
 
     /*
@@ -726,6 +736,14 @@ public class ResourceServiceImpl implements ResourceService {
 			// insert new rules
 			for(SecurityRule rule : rules) {
 				rule.setResource(resource);
+				//Retrieve from db the entity usergroup, if the securityrule is related to a group
+				if(rule.getGroup() != null){
+				    UserGroup ug = userGroupDAO.find(rule.getGroup().getId());
+				    if(ug == null){
+				        throw new InternalErrorServiceEx("The usergroup having the provided Id doesn't exist");
+				    }
+				    rule.setGroup(ug);
+				}
 				securityDAO.persist(rule);
 			}
 		} else {
