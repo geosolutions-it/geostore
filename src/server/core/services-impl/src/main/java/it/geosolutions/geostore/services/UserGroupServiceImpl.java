@@ -144,6 +144,10 @@ public class UserGroupServiceImpl implements UserGroupService{
     @Override
     public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx{
         UserGroup groupToAssign = userGroupDAO.find(groupId);
+        // Check if the group user want to assign is an allowed one
+        if(!GroupReservedNames.isAllowedName(groupToAssign.getGroupName())){
+            throw new NotFoundServiceEx("You can't re-assign the group EVERYONE or any other reserved groups...");
+        }
         User targetUser = userDAO.find(userId);
         if(groupToAssign == null || targetUser == null){
             throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");
@@ -166,6 +170,10 @@ public class UserGroupServiceImpl implements UserGroupService{
     @Override
     public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx{
         UserGroup groupToAssign = userGroupDAO.find(groupId);
+        // Check if the group user want to remove is an allowed one
+        if(!GroupReservedNames.isAllowedName(groupToAssign.getGroupName())){
+            throw new NotFoundServiceEx("You can't remove the group EVERYONE or any other reserved groups from the users group list...");
+        }
         User targetUser = userDAO.find(userId);
         if(groupToAssign == null || targetUser == null){
             throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");

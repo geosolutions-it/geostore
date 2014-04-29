@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
@@ -229,7 +230,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
         ret.setRole(authUser.getRole());
         ret.setEnabled(authUser.isEnabled());
-        ret.setGroups(authUser.getGroups());
+        ret.setGroups(removeReservedGroups(authUser.getGroups()));
         if (includeAttributes) {
             ret.setAttribute(authUser.getAttribute());
         }
@@ -257,6 +258,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             } else {
                 ret.setAttribute(null);
             }
+            ret.setGroups(removeReservedGroups(ret.getGroups()));
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx("User not found");
         }
@@ -278,7 +280,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups());
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups(), false);
                 restUSERList.add(restUser);
             }
 
@@ -346,7 +348,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups());
+                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups(), false);
                 restUSERList.add(restUser);
             }
 
@@ -356,6 +358,25 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         }
     }
 
+    /**
+     * Utility method to remove Reserved group (for example EVERYONE) from a group list
+     * 
+     * @param groups
+     * @return
+     */
+    private Set<UserGroup> removeReservedGroups(Set<UserGroup> groups){
+        List<UserGroup> reserved = new ArrayList<UserGroup>();
+        for(UserGroup ug : groups){
+            if(!GroupReservedNames.isAllowedName(ug.getGroupName())){
+                reserved.add(ug);
+            }
+        }
+        for(UserGroup ug : reserved){
+            groups.remove(ug);
+        }
+        return groups;
+    }
+    
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
      */

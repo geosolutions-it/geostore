@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -34,6 +35,8 @@ import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
@@ -139,14 +142,16 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
      * @see it.geosolutions.geostore.services.rest.RESTUserGroupService#getAll(javax.ws.rs.core.SecurityContext, java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public UserGroupList getAll(SecurityContext sc, Integer page, Integer entries)
+    public UserGroupList getAll(SecurityContext sc, Integer page, Integer entries, boolean all)
             throws BadRequestWebEx {
         try {
             List<UserGroup> returnList = userGroupService.getAll(page, entries);
             List<RESTUserGroup> ugl = new ArrayList<RESTUserGroup>();
             for(UserGroup ug : returnList){
-                RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), ug.getUsers(), ug.getDescription());
-                ugl.add(rug);
+                if(all || GroupReservedNames.isAllowedName(ug.getGroupName())){
+                    RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), ug.getUsers(), ug.getDescription());
+                    ugl.add(rug);
+                }
             }
             return new UserGroupList(ugl);
         } catch (BadRequestServiceEx e) {

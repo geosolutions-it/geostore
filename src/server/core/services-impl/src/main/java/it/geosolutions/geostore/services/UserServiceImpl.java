@@ -133,7 +133,7 @@ public class UserServiceImpl implements UserService {
         search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
         List<UserGroup> ugEveryone = userGroupDAO.search(search);
         if(ugEveryone == null || ugEveryone.size() != 1){
-            // Only log the error at ERROR level and avoid block the user creation... 
+            // Only log the error at ERROR level and avoid to block the user creation... 
             LOGGER.error("No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '" + user.getName() + "'");
         }
         else{
@@ -176,6 +176,7 @@ public class UserServiceImpl implements UserService {
         //
         Set<UserGroup> groups = user.getGroups();
         List<String> groupNames = new ArrayList<String>();
+        List<UserGroup> existingGroups = new ArrayList<UserGroup>();
         if (groups != null && groups.size() > 0) {
             for(UserGroup group : groups){
                 String groupName = group.getGroupName();
@@ -190,15 +191,27 @@ public class UserServiceImpl implements UserService {
             Search searchCriteria = new Search(UserGroup.class);
             searchCriteria.addFilterIn("groupName", groupNames);
 
-            List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
+            existingGroups = userGroupDAO.search(searchCriteria);
 
             if (existingGroups == null || (existingGroups != null && groups.size() != existingGroups.size())) {
                 throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
             }
-            user.getGroups().clear();
-            user.getGroups().addAll(existingGroups);
            
         }
+        // Special Usergroup EVERYONE management
+        Search search = new Search();
+        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        List<UserGroup> ugEveryone = userGroupDAO.search(search);
+        if(ugEveryone == null || ugEveryone.size() != 1){
+            // Only log the error at ERROR level and avoid to block the user creation... 
+            LOGGER.error("No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '" + user.getName() + "'");
+        }
+        else{
+            existingGroups.add(ugEveryone.get(0));
+        }
+        user.getGroups().clear();
+        user.getGroups().addAll(existingGroups);
+        
         userDAO.merge(user);
 
         return orig.getId();

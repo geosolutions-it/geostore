@@ -28,6 +28,7 @@ import it.geosolutions.geostore.services.rest.model.UserGroupList;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -92,7 +93,7 @@ public interface RESTUserGroupService {
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN" })
     UserGroupList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
-            @QueryParam("entries") Integer entries) throws BadRequestWebEx;
+            @QueryParam("entries") Integer entries, @QueryParam("all") @DefaultValue("false") boolean all) throws BadRequestWebEx;
     
     @PUT
     @Path("/update_security_rules/{groupId}/{canRead}/{canWrite}")
