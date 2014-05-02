@@ -4,7 +4,10 @@ The following files allow to bind geostore user groups and roles with GeoServer.
 Binding GeoStore and GeoServer users
 ====================================
 
-Create the empty GeoStore database using scripts (add ‘enabled’ column as in the scripts for users and groups. Only the public schema is supported. Configure GeoStore to use the database and let him create the users.
+Create the empty GeoStore database using scripts as described in GeoStore WIKI 
+(https://github.com/geosolutions-it/geostore/wiki/Building-instructions#building-geostore-with-postgres-support).
+In order to intergrate GeoServer with GeoStore's users you need GeoStore v1.2.
+For the old GeoStore DBs migration's scripts must be used, you can find these scripts at your-path/geostore/doc/sql/migration directory.
 
 GeoServer Settings
 ==================
@@ -24,7 +27,7 @@ Setup User Group
     * password policy default 
     * Driver org.postgresql (or JNDI)
     * connection url jdbc:postgresql://localhost:5432/geostore (or the one for you
-    * set username and password for the db
+    * set username and password for the db (user 'geostore' with password 'geostore')
     * set DDL and DML file urls.
         To do This you can save, and place the provided files in the created directory under <gs_datadir>/security/usergroup/geostore . Then go back to geostore user group service and save again.
 
@@ -35,7 +38,7 @@ Setup Role Service
     * name geostore
     * db org.postgresql
     * connection url: jdbc:postgresql://localhost:5432/geostore (same as above) 
-    * set user and password
+    * set user and password (user 'geostore' with password 'geostore')
     * save, add the provided files to the geostore directory under /<gs_datadir>/security/role/geostore and save again
     * Go Again in JDBC Role Service GeoStore and select Administrator role to ADMIN and Group Administrator Role to ADMIN 
     
@@ -63,10 +66,14 @@ The default crittografy will use a “digest”. If you want to  use simmetric passw
     
 Use the auth key Module for with GeoStore/GeoServer
 ===================================================
-    * install auth key module in GeoServer. 
-    * go to authentication page and click on authkey module.
-    * Sync with user properties (select geostore),leave authkey as parameter name.
-    * (Sync keys to create them)
-    * go in the authentication page and open default filter chain.
-    * add auth key and put it on top, and save.
+    * Install the auth key module in GeoServer. 
+    * Go to the authentication page and scroll into the 'Authentication Filters' section
+	* Click 'Add new'.
+	* Inside the 'New authentication Filter' page clieck on authkey module.
+	* Insert the name (i.e. 'geostore').
+	* Leave authkey as parameter name.
+	* Select the 'User Property' as 'Authentication key user mapper'.
+	* Select the created geostore's 'User/Group Service'.
+    * Go into the authentication page and open default filter chain.
+    * Add auth key and put it on top, and save.
 
