@@ -81,7 +81,7 @@
 
         <junit-version>4.4</junit-version>
         <log4j-version>1.2.14</log4j-version>
-        <slf4j-version>1.5.8</slf4j-version>
+	<slf4japi-version>1.7.2</slf4japi-version>
         <dom4j-version>1.6.1</dom4j-version>
 
         <maven-assembly-plugin-version>2.2-beta-5</maven-assembly-plugin-version>
@@ -263,6 +263,11 @@
 		    <!-- =========================================================== -->
 		    <!--     4J                                                      -->
 		    <!-- =========================================================== -->
+	    <dependency>
+		<groupId>org.slf4j</groupId>
+		<artifactId>slf4j-api</artifactId>
+                <version>${slf4japi-version}</version>
+            </dependency>
             <dependency>
                 <groupId>log4j</groupId>
                 <artifactId>log4j</artifactId>
@@ -271,7 +276,7 @@
             <dependency>
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-log4j12</artifactId>
-                <version>${slf4j-version}</version>
+                <version>${slf4japi-version}</version>
             </dependency>
             <dependency>
                 <groupId>dom4j</groupId>
@@ -465,15 +470,6 @@
             </dependency>
 
 		    <!-- =========================================================== -->
-		    <!--     GEO-BATCH                                               -->
-		    <!-- =========================================================== -->
-<!--            <dependency>
-                <groupId>com.digitalglobe</groupId>
-                <artifactId>gb-action-geoserver-restclient</artifactId>
-                <version>${geobatch-version}</version>
-            </dependency>-->
-
-		    <!-- =========================================================== -->
 		    <!--     SPRING                                                  -->
 		    <!-- =========================================================== -->
             <dependency>
@@ -591,41 +587,6 @@
               <artifactId>jasypt</artifactId>
               <version>1.8</version>
             </dependency>
-			<!-- LDAP Deps -->
-			<dependency>
-				<groupId>org.apache.directory.server</groupId>
-				<artifactId>apacheds-all</artifactId>
-				<version>1.5.5</version>
-			</dependency>
-			<dependency>    
-				<groupId>org.apache.directory.shared</groupId>    
-				<artifactId>shared-ldap</artifactId>    
-				<version>0.9.16</version>    
-			</dependency>
-			
-			<dependency>
-				<groupId>org.apache.directory.server</groupId>
-				<artifactId>apacheds-all</artifactId>
-				<version>1.5.5</version>
-				<type>jar</type>
-				<scope>compile</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>1.5.6</version>
-				<type>jar</type>
-				<scope>compile</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-log4j12</artifactId>
-				<version>1.5.6</version>
-				<type>jar</type>
-				<scope>compile</scope>
-			</dependency>
-			
-			
 		    <!-- =========================================================== -->
 		    <!--     JAVAX PERSISTENCE                                       -->
 		    <!-- =========================================================== -->
