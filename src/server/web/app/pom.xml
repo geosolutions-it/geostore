@@ -67,6 +67,14 @@
 			<artifactId>cxf-rt-transports-http-jetty</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+		        <groupId>org.slf4j</groupId>
+		        <artifactId>slf4j-api</artifactId>
+		</dependency>
+
+                <!-- ================================================================ -->
+                <!-- GeoStore modules -->
+                <!-- ================================================================ -->
 
 		<!-- JUnit -->
 		<dependency>
@@ -74,6 +82,27 @@
 			<artifactId>junit</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- LDAP Deps -->
+			<dependency>
+				<groupId>org.apache.directory.server</groupId>
+				<artifactId>apacheds-all</artifactId>
+				<version>1.5.5</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>    
+				<groupId>org.apache.directory.shared</groupId>    
+				<artifactId>shared-ldap</artifactId>    
+				<version>0.9.16</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.directory.server</groupId>
+				<artifactId>apacheds-all</artifactId>
+				<version>1.5.5</version>
+				<type>jar</type>
+				<scope>test</scope>
+			</dependency>
 	</dependencies>
 
 	<!-- if you want to create a new profile for support another DB create a 
