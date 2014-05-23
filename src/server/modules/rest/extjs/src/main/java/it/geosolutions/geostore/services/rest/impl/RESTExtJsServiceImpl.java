@@ -51,6 +51,7 @@ import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -418,17 +419,19 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
                     jobj.element("id", sr.getId());
                     jobj.element("name", sr.getName());
-                    
+                    String owner = sr.getOwner();
                     // Append extra attributes
-                    if(extraAttributes != null && sr.getAttribute() != null){
+                    if(sr.getAttribute() != null){
                     	for(Attribute at: sr.getAttribute()){
-                    		if(extraAttributes.contains(at.getName())){
+                    		if(extraAttributes != null && extraAttributes.contains(at.getName())){
                                 jobj.element(at.getName(), at.getValue());
+                    		}
+                    		if("owner".equals(at.getName())){
+                    			owner = at.getValue();
                     		}
                     	}
                     }
-
-                    String owner = sr.getOwner();
+                    //get owner     
                     if (owner != null)
                         jobj.element("owner", owner);
 
@@ -503,6 +506,23 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 						canEdit = true;
 						canDelete = true;
 					} else {
+						//get security rules for groups
+						List<String> groups = new ArrayList<String>();
+						for(UserGroup g : authUser.getGroups()){
+							groups.add(g.getGroupName());
+						}
+						for (SecurityRule rule : resourceService
+								.getGroupSecurityRule(groups,
+										r.getId())) {
+							//GUEST users can not access to the delete and edit(resource,data blob is editable) services
+							//so only authenticated users with 
+							if (rule.isCanWrite() && !authUser.getRole().equals(Role.GUEST)) {
+								canEdit = true;
+								canDelete = true;
+								break;
+							}
+						}
+						//get security rules for user
 						for (SecurityRule rule : resourceService
 								.getUserSecurityRule(authUser.getName(),
 										r.getId())) {
@@ -528,6 +548,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 								}
 							}
 						}
+						
 					}
 				}
 			}
