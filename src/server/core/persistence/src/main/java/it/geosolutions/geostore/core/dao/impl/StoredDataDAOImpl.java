@@ -103,7 +103,7 @@ public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements Stor
         Filter securityFilter = Filter.some(
                 "resource.security",
                 Filter.and(Filter.equal("resource.security.resource.id", resourceId),
-                        Filter.equal("resource.security.user.groups.groupName", userGroups)));
+                        Filter.in("resource.security.user.groups.groupName", userGroups)));
         searchCriteria.addFilter(securityFilter);
 
         return super.search(searchCriteria);
