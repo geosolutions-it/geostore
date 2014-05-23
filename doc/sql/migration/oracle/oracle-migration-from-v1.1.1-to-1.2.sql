@@ -20,5 +20,13 @@ CREATE TABLE gs_usergroup_members (user_id number(19,0) not null, group_id numbe
 ALTER TABLE gs_usergroup_members ADD CONSTRAINT FKFDE460DB62224F72 FOREIGN KEY (user_id) REFERENCES gs_user;
 ALTER TABLE gs_usergroup_members ADD CONSTRAINT FKFDE460DB9EC981B7 FOREIGN KEY (group_id) REFERENCES gs_usergroup;
 
-INSERT INTO gs_usergroup(id, groupname, description, enabled) VALUES (hibernate_sequence.nextval,'testGroup1', 'description', 'Y');
+INSERT INTO gs_usergroup(id, groupname, description, enabled) VALUES (hibernate_sequence.nextval,'everyone', 'description', 'Y');
 INSERT INTO gs_user(id, name, user_role, enabled) VALUES (hibernate_sequence.nextval,'guest', 'GUEST', 'Y');
+
+INSERT INTO gs_security(id,canread,canwrite,group_id,resource_id)
+SELECT hibernate_sequence.nextval,true,false,(SELECT id FROM gs_usergroup WHERE groupname='everyone'),gs_resource.id
+FROM gs_resource INNER JOIN gs_category ON gs_resource.category_id=gs_category.id
+WHERE gs_category.name='MAP';
+
+INSERT INTO gs_usergroup_members(user_id, group_id) SELECT gsuser.id, gsgroup.id FROM gs_user AS gsuser, gs_usergroup AS gsgroup 
+WHERE gsuser.user_role='GUEST' AND gsgroup.groupname='everyone';

@@ -19,5 +19,13 @@ create table gs_usergroup_members (user_id int8 not null, group_id int8 not null
 alter table gs_usergroup_members add constraint FKFDE460DB62224F72 foreign key (user_id) references gs_user;
 alter table gs_usergroup_members add constraint FKFDE460DB9EC981B7 foreign key (group_id) references gs_usergroup;
 
-INSERT INTO gs_usergroup(id, groupname, description, enabled) VALUES (nextval('hibernate_sequence'),'testGroup1', 'description', 'Y');
+INSERT INTO gs_usergroup(id, groupname, description, enabled) VALUES (nextval('hibernate_sequence'),'everyone', 'description', 'Y');
 INSERT INTO gs_user(id, name, user_role, enabled) VALUES (nextval('hibernate_sequence'),'guest', 'GUEST', 'Y');
+
+insert into gs_security(id,canread,canwrite,group_id,resource_id)
+select nextval('hibernate_sequence'),true,false,(select id from gs_usergroup where groupname='everyone'),gs_resource.id
+from gs_resource inner join gs_category on gs_resource.category_id=gs_category.id
+where gs_category.name='MAP';
+
+insert into gs_usergroup_members(user_id, group_id) select gsuser.id, gsgroup.id from gs_user as gsuser, gs_usergroup as gsgroup 
+where gsuser.user_role='GUEST' and gsgroup.groupname='everyone';
