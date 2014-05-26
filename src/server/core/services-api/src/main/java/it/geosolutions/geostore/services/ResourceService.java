@@ -31,6 +31,7 @@ import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -236,6 +237,9 @@ public interface ResourceService extends SecurityService{
      * @throws BadRequestServiceEx 
      */
 	long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx;
+
+	long insertAttribute(long id, String name, String value, DataType type)
+			throws InternalErrorServiceEx;
 
 
 }

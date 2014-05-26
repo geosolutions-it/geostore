@@ -31,6 +31,7 @@ package it.geosolutions.geostore.services.rest;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
@@ -259,6 +260,22 @@ public interface RESTResourceService {
             @PathParam("name") String name, @PathParam("value") String value);
 
     /**
+     * @param id
+     * @param name
+     * @param value
+     * @param type
+     * @return long
+     * @throws NotFoundWebEx
+     * @throws InternalErrorWebEx
+     */
+    @PUT
+    @Path("/resource/{id}/attributes/{name}/{value}/{type}")
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    // @RolesAllowed({ "ADMIN", "USER" })
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    long updateAttribute(@Context SecurityContext sc, @PathParam("id") long id,
+            @PathParam("name") String name, @PathParam("value") String value,@PathParam("type" ) DataType type);
+    /**
      * 
      * @param sc
      * @param id
@@ -276,4 +293,6 @@ public interface RESTResourceService {
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     SecurityRuleList getSecurityRules(@Context SecurityContext sc, @PathParam("id") long id);
+
+	
 }

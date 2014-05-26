@@ -33,6 +33,7 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
@@ -60,10 +61,16 @@ import it.geosolutions.geostore.services.rest.utils.Convert;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.springframework.security.access.annotation.Secured;
 
 /**
  * Class RESTResourceServiceImpl.
@@ -425,10 +432,10 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     /*
      * (non-Javadoc)
      * 
-     * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String)
+     * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String,it.geosolutions.geostore.core.model.enums.DataType)
      */
     @Override
-    public long updateAttribute(SecurityContext sc, long id, String name, String value)
+    public long updateAttribute(SecurityContext sc, long id, String name, String value, DataType type)
             throws NotFoundWebEx, InternalErrorWebEx {
         Resource resource = resourceService.get(id);
         if (resource == null)
@@ -442,14 +449,39 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             User authUser = extractAuthUser(sc);
             canUpdate = resourceAccessWrite(authUser, resource.getId());
 
-            if (canUpdate)
-                return resourceService.updateAttribute(id, name, value);
-            else
+            if (canUpdate){
+            	
+            	ShortAttribute a  = resourceService.getAttribute(id, name);
+            	//if the attribute exists, will be updated
+            	if(a!=null){
+            		return resourceService.updateAttribute(id, name, value);
+            	}else{
+            		//create the attribute if missing
+            		if(type != null){
+            			return resourceService.insertAttribute(id, name, value, type);
+            		}else{
+            			return resourceService.insertAttribute(id, name, value, DataType.STRING);
+            		}
+            		
+            	}
+                
+            } else {
                 throw new InternalErrorServiceEx("This user cannot access this resource !");
-        } catch (InternalErrorServiceEx ex) {
+            }
+            } catch (InternalErrorServiceEx ex) {
+            	
             throw new InternalErrorWebEx(ex.getMessage());
         }
     }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String)
+     */
+    public long updateAttribute(SecurityContext sc,  long id,String name, String value) {
+		return updateAttribute(sc, id, name, value, null);
+	}
 
     /*
      * (non-Javadoc)
@@ -570,4 +602,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 		
 		
 	}
+
+	
+	
 }

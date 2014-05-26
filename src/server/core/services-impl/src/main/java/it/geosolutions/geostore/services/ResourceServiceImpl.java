@@ -40,6 +40,7 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -563,6 +564,73 @@ public class ResourceServiceImpl implements ResourceService {
 
         return attribute.getId();
     }
+    @Override
+    public long insertAttribute(long id, String name, String value,DataType type) throws InternalErrorServiceEx {
+        Search searchCriteria = new Search(Attribute.class);
+        searchCriteria.addFilterEqual("resource.id", id);
+        searchCriteria.addFilterEqual("name", name);
+
+        List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
+        //if the attribute exist, update id (note: it must have the same type)
+        if(attributes.size()>0){
+        	Attribute attribute = attributes.get(0);
+        	switch (attribute.getType()) {
+            case DATE:
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                try {
+                    attribute.setDateValue(sdf.parse(value));
+                } catch (ParseException e) {
+                    throw new InternalErrorServiceEx("Error parsing attribute date value");
+                }
+                break;
+            case NUMBER:
+                attribute.setNumberValue(Double.valueOf(value));
+                break;
+            case STRING:
+                attribute.setTextValue(value);
+                break;
+            default:
+                throw new IllegalStateException("Unknown type " + attribute.getType());
+            }
+
+            attribute = this.attributeDAO.merge(attribute);
+
+            return attribute.getId();
+        }else{
+    		//create the new attribute
+        	Attribute attribute = new Attribute();
+        	attribute.setType(type);
+        	attribute.setName(name);
+        	attribute.setResource(resourceDAO.find(id));
+        	
+        	switch (type) {
+            case DATE:
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                try {
+                    attribute.setDateValue(sdf.parse(value));
+                } catch (ParseException e) {
+                    throw new InternalErrorServiceEx("Error parsing attribute date value");
+                }
+                break;
+            case NUMBER:
+                attribute.setNumberValue(Double.valueOf(value));
+                break;
+            case STRING:
+                attribute.setTextValue(value);
+                break;
+            default:
+                throw new IllegalStateException("Unknown type " + attribute.getType());
+            }
+
+        	return this.attributeDAO.merge(attribute).getId();
+
+
+        }
+        
+    }
+    
 
     /*
      * (non-Javadoc)
