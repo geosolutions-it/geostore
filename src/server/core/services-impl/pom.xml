@@ -25,7 +25,7 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>1.2</version>
+        <version>1.2-SNAPSHOT</version>
     </parent>
 
     <groupId>it.geosolutions.geostore</groupId>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-model</artifactId>
-            <version>1.2</version>
+            <version>1.2-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
 

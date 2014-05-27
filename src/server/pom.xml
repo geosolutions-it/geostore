@@ -23,7 +23,7 @@
 
     <groupId>it.geosolutions.geostore</groupId>
     <artifactId>geostore-root</artifactId>
-    <version>1.2</version>
+    <version>1.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
