@@ -25,7 +25,7 @@
 	update gs_usergroup set groupname=groupname where groupname = ?
   </entry>
   <entry key="roles.delete">
-	delete from gs_usergroup where name = ?
+	delete from gs_usergroup where groupname = ?
   </entry>
   <entry key="roles.deleteAll">
 	delete from gs_usergroup 
@@ -56,7 +56,7 @@
    <!-- not implemented -->
    <!-- Mapping of GeoStore groups as roles in GeoServer -->
   <entry key="userroles.rolesForUser">
-    select CASE WHEN ? = 'admin'  THEN 'ADMIN' ELSE 'USER' END,NULL
+    SELECT user_role,NULL FROM gs_user WHERE name = ?
   </entry>
   <entry key="userroles.usersForRole">
 	SELECT u.name FROM  gs_user where role = ?
