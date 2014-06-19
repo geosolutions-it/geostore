@@ -7,7 +7,7 @@
 -- The script assumes that the tables are located into the schema called "geostore" 
 --      if not find/replace geostore. with <yourschemaname>.
 
--- Tested only with postgres9.1
+-- Tested with Oracle 11g
 
 -- Run the script with an unprivileged application user allowed to work on schema geostore
 
@@ -28,5 +28,5 @@ SELECT hibernate_sequence.nextval,true,false,(SELECT id FROM gs_usergroup WHERE 
 FROM gs_resource INNER JOIN gs_category ON gs_resource.category_id=gs_category.id
 WHERE gs_category.name='MAP';
 
-INSERT INTO gs_usergroup_members(user_id, group_id) SELECT gsuser.id, gsgroup.id FROM gs_user AS gsuser, gs_usergroup AS gsgroup 
+INSERT INTO gs_usergroup_members(user_id, group_id) SELECT gsuser.id, gsgroup.id FROM gs_user gsuser, gs_usergroup gsgroup 
 WHERE gsuser.user_role='GUEST' AND gsgroup.groupname='everyone';
