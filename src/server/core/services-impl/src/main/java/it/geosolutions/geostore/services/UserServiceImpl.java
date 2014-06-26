@@ -362,6 +362,7 @@ public class UserServiceImpl implements UserService {
             u.setGroups(user.getGroups());
             u.setId(user.getId());
             u.setName(user.getName());
+            u.setEnabled(user.isEnabled());
             u.setPassword(user.getPassword());
             u.setRole(user.getRole());
 

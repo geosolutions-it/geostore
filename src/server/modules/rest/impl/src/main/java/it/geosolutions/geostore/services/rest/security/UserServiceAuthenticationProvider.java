@@ -11,6 +11,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,6 +40,7 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
      * Message shown if the user it's not found. TODO: Localize it
      */
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
+    public static final String USER_NOT_ENABLED = "The user present but not enabled";
 
     @Override
     public boolean supports(Class<? extends Object> authentication) {
@@ -57,6 +59,9 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
             LOGGER.info("US: " + us );//+ " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
             if (user.getPassword() == null || !PwEncoder.isPasswordValid(user.getPassword(),pw)) {
                 throw new BadCredentialsException(UNAUTHORIZED_MSG);
+            }
+            if(!user.isEnabled()){
+            	throw new DisabledException(USER_NOT_FOUND_MSG);
             }
         } catch (Exception e) {
             LOGGER.info(USER_NOT_FOUND_MSG);
