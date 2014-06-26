@@ -27,12 +27,12 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
     // ==========================================================================
     
     public User getUser(long id) {
-        return getBaseWebResource("users", "user", id).get(User.class);
+        return getBaseWebResource("users", "user", id).accept(MediaType.TEXT_XML).get(User.class);
 
     }
     
     public User getUser(String name) {
-        return getBaseWebResource("users", "search", name).get(User.class);
+        return getBaseWebResource("users", "search", name).accept(MediaType.TEXT_XML).get(User.class);
 
     }
 
@@ -50,7 +50,7 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
     }
 
     public UserList getUsers() {
-        return getBaseWebResource("users").get(UserList.class);
+        return getBaseWebResource("users").header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML).get(UserList.class);
     }
 
     public UserList getUsers(Integer page, Integer entries) {
