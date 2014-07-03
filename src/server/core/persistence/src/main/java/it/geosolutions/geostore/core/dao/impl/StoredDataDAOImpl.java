@@ -23,6 +23,7 @@ import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
@@ -98,15 +99,23 @@ public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements Stor
     @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> userGroups, long resourceId) {
         Search searchCriteria = new Search(StoredData.class);
-        searchCriteria.addField("resource.security");
-
-        Filter securityFilter = Filter.some(
-                "resource.security",
-                Filter.and(Filter.equal("resource.security.resource.id", resourceId),
-                        Filter.in("resource.security.user.groups.groupName", userGroups)));
-        searchCriteria.addFilter(securityFilter);
-
-        return super.search(searchCriteria);
+        
+         //get all the security rules
+          searchCriteria.addField("resource.security");
+          Filter securityFilter = Filter.some(
+                  "resource.security",Filter.equal("resource.security.resource.id", resourceId)
+          );
+          searchCriteria.addFilter(securityFilter);
+          
+        List<SecurityRule> rules = super.search(searchCriteria);
+        //WORKAROUND (See ResourceDAOImpl)
+        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
+        for(SecurityRule sr : rules){
+            if(sr.getGroup() != null && userGroups.contains(sr.getGroup().getGroupName())){
+                filteredRules.add(sr);
+            }
+        }
+        return filteredRules;
     }
 
 }

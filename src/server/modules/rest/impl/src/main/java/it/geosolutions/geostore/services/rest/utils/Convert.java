@@ -126,6 +126,9 @@ public class Convert {
 
 	public static List<SecurityRule> convertSecurityRuleList(
 			List<RESTSecurityRule> list, Long resourceId) {
+		if(list==null){
+			list = new ArrayList<RESTSecurityRule>();	
+		}
 		List<SecurityRule> rules = new ArrayList<SecurityRule>(list.size());
 		for(RESTSecurityRule rule : list) {
 			SecurityRule securityRule = new SecurityRule();
