@@ -1,3 +1,4 @@
+SET search_path TO geostore;
 
     create table gs_attribute (
         id int8 not null,
@@ -10,6 +11,8 @@
         primary key (id),
         unique (name, resource_id)
     );
+    ALTER TABLE gs_attribute
+          OWNER TO geostore;
 
     create table gs_category (
         id int8 not null,
@@ -17,6 +20,8 @@
         primary key (id),
         unique (name)
     );
+    ALTER TABLE gs_category
+          OWNER TO geostore;
 
     create table gs_resource (
         id int8 not null,
@@ -29,6 +34,8 @@
         primary key (id),
         unique (name)
     );
+    ALTER TABLE gs_resource
+          OWNER TO geostore;
 
     create table gs_security (
         id int8 not null,
@@ -41,6 +48,8 @@
         unique (user_id, resource_id),
         unique (resource_id, group_id)
     );
+    ALTER TABLE gs_security
+          OWNER TO geostore;
 
     create table gs_stored_data (
         id int8 not null,
@@ -49,6 +58,8 @@
         primary key (id),
         unique (resource_id)
     );
+    ALTER TABLE gs_stored_data
+          OWNER TO geostore;
 
     create table gs_user (
         id int8 not null,
@@ -60,6 +71,8 @@
         primary key (id),
         unique (name)
     );
+    ALTER TABLE gs_user
+          OWNER TO geostore;
 
     create table gs_user_attribute (
         id int8 not null,
@@ -69,6 +82,8 @@
         primary key (id),
         unique (name, user_id)
     );
+    ALTER TABLE gs_user_attribute
+          OWNER TO geostore;
 
     create table gs_usergroup (
         id int8 not null,
@@ -78,12 +93,16 @@
         primary key (id),
         unique (groupName)
     );
+    ALTER TABLE gs_usergroup
+          OWNER TO geostore;
 	
 	create table gs_usergroup_members (
 		user_id int8 not null, 
 		group_id int8 not null, 
 		primary key (user_id, group_id)
 	);
+    ALTER TABLE gs_usergroup_members
+          OWNER TO geostore;
 	
 	alter table gs_usergroup_members 
 		add constraint FKFDE460DB62224F72 
@@ -188,3 +207,5 @@
     create index idx_usergroup_name on gs_usergroup (groupName);
 
     create sequence hibernate_sequence;
+    ALTER TABLE hibernate_sequence
+          OWNER TO geostore;
