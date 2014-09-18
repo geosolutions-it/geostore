@@ -24,7 +24,7 @@ INSERT INTO gs_usergroup(id, groupname, description, enabled) VALUES (hibernate_
 INSERT INTO gs_user(id, name, user_role, enabled) VALUES (hibernate_sequence.nextval,'guest', 'GUEST', 'Y');
 
 INSERT INTO gs_security(id,canread,canwrite,group_id,resource_id)
-SELECT hibernate_sequence.nextval,true,false,(SELECT id FROM gs_usergroup WHERE groupname='everyone'),gs_resource.id
+SELECT hibernate_sequence.nextval,1,0,(SELECT id FROM gs_usergroup WHERE groupname='everyone'),gs_resource.id
 FROM gs_resource INNER JOIN gs_category ON gs_resource.category_id=gs_category.id
 WHERE gs_category.name='MAP';
 
