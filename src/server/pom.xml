@@ -81,7 +81,7 @@
 
         <junit-version>4.4</junit-version>
         <log4j-version>1.2.14</log4j-version>
-	<slf4japi-version>1.7.2</slf4japi-version>
+        <slf4japi-version>1.7.2</slf4japi-version>
         <dom4j-version>1.6.1</dom4j-version>
 
         <maven-assembly-plugin-version>2.2-beta-5</maven-assembly-plugin-version>
@@ -263,9 +263,9 @@
 		    <!-- =========================================================== -->
 		    <!--     4J                                                      -->
 		    <!-- =========================================================== -->
-	    <dependency>
-		<groupId>org.slf4j</groupId>
-		<artifactId>slf4j-api</artifactId>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
                 <version>${slf4japi-version}</version>
             </dependency>
             <dependency>
@@ -428,12 +428,6 @@
                 <artifactId>cxf-rt-core</artifactId>
                 <version>${cxf-version}</version>
             </dependency>
-
-			<dependency>
-				<groupId>org.apache.cxf</groupId>
-				<artifactId>cxf-rt-ws-security</artifactId>
-				<version>${cxf-version}</version>
-			</dependency>
 			<dependency>
 				<groupId>com.google.code.cxf-spring-security</groupId>
 				<artifactId>cxf-spring-security</artifactId>
@@ -500,11 +494,6 @@
                 <artifactId>spring-tx</artifactId>
                 <version>${spring-version}</version>
             </dependency>
-			<dependency>
-			    <groupId>org.springframework</groupId>
-			    <artifactId>spring-context</artifactId>
-                <version>${spring-version}</version>
-			</dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context-support</artifactId>
@@ -853,6 +842,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
                 <configuration>
                     <source>1.6</source>
                     <target>1.6</target>
@@ -871,11 +861,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-
+            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -1005,7 +996,7 @@
         <repository>
             <id>java.net</id>
             <url>http://download.java.net/maven/1</url>
-            <layout>legacy</layout>
+            <!-- layout>legacy</layout -->
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -1070,8 +1061,8 @@
         </pluginRepository>
         
         <pluginRepository>
-         <id>repo.maven.org/maven2</id>
-         <name>repo.maven.org/maven2</name>
+         <id>repo.maven.org-maven2</id>
+         <name>repo.maven.org-maven2</name>
          <url>http://repo.maven.org/maven2/</url>
          <snapshots>
           <enabled>true</enabled>
@@ -1082,8 +1073,8 @@
         </pluginRepository>  
         
         <pluginRepository>
-         <id>repo1.maven.org/maven2</id>
-         <name>repo1.maven.org/maven2</name>
+         <id>repo1.maven.org-maven2</id>
+         <name>repo1.maven.org-maven2</name>
          <url>http://repo1.maven.org/maven2/</url>
          <snapshots>
           <enabled>true</enabled>
