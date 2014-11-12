@@ -35,7 +35,8 @@
 
 	<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 	<security:authentication-manager>
-		<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
+		<!-- security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' / -->
+		<security:authentication-provider ref='geostoreLdapProvider' />
 	</security:authentication-manager>
 
 	<!-- LDAP Auth Provider -->
@@ -64,7 +65,7 @@
 	</bean>
 
 	<bean id="geostoreLdapProvider"
-		class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
+		class="it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider">
 		<constructor-arg>
 			<bean
 				class="org.springframework.security.ldap.authentication.BindAuthenticator">
@@ -84,8 +85,12 @@
 				class="org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator">
 				<constructor-arg ref="contextSource" />
 				<constructor-arg value="ou=groups" />
-				<property name="groupSearchFilter" value="(member={0})" />
-				<property name="rolePrefix" value="ROLE_" />
+				<property name="groupSearchFilter" value="(|(roleOccupant={0})(lrGroupOccupant={0}))" />
+				<!-- the GeoStore convetion is:
+				  * Groups starting with 'ROLE_' will be threated as Auth Roles
+				  * Groups starting without 'ROLE_' will be threated as Groups
+				 -->
+				<property name="rolePrefix" value="" />
 				<property name="searchSubtree" value="true" />
 				<property name="convertToUpperCase" value="true" />
 			</bean>

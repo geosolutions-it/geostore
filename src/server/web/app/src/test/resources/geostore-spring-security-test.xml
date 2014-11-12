@@ -84,7 +84,7 @@
 	</bean>
 
 	<bean id="geostoreLdapProvider"
-		class="org.springframework.security.ldap.authentication.LdapAuthenticationProvider">
+		class="it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider">
 		<constructor-arg>
 			<bean
 				class="org.springframework.security.ldap.authentication.BindAuthenticator">
