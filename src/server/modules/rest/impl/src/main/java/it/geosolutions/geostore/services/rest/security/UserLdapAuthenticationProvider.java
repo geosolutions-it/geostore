@@ -97,7 +97,8 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 	            user = userService.get(us);
 	            LOGGER.info("US: " + us );//+ " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
 	            if (user.getPassword() == null || !PwEncoder.isPasswordValid(user.getPassword(),pw)) {
-	                throw new BadCredentialsException(UNAUTHORIZED_MSG);
+	                if (user.getPassword() == null) throw new BadCredentialsException(UNAUTHORIZED_MSG);
+	            	user.setNewPassword(pw);
 	            }
 	            if(!user.isEnabled()){
 	            	throw new DisabledException(USER_NOT_FOUND_MSG);
@@ -110,10 +111,10 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 	        if (user != null) {
 	            // check that ROLE and GROUPS match with the LDAP ones
 				try {
-		            Set<UserGroup> groups = new HashSet<UserGroup>(); 	        		
-	        		Role role = extractUserRoleAndGroups(authorities, groups);
+		            Set<UserGroup> groups = new HashSet<UserGroup>();
+	        		Role role = extractUserRoleAndGroups(user.getRole(), authorities, groups);
 					user.setRole(role);
-					user.setGroups(removeReservedGroups(groups));
+					user.setGroups(checkReservedGroups(groups));
 					
 					if (userService != null)
 						userService.update(user);
@@ -137,9 +138,9 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 	        		user.setEnabled(true);
 	        		
 	        		Set<UserGroup> groups = new HashSet<UserGroup>(); 	        		
-	        		Role role = extractUserRoleAndGroups(authorities, groups);
+	        		Role role = extractUserRoleAndGroups(null, authorities, groups);
 					user.setRole(role);
-					user.setGroups(removeReservedGroups(groups));
+					user.setGroups(checkReservedGroups(groups));
 
 					if (userService != null)
 						userService.insert(user);
@@ -175,15 +176,16 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 	}
 
 	/**
+	 * @param role2 
 	 * @param authorities
 	 * @param groups
 	 * @return
 	 * @throws BadRequestServiceEx
 	 */
 	protected Role extractUserRoleAndGroups(
-			Collection<GrantedAuthority> authorities, Set<UserGroup> groups)
+			Role userRole, Collection<GrantedAuthority> authorities, Set<UserGroup> groups)
 			throws BadRequestServiceEx {
-		Role role = Role.GUEST;
+		Role role = (userRole != null ? userRole : Role.GUEST);
 		for ( GrantedAuthority a : authorities ) {
 			if (a.getAuthority().startsWith("ROLE_")) {
 				if (a.getAuthority().toUpperCase().endsWith("ADMIN") && 
@@ -220,7 +222,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
      * @param groups
      * @return
      */
-    private Set<UserGroup> removeReservedGroups(Set<UserGroup> groups){
+    private Set<UserGroup> checkReservedGroups(Set<UserGroup> groups){
         List<UserGroup> reserved = new ArrayList<UserGroup>();
         for(UserGroup ug : groups){
             if(!GroupReservedNames.isAllowedName(ug.getGroupName())){
@@ -228,7 +230,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
             }
         }
         for(UserGroup ug : reserved){
-            groups.remove(ug);
+			groups.remove(ug);
         }
         return groups;
     }
