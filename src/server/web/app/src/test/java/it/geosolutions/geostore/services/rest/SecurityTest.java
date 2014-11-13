@@ -16,6 +16,7 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.impl.RESTCategoryServiceImpl;
 
 import javax.ws.rs.core.Response;
@@ -123,17 +124,24 @@ public class SecurityTest extends BaseAuthenticationTest {
         assertNotNull(SecurityContextHolder.getContext());
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
 
-        final Authentication authentication = SecurityContextHolder.getContext()
-                .getAuthentication();
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         authentication.getName();
 
-        assertEquals("admin", authentication.getName());
+        assertEquals("admin", authentication.getCredentials());
 
-        assertTrue(authentication.getPrincipal() instanceof LdapUserDetailsImpl);
-        LdapUserDetailsImpl userDetails = (LdapUserDetailsImpl) authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
+        assertNotNull(principal);
+        
+        if (principal instanceof User) {
+        	User user = (User) principal;
+        	
+        	assertEquals("admin", user.getName());
+        } else if (principal instanceof LdapUserDetailsImpl) {
+        	LdapUserDetailsImpl userDetails = (LdapUserDetailsImpl) principal;
 
-        assertEquals("uid=admin,ou=people,dc=geosolutions,dc=it", userDetails.getDn());
-
+        	assertEquals("uid=admin,ou=people,dc=geosolutions,dc=it", userDetails.getDn());
+        }
+        
         assertEquals(authentication.getAuthorities().size(), 1);
 
         for (GrantedAuthority authority : authentication.getAuthorities()) {

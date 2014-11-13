@@ -108,18 +108,27 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 	        }
 
 	        if (user != null) {
-	            String role = user.getRole().toString();
-	            
-	            // TODO: check that ROLE and GROUPS match with the LDAP ones
-	            
-	            List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
-	            grantedAuthorities.add(new GrantedAuthorityImpl("ROLE_" + role));
-	            Authentication a = new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
-	            // a.setAuthenticated(true);
-	            
-	            return a;
+	            // check that ROLE and GROUPS match with the LDAP ones
+				try {
+		            Set<UserGroup> groups = new HashSet<UserGroup>(); 	        		
+	        		Role role = extractUserRoleAndGroups(authorities, groups);
+					user.setRole(role);
+					user.setGroups(removeReservedGroups(groups));
+					
+					if (userService != null)
+						userService.update(user);
+
+					Authentication a = prepareAuthentication(pw, user, role);
+					return a;
+				} catch (BadRequestServiceEx e) {
+					LOGGER.log(Level.ERROR, e.getMessage(), e);
+					throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+				} catch (NotFoundServiceEx e) {
+					LOGGER.log(Level.ERROR, e.getMessage(), e);
+					throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+				}
 	        } else {
-	            //throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+	        	// check that ROLE and GROUPS match with the LDAP ones
 	        	try {
 	        		user = new User();
 	        		
@@ -127,46 +136,15 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 	        		user.setNewPassword(pw);
 	        		user.setEnabled(true);
 	        		
-	        		Role role = Role.GUEST;
 	        		Set<UserGroup> groups = new HashSet<UserGroup>(); 	        		
-	        		for ( GrantedAuthority a : authorities ) {
-	        			if (a.getAuthority().startsWith("ROLE_")) {
-	        				if (a.getAuthority().toUpperCase().endsWith("ADMIN") && 
-	        						(role == Role.GUEST || role == Role.USER)) {
-	        					role = Role.ADMIN;
-	        				} else if (a.getAuthority().toUpperCase().endsWith("USER") && role == Role.GUEST) {
-	        					role = Role.USER;	
-	        				}
-	        			} else {
-	        				UserGroup group = new UserGroup();
-	        				group.setGroupName(a.getAuthority());
-	        				
-	        				UserGroup userGroup = userGroupService.get(group.getGroupName());
-	        				
-	        				if (userGroup == null) {
-	        					long groupId = userGroupService.insert(group);
-	        					userGroup = userGroupService.get(groupId);
-	        				}
-	        				
-	        				groups.add(userGroup);
-	        			}
-	        		}
-	        		
+	        		Role role = extractUserRoleAndGroups(authorities, groups);
 					user.setRole(role);
-	        		
 					user.setGroups(removeReservedGroups(groups));
-	        		
-					userService.insert(user);
+
+					if (userService != null)
+						userService.insert(user);
 					
-					String userRole = user.getRole().toString();
-		            
-		            // TODO: check that ROLE and GROUPS match with the LDAP ones
-		            
-		            List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
-		            grantedAuthorities.add(new GrantedAuthorityImpl("ROLE_" + userRole));
-		            Authentication a = new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
-		            // a.setAuthenticated(true);
-		            
+		            Authentication a = prepareAuthentication(pw, user, role);
 		            return a;
 				} catch (BadRequestServiceEx e) {
 					LOGGER.log(Level.ERROR, e.getMessage(), e);
@@ -179,6 +157,61 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 		} else {
 			throw new BadCredentialsException(UNAUTHORIZED_MSG);
 		}
+	}
+
+	/**
+	 * @param pw
+	 * @param user
+	 * @param role
+	 * @return
+	 */
+	protected Authentication prepareAuthentication(String pw, User user,
+			Role role) {
+		List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
+		grantedAuthorities.add(new GrantedAuthorityImpl("ROLE_" + role));
+		Authentication a = new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
+		// a.setAuthenticated(true);
+		return a;
+	}
+
+	/**
+	 * @param authorities
+	 * @param groups
+	 * @return
+	 * @throws BadRequestServiceEx
+	 */
+	protected Role extractUserRoleAndGroups(
+			Collection<GrantedAuthority> authorities, Set<UserGroup> groups)
+			throws BadRequestServiceEx {
+		Role role = Role.GUEST;
+		for ( GrantedAuthority a : authorities ) {
+			if (a.getAuthority().startsWith("ROLE_")) {
+				if (a.getAuthority().toUpperCase().endsWith("ADMIN") && 
+						(role == Role.GUEST || role == Role.USER)) {
+					role = Role.ADMIN;
+				} else if (a.getAuthority().toUpperCase().endsWith("USER") && role == Role.GUEST) {
+					role = Role.USER;	
+				}
+			} else {
+				UserGroup group = new UserGroup();
+				group.setGroupName(a.getAuthority());
+
+				if (userGroupService != null) {
+					UserGroup userGroup = userGroupService.get(group
+							.getGroupName());
+
+					if (userGroup == null) {
+						long groupId = userGroupService.insert(group);
+						userGroup = userGroupService.get(groupId);
+					}
+
+					groups.add(userGroup);
+				} else {
+					groups.add(group);
+				}
+			}
+		}
+		return role;
 	}
 
 	 /**

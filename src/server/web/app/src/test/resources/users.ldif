@@ -45,14 +45,14 @@ uid: user
 userPassword: user
 
 # Groups and Members
-dn: cn=admin,ou=groups,dc=geosolutions,dc=it
+dn: cn=role_admin,ou=groups,dc=geosolutions,dc=it
 objectClass: top
 objectClass: groupOfNames
-cn: admin
+cn: role_admin
 member: uid=admin,ou=people,dc=geosolutions,dc=it
 
-dn: cn=user,ou=groups,dc=geosolutions,dc=it
+dn: cn=role_user,ou=groups,dc=geosolutions,dc=it
 objectClass: top
 objectClass: groupOfNames
-cn: user
+cn: role_user
 member: uid=user,ou=people,dc=geosolutions,dc=it

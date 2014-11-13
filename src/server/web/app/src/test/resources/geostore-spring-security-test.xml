@@ -105,7 +105,7 @@
 				<constructor-arg ref="contextSource" />
 				<constructor-arg value="ou=groups" />
 				<property name="groupSearchFilter" value="(member={0})" />
-				<property name="rolePrefix" value="ROLE_" />
+				<property name="rolePrefix" value="" />
 				<property name="searchSubtree" value="true" />
 				<property name="convertToUpperCase" value="true" />
 			</bean>
