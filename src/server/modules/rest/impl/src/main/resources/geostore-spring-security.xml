@@ -84,8 +84,10 @@
 			<bean
 				class="it.geosolutions.geostore.services.rest.security.GeoStoreLdapAuthoritiesPopulator">
 				<constructor-arg ref="contextSource" />
+				<!-- groupSearchBase -->
 				<constructor-arg value="ou=groups" />
-				<constructor-arg value="ou=groups" />
+				<!-- roleSearchBase -->
+				<constructor-arg value="ou=roles" />
 				<property name="groupSearchFilter" value="(lrGroupOccupant={0})" />
 				<property name="roleSearchFilter" value="(roleOccupant={0})" />
 				<!-- the GeoStore convetion is:
