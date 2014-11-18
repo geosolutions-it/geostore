@@ -101,7 +101,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * java.lang.String, java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public String getAllResources(SecurityContext sc, String nameLike, Integer start, Integer limit)
+	public String getAllResources(SecurityContext sc, String nameLike,
+			Integer start, Integer limit)
             throws BadRequestWebEx {
 
         if (start == null || limit == null)
@@ -121,6 +122,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             nameLike = nameLike.replaceAll("[*]", "%");
+            // TOOD: implement includeAttributes and includeData
             List<ShortResource> resources = getShortResourcesAllowed(resourceService
                     .getList(nameLike, page, limit, authUser), authUser);
 
@@ -148,8 +150,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      */
     @Override
     public String getResourcesByCategory(SecurityContext sc, String categoryName, Integer start,
-            Integer limit) throws BadRequestWebEx {
-        return getResourcesByCategory(sc, categoryName, null, start, limit);
+            Integer limit, boolean includeAttributes,
+			boolean includeData) throws BadRequestWebEx {
+        return getResourcesByCategory(sc, categoryName, null, start, limit, includeAttributes, includeData);
     }
 
     /*
@@ -160,14 +163,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      */
     @Override
     public String getResourcesByCategory(SecurityContext sc, String categoryName, String categorySearch, Integer start,
-            Integer limit) throws BadRequestWebEx {
-    	return getResourcesByCategory(sc, categoryName, categorySearch, null, start, limit);
+            Integer limit, boolean includeAttributes, boolean includeData) throws BadRequestWebEx {
+    	return getResourcesByCategory(sc, categoryName, categorySearch, null, start, limit, includeAttributes, includeData);
     }
 
 	@Override
 	public String getResourcesByCategory(SecurityContext sc,
 			String categoryName, String categorySearch, String extraAttributes,
-			Integer start, Integer limit) throws BadRequestWebEx,
+			Integer start, Integer limit, boolean includeAttributes, boolean includeData) throws BadRequestWebEx,
 			InternalErrorWebEx {
 		
 		// read extra attribustes
@@ -212,14 +215,24 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             	filter = new AndFilter(filter, new FieldFilter(BaseField.NAME, categorySearch, SearchOperator.LIKE));
             }
 
-            List<Resource> resources = getResourcesAllowed(resourceService.getResources(filter, page, limit, true, false,
-                    authUser), authUser);
+			List<Resource> resources = getResourcesAllowed(
+					resourceService
+							.getResources(
+									filter,
+									page,
+									limit,
+									includeAttributes || (extraAttributes != null && !extraAttributes.isEmpty()), 
+									includeData,
+									authUser),
+					authUser);
 
             long count = 0;
             if (resources != null && resources.size() > 0)
                 count = resourceService.getCountByFilterAndUser(filter, authUser);
             
-            JSONObject result = makeExtendedJSONResult(true, count, resources, authUser, extraAttributesList);
+			JSONObject result = makeExtendedJSONResult(true, count, resources,
+					authUser, extraAttributesList, includeAttributes,
+					includeData);
             return result.toString();
 
         } catch (InternalErrorServiceEx e) {
@@ -245,7 +258,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      */
     @Override
     public ExtResourceList getExtResourcesList(SecurityContext sc, Integer start, Integer limit,
-            boolean includeAttributes, SearchFilter filter) throws BadRequestWebEx {
+            boolean includeAttributes, boolean includeData, SearchFilter filter) throws BadRequestWebEx {
 
         if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
             throw new BadRequestWebEx("start and limit params should be declared together");
@@ -269,7 +282,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             List<Resource> resources = getResourcesAllowed(resourceService.getResources(filter, page, limit,
-                    includeAttributes, false, authUser), authUser);
+                    includeAttributes, includeData, authUser), authUser);
 
             // Here the Read permission on each resource must be checked due to will be returned the full Resource not just a ShortResource
             // N.B. This is a bad method to check the permissions on each requested resource, it can perform 2 database access for each resource.
@@ -303,8 +316,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return JSONObject
      */
     private JSONObject makeExtendedJSONResult(boolean success, long count, List<Resource> resources,
-            User authUser, List<String> extraAttributes) {
-        return makeGeneralizedJSONResult(success, count, resources, authUser, extraAttributes);
+            User authUser, List<String> extraAttributes, boolean includeAttributes, boolean includeData) {
+        return makeGeneralizedJSONResult(success, count, resources, authUser, extraAttributes, includeAttributes, includeData);
     }
 
     /**
@@ -315,7 +328,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      */
     private JSONObject makeJSONResult(boolean success, long count, List<ShortResource> resources,
             User authUser) {
-        return makeGeneralizedJSONResult(success, count, resources, authUser, null);
+        return makeGeneralizedJSONResult(success, count, resources, authUser, null, false, false);
     }
     
     @Override
@@ -371,7 +384,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return
      */
     private JSONObject makeGeneralizedJSONResult(boolean success, long count, List<?> resources,
-            User authUser, List<String> extraAttributes) {
+            User authUser, List<String> extraAttributes, boolean includeAttributes, boolean includeData) {
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("success", success);
         jsonObj.put("totalCount", count);
@@ -423,13 +436,16 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     // Append extra attributes
                     if(sr.getAttribute() != null){
                     	for(Attribute at: sr.getAttribute()){
-                    		if(extraAttributes != null && extraAttributes.contains(at.getName())){
+                    		if(includeAttributes || (extraAttributes != null && extraAttributes.contains(at.getName()))){
                                 jobj.element(at.getName(), at.getValue());
                     		}
                     		if("owner".equals(at.getName())){
                     			owner = at.getValue();
                     		}
                     	}
+                    }
+                    if(includeData) {
+                    	jobj.element("data", ((Resource)obj).getData().getData());
                     }
                     //get owner     
                     if (owner != null)
