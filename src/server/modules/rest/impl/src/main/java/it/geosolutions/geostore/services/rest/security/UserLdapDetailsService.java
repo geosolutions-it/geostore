@@ -16,9 +16,15 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,11 +35,13 @@ import javax.naming.NamingException;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.SearchControls;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.ldap.core.AttributesMapper;
 import org.springframework.ldap.core.ContextSource;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.GrantedAuthorityImpl;
 import org.springframework.security.core.userdetails.User;
@@ -68,6 +76,19 @@ public class UserLdapDetailsService implements UserDetailsService {
     @Autowired
     UserGroupService userGroupService;
 
+    /**
+     * Message shown if the user credentials are wrong. TODO: Localize it
+     */
+    private static final String UNAUTHORIZED_MSG = "Bad credentials";
+
+    /**
+     * Message shown if the user it's not found. TODO: Localize it
+     */
+    public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
+
+    public static final String USER_NOT_ENABLED = "The user present but not enabled";
+
+    
     /**
      * LDAP Base DN
      */
@@ -241,13 +262,137 @@ public class UserLdapDetailsService implements UserDetailsService {
             authorities.add(new GrantedAuthorityImpl("ANONYMOUS"));
         }
         
-        UserDetails user = new User((String) ldapUser.get("uid"), (String) ldapUser.get("password"), 
+        
+        // We use the credentials for all the session in the GeoStore client
+        username = (String) ldapUser.get("uid");
+        it.geosolutions.geostore.core.model.User user = null;
+        try {
+            user = userService.get(username);
+            LOGGER.info("US: " + username);// + " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
+
+            if (!user.isEnabled()) {
+                throw new DisabledException(USER_NOT_FOUND_MSG);
+            }
+        } catch (Exception e) {
+            LOGGER.info(USER_NOT_FOUND_MSG);
+            user = null;
+        }
+
+        if (user != null) {
+            // check that ROLE and GROUPS match with the LDAP ones
+            try {
+                Set<UserGroup> groups = new HashSet<UserGroup>();
+                Role role = extractUserRoleAndGroups(user.getRole(), authorities, groups);
+                user.setRole(role);
+                user.setGroups(checkReservedGroups(groups));
+
+                if (userService != null)
+                    userService.update(user);
+                
+            } catch (BadRequestServiceEx e) {
+                LOGGER.log(Level.ERROR, e.getMessage(), e);
+                throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+            } catch (NotFoundServiceEx e) {
+                LOGGER.log(Level.ERROR, e.getMessage(), e);
+                throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+            }
+        } else {
+            // check that ROLE and GROUPS match with the LDAP ones
+            try {
+                user = new it.geosolutions.geostore.core.model.User();
+
+                user.setName(username);
+                //user.setNewPassword(pw);
+                user.setEnabled(true);
+
+                Set<UserGroup> groups = new HashSet<UserGroup>();
+                Role role = extractUserRoleAndGroups(null, authorities, groups);
+                user.setRole(role);
+                user.setGroups(checkReservedGroups(groups));
+
+                if (userService != null)
+                    userService.insert(user);
+
+            } catch (BadRequestServiceEx e) {
+                LOGGER.log(Level.ERROR, e.getMessage(), e);
+                throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+            } catch (NotFoundServiceEx e) {
+                LOGGER.log(Level.ERROR, e.getMessage(), e);
+                throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+            }
+        }
+        
+        // Return user to the security context
+        UserDetails secUser = new User(username, (String) ldapUser.get("password"), 
                 true, true, true, true, 
                 authorities.toArray(new GrantedAuthority[authorities.size()]));
         
-        return user;
+        return secUser;
     }
 
+    /**
+     * 
+     * @param userRole
+     * @param authorities
+     * @param groups
+     * @return
+     */
+    private Role extractUserRoleAndGroups(Role userRole, Set<GrantedAuthority> authorities,
+            Set<UserGroup> groups) {
+        Role role = (userRole != null ? userRole : Role.GUEST);
+        for (GrantedAuthority a : authorities) {
+            if (a.getAuthority().startsWith("ROLE_")) {
+                if (a.getAuthority().toUpperCase().endsWith("ADMIN")
+                        && (role == Role.GUEST || role == Role.USER)) {
+                    role = Role.ADMIN;
+                } else if (a.getAuthority().toUpperCase().endsWith("USER") && role == Role.GUEST) {
+                    role = Role.USER;
+                }
+            } else {
+                UserGroup group = new UserGroup();
+                group.setGroupName(a.getAuthority());
+
+                if (userGroupService != null) {
+                    UserGroup userGroup = userGroupService.get(group.getGroupName());
+
+                    if (userGroup == null) {
+                        long groupId;
+                        try {
+                            groupId = userGroupService.insert(group);
+                            userGroup = userGroupService.get(groupId);
+                            groups.add(userGroup);
+                        } catch (BadRequestServiceEx e) {
+                            LOGGER.log(Level.ERROR, e.getMessage(), e);
+                        }
+                    }
+                } else {
+                    groups.add(group);
+                }
+            }
+        }
+        
+        return role;
+    }
+
+    /**
+     * Utility method to remove Reserved group (for example EVERYONE) from a group list
+     * 
+     * @param groups
+     * @return
+     */
+    private Set<UserGroup> checkReservedGroups(Set<UserGroup> groups) {
+        List<UserGroup> reserved = new ArrayList<UserGroup>();
+        for (UserGroup ug : groups) {
+            if (!GroupReservedNames.isAllowedName(ug.getGroupName())) {
+                reserved.add(ug);
+            }
+        }
+        for (UserGroup ug : reserved) {
+            groups.remove(ug);
+        }
+        return groups;
+    }
+    
     /**
      * @return the baseDn
      */
