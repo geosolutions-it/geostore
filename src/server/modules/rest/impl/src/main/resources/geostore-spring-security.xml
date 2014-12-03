@@ -18,87 +18,218 @@
 	<!-- ==================================================================== -->
 	<!-- === REST Security ================================================== -->
 	<!-- ==================================================================== -->
-	<security:global-method-security secured-annotations="enabled" />
+		<security:global-method-security secured-annotations="enabled" />
+	
+		<!-- In case you need BASIC AUTH -->
+		<!-- security:http auto-config="true" create-session="never"
+			<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
+			<security:anonymous />
+		</security:http -->
+		
+		<!-- In case you need CAS AUTH -->
+		<security:http auto-config="true" use-expressions="true" 
+		       entry-point-ref="casProcessingFilterEntryPoint">
+			<security:intercept-url pattern="/**" access="isAuthenticated()" />
+			
+			<security:custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
+        	<security:custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>
+			<security:custom-filter ref="casAuthenticationFilter" after="CAS_FILTER"/>
 
-	<security:http auto-config="true" create-session="never" >
-		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
-		<security:anonymous />
-	</security:http>
-	<!-- Entry point -->
-	<bean id="restAuthenticationEntryPoint" class="it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint" >
-		<property name="realmName" value="GeoStore"></property>
+			<security:anonymous />
+		</security:http>
+
+	<!-- ==================================================================== -->
+	<!-- === The AUTHENTICATION MANAGER ===================================== -->
+	<!-- ==================================================================== -->
+		<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
+		<security:authentication-manager alias="authenticationManager">
+		    <!-- Use the default GeoStore Auth Provider -->
+			<!-- security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' / -->
+			
+			<!-- Use the GeoStore LDAP Provider -->
+			<!-- security:authentication-provider ref='geostoreLdapProvider' / -->
+			
+			<!-- Use the GeoStore CAS Provider -->
+			<security:authentication-provider ref="casAuthenticationProvider"/>
+		</security:authentication-manager>
+		
+	<!-- ==================================================================== -->
+	<!-- === DEFAULT GeoStore Provider ====================================== -->
+	<!-- ==================================================================== -->
+		<!-- Entry point -->
+		<bean id="restAuthenticationEntryPoint" 
+		    class="it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint" >
+			<property name="realmName" value="GeoStore"></property>
+		</bean>
+		
+		<!-- GeoStore Auth Provider -->
+		<bean id="geoStoreUserServiceAuthenticationProvider"
+			class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
+		</bean>
+
+	<!-- ==================================================================== -->
+	<!-- === LDAP GeoStore Provider ========================================= -->
+	<!-- ==================================================================== -->
+		<!-- LDAP Auth Provider -->
+		<!-- Simple namespace-based configuration -->
+	
+		<!-- Starts an internal LDAP server -->
+		<!-- security:ldap-server ldif="classpath*:users.ldif" port="33389" root="${ldap.root}"/ -->
+	
+		<!-- security:authentication-manager>
+			<security:ldap-authentication-provider
+				user-search-filter="(uid={0})" 
+				user-search-base="ou=people"
+				group-search-filter="(member={0})" 
+				group-search-base="ou=groups"
+				group-role-attribute="cn" 
+				role-prefix="ROLE_">
+			</security:ldap-authentication-provider>
+			<security:authentication-provider ref='geostoreLdapProvider' />
+		</security:authentication-manager -->
+	
+		<!-- Traditional Bean version of the same configuration -->
+	
+		<!-- This bean points at the embedded directory server created by the ldap-server element above -->
+		<bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+			<constructor-arg value="ldap://${ldap.host}:${ldap.port}/${ldap.root}" />
+		</bean>
+	
+		<bean id="geostoreLdapProvider"
+			class="it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider">
+			<constructor-arg>
+				<bean
+					class="org.springframework.security.ldap.authentication.BindAuthenticator">
+					<constructor-arg ref="contextSource" />
+					<property name="userSearch">
+						<bean id="userSearch"
+							class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
+							<constructor-arg index="0" value="ou=people" />
+							<constructor-arg index="1" value="(uid={0})" />
+							<constructor-arg index="2" ref="contextSource" />
+						</bean>
+					</property>
+				</bean>
+			</constructor-arg>
+			<constructor-arg>
+				<bean
+					class="it.geosolutions.geostore.services.rest.security.GeoStoreLdapAuthoritiesPopulator">
+					<constructor-arg ref="contextSource" />
+					<!-- groupSearchBase -->
+					<constructor-arg value="ou=groups" />
+					<!-- roleSearchBase -->
+					<constructor-arg value="ou=roles" />
+					<property name="groupSearchFilter" value="(lrGroupOccupant={0})" />
+					<property name="roleSearchFilter" value="(roleOccupant={0})" />
+					<!-- the GeoStore convetion is:
+					  * Groups starting with 'ROLE_' will be threated as Auth Roles
+					  * Groups starting withOUT 'ROLE_' will be threated as Groups
+					 -->
+					<property name="rolePrefix" value="ROLE_" />
+					<property name="searchSubtree" value="true" />
+					<property name="convertToUpperCase" value="true" />
+				</bean>
+			</constructor-arg>
+		</bean>
+
+	<!-- ==================================================================== -->
+	<!-- === CAS GeoStore Provider ========================================== -->
+	<!-- ==================================================================== -->
+		<!-- This filter handles a Single Logout Request from the CAS Server -->
+	    <bean id="singleLogoutFilter" class="org.jasig.cas.client.session.SingleSignOutFilter"/>
+	    
+	    <!-- This filter redirects to the CAS Server to signal Single Logout should be performed -->
+	    <bean id="requestSingleLogoutFilter" class="org.springframework.security.web.authentication.logout.LogoutFilter">
+	        <constructor-arg value="https://geos3.cmre.nato.int/cas/logout"/>
+	        <constructor-arg>
+	            <bean class="org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler"/>
+	        </constructor-arg>
+	        
+	        <property name="filterProcessesUrl" value="/j_spring_cas_security_logout"/>
+	    </bean>
+	    	
+		<bean id="casAuthenticationFilter" class="org.springframework.security.cas.web.CasAuthenticationFilter">
+	        <property name="proxyGrantingTicketStorage" ref="proxyGrantingTicketStorage" />
+	        <property name="proxyReceptorUrl" value="/j_spring_cas_security_proxyreceptor" />
+	        <property name="authenticationManager" ref="authenticationManager"/>
+	        
+	        <property name="authenticationFailureHandler">
+	            <bean class="org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler">
+	                <property name="defaultFailureUrl" value="https://geos3.cmre.nato.int/cas/logout"/>
+	            </bean>
+	        </property>
+	        
+	        <property name="authenticationSuccessHandler">
+	            <!-- bean class="org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler">
+	                <property name="defaultTargetUrl" value="/"/>
+	            </bean -->
+	            <bean class="org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler">
+	                <property name="defaultTargetUrl" value="/"/>
+	            </bean>
+	        </property>
+	    </bean>
+	    
+		<bean id="casProcessingFilterEntryPoint" class="org.springframework.security.cas.web.CasAuthenticationEntryPoint">
+	        <property name="loginUrl" value="https://geos3.cmre.nato.int/cas/login"/>
+	        <property name="serviceProperties" ref="serviceProperties"/>
+	    </bean>
+	    
+	    <bean id="casAuthenticationProvider" class="org.springframework.security.cas.authentication.CasAuthenticationProvider">
+	        <property name="userDetailsService" ref="userLDAPService"/>
+	        <property name="serviceProperties" ref="serviceProperties" />
+	        <property name="ticketValidator">
+	            <bean class="org.jasig.cas.client.validation.Cas20ServiceTicketValidator">
+	                <constructor-arg index="0" value="https://geos3.cmre.nato.int/cas" />
+
+	                <property name="proxyGrantingTicketStorage" ref="proxyGrantingTicketStorage" />
+	                <property name="proxyCallbackUrl" value="http://localhost:8280/geostore/j_spring_cas_security_proxyreceptor" />
+	                
+	            </bean>
+	        </property>
+	        <property name="key" value="casAuthProviderKey"/>
+	    </bean>
+	
+	    <bean id="proxyGrantingTicketStorage" class="org.jasig.cas.client.proxy.ProxyGrantingTicketStorageImpl" />
+	
+	    <bean id="serviceProperties" class="org.springframework.security.cas.ServiceProperties">
+	        <property name="service" value="http://localhost:8280/geostore/j_spring_cas_security_check"/>
+	        <!-- property name="service" value="http://localhost:8280/geostore/j_spring_cas_security_proxyreceptor"/ -->
+	        <property name="sendRenew" value="false"/>
+	    </bean>
+	
+	    <!-- security:user-service id="userCASService">
+	        <security:user name="admin" password="admin" authorities="ROLE_SUPERVISOR,ROLE_USER" />
+	        <security:user name="dianne" password="dianne" authorities="ROLE_USER" />
+	        <security:user name="scott" password="scott" authorities="ROLE_USER" />
+	    </security:user-service -->
+    	
+    	<bean id="userLDAPService" class="it.geosolutions.geostore.services.rest.security.UserLdapDetailsService">
+    	    <constructor-arg ref="contextSource" />
+			<!-- userSearchBase -->
+			<constructor-arg value="ou=people" />
+    	    <!-- groupSearchBase -->
+			<constructor-arg value="ou=groups" />
+			<!-- roleSearchBase -->
+			<constructor-arg value="ou=roles" />
+			
+			<property name="baseDn" value="${ldap.root}" />
+			<property name="userSearchFilter" value="(uid={0})" />
+			<property name="groupSearchFilter" value="(lrGroupOccupant={0})" />
+			<property name="roleSearchFilter" value="(roleOccupant={0})" />
+			<!-- the GeoStore convetion is:
+			  * Groups starting with 'ROLE_' will be threated as Auth Roles
+			  * Groups starting withOUT 'ROLE_' will be threated as Groups
+			 -->
+			<property name="rolePrefix" value="ROLE_" />
+			<property name="convertToUpperCase" value="true" />
+			
+			<!-- 
+			  User Attributes Mapper
+			 -->
+			<property name="userNameAttribute" value="uid" />
+			<property name="userGivenNameAttribute" value="givenName" />
+			<property name="userMailAttribute" value="mail" />
+			<property name="userPasswordAttribute" value="userPassword" />
 	</bean>
-	<!-- GeoStore Auth Provider -->
-	<bean id="geoStoreUserServiceAuthenticationProvider"
-		class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
-	</bean>
-
-	<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
-	<security:authentication-manager>
-		<!-- security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' / -->
-		<security:authentication-provider ref='geostoreLdapProvider' />
-	</security:authentication-manager>
-
-	<!-- LDAP Auth Provider -->
-	<!-- Simple namespace-based configuration -->
-
-	<!-- Starts an internal LDAP server -->
-	<!-- security:ldap-server ldif="classpath*:users.ldif" port="33389" root="${ldap.root}"/ -->
-
-	<!-- security:authentication-manager>
-		<security:ldap-authentication-provider
-			user-search-filter="(uid={0})" 
-			user-search-base="ou=people"
-			group-search-filter="(member={0})" 
-			group-search-base="ou=groups"
-			group-role-attribute="cn" 
-			role-prefix="ROLE_">
-		</security:ldap-authentication-provider>
-		<security:authentication-provider ref='geostoreLdapProvider' />
-	</security:authentication-manager -->
-
-	<!-- Traditional Bean version of the same configuration -->
-
-	<!-- This bean points at the embedded directory server created by the ldap-server element above -->
-	<bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
-		<constructor-arg value="ldap://${ldap.host}:${ldap.port}/${ldap.root}" />
-	</bean>
-
-	<bean id="geostoreLdapProvider"
-		class="it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider">
-		<constructor-arg>
-			<bean
-				class="org.springframework.security.ldap.authentication.BindAuthenticator">
-				<constructor-arg ref="contextSource" />
-				<property name="userSearch">
-					<bean id="userSearch"
-						class="org.springframework.security.ldap.search.FilterBasedLdapUserSearch">
-						<constructor-arg index="0" value="ou=people" />
-						<constructor-arg index="1" value="(uid={0})" />
-						<constructor-arg index="2" ref="contextSource" />
-					</bean>
-				</property>
-			</bean>
-		</constructor-arg>
-		<constructor-arg>
-			<bean
-				class="it.geosolutions.geostore.services.rest.security.GeoStoreLdapAuthoritiesPopulator">
-				<constructor-arg ref="contextSource" />
-				<!-- groupSearchBase -->
-				<constructor-arg value="ou=groups" />
-				<!-- roleSearchBase -->
-				<constructor-arg value="ou=roles" />
-				<property name="groupSearchFilter" value="(lrGroupOccupant={0})" />
-				<property name="roleSearchFilter" value="(roleOccupant={0})" />
-				<!-- the GeoStore convetion is:
-				  * Groups starting with 'ROLE_' will be threated as Auth Roles
-				  * Groups starting withOUT 'ROLE_' will be threated as Groups
-				 -->
-				<property name="rolePrefix" value="ROLE_" />
-				<property name="searchSubtree" value="true" />
-				<property name="convertToUpperCase" value="true" />
-			</bean>
-		</constructor-arg>
-	</bean>
-
+    	
 </beans>
