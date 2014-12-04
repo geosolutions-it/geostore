@@ -34,7 +34,6 @@
 			<security:custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
         	<security:custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>
 			<security:custom-filter ref="casAuthenticationFilter" after="CAS_FILTER"/>
-
 			<security:anonymous />
 		</security:http>
 
