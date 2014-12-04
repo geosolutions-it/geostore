@@ -35,8 +35,8 @@
 
 	<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 	<security:authentication-manager>
-		<!-- security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' / -->
-		<security:authentication-provider ref='geostoreLdapProvider' />
+		<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
+		<!-- security:authentication-provider ref='geostoreLdapProvider' / -->
 	</security:authentication-manager>
 
 	<!-- LDAP Auth Provider -->
