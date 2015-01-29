@@ -54,8 +54,8 @@ public class MockedUserService implements UserService {
         Long id = RANDOM.nextLong();
         user.setId(id);
         String password = user.getPassword() != null ? user.getPassword()
-                : user.getNewPassword() != null ? user.getNewPassword() : "";
-        user.setPassword(PwEncoder.encode(password));
+                : user.getNewPassword() != null ? user.getNewPassword() : null;
+        user.setPassword(password == null ? null : PwEncoder.encode(password));
         USERS.put(id, user);
         return id;
     }

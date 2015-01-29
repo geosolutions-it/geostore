@@ -8,7 +8,6 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.UserMapper;
-import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -70,6 +69,18 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
 
     
     
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+
+
+    public void setUserGroupService(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+
+
+
     public void setUserMapper(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
@@ -107,12 +118,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
             try {
                 user = userService.get(us);
                 LOGGER.info("US: " + us);// + " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
-                if (user.getPassword() == null
-                        || !PwEncoder.isPasswordValid(user.getPassword(), pw)) {
-                    if (user.getPassword() == null)
-                        throw new BadCredentialsException(UNAUTHORIZED_MSG);
-                    user.setNewPassword(pw);
-                }
+                
                 if (!user.isEnabled()) {
                     throw new DisabledException(USER_NOT_FOUND_MSG);
                 }
@@ -147,7 +153,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
                     user = new User();
 
                     user.setName(us);
-                    user.setNewPassword(pw);
+                    user.setNewPassword(null);
                     user.setEnabled(true);
 
                     Set<UserGroup> groups = new HashSet<UserGroup>();
