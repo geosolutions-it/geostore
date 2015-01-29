@@ -107,7 +107,11 @@
 	      <groupId>org.jasypt</groupId>
 	      <artifactId>jasypt</artifactId>
 	   </dependency>
-	   
+	   <dependency>
+             <groupId>org.springframework.security</groupId>
+             <artifactId>spring-security-ldap</artifactId>
+       </dependency>
+
     <!-- Apache Commons -->
         <dependency>
             <groupId>commons-beanutils</groupId>
@@ -124,7 +128,11 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
+    <!-- GeoStore modules -->
+    <dependency>
+        <groupId>it.geosolutions.geostore</groupId>
+        <artifactId>geostore-model</artifactId>
+    </dependency>
     </dependencies>
 
    

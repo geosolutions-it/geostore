@@ -1,7 +1,33 @@
-/**
- * 
+/* ====================================================================
+ *
+ * Copyright (C) 2014 GeoSolutions S.A.S.
+ * http://www.geo-solutions.it
+ *
+ * GPLv3 + Classpath exception
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by developers
+ * of GeoSolutions.  For more information on GeoSolutions, please see
+ * <http://www.geo-solutions.it/>.
+ *
  */
 package it.geosolutions.geostore.services.rest.security;
+
+import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -61,27 +87,29 @@ public class GeoStoreLdapAuthoritiesPopulator extends
      * Should we convert the role name to uppercase
      */
     private boolean convertToUpperCase = true;
-	
-	/**
-	 * @param contextSource
-	 * @param groupSearchBase
-	 */
-	public GeoStoreLdapAuthoritiesPopulator(ContextSource contextSource,
-			String groupSearchBase, String roleSearchBase) {
-		super(contextSource, groupSearchBase);
-	
-		Assert.notNull(contextSource, "contextSource must not be null");
+    
+    private GrantedAuthoritiesMapper authoritiesMapper = null;
+
+    /**
+     * @param contextSource
+     * @param groupSearchBase
+     */
+    public GeoStoreLdapAuthoritiesPopulator(ContextSource contextSource, String groupSearchBase,
+            String roleSearchBase) {
+        super(contextSource, groupSearchBase);
+
+        Assert.notNull(contextSource, "contextSource must not be null");
         ldapTemplate = new SpringSecurityLdapTemplate(contextSource);
         ldapTemplate.setSearchControls(searchControls);
-        
-		this.groupSearchBase = groupSearchBase;
+
+        this.groupSearchBase = groupSearchBase;
 
         if (groupSearchBase == null) {
             logger.info("groupSearchBase is null. No group search will be performed.");
         } else if (groupSearchBase.length() == 0) {
             logger.info("groupSearchBase is empty. Searches will be performed from the context source base");
         }
-        
+
         this.roleSearchBase = roleSearchBase;
 
         if (roleSearchBase == null) {
@@ -89,9 +117,15 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         } else if (roleSearchBase.length() == 0) {
             logger.info("roleSearchBase is empty. Searches will be performed from the context source base");
         }
-	}
+    }
 
-	@Override
+    public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
+        this.authoritiesMapper = authoritiesMapper;
+    }
+
+
+
+    @Override
 	public Set<GrantedAuthority> getGroupMembershipRoles(String userDn, String username) {
         if (roleSearchBase == null && groupSearchBase == null) {
             return new HashSet<GrantedAuthority>();
@@ -105,46 +139,46 @@ public class GeoStoreLdapAuthoritiesPopulator extends
                     + roleSearchFilter + " in search base '" + roleSearchBase + "'");
         }
 
-        Set<String> userRoles = ldapTemplate.searchForSingleAttributeValues(roleSearchBase, roleSearchFilter,
-            new String[]{userDn, username}, groupRoleAttribute);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Roles from search: " + userRoles);
-        }
-
-        for (String role : userRoles) {
-
-            if (convertToUpperCase) {
-                role = role.toUpperCase();
-            }
-
-            String prefix = (rolePrefix != null && !role.startsWith(rolePrefix) ? rolePrefix : "");
-            authorities.add(new GrantedAuthorityImpl(prefix + role));
-        }
-
-        // Searching for Groups
-        if (logger.isDebugEnabled()) {
-            logger.debug("Searching for roles for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                    + groupSearchFilter + " in search base '" + groupSearchBase + "'");
-        }
-
-        Set<String> userGroups = ldapTemplate.searchForSingleAttributeValues(groupSearchBase, groupSearchFilter,
-            new String[]{userDn, username}, groupRoleAttribute);
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Roles from search: " + userGroups);
-        }
-
-        for (String group : userGroups) {
-
-            if (convertToUpperCase) {
-                group = group.toUpperCase();
-            }
-
-            authorities.add(new GrantedAuthorityImpl(group));
+        String[] rolesRoots = roleSearchBase.split(",");
+        for(String rolesRoot : rolesRoots) {
+            addAuthorities(userDn, username, authorities, rolesRoot, roleSearchFilter, rolePrefix);
         }
         
+        // Searching for Groups
+        if (logger.isDebugEnabled()) {
+            logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
+                    + groupSearchFilter + " in search base '" + groupSearchBase + "'");
+        }
+        String[] groupsRoots = groupSearchBase.split(",");
+        for(String groupsRoot : groupsRoots) {
+            addAuthorities(userDn, username, authorities, groupsRoot, groupSearchFilter, null);
+        }
+
+        
+
+        
+        if(authoritiesMapper != null) {
+            return new HashSet<GrantedAuthority>(authoritiesMapper.mapAuthorities(authorities));
+        }
         return authorities;
+    }
+
+    private void addAuthorities(String userDn, String username, Set<GrantedAuthority> authorities,
+            String root, String filter, String authorityPrefix) {
+        Set<String> ldapAuthorities = ldapTemplate.searchForSingleAttributeValues(root, filter,
+            new String[]{userDn, username}, groupRoleAttribute);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Authorities from search: " + ldapAuthorities);
+        }
+        for (String authority : ldapAuthorities) {
+
+            if (convertToUpperCase) {
+                authority = authority.toUpperCase();
+            }
+
+            String prefix = (authorityPrefix != null && !authority.startsWith(authorityPrefix) ? authorityPrefix : "");
+            authorities.add(new GrantedAuthorityImpl(prefix + authority));
+        }
     }
 
 	@Override
