@@ -62,6 +62,14 @@
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-rest-api</artifactId>
         </dependency>
+        
+        <dependency>
+          <groupId>it.geosolutions.geostore</groupId>
+          <artifactId>geostore-security</artifactId>
+          <version>${geostore-version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+        </dependency>
 
         <!-- ================================================================-->
         <!-- Core lib -->
