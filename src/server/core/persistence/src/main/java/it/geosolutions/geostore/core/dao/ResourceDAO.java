@@ -35,7 +35,6 @@ import it.geosolutions.geostore.core.model.User;
 
 import java.util.List;
 
-import javax.persistence.NoResultException;
 import javax.persistence.NonUniqueResultException;
 
 import com.googlecode.genericdao.search.ISearch;
