@@ -141,7 +141,7 @@ public class ResourceServiceImpl implements ResourceService {
             LOGGER.debug("Persisting Resource ... ");
         }
         
-        validateResourceName(resource);
+        validateResourceName(resource, false);
         
         Category category = resource.getCategory();
         if (category == null) {
@@ -233,7 +233,7 @@ public class ResourceServiceImpl implements ResourceService {
             throw new NotFoundServiceEx("Resource not found " + resource.getId());
         }
         
-        validateResourceName(resource);
+        validateResourceName(resource, true);
 
         // reset some server-handled data.
         resource.setCreation(orig.getCreation());
@@ -281,9 +281,9 @@ public class ResourceServiceImpl implements ResourceService {
      * if a conflict is found, the method throws a DuplicatedResourceNameServiceEx
      * exception, putting an alternative, non-conflicting resource name in the exception's message
      */
-    private void validateResourceName(Resource resource) throws DuplicatedResourceNameServiceEx {
+    private void validateResourceName(Resource resource, boolean isUpdate) throws DuplicatedResourceNameServiceEx {
         Resource existentResource = resourceDAO.findByName(resource.getName());
-        if (existentResource != null) {
+        if (existentResource != null && !(isUpdate && existentResource.getId().equals(resource.getId()))) {
         	String validResourceName = suggestValidResourceName(resource.getName());
         	
         	throw new DuplicatedResourceNameServiceEx(validResourceName);

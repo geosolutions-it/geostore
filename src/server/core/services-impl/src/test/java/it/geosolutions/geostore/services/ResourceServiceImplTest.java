@@ -327,6 +327,10 @@ public class ResourceServiceImplTest extends ServiceTestBase {
                 // should throw no exception
                 try {
                 	resourceService.update(copy);
+                	
+                	// update description
+                	copy.setDescription(DESCRIPTION + " modified");
+                	resourceService.update(copy);
                 } catch (Exception e) {
                 	fail("Exception was thrown during update: " + e.getMessage());
                 }                
