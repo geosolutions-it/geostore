@@ -39,6 +39,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.persistence.NoResultException;
+
 import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
@@ -273,6 +275,39 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
                         ));
         searchCriteria.addFilter(securityFilter);
 		return count(searchCriteria);
+	}
+
+	/* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findByName(java.lang.String)
+     */
+	@Override
+	public Resource findByName(String resourceName) {
+		Search searchCriteria = new Search(Resource.class);
+		Filter filter = Filter.equal("name", resourceName);
+		searchCriteria.addFilter(filter);
+		
+		Resource foundResource = null;
+		
+		try {
+			foundResource = super.searchUnique(searchCriteria);
+		} catch (NoResultException ex) {
+			// I ignore the exception and return null on purpose, mimicking the behavior of ResourceDAO#find(java.lang.Long) 
+			foundResource = null;
+		}
+		
+		return foundResource;
+	}
+	
+	@Override
+	public List<String> findResourceNamesMatchingPattern(String pattern) {
+		Search searchCriteria = new Search(Resource.class);
+    	searchCriteria.addField("name");
+    	searchCriteria.addFilterLike("name", pattern);
+    	searchCriteria.setResultMode(Search.RESULT_SINGLE);
+    	
+    	List<String> resourceNames = super.search(searchCriteria);
+    	
+    	return resourceNames;
 	}
 
 }

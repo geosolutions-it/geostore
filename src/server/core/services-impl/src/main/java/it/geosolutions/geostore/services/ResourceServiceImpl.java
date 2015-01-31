@@ -46,6 +46,7 @@ import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
@@ -57,6 +58,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -133,11 +136,13 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#insert(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
-    public long insert(Resource resource) throws BadRequestServiceEx, NotFoundServiceEx {
+    public long insert(Resource resource) throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting Resource ... ");
         }
-
+        
+        validateResourceName(resource);
+        
         Category category = resource.getCategory();
         if (category == null) {
             throw new BadRequestServiceEx("Category type must be specified");
@@ -222,11 +227,13 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#update(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
-    public long update(Resource resource) throws NotFoundServiceEx {
+    public long update(Resource resource) throws NotFoundServiceEx, DuplicatedResourceNameServiceEx {
         Resource orig = resourceDAO.find(resource.getId());
         if (orig == null) {
             throw new NotFoundServiceEx("Resource not found " + resource.getId());
         }
+        
+        validateResourceName(resource);
 
         // reset some server-handled data.
         resource.setCreation(orig.getCreation());
@@ -269,6 +276,58 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
+    /*
+     * Makes sure that no resource with the same name exists in the database;
+     * if a conflict is found, the method throws a DuplicatedResourceNameServiceEx
+     * exception, putting an alternative, non-conflicting resource name in the exception's message
+     */
+    private void validateResourceName(Resource resource) throws DuplicatedResourceNameServiceEx {
+        Resource existentResource = resourceDAO.findByName(resource.getName());
+        if (existentResource != null) {
+        	String validResourceName = suggestValidResourceName(resource.getName());
+        	
+        	throw new DuplicatedResourceNameServiceEx(validResourceName);
+        }
+    }
+    
+    /*
+     * Utility method containing the logic to determine a valid (i.e. not duplicated) resource name.
+     * To do so, the method queries the database in search of resouce names matching the pattern:
+     *  	[baseResourceName] - [counter]
+     *  The maximum employed counter is then established and a unique resource name following the
+     *  aforementioned pattern is constructed.
+     */
+    private String suggestValidResourceName(String baseResourceName) {
+    	final String COUNTER_SEPARATOR = " - ";
+    	final String BASE_PATTERN = baseResourceName + COUNTER_SEPARATOR;
+    	
+    	final String RESOURCE_NAME_LIKE_PATTERN = BASE_PATTERN + "%";
+    	final Pattern RESOURCE_NAME_REGEX_PATTERN = Pattern.compile(BASE_PATTERN + "(\\d+)");
+    	int maxCounter = 0, initialCounter = 2;
+    	
+    	List<String> resourceNames = resourceDAO.findResourceNamesMatchingPattern(RESOURCE_NAME_LIKE_PATTERN);
+    	for (String resourceName: resourceNames) {
+    		Matcher matcher = RESOURCE_NAME_REGEX_PATTERN.matcher(resourceName);
+    		if (matcher.matches()) {
+    			String suffix = matcher.group(1);
+    			int suffixAsInteger = 0;
+    			try {
+    				suffixAsInteger = Integer.valueOf(suffix);
+    				if (suffixAsInteger > maxCounter) {
+    					maxCounter = suffixAsInteger;
+    				}
+    			} catch (NumberFormatException ex) {
+    				// ignore: suffix is NOT an integer
+    			}
+    		}
+    	}
+    	
+    	Integer validCounter = Math.max(maxCounter+1, initialCounter);
+    	String validName = BASE_PATTERN + validCounter;
+    	
+    	return validName;
+    }
+    
     /*
      * @param id
      * 

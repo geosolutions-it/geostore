@@ -36,6 +36,7 @@ import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
@@ -58,15 +59,17 @@ public interface ResourceService extends SecurityService{
      * @return long
      * @throws BadRequestServiceEx
      * @throws NotFoundServiceEx
+     * @throws DuplicatedResourceNameServiceEx 
      */
-    long insert(Resource resource) throws BadRequestServiceEx, NotFoundServiceEx;
+    long insert(Resource resource) throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx;
 
     /**
      * @param resource
      * @return long
      * @throws NotFoundServiceEx
+     * @throws DuplicatedResourceNameServiceEx 
      */
-    long update(Resource resource) throws NotFoundServiceEx;
+    long update(Resource resource) throws NotFoundServiceEx, DuplicatedResourceNameServiceEx;
 
     /**
      * @param id
