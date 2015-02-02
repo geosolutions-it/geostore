@@ -29,6 +29,7 @@ import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.ArrayList;
@@ -93,9 +94,10 @@ public class UserGroupServiceImplTest extends ServiceTestBase{
      * 
      * @throws BadRequestServiceEx
      * @throws NotFoundServiceEx
+     * @throws DuplicatedResourceNameServiceEx 
      */
     @Test
-    public void testChangeGroupPermissionsOnResources() throws BadRequestServiceEx, NotFoundServiceEx{
+    public void testChangeGroupPermissionsOnResources() throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx{
 
         UserGroup ug1 = new UserGroup();
         ug1.setGroupName("ug1");

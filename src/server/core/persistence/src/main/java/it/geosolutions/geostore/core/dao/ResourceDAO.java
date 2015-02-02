@@ -35,6 +35,8 @@ import it.geosolutions.geostore.core.model.User;
 
 import java.util.List;
 
+import javax.persistence.NonUniqueResultException;
+
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 
@@ -90,4 +92,20 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @return resources' count that the user has access 
      */
 	public long count(Search searchCriteria, User user);
+	
+	/**
+	 * Gets a resource by name.
+	 * @return the resource with the specified name, or null if none was found
+	 * @throws NonUniqueResultException
+	 *             if more than one result
+	 */
+	public Resource findByName(String resourceName);
+	
+	/**
+	 * Returns a list of resource names matching the specified pattern 
+	 * @param pattern the pattern used to build a LIKE filter  
+	 * @return a list of resource names
+	 */	
+	public List<String> findResourceNamesMatchingPattern(String pattern);
+	
 }
