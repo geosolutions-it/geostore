@@ -25,6 +25,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -287,6 +288,15 @@ public class ServiceTestBase extends TestCase {
         user.setRole(role);
         user.setNewPassword(password);
 
+        return userService.insert(user);
+    }
+    
+    protected long createUser(String name, Role role, String password, List<UserAttribute> attributes) throws Exception {
+        User user = new User();
+        user.setName(name);
+        user.setRole(role);
+        user.setNewPassword(password);
+        user.setAttribute(attributes);
         return userService.insert(user);
     }
     

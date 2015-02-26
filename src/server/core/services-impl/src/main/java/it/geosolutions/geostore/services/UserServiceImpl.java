@@ -32,6 +32,7 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -416,5 +417,24 @@ public class UserServiceImpl implements UserService {
             LOGGER.debug("Special User '" + u.getName() + "' persisted!");
         }
         return true;
+    }
+
+    @Override
+    public Collection<User> getByAttribute(UserAttribute attribute) {
+        
+        Search searchCriteria = new Search(UserAttribute.class);
+        searchCriteria.addFilterEqual("name", attribute.getName());
+        searchCriteria.addFilterEqual("value", attribute.getValue());
+        searchCriteria.addFetch("user");
+
+        List<UserAttribute> attributes = userAttributeDAO.search(searchCriteria);
+        
+        Set<User> users = new HashSet<User>();
+        for(UserAttribute userAttr : attributes) {
+            if(userAttr.getUser() != null) {
+                users.add(userAttr.getUser());
+            }
+        }
+        return users;
     }
 }
