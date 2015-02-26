@@ -33,6 +33,7 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -118,5 +119,13 @@ public interface UserService {
      * @return true if the persist operation finish with success, false otherwise  
      */
     public boolean insertSpecialUsers();
+    
+    /**
+     * Returns all user with the specified attribute (name / value).
+     * 
+     * @param attribute
+     * @return
+     */
+    public Collection<User>  getByAttribute(UserAttribute attribute);
 
 }

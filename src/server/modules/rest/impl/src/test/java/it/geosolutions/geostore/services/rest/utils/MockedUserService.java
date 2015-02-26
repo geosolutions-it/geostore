@@ -26,6 +26,7 @@ import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -157,6 +158,12 @@ public class MockedUserService implements UserService {
     public boolean insertSpecialUsers() {
      // Don't needed
         return false;
+    }
+
+    @Override
+    public Collection<User> getByAttribute(UserAttribute attribute) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

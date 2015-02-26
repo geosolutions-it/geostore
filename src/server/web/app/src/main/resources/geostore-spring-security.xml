@@ -22,6 +22,7 @@
 
 	<security:http auto-config="true" create-session="never" >
 		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
+		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
 		<security:anonymous />
 	</security:http>
 	<!-- Entry point -->
@@ -32,6 +33,15 @@
 	<bean id="geoStoreUserServiceAuthenticationProvider"
 		class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
 	</bean>
+	
+	<bean class="it.geosolutions.geostore.services.rest.security.UserAttributeTokenAuthenticationFilter"
+        id="authenticationTokenProcessingFilter">
+	</bean>
+	
+	<!-- bean class="it.geosolutions.geostore.services.rest.security.WebServiceTokenAuthenticationFilter"
+        id="authenticationTokenProcessingFilter">
+        <constructor-arg><value>http://localhost:8080/geoserver/www/{token}.txt</value></constructor-arg>
+    </bean-->
 
 	<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 	<security:authentication-manager>
