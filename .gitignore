@@ -31,3 +31,7 @@ src/server/target
 src/server/web/app/target
 src/server/web/target
 src/server/core/security/target
+
+#h2_disk database
+src/server/web/app/test.trace.db
+src/server/web/app/test.h2.db
