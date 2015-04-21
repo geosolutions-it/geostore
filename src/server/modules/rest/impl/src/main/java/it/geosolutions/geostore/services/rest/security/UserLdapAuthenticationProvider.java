@@ -215,24 +215,39 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
                     role = Role.USER;
                 }
             } else {
-                UserGroup group = new UserGroup();
-                group.setGroupName(a.getAuthority());
-
-                if (userGroupService != null) {
-                    UserGroup userGroup = userGroupService.get(group.getGroupName());
-
-                    if (userGroup == null) {
-                        long groupId = userGroupService.insert(group);
-                        userGroup = userGroupService.get(groupId);
-                    }
-
-                    groups.add(userGroup);
-                } else {
-                    groups.add(group);
-                }
+                groups.add(synchronizeGroup(a));
             }
         }
         return role;
+    }
+
+    public void synchronizeGroups() throws BadRequestServiceEx {
+        if(getAuthoritiesPopulator() instanceof GroupsRolesService) {
+            GroupsRolesService groupsService = (GroupsRolesService) getAuthoritiesPopulator();
+            for(GrantedAuthority authority : groupsService.getAllGroups()) {
+                synchronizeGroup(authority);
+            }
+        }
+    }
+
+    private UserGroup synchronizeGroup(GrantedAuthority a)
+            throws BadRequestServiceEx {
+        UserGroup group = new UserGroup();
+        group.setGroupName(a.getAuthority());
+
+        if (userGroupService != null) {
+            UserGroup userGroup = userGroupService.get(group.getGroupName());
+
+            if (userGroup == null) {
+                LOGGER.log(Level.INFO, "Creating new group from LDAP: " + group.getGroupName());
+                long groupId = userGroupService.insert(group);
+                userGroup = userGroupService.get(groupId);
+            }
+
+            return userGroup;
+        } else {
+            return group;
+        }
     }
 
 	 /**

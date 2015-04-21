@@ -79,4 +79,12 @@ public interface RESTMiscService {
             @PathParam("cname") String cname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
             InternalErrorWebEx;
 
+
+    @GET
+    @Path("/reload/{service}")
+    @Secured({ "ROLE_ADMIN" })
+    void reload(@Context SecurityContext sc, @PathParam("service") String service) throws BadRequestWebEx;
+        
+   
 }
+
