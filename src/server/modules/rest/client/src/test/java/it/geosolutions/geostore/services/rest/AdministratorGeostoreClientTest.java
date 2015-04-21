@@ -137,10 +137,7 @@ public class AdministratorGeostoreClientTest{
         // User user = geoStoreClient.getUser(1);
         try {
             UserList users = geoStoreClient.getUsers(1, 1);
-            System.out.println(users.getList().get(0).getName());
-            users = geoStoreClient.getUsers(2, 1);
-            System.out.println(users.getList().get(0).getName());
-            
+
             UserGroup ug1 = new UserGroup();
             ug1.setGroupName("testGroup1");
             ug1.setDescription("testGroup1-Description");
@@ -166,7 +163,7 @@ public class AdministratorGeostoreClientTest{
             email.setValue("test@geo-solutions.it");
             user.setGroups(ugs);
             geoStoreClient.insert(user);
-            users = geoStoreClient.getUsers(3, 1);
+            users = geoStoreClient.getUsers(0, 3);
             for(RESTUser u : users.getList()){
                 if("testuser111".equals(u.getName())){
                     assertEquals(3,u.getGroupsNames().size());     
@@ -294,7 +291,7 @@ public class AdministratorGeostoreClientTest{
         geoStoreClient.insert(u1);
         geoStoreClient.insert(u2);
         
-        UserList uli = geoStoreClient.getUsers(1,1000);
+        UserList uli = geoStoreClient.getUsers(0,1000);
         long uid1 = -1;
         long uid2 = -1;
         for(RESTUser u : uli.getList()){
@@ -507,7 +504,7 @@ public class AdministratorGeostoreClientTest{
     
     @Test
     public void testUserInitialization(){
-        UserList ul = geoStoreClient.getUsers(1,100);
+        UserList ul = geoStoreClient.getUsers(0,100);
         assertEquals(2, ul.getList().size());
         for(RESTUser u : ul.getList()){
             assertNull(u.getGroupsNames());
@@ -626,7 +623,7 @@ public class AdministratorGeostoreClientTest{
         ShortResource sr3 = createAResource();
         ShortResource sr4 = createAResource();
         
-        ShortResourceList srl = geoStoreUserClient.getAllShortResource(1, 1000);
+        ShortResourceList srl = geoStoreUserClient.getAllShortResource(0, 1000);
         List<ShortResource> listG1 = new ArrayList<ShortResource>();
         List<ShortResource> listG2 = new ArrayList<ShortResource>();
         int i = 0;
@@ -678,7 +675,7 @@ public class AdministratorGeostoreClientTest{
         geoStoreClient.updateSecurityRules(new  ShortResourceList(listG2), ug2_id, true, true);
         
         // Now the situation should be changed: I should have access to 2 resources
-        srl = u1Client.getAllShortResource(1, 1000);
+        srl = u1Client.getAllShortResource(0, 1000);
         assertEquals(2, srl.getList().size());
         for(ShortResource r : srl.getList()){
             if(r.getId() == listG1.get(0).getId() || r.getId() == listG1.get(1).getId()){
@@ -695,7 +692,7 @@ public class AdministratorGeostoreClientTest{
         assertEquals(2,rl.getList().size());
         
     }
-    
+
     @Test
     public void updateSecurityRulesTest() {
         
@@ -784,11 +781,11 @@ public class AdministratorGeostoreClientTest{
         srl.add(sr);
         ShortResourceList srll = new ShortResourceList(srl);
         
-        ShortResourceList srlf = geoStoreClient.getAllShortResource(1, 1000);
+        ShortResourceList srlf = geoStoreClient.getAllShortResource(0, 1000);
         assertEquals(2, srlf.getList().size());
         geoStoreClient.updateSecurityRules(srll, gid, false, true);
         geoStoreClient.updateSecurityRules(srll, gid2, false, false);
-        srlf = geoStoreClient.getAllShortResource(1, 1000);
+        srlf = geoStoreClient.getAllShortResource(0, 1000);
         assertEquals(2, srlf.getList().size());
         
         // READ shouldn't allowed, WRITE allowed

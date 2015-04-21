@@ -56,10 +56,11 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
 
     public UserList getUsers(Integer page, Integer entries) {
         WebResource wr = getBaseWebResource("users");
-        wr.queryParam("page", page.toString());
-        wr.queryParam("entries", entries.toString());
-        return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
-                .get(UserList.class);
+        return wr.queryParam("page", page.toString())
+                 .queryParam("entries", entries.toString())
+                 .header("Content-Type", MediaType.TEXT_XML)
+                 .accept(MediaType.TEXT_XML)
+                 .get(UserList.class);
     }
 
     // TODO move it to the base client to allow login
