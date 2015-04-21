@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.services;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -72,7 +73,21 @@ public interface UserGroupService {
      * @throws BadRequestServiceEx
      */
     List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
-    
+
+    /**
+     * Returns a list of groups that match searching criteria with pagination.
+     *
+     * @param user the user that performs the research
+     * @param page the requested page number
+     * @param entries max entries for page.
+     * @param nameLike a sub-string to search in group name
+     * @param all if <code>true</code> adds to result the 'everyone' group if it matches the searching criteria
+     * @return a list of groups that match searching criteria with pagination.
+     *
+     * @throws BadRequestServiceEx
+     */
+    List<UserGroup> getAllAllowed(User user, Integer page, Integer entries, String nameLike, boolean all) throws BadRequestServiceEx;
+
     UserGroup get(long id) throws BadRequestServiceEx;
     /**
      * 
@@ -101,5 +116,27 @@ public interface UserGroupService {
      */
     public UserGroup get(String name);
 
-	
+    /**
+     * Returns the amount of groups that match searching criteria.
+     * The 'everyone' group is never included.
+     *
+     * @param authUser the user that performs the research
+     * @param nameLike a sub-string to search in group name
+     * @return the amount of groups that match searching criteria
+     *
+     * @throws BadRequestServiceEx
+     */
+    long getCount(User authUser, String nameLike) throws BadRequestServiceEx;
+
+    /**
+     * Returns the amount of groups that match searching criteria.
+     *
+     * @param authUser the user that performs the research
+     * @param nameLike a sub-string to search in group name
+     * @param all if <code>true</code> adds to result the 'everyone' group if it matches the searching criteria
+     * @return the amount of groups that match searching criteria
+     *
+     * @throws BadRequestServiceEx
+     */
+    long getCount(User authUser, String nameLike, boolean all) throws BadRequestServiceEx;
 }
