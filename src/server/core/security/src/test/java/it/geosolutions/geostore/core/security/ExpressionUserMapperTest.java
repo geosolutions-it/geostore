@@ -39,17 +39,18 @@ import org.junit.Test;
 public class ExpressionUserMapperTest {
     ExpressionUserMapper mapper;
     private Map<String, String> attributeMappings;
-    MockUserDetailsWithAttributes detailsWithAttributes;
+    
+    String SAMPLE_JSON = "{\"user_id\":\"123\",\"email\":\"myemail@email.com\"}";
     
     @Before
     public void setUp() {
         attributeMappings = new HashMap<String,String>();
-        mapper = new ExpressionUserMapper(attributeMappings);
-        detailsWithAttributes =  new MockUserDetailsWithAttributes();
     }
     
     @Test
-    public void testMapping() {
+    public void testUserDetailsMapping() {
+        MockUserDetailsWithAttributes detailsWithAttributes =  new MockUserDetailsWithAttributes();
+        mapper = new UserDetailsExpressionUserMapper(attributeMappings);
         User user = new User();
         detailsWithAttributes.getAttributes().put("sample", "mock");
         attributeMappings.put("transformed", "sample");
@@ -58,5 +59,17 @@ public class ExpressionUserMapperTest {
         assertEquals(1, user.getAttribute().size());
         assertEquals("transformed", user.getAttribute().get(0).getName());
         assertEquals("mock", user.getAttribute().get(0).getValue());
+    }
+    
+    @Test
+    public void testJsonsMapping() {
+        mapper = new JSONExpressionUserMapper(attributeMappings);
+        User user = new User();
+        attributeMappings.put("transformed", "email");
+        mapper.mapUser(SAMPLE_JSON, user);
+        
+        assertEquals(1, user.getAttribute().size());
+        assertEquals("transformed", user.getAttribute().get(0).getName());
+        assertEquals("myemail@email.com", user.getAttribute().get(0).getValue());
     }
 }

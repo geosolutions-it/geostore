@@ -27,10 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -138,11 +137,11 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
                         .replace("\r", "").replace("\n", "");
                 if(response != null) {
                     if (searchUserRegex == null) {
-                        return createAuthenticationForUser(response);
+                        return createAuthenticationForUser(response, "");
                     } else {
                         Matcher matcher = searchUserRegex.matcher(response);
                         if (matcher.find()) {
-                            return createAuthenticationForUser(matcher.group(1));
+                            return createAuthenticationForUser(matcher.group(1), response);
                         } else {
                             LOGGER.warn("Error in getting username from webservice response cannot find userName in response");
                         }
@@ -162,15 +161,5 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
         }
         return null;
         
-    }
-
-    private Authentication createAuthenticationForUser(String userName) {
-        try {
-            User user = userService.get(userName);
-            return createAuthenticationForUser(user);
-        } catch (NotFoundServiceEx e) {
-            LOGGER.error("User not found: " + userName, e);
-            return null;
-        }
-    }
+    }    
 }

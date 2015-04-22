@@ -32,7 +32,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import it.geosolutions.geostore.core.model.User;
 
 /**
- * Interface used to map a SpringSecurity UserDetails object to a GeoStore User
+ * Interface used to map a user detail object (in any format) to a GeoStore User
  * object. Allows for custom attributes / groups / roles mapping.
  * 
  * @author Mauro Bartolomeoli
@@ -40,6 +40,6 @@ import it.geosolutions.geostore.core.model.User;
  */
 public interface UserMapper {
 
-    void mapUser(UserDetails details, User user);
+    void mapUser(Object details, User user);
 
 }
