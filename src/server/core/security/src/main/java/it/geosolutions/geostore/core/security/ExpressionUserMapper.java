@@ -34,67 +34,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.expression.AccessException;
-import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.Expression;
-import org.springframework.expression.PropertyAccessor;
-import org.springframework.expression.TypedValue;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Implementation of UserMapper that maps attributes from a UserDetailsWithAttributes
- * object to GeoStore User attributes. Mappings are expressed using SpEL expressions.
+ * Implementation of UserMapper that maps attributes from a generic object
+ * to GeoStore User attributes. Mappings are expressed using SpEL expressions.
+ * 
+ * Inherited classes should add their propertyAccessor implementations to the evaluationContext.
  * 
  * @author Mauro Bartolomeoli
  *
  */
-public class ExpressionUserMapper implements UserMapper {
+public abstract class ExpressionUserMapper implements UserMapper {
     Map<String, String> attributeMappings;
     
     public static SpelExpressionParser parser = new SpelExpressionParser();
     
-    public static StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+    protected StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
     
-    static {
-        // property accessor for UserDetailsWithAttributes attributes (read only)
-        evaluationContext.addPropertyAccessor(new PropertyAccessor() {
-
-            @Override
-            public void write(EvaluationContext ctx, Object target, String name, Object value)
-                    throws AccessException {
-
-            }
-
-            @Override
-            public TypedValue read(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                if (target instanceof UserDetailsWithAttributes) {
-                    UserDetailsWithAttributes details = (UserDetailsWithAttributes) target;
-                    return new TypedValue(details.getAttribute(name));
-                }
-                return null;
-            }
-
-            @Override
-            public Class[] getSpecificTargetClasses() {
-                return new Class[] { UserDetailsWithAttributes.class };
-            }
-
-            @Override
-            public boolean canWrite(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                return false;
-            }
-
-            @Override
-            public boolean canRead(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                return target instanceof UserDetailsWithAttributes;
-            }
-        });
-    }
+    
 
     /**
      * 
@@ -112,8 +72,9 @@ public class ExpressionUserMapper implements UserMapper {
      * Each mapping is an SpEL expression using the UserDetailsWithAttributes as a source.
      * 
      */
-    public void mapUser(UserDetails details, User user) {
+    public void mapUser(Object details, User user) {
         List<UserAttribute> attributes = new ArrayList<UserAttribute>();
+        details = preProcessDetails(details);
         for(String attributeName : attributeMappings.keySet()) {
             
             Expression exp = parser.parseExpression(attributeMappings.get(attributeName));
@@ -125,6 +86,10 @@ public class ExpressionUserMapper implements UserMapper {
         }
         user.setAttribute(attributes);
         
+    }
+
+    protected Object preProcessDetails(Object details) {
+        return details;
     }
 
 }

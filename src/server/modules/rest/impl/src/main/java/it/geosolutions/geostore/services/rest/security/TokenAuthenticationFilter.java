@@ -28,11 +28,20 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.core.security.UserMapper;
 import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -91,6 +100,12 @@ public abstract class TokenAuthenticationFilter extends GenericFilterBean {
     private int cacheSize = 1000;
     private int cacheExpiration = 60;
     
+    private boolean autoCreateUser = false;
+
+    private boolean enableAutoCreatedUsers = true;
+    
+    private UserMapper userMapper;
+    
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
 
     @Override
@@ -104,6 +119,22 @@ public abstract class TokenAuthenticationFilter extends GenericFilterBean {
     
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    
+    
+    public void setAutoCreateUser(boolean autoCreateUser) {
+        this.autoCreateUser = autoCreateUser;
+    }
+
+    public void setEnableAutoCreatedUsers(boolean enableAutoCreatedUsers) {
+        this.enableAutoCreatedUsers = enableAutoCreatedUsers;
+    }
+    
+    
+
+    public void setUserMapper(UserMapper userMapper) {
+        this.userMapper = userMapper;
     }
 
     /**
@@ -182,6 +213,49 @@ public abstract class TokenAuthenticationFilter extends GenericFilterBean {
             }
         }
         
+    }
+    
+    protected Authentication createAuthenticationForUser(String userName, String rawUser) {
+        User user = null;
+        try {
+            user = userService.get(userName);
+        } catch (NotFoundServiceEx e) {
+            if(autoCreateUser) {
+                try {
+                    user = createUser(userName, rawUser);
+                } catch (BadRequestServiceEx e1) {
+                    LOGGER.error("User not found: " + userName, e);
+                } catch (NotFoundServiceEx e1) {
+                    LOGGER.error("User not found: " + userName, e);
+                }
+            } else {
+                LOGGER.error("User not found: " + userName, e);
+            }
+            
+        }
+        if(user != null) {
+            return createAuthenticationForUser(user);
+        }
+        return null;
+    }
+
+    private User createUser(String userName, String rawUser) throws BadRequestServiceEx, NotFoundServiceEx {
+        User user = new User();
+
+        user.setName(userName);
+        user.setNewPassword(null);
+        user.setEnabled(enableAutoCreatedUsers);
+
+        Role role = Role.USER;
+        user.setRole(role);
+        user.setGroups(Collections.EMPTY_SET);
+        if(userMapper != null) {
+            userMapper.mapUser(rawUser, user);
+        }
+        if (userService != null) {
+            userService.insert(user);
+        }
+        return user;
     }
     
     /**
