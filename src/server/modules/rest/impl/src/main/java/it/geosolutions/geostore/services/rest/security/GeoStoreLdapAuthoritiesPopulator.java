@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  *
  */
 public class GeoStoreLdapAuthoritiesPopulator extends
-		DefaultLdapAuthoritiesPopulator {
+		DefaultLdapAuthoritiesPopulator implements GroupsRolesService {
 
 	private static final Log logger = LogFactory.getLog(GeoStoreLdapAuthoritiesPopulator.class);
 	
@@ -79,6 +79,9 @@ public class GeoStoreLdapAuthoritiesPopulator extends
      */
     private String groupSearchFilter = "(member={0})";
     private String roleSearchFilter = "(member={0})";
+    
+    private String allGroupsSearchFilter = "(objectClass=group)";
+    private String allRolesSearchFilter = "(objectClass=group)";
     /**
      * The role prefix that will be prepended to each role name
      */
@@ -126,59 +129,82 @@ public class GeoStoreLdapAuthoritiesPopulator extends
 
 
     @Override
-	public Set<GrantedAuthority> getGroupMembershipRoles(String userDn, String username) {
+    public Set<GrantedAuthority> getGroupMembershipRoles(String userDn, String username) {
+        return getGroupsOrRoles(userDn, username, true, true);
+    }
+
+    private Set<GrantedAuthority> getGroupsOrRoles(String userDn, String username, boolean groups, boolean roles) {
         if (roleSearchBase == null && groupSearchBase == null) {
             return new HashSet<GrantedAuthority>();
         }
 
         Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
-
-        // Searching for ROLES
-        if (logger.isDebugEnabled()) {
-            logger.debug("Searching for roles for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                    + roleSearchFilter + " in search base '" + roleSearchBase + "'");
-        }
-
-        String[] rolesRoots = roleSearchBase.split(",");
-        for(String rolesRoot : rolesRoots) {
-            addAuthorities(userDn, username, authorities, rolesRoot, roleSearchFilter, rolePrefix);
+        String[] searchParams = username == null ? new String[] {} : new String[] {userDn, username};
+        if(roles) {
+            // Searching for ROLES
+            if (logger.isDebugEnabled()) {
+                logger.debug("Searching for roles for user '" + username + "', DN = " + "'" + userDn + "', with filter "
+                        + roleSearchFilter + " in search base '" + roleSearchBase + "'");
+            }
+    
+            String[] rolesRoots = roleSearchBase.split(",");
+            String filter = username == null ? allRolesSearchFilter : roleSearchFilter;
+            
+            for(String rolesRoot : rolesRoots) {
+                addAuthorities(searchParams, authorities, rolesRoot, filter, rolePrefix);
+            }
         }
         
-        // Searching for Groups
-        if (logger.isDebugEnabled()) {
-            logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                    + groupSearchFilter + " in search base '" + groupSearchBase + "'");
+        if(groups) {
+            // Searching for Groups
+            if (logger.isDebugEnabled()) {
+                logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
+                        + groupSearchFilter + " in search base '" + groupSearchBase + "'");
+            }
+            String[] groupsRoots = groupSearchBase.split(",");
+            String filter = username == null ? allGroupsSearchFilter : groupSearchFilter;
+            for(String groupsRoot : groupsRoots) {
+                addAuthorities(searchParams, authorities, groupsRoot, filter, null);
+            }
         }
-        String[] groupsRoots = groupSearchBase.split(",");
-        for(String groupsRoot : groupsRoots) {
-            addAuthorities(userDn, username, authorities, groupsRoot, groupSearchFilter, null);
-        }
-
-        
-
-        
+                
         if(authoritiesMapper != null) {
             return new HashSet<GrantedAuthority>(authoritiesMapper.mapAuthorities(authorities));
         }
         return authorities;
     }
 
-    private void addAuthorities(String userDn, String username, Set<GrantedAuthority> authorities,
+    public Set<GrantedAuthority> getAllGroups() {
+        return getGroupsOrRoles(null, null, true, false);
+    }
+    
+    public Set<GrantedAuthority> getAllRoles() {
+        return getGroupsOrRoles(null, null, false, true);
+    }
+    
+    
+    private void addAuthorities(String[] params, Set<GrantedAuthority> authorities,
             String root, String filter, String authorityPrefix) {
         Set<String> ldapAuthorities = ldapTemplate.searchForSingleAttributeValues(root, filter,
-            new String[]{userDn, username}, groupRoleAttribute);
+                params, groupRoleAttribute);
+        
         if (logger.isDebugEnabled()) {
             logger.debug("Authorities from search: " + ldapAuthorities);
         }
         for (String authority : ldapAuthorities) {
 
-            if (convertToUpperCase) {
-                authority = authority.toUpperCase();
-            }
-
-            String prefix = (authorityPrefix != null && !authority.startsWith(authorityPrefix) ? authorityPrefix : "");
-            authorities.add(new GrantedAuthorityImpl(prefix + authority));
+            addAuthority(authorities, authorityPrefix, authority);
         }
+    }
+
+    private void addAuthority(Set<GrantedAuthority> authorities, String authorityPrefix,
+            String authority) {
+        if (convertToUpperCase) {
+            authority = authority.toUpperCase();
+        }
+
+        String prefix = (authorityPrefix != null && !authority.startsWith(authorityPrefix) ? authorityPrefix : "");
+        authorities.add(new GrantedAuthorityImpl(prefix + authority));
     }
 
 	@Override

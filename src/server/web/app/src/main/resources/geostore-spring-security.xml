@@ -74,6 +74,12 @@
 		<constructor-arg value="ldap://${ldap.host}:${ldap.port}/${ldap.root}" />
 	</bean>
 
+    <!-- 
+     <bean id="ldapInitializer" class="it.geosolutions.geostore.init.LDAPInit" lazy-init="false">
+       <constructor-arg ref="geostoreLdapProvider" />
+     </bean>
+     -->
+
 	<bean id="geostoreLdapProvider"
 		class="it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider">
 		<constructor-arg>
