@@ -137,11 +137,11 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
                         .replace("\r", "").replace("\n", "");
                 if(response != null) {
                     if (searchUserRegex == null) {
-                        return createAuthenticationForUser(response, "");
+                        return createAuthenticationForUser(response, null, "");
                     } else {
                         Matcher matcher = searchUserRegex.matcher(response);
                         if (matcher.find()) {
-                            return createAuthenticationForUser(matcher.group(1), response);
+                            return createAuthenticationForUser(matcher.group(1), null, response);
                         } else {
                             LOGGER.warn("Error in getting username from webservice response cannot find userName in response");
                         }
