@@ -27,39 +27,14 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.enums.Role;
-import it.geosolutions.geostore.core.security.UserMapper;
-import it.geosolutions.geostore.services.UserService;
-import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.web.filter.GenericFilterBean;
 
 import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
@@ -85,12 +60,9 @@ import com.google.common.cache.LoadingCache;
  * @author Mauro Bartolomeoli
  *
  */
-public abstract class TokenAuthenticationFilter extends GenericFilterBean {
+public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFilter {
 
     private final static Logger LOGGER = Logger.getLogger(TokenAuthenticationFilter.class);
-    
-    @Autowired
-    protected UserService userService;
     
     protected LoadingCache<String, Optional<Authentication>> cache;
     
@@ -100,43 +72,7 @@ public abstract class TokenAuthenticationFilter extends GenericFilterBean {
     private int cacheSize = 1000;
     private int cacheExpiration = 60;
     
-    private boolean autoCreateUser = false;
-
-    private boolean enableAutoCreatedUsers = true;
     
-    private UserMapper userMapper;
-    
-    public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
-
-    @Override
-    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
-            throws IOException, ServletException {
-        if(req instanceof HttpServletRequest) {
-            authenticate((HttpServletRequest) req);
-        }
-        chain.doFilter(req, resp);
-    }
-    
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
-    
-    
-    public void setAutoCreateUser(boolean autoCreateUser) {
-        this.autoCreateUser = autoCreateUser;
-    }
-
-    public void setEnableAutoCreatedUsers(boolean enableAutoCreatedUsers) {
-        this.enableAutoCreatedUsers = enableAutoCreatedUsers;
-    }
-    
-    
-
-    public void setUserMapper(UserMapper userMapper) {
-        this.userMapper = userMapper;
-    }
-
     /**
      * Header to check for token (defaults to Authorization).
      * 
@@ -195,7 +131,7 @@ public abstract class TokenAuthenticationFilter extends GenericFilterBean {
     }
     
     
-    private void authenticate(HttpServletRequest req) {
+    protected void authenticate(HttpServletRequest req) {
         String authHeader = req.getHeader(tokenHeader);
         
         if (authHeader != null
@@ -215,68 +151,7 @@ public abstract class TokenAuthenticationFilter extends GenericFilterBean {
         
     }
     
-    protected Authentication createAuthenticationForUser(String userName, String rawUser) {
-        User user = null;
-        try {
-            user = userService.get(userName);
-        } catch (NotFoundServiceEx e) {
-            if(autoCreateUser) {
-                try {
-                    user = createUser(userName, rawUser);
-                } catch (BadRequestServiceEx e1) {
-                    LOGGER.error("User not found: " + userName, e);
-                } catch (NotFoundServiceEx e1) {
-                    LOGGER.error("User not found: " + userName, e);
-                }
-            } else {
-                LOGGER.error("User not found: " + userName, e);
-            }
-            
-        }
-        if(user != null) {
-            return createAuthenticationForUser(user);
-        }
-        return null;
-    }
-
-    private User createUser(String userName, String rawUser) throws BadRequestServiceEx, NotFoundServiceEx {
-        User user = new User();
-
-        user.setName(userName);
-        user.setNewPassword(null);
-        user.setEnabled(enableAutoCreatedUsers);
-
-        Role role = Role.USER;
-        user.setRole(role);
-        user.setGroups(Collections.EMPTY_SET);
-        if(userMapper != null) {
-            userMapper.mapUser(rawUser, user);
-        }
-        if (userService != null) {
-            userService.insert(user);
-        }
-        return user;
-    }
     
-    /**
-     * Helper method that creates an Authentication object for the given user,
-     * populating GrantedAuthority instances.
-     * 
-     * @param user
-     * @return
-     */
-    protected Authentication createAuthenticationForUser(User user) {
-        if (user != null) {
-            String role = user.getRole().toString();
-
-            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-            authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
-            return new UsernamePasswordAuthenticationToken(user, user.getPassword(), authorities);
-        } else {
-            LOGGER.error(USER_NOT_FOUND_MSG);
-            return null;
-        }
-    }
     
     /**
      * Phisically checks the validity of the given token and

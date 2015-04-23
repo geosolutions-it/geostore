@@ -72,4 +72,18 @@ public class ExpressionUserMapperTest {
         assertEquals("transformed", user.getAttribute().get(0).getName());
         assertEquals("myemail@email.com", user.getAttribute().get(0).getValue());
     }
+    
+    @Test
+    public void testMapMapping() {
+        mapper = new MapExpressionUserMapper(attributeMappings);
+        User user = new User();
+        attributeMappings.put("transformed", "my_email");
+        Map<String, String> attributes = new HashMap<String, String>();
+        attributes.put("my_email", "myemail@email.com");
+        mapper.mapUser(attributes, user);
+        
+        assertEquals(1, user.getAttribute().size());
+        assertEquals("transformed", user.getAttribute().get(0).getName());
+        assertEquals("myemail@email.com", user.getAttribute().get(0).getValue());
+    }
 }
