@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -95,5 +96,27 @@ public class MockedUserGroupService implements UserGroupService {
         }
         return null;
     }
+
+	@Override
+	public List<UserGroup> getAllAllowed(User user, Integer page,
+			Integer entries, String nameLike, boolean all)
+			throws BadRequestServiceEx {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public long getCount(User authUser, String nameLike)
+			throws BadRequestServiceEx {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public long getCount(User authUser, String nameLike, boolean all)
+			throws BadRequestServiceEx {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
 }
