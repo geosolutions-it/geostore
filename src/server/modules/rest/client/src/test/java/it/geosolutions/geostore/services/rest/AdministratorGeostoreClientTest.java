@@ -20,6 +20,7 @@ import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.rest.client.model.ExtGroupList;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
@@ -136,10 +137,7 @@ public class AdministratorGeostoreClientTest{
         // User user = geoStoreClient.getUser(1);
         try {
             UserList users = geoStoreClient.getUsers(1, 1);
-            System.out.println(users.getList().get(0).getName());
-            users = geoStoreClient.getUsers(2, 1);
-            System.out.println(users.getList().get(0).getName());
-            
+
             UserGroup ug1 = new UserGroup();
             ug1.setGroupName("testGroup1");
             ug1.setDescription("testGroup1-Description");
@@ -165,7 +163,7 @@ public class AdministratorGeostoreClientTest{
             email.setValue("test@geo-solutions.it");
             user.setGroups(ugs);
             geoStoreClient.insert(user);
-            users = geoStoreClient.getUsers(3, 1);
+            users = geoStoreClient.getUsers(0, 3);
             for(RESTUser u : users.getList()){
                 if("testuser111".equals(u.getName())){
                     assertEquals(3,u.getGroupsNames().size());     
@@ -293,7 +291,7 @@ public class AdministratorGeostoreClientTest{
         geoStoreClient.insert(u1);
         geoStoreClient.insert(u2);
         
-        UserList uli = geoStoreClient.getUsers(1,1000);
+        UserList uli = geoStoreClient.getUsers(0,1000);
         long uid1 = -1;
         long uid2 = -1;
         for(RESTUser u : uli.getList()){
@@ -506,7 +504,7 @@ public class AdministratorGeostoreClientTest{
     
     @Test
     public void testUserInitialization(){
-        UserList ul = geoStoreClient.getUsers(1,100);
+        UserList ul = geoStoreClient.getUsers(0,100);
         assertEquals(2, ul.getList().size());
         for(RESTUser u : ul.getList()){
             assertNull(u.getGroupsNames());
@@ -625,7 +623,7 @@ public class AdministratorGeostoreClientTest{
         ShortResource sr3 = createAResource();
         ShortResource sr4 = createAResource();
         
-        ShortResourceList srl = geoStoreUserClient.getAllShortResource(1, 1000);
+        ShortResourceList srl = geoStoreUserClient.getAllShortResource(0, 1000);
         List<ShortResource> listG1 = new ArrayList<ShortResource>();
         List<ShortResource> listG2 = new ArrayList<ShortResource>();
         int i = 0;
@@ -677,7 +675,7 @@ public class AdministratorGeostoreClientTest{
         geoStoreClient.updateSecurityRules(new  ShortResourceList(listG2), ug2_id, true, true);
         
         // Now the situation should be changed: I should have access to 2 resources
-        srl = u1Client.getAllShortResource(1, 1000);
+        srl = u1Client.getAllShortResource(0, 1000);
         assertEquals(2, srl.getList().size());
         for(ShortResource r : srl.getList()){
             if(r.getId() == listG1.get(0).getId() || r.getId() == listG1.get(1).getId()){
@@ -694,7 +692,7 @@ public class AdministratorGeostoreClientTest{
         assertEquals(2,rl.getList().size());
         
     }
-    
+
     @Test
     public void updateSecurityRulesTest() {
         
@@ -783,11 +781,11 @@ public class AdministratorGeostoreClientTest{
         srl.add(sr);
         ShortResourceList srll = new ShortResourceList(srl);
         
-        ShortResourceList srlf = geoStoreClient.getAllShortResource(1, 1000);
+        ShortResourceList srlf = geoStoreClient.getAllShortResource(0, 1000);
         assertEquals(2, srlf.getList().size());
         geoStoreClient.updateSecurityRules(srll, gid, false, true);
         geoStoreClient.updateSecurityRules(srll, gid2, false, false);
-        srlf = geoStoreClient.getAllShortResource(1, 1000);
+        srlf = geoStoreClient.getAllShortResource(0, 1000);
         assertEquals(2, srlf.getList().size());
         
         // READ shouldn't allowed, WRITE allowed
@@ -818,6 +816,132 @@ public class AdministratorGeostoreClientTest{
         u2Client.updateResource(sr.getId(), new RESTResource());
     }
     
+    @Test
+    public void getAllGroupsWithoutEveryoneTest(){
+        int grpCount = 3;
+        addSomeUserGroups(grpCount, "randomGroups");
+
+        ExtGroupList res = geoStoreClient.searchUserGroup(0, 10, "*");
+        assertEquals(grpCount, res.getCount());
+    }
+
+    @Test
+    public void getAllGroupsWithEveryoneTest(){
+        int grpCount = 3;
+        addSomeUserGroups(grpCount, "randomGroups");
+
+        ExtGroupList res = geoStoreClient.searchUserGroup(0, 10, "*", true);
+        assertEquals(grpCount+1, res.getCount()); // +1: the everyone group
+    }
+
+    @Test
+    public void searchGroupTest(){
+        int grpNum = 4;
+        int targetGrpNum = 2;
+        String targetGrpPrefix = "target";
+        addSomeUserGroups(grpNum, "smokeGrp");
+        addSomeUserGroups(targetGrpNum, targetGrpPrefix);
+
+        ExtGroupList searchResult = geoStoreClient.searchUserGroup(0, 10, "*" + targetGrpPrefix + "*");
+        assertTrue(searchResult.getList().size() == targetGrpNum);
+    }
+
+    @Test
+    public void noGroupsForNormalUserTest(){
+        String username = "user", password = "user";
+
+        addSomeUserGroups(8, "randomGrp");
+
+        GeoStoreClient client = createUserClient(username, password);
+        ExtGroupList result = client.searchUserGroup(0, 10, "*");
+        assertEquals(result.getCount(), 0);
+    }
+
+    @Test
+    public void allGroupsOfAnUserTest(){
+        int grpTestUserNum = 5, grpUUserNum = 3;
+        String usrTestName = "test";
+        String usrTestPasswd = "test";
+
+        User testUser = new User();
+        testUser.setName(usrTestName);
+        testUser.setRole(Role.USER);
+        testUser.setNewPassword(usrTestPasswd);
+
+        Set<UserGroup> testUserGroups = createSomeGroups(grpTestUserNum, usrTestName);
+        addSomeUserGroups(testUserGroups);
+        testUser.setGroups(testUserGroups);
+        geoStoreClient.insert(testUser);
+
+
+        User u = new User();
+        u.setName("u");
+        u.setRole(Role.USER);
+
+        Set<UserGroup> uGroups = createSomeGroups(grpUUserNum, "u");
+        addSomeUserGroups(uGroups);
+        u.setGroups(uGroups);
+        geoStoreClient.insert(u);
+
+        GeoStoreClient userClient = createUserClient(usrTestName, usrTestPasswd);
+
+        ExtGroupList result = userClient.searchUserGroup(0, 10, "*");
+
+        assertEquals(result.getCount(), grpTestUserNum);
+    }
+
+    @Test
+    public void userGroupsPaginationTest(){
+        int totalGrps = 10;
+        int pageSize = 3;
+        int expectedItems[] = {3, 3, 3, 1};
+        ExtGroupList result;
+
+        addSomeUserGroups(totalGrps, "paging");
+        for(int page=0; page<expectedItems.length; page++){
+            result = geoStoreClient.searchUserGroup(page*pageSize, pageSize, "*");
+            assertTrue(expectedItems[page] == result.getList().size());
+        }
+    }
+
+    /**
+     * Generates some random user groups
+     * @param amount the amount of user groups
+     * @param namePrefix a string used as prefix in groups name and descriptions.
+     * @return a Set of user groups.
+     */
+    protected Set<UserGroup> createSomeGroups(int amount, String namePrefix){
+        Set<UserGroup> grps = new HashSet<UserGroup>();
+        for(int i=0; i<amount; i++){
+            UserGroup grp = new UserGroup();
+            grp.setGroupName(namePrefix + i);
+            grp.setDescription(namePrefix + i + "-Description");
+            grps.add(grp);
+        }
+        return grps;
+    }
+
+    /**
+     * Create n random UserGroups and insert them into db.
+     * @param n the amount of random groups that will be created
+     * @param namePrefix a string used as prefix in groups name and descriptions.
+     */
+    protected void addSomeUserGroups(int n, String namePrefix){
+        for(UserGroup g : createSomeGroups(n, namePrefix)){
+            geoStoreClient.insertUserGroup(g);
+        }
+    }
+
+    /**
+     * adds some UserGroup into db
+     * @param groups set of UserGroups to insert into db.
+     */
+    protected void addSomeUserGroups(Set<UserGroup> groups){
+        for(UserGroup g : groups){
+            geoStoreClient.insertUserGroup(g);
+        }
+    }
+
     protected void removeAllUsers(GeoStoreClient client) {
         UserList users = geoStoreClient.getUsers(0, 1000);
         List<RESTUser> usersList = users.getList();

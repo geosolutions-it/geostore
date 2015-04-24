@@ -2,6 +2,7 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.services.rest.client.model.ExtGroupList;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
@@ -55,10 +56,11 @@ public class AdministratorGeoStoreClient extends GeoStoreClient {
 
     public UserList getUsers(Integer page, Integer entries) {
         WebResource wr = getBaseWebResource("users");
-        wr.queryParam("page", page.toString());
-        wr.queryParam("entries", entries.toString());
-        return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
-                .get(UserList.class);
+        return wr.queryParam("page", page.toString())
+                 .queryParam("entries", entries.toString())
+                 .header("Content-Type", MediaType.TEXT_XML)
+                 .accept(MediaType.TEXT_XML)
+                 .get(UserList.class);
     }
 
     // TODO move it to the base client to allow login

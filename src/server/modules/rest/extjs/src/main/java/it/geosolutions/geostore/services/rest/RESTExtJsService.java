@@ -33,6 +33,7 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
@@ -144,6 +145,24 @@ public interface RESTExtJsService {
     ExtUserList getUsersList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
             @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes)
+            throws BadRequestWebEx;
+
+    /**
+     * Search for groups by name and return paginated results.
+     * @param sc security context
+     * @param nameLike a substring in the name
+     * @param start the n-th group shown as first in results.
+     * @param limit max entries per page
+     * @param all if <code>true</code> return also 'everyone' group
+     * @return
+     * @throws BadRequestWebEx
+     */
+    @GET
+    @Path("/search/groups/{nameLike}")
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER"})
+    ExtGroupList getGroupsList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit, @QueryParam("all") @DefaultValue("false") boolean all)
             throws BadRequestWebEx;
 
 }

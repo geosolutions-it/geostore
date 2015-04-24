@@ -22,6 +22,7 @@ package it.geosolutions.geostore.services.rest;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.rest.client.model.ExtGroupList;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
@@ -125,13 +126,14 @@ public class GeoStoreClient {
         getBaseWebResource("resources", "resource", id).header("Content-Type", MediaType.TEXT_XML)
                 .put(resource);
     }
-    
+
     public ShortResourceList getAllShortResource(Integer page, Integer entries) {
         WebResource wr = getBaseWebResource("resources");
-        wr.queryParam("page", page.toString());
-        wr.queryParam("entries", entries.toString());
-        return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
-                .get(ShortResourceList.class);
+        return wr.queryParam("page", page.toString())
+                 .queryParam("entries", entries.toString())
+                 .header("Content-Type", MediaType.TEXT_XML)
+                 .accept(MediaType.TEXT_XML)
+                 .get(ShortResourceList.class);
     }
     
     public SecurityRuleList getSecurityRules(Long resourceId) {
@@ -297,4 +299,15 @@ public class GeoStoreClient {
         this.geostoreRestUrl = geostoreRestUrl;
     }
 
+    public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike, boolean all){
+        WebResource wr =getBaseWebResource("extjs", "search", "groups", nameLike);
+        wr = wr.queryParam("start", start.toString()).queryParam("limit", limit.toString()).queryParam("all", all+"");
+
+        return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML).get(ExtGroupList.class);
+
+    }
+
+    public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike){
+        return searchUserGroup(start, limit, nameLike, false);
+    }
 }

@@ -28,15 +28,18 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -211,6 +214,43 @@ public class UserGroupServiceImpl implements UserGroupService{
         return found;
     }
 
+    @Override
+    public List<UserGroup> getAllAllowed(User user, Integer page, Integer entries, String nameLike, boolean all) throws BadRequestServiceEx {
+        if (user == null)
+            throw new BadRequestServiceEx("User must be defined.");
+
+        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
+            throw new BadRequestServiceEx("Page and entries params should be declared together.");
+        }
+
+        Search searchCriteria = new Search(UserGroup.class);
+        if (page != null) {
+            searchCriteria.setMaxResults(entries);
+            searchCriteria.setPage(page);
+        }
+        searchCriteria.addSortAsc("groupName");
+
+        Role userRole = user.getRole();
+        if (userRole.equals((Role)Role.USER)){
+            Set<UserGroup> userGrp = user.getGroups();
+            Collection<Long> grpIds = new Vector<Long>();
+            for(UserGroup grp :userGrp){
+                grpIds.add(grp.getId());
+            }
+            searchCriteria.addFilterIn("id", grpIds);
+        }
+
+        if (nameLike != null)
+            searchCriteria.addFilterILike("groupName", nameLike);
+
+        if(!all)
+            searchCriteria.addFilterNotEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+
+        List<UserGroup> found = userGroupDAO.search(searchCriteria);
+
+        return found;
+    }
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.UserGroupService#updateSecurityRules(java.lang.Long, java.util.List, boolean, boolean)
      */
@@ -317,4 +357,39 @@ public class UserGroupServiceImpl implements UserGroupService{
         return null;
 		
 	}
+
+    @Override
+    public long getCount(User user, String nameLike, boolean all) throws BadRequestServiceEx {
+        if (user == null)
+            throw new BadRequestServiceEx("User must be defined.");
+
+        Search searchCriteria = new Search(UserGroup.class);
+
+        searchCriteria.addSortAsc("groupName");
+
+        Role userRole = user.getRole();
+        if (userRole.equals((Role)Role.USER)){
+            Set<UserGroup> userGrp = user.getGroups();
+            Collection<Long> grpIds = new Vector<Long>();
+            for(UserGroup grp :userGrp){
+                grpIds.add(grp.getId());
+            }
+            searchCriteria.addFilterIn("id", grpIds);
+        }
+
+        if (nameLike != null) {
+            searchCriteria.addFilterILike("groupName", nameLike);
+        }
+
+        if(!all)
+            searchCriteria.addFilterNotEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+
+        return userGroupDAO.count(searchCriteria);
+
+
+    }
+
+    public long getCount(User user, String nameLike) throws BadRequestServiceEx {
+        return getCount(user, nameLike, false);
+    }
 }
