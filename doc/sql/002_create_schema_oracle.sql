@@ -52,7 +52,7 @@
 
     create table gs_user (
         id number(19,0) not null,
-        name varchar2(20 char) not null,
+        name varchar2(255 char) not null,
         user_password varchar2(255 char),
         user_role varchar2(255 char) not null,
         group_id number(19,0),
@@ -72,8 +72,8 @@
 
     create table gs_usergroup (
         id number(19,0) not null,
-        groupName varchar2(20 char) not null,
-		description varchar2(200 char),
+        groupName varchar2(255 char) not null,
+		description varchar2(255 char),
 		enabled char(1) NOT NULL DEFAULT 'Y',
         primary key (id),
         unique (groupName)

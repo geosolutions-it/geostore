@@ -63,7 +63,7 @@ SET search_path TO geostore;
 
     create table gs_user (
         id int8 not null,
-        name varchar(20) not null,
+        name varchar(255) not null,
         user_password varchar(255),
         user_role varchar(255) not null,
         group_id int8,
@@ -87,8 +87,8 @@ SET search_path TO geostore;
 
     create table gs_usergroup (
         id int8 not null,
-        groupName varchar(20) not null,
-		description varchar(200),
+        groupName varchar(255) not null,
+		description varchar(255),
 		enabled char(1) NOT NULL DEFAULT 'Y',
         primary key (id),
         unique (groupName)
