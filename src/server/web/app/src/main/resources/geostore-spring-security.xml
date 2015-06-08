@@ -23,7 +23,7 @@
 		<!-- In case you need BASIC AUTH -->
 		<security:http auto-config="true" create-session="never">
 			<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
-		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
+		    <!-- security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/ -->
 			<security:anonymous />
 		</security:http>
 		
