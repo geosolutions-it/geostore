@@ -49,6 +49,7 @@ import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+import it.geosolutions.geostore.services.rest.security.GroupsRolesService;
 
 import java.util.List;
 
@@ -56,6 +57,10 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 
 /**
  * Class RESTMiscServiceImpl.
@@ -63,7 +68,7 @@ import org.apache.log4j.Logger;
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService {
+public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService, ApplicationContextAware {
 
     private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
 
@@ -72,6 +77,8 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     private ResourceService resourceService;
 
     private StoredDataService storedDataService;
+    
+    private ApplicationContext appContext;
 
     /*
      * (non-Javadoc)
@@ -213,5 +220,33 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     protected SecurityService getSecurityService() {
         throw new NotImplementedException("This method is not implemented yet...");
     }
+
+    @Override
+    public void reload(SecurityContext sc, String service) throws BadRequestWebEx {
+        String reloadService = service;
+        if(appContext != null) {
+            if(!appContext.containsBean(reloadService)) {
+                reloadService = reloadService + "Initializer";
+            }
+            if(!appContext.containsBean(reloadService)) {
+                throw new BadRequestWebEx("No service named " + service + " to reload");
+            }
+            InitializingBean bean = appContext.getBean(reloadService, InitializingBean.class);
+            if(bean != null) {
+                try {
+                    bean.afterPropertiesSet();
+                } catch (Exception e) {
+                    throw new BadRequestWebEx(e.getMessage());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext appContext) throws BeansException {
+        this.appContext = appContext;
+    }
+
+
 
 }

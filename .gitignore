@@ -40,3 +40,8 @@ src/server/modules/rest/api/bin/
 src/server/modules/rest/client/bin/
 src/server/modules/rest/impl/.gitignore
 src/server/web/app/.gitignore
+
+#h2_disk database
+src/server/web/app/test.trace.db
+src/server/web/app/test.h2.db
+

@@ -37,6 +37,7 @@ import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTBackupService;
@@ -134,7 +135,7 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
     }
 
     private void quickRestoreCategory(RESTBackupCategory rbc) throws BadRequestServiceEx,
-            NotFoundServiceEx {
+            NotFoundServiceEx, DuplicatedResourceNameServiceEx {
         LOGGER.info("Restoring category: " + rbc.getName());
         Category cat = rbc2cat(rbc);
         long catId = categoryService.insert(cat);

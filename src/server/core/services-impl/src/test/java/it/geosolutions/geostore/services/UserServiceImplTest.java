@@ -19,7 +19,12 @@
  */
 package it.geosolutions.geostore.services;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
 
@@ -101,5 +106,18 @@ public class UserServiceImplTest extends ServiceTestBase {
         }
 
     }
+    
+    @Test
+    public void testGetByAttribute() throws Exception {
+        UserAttribute attribute = new UserAttribute();
+        String token = UUID.randomUUID().toString();
+        attribute.setName("UUID");
+        attribute.setValue(token);
+        createUser("test", Role.USER, "tesPW", Arrays.asList(attribute));
+        
+        assertEquals(1, userService.getByAttribute(attribute).size());
+    }
+
+    
 
 }

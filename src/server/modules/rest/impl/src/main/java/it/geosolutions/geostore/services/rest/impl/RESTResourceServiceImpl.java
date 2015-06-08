@@ -43,10 +43,12 @@ import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTResourceService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
@@ -138,7 +140,9 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             throw new BadRequestWebEx(ex.getMessage());
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
-        }
+        } catch (DuplicatedResourceNameServiceEx e) {
+			throw new ConflictWebEx(e.getMessage());
+		}
     }
 
     /**
@@ -189,7 +193,11 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
                 if (resource.getMetadata() != null)
                     old.setMetadata(resource.getMetadata());
 
-                resourceService.update(old);
+                try {
+					resourceService.update(old);
+				} catch (DuplicatedResourceNameServiceEx e) {
+					throw new ConflictWebEx(e.getMessage());
+				}
 
                 //
                 // Check Attribute list

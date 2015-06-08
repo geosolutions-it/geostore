@@ -59,7 +59,6 @@
 		<dependency>
 			<groupId>commons-httpclient</groupId>
 			<artifactId>commons-httpclient</artifactId>
-			<scope>test</scope>
 		</dependency>
 
 		<dependency>
@@ -168,6 +167,35 @@
 					<artifactId>postgresql</artifactId>
 				</dependency>
 			</dependencies>
+		</profile>
+
+		<profile>
+			<id>h2_disk</id>
+			<build>
+				<!-- Copy the postgres custom geostore-datasource-ovr.properties -->
+				<plugins>
+					<plugin>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<phase>process-classes</phase>
+								<configuration>
+									<tasks>
+										<copy file="src/main/resources/db-conf/h2_disk.properties"
+											tofile="${project.build.outputDirectory}/geostore-datasource-ovr.properties"
+											overwrite="true" verbose="true" />
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
 		</profile>
 
 		<profile>

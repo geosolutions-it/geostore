@@ -26,6 +26,7 @@ import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -54,8 +55,8 @@ public class MockedUserService implements UserService {
         Long id = RANDOM.nextLong();
         user.setId(id);
         String password = user.getPassword() != null ? user.getPassword()
-                : user.getNewPassword() != null ? user.getNewPassword() : "";
-        user.setPassword(PwEncoder.encode(password));
+                : user.getNewPassword() != null ? user.getNewPassword() : null;
+        user.setPassword(password == null ? null : PwEncoder.encode(password));
         USERS.put(id, user);
         return id;
     }
@@ -157,6 +158,12 @@ public class MockedUserService implements UserService {
     public boolean insertSpecialUsers() {
      // Don't needed
         return false;
+    }
+
+    @Override
+    public Collection<User> getByAttribute(UserAttribute attribute) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

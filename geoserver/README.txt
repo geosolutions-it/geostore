@@ -26,7 +26,8 @@ Setup User Group
     * Password encryption : Digest
     * password policy default 
     * Driver org.postgresql (or JNDI)
-    * connection url jdbc:postgresql://localhost:5432/geostore (or the one for you
+    * connection url jdbc:postgresql://localhost:5432/geostore (or the one for your setup)
+    * JNDI only: the JNDI resource name should look like this java:comp/env/jdbc/geostore
     * set username and password for the db (user 'geostore' with password 'geostore')
 	* Save
     * set DDL and DML file urls.
@@ -38,18 +39,18 @@ Setup Role Service
     * select JDBC
     * name geostore
     * db org.postgresql
-    * connection url: jdbc:postgresql://localhost:5432/geostore (same as above) 
+    * connection url: jdbc:postgresql://localhost:5432/geostore (or JNDI, same as above) 
     * set user and password (user 'geostore' with password 'geostore')
     * save, add the provided files to the geostore directory under /<gs_datadir>/security/role/geostore and save again
     * Go Again in JDBC Role Service 'geostore' and select Administrator role to ADMIN and Group Administrator Role to ADMIN 
     
 Use these services as default
 =============================
-    * Go To Security Settings and set the 'Active role service' to ìgeostoreî
+    * Go To Security Settings and set the 'Active role service' to ‚Äúgeostore‚Äù
     * Go to Authentication Section, scroll to Authentication Providers and Add a new one.
     * select 'Username Password' 
-    * name it ìgeostoreî
-    * select ìgeostoreî from the select box
+    * name it ‚Äúgeostore‚Äù
+    * select ‚Äúgeostore‚Äù from the select box
     * Save.
     * Go to Provider chain and move geostore in the right list, on top 
     * save
@@ -57,7 +58,7 @@ Use these services as default
 
 Use symmetric Encoding
 ======================
-The default crittografy will use a ìdigestî. If you want to  use simmetric password encoding you have to set up properly geostore and geoserver
+The default crittografy will use a ‚Äúdigest‚Äù. If you want to  use simmetric password encoding you have to set up properly geostore and geoserver
     * configure geoserver usergroup to use weakPBE password encryption (or strong,not thested on geostore) 
     * delete all users from gs_users table (user and admin)
     * edit geostore.properties and set it to passwordEncoder=pbePasswordEncoder

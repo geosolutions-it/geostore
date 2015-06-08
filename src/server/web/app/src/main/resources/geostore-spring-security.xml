@@ -23,6 +23,7 @@
 		<!-- In case you need BASIC AUTH -->
 		<security:http auto-config="true" create-session="never">
 			<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
+		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
 			<security:anonymous />
 		</security:http>
 		
@@ -65,10 +66,16 @@
 		<bean id="geoStoreUserServiceAuthenticationProvider"
 			class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
 		</bean>
-
+	
 	<!-- ==================================================================== -->
 	<!-- === LDAP GeoStore Provider ========================================= -->
 	<!-- ==================================================================== -->
+	
+	<!-- bean class="it.geosolutions.geostore.services.rest.security.WebServiceTokenAuthenticationFilter"
+        id="authenticationTokenProcessingFilter">
+        <constructor-arg><value>http://localhost:8080/geoserver/www/{token}.txt</value></constructor-arg>
+    </bean-->
+
 		<!-- LDAP Auth Provider -->
 		<!-- Simple namespace-based configuration -->
 	
@@ -93,6 +100,12 @@
 		<bean id="contextSource" class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
 			<constructor-arg value="ldap://${ldap.host}:${ldap.port}/${ldap.root}" />
 		</bean>
+
+    <!-- 
+     <bean id="ldapInitializer" class="it.geosolutions.geostore.init.LDAPInit" lazy-init="false">
+       <constructor-arg ref="geostoreLdapProvider" />
+     </bean>
+     -->
 	
 		<bean id="geostoreLdapProvider"
 			class="it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider">

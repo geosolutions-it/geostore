@@ -29,6 +29,7 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -268,4 +269,83 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     	writtenRules = resourceService.getSecurityRules(resourceId);
     	assertEquals(3, writtenRules.size());
     }
+    
+    @Test
+    public void testInsertUpdateDuplicatedResource() throws Exception {
+    	final String ORIG_RES_NAME = "testRes";
+    	final String DESCRIPTION = "description";
+    	final String CATEGORY_NAME = "MAP";
+    	final int NUM_COPIES = 3;
+    	final long[] COPY_IDS = new long[NUM_COPIES];
+    	
+    	long origResourceId = createResource(ORIG_RES_NAME, DESCRIPTION, CATEGORY_NAME);
+    	Category category = categoryService.get(CATEGORY_NAME);
+
+        assertEquals(1, resourceService.getCount(null));
+        assertNotNull(category);
+        
+        for (int i=0; i<NUM_COPIES; i++) {
+        	// //////////////////////
+            // test insert
+            // //////////////////////
+        	
+        	long copyId = -1;
+            try {
+            	createResource(ORIG_RES_NAME, DESCRIPTION, category);
+            	fail("DuplicatedResourceNameServiceEx was not thrown as expected");
+            } catch (DuplicatedResourceNameServiceEx ex) {
+            	// OK, exception was thrown: exception message be a valid resource name
+            	String validCopyName = ex.getMessage();
+            	
+            	assertNotNull("Thrown DuplicatedResourceNameServiceEx exception's message was null", validCopyName);
+                assertFalse("Thrown DuplicatedResourceNameServiceEx exception's message was empty", validCopyName.isEmpty());
+                 
+                copyId = createResource(validCopyName, DESCRIPTION, category);
+            }
+            
+            assertTrue(copyId > 0);
+            assertEquals(i+2, resourceService.getCount(null));
+            
+            // //////////////////////
+            // test update
+            // //////////////////////
+            
+            Resource copy = resourceService.get(copyId);
+            assertNotNull(copy);
+            copy.setName(ORIG_RES_NAME);
+            try {
+            	resourceService.update(copy);
+            	fail("DuplicatedResourceNameServiceEx was not thrown as expected");
+            } catch (DuplicatedResourceNameServiceEx ex) {
+            	// OK, exception was thrown: exception message be a valid resource name
+            	String validCopyName = ex.getMessage();
+            	
+            	assertNotNull("Thrown DuplicatedResourceNameServiceEx exception's message was null", validCopyName);
+                assertFalse("Thrown DuplicatedResourceNameServiceEx exception's message was empty", validCopyName.isEmpty());
+                 
+                copy.setName(validCopyName);
+                // should throw no exception
+                try {
+                	resourceService.update(copy);
+                	
+                	// update description
+                	copy.setDescription(DESCRIPTION + " modified");
+                	resourceService.update(copy);
+                } catch (Exception e) {
+                	fail("Exception was thrown during update: " + e.getMessage());
+                }                
+            }
+            
+            COPY_IDS[i] = copyId;
+        }
+        
+        // cleanup
+        assertTrue("Could not delete resource", resourceService.delete(origResourceId));
+        for (int i=0; i<NUM_COPIES; i++) {
+        	assertTrue("Could not delete resource", resourceService.delete(COPY_IDS[i]));        	
+        }
+        
+        assertEquals(0, resourceService.getCount(null));    	
+    }
+    
 }

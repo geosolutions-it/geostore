@@ -35,6 +35,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
+import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
@@ -45,6 +46,7 @@ import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
@@ -80,6 +82,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private UserService userService;
 
+    private UserGroupService groupService;
+
     /**
      * @param resourceService
      */
@@ -92,6 +96,10 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      */
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setUserGroupService(UserGroupService userGroupService){
+        this.groupService = userGroupService;
     }
 
     /*
@@ -364,6 +372,50 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             return null;
         }
+    }
+
+    @Override
+    public ExtGroupList getGroupsList(SecurityContext sc, String nameLike, Integer start,
+            Integer limit, boolean all) throws BadRequestWebEx {
+
+        if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
+            throw new BadRequestWebEx("start and limit params should be declared together");
+        }
+
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("getGroupsList(start=" + start + ", limit=" + limit);
+
+        Integer page = null;
+        if (start != null) {
+            page = start / limit;
+        }
+
+        User authUser = null;
+        try{
+            authUser = extractAuthUser(sc);
+        }catch (InternalErrorWebEx ie){
+            // serch without user information
+            return null;
+        }
+
+        try {
+            nameLike = nameLike.replaceAll("[*]", "%");
+            List<UserGroup> groups = groupService.getAllAllowed(authUser, page, limit, nameLike, all);
+
+            long count = 0;
+            if (groups != null && groups.size() > 0)
+                count = groupService.getCount(authUser,nameLike, all);
+
+            ExtGroupList list = new ExtGroupList(count, groups);
+            return list;
+
+        } catch (BadRequestServiceEx e) {
+            if (LOGGER.isEnabledFor(Level.ERROR))
+                LOGGER.error(e.getMessage());
+
+            return null;
+        }
+
     }
 
     /* (non-Javadoc)
