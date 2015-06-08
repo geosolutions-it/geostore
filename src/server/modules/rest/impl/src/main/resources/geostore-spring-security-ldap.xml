@@ -21,7 +21,7 @@
 		<security:global-method-security secured-annotations="enabled" />
 	
 		<!-- In case you need BASIC AUTH -->
-		<security:http auto-config="true" create-session="never">
+		<security:http auto-config="true" create-session="never"
 			<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
 			<security:anonymous />
 		</security:http>
@@ -43,10 +43,10 @@
 		<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 		<security:authentication-manager alias="authenticationManager">
 		    <!-- Use the default GeoStore Auth Provider -->
-			<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
+			<!-- security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' / -->
 			
 			<!-- Use the GeoStore LDAP Provider -->
-			<!-- security:authentication-provider ref='geostoreLdapProvider' / -->
+			<security:authentication-provider ref='geostoreLdapProvider' />
 			
 			<!-- Use the GeoStore CAS Provider -->
 			<!-- security:authentication-provider ref="casAuthenticationProvider"/ -->

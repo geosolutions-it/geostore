@@ -21,21 +21,21 @@
 		<security:global-method-security secured-annotations="enabled" />
 	
 		<!-- In case you need BASIC AUTH -->
-		<security:http auto-config="true" create-session="never">
+		<!-- security:http auto-config="true" create-session="never"
 			<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
 			<security:anonymous />
-		</security:http>
+		</security:http -->
 		
 		<!-- In case you need CAS AUTH -->
-		<!-- security:http auto-config="true" use-expressions="true" 
-		       entry-point-ref="casProcessingFilterEntryPoint">
+		<security:http auto-config="true" use-expressions="true" entry-point-ref="casProcessingFilterEntryPoint">
 			<security:intercept-url pattern="/**" access="isAuthenticated()" />
 			
 			<security:custom-filter ref="requestSingleLogoutFilter" before="LOGOUT_FILTER"/>
         	<security:custom-filter ref="singleLogoutFilter" before="CAS_FILTER"/>
 			<security:custom-filter ref="casAuthenticationFilter" after="CAS_FILTER"/>
-			<security:anonymous />
-		</security:http -->
+		    <!-- security:http-basic entry-point-ref="restAuthenticationEntryPoint"/ -->
+		    <security:anonymous />
+		</security:http>
 
 	<!-- ==================================================================== -->
 	<!-- === The AUTHENTICATION MANAGER ===================================== -->
@@ -43,13 +43,13 @@
 		<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 		<security:authentication-manager alias="authenticationManager">
 		    <!-- Use the default GeoStore Auth Provider -->
-			<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
+			<!-- security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' / -->
 			
 			<!-- Use the GeoStore LDAP Provider -->
 			<!-- security:authentication-provider ref='geostoreLdapProvider' / -->
 			
 			<!-- Use the GeoStore CAS Provider -->
-			<!-- security:authentication-provider ref="casAuthenticationProvider"/ -->
+			<security:authentication-provider ref="casAuthenticationProvider"/>
 		</security:authentication-manager>
 		
 	<!-- ==================================================================== -->
