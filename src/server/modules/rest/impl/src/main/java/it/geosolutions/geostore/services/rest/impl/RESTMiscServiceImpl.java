@@ -48,6 +48,7 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.security.GroupsRolesService;
 
@@ -197,6 +198,49 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         }
 
         return new ShortResourceList(resources);
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
+     */
+    @Override
+    public ResourceList getResourcesByCategory(SecurityContext sc, String catName,
+            boolean includeAttributes, boolean includeData) throws NotFoundWebEx, ConflictWebEx,
+            BadRequestWebEx, InternalErrorWebEx {
+
+        if (LOGGER.isDebugEnabled())
+            LOGGER.debug("getResourcesByCategory(" + catName + ")");
+
+        // some checks on category
+        if (catName == null)
+            throw new BadRequestWebEx("Category is null");
+
+        Category category;
+        try {
+            category = categoryService.get(catName);
+        } catch (BadRequestServiceEx ex) {
+            throw new BadRequestWebEx(ex.getMessage());
+        }
+        if (category == null)
+            throw new NotFoundWebEx("Category not found");
+
+        // ok, search for the resource list
+        SearchFilter filter = new CategoryFilter(catName, SearchOperator.EQUAL_TO);
+
+        List<Resource> resources = null;
+        try {
+            User user = extractAuthUser(sc);
+            resources = resourceService.getResources(filter, null, null, includeAttributes,
+                    includeData, user);
+        } catch (BadRequestServiceEx ex) {
+            throw new BadRequestWebEx(ex.getMessage());
+        } catch (InternalErrorServiceEx ex) {
+            throw new InternalErrorWebEx(ex.getMessage());
+        }
+
+        return new ResourceList(resources);
     }
 
     // =========================================================================
