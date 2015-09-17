@@ -16,6 +16,10 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.impl.RESTCategoryServiceImpl;
 
@@ -43,67 +47,52 @@ public class SecurityTest extends BaseAuthenticationTest {
 
     private final static String WADL_ADDRESS = ENDPOINT_ADDRESS + "?_wadl&_type=xml";
 
-    private static Server server;
+    
+    private boolean serverStarted = false;
 
     @Override
     protected void setUp() throws Exception {
-        super.setUp();
-    }
-
-    @BeforeClass
-    public static void initialize() throws Exception {
-        try {
-            startServer();
-            waitForWADL();
-        } catch (Exception e) {
-            throw e;
-        } finally {
-            destroy();
-        }
-    }
-
-    @AfterClass
-    public static void destroy() throws Exception {
-
-        if (server != null) {
-            server.stop();
-            server.destroy();
-        }
-    }
-
-    private static void startServer() throws Exception {
-        JAXRSServerFactoryBean sf = (JAXRSServerFactoryBean) context
-                .getBean("geoStoreRESTCategory");
-
-        // sf.setServiceBeans( Arrays.< Object >asList( new RESTCategoryServiceImpl() ) );
-        // sf.setResourceClasses(RESTCategoryServiceImpl.class);
-
-        // add custom providers if any
-        // List<Object> providers = new ArrayList<Object>();
-        // providers.add(new JSONProvider());
-        // sf.setProviders(providers);
-
-        // sf.setResourceProvider(RESTCategoryServiceImpl.class, new SingletonResourceProvider(new RESTCategoryServiceImpl(), true));
-
-        // sf.setAddress(ENDPOINT_ADDRESS);
-
-        server = sf.create();
-    }
-
-    // Optional step - may be needed to ensure that by the time individual
-    // tests start running the endpoint has been fully initialized
-    private static void waitForWADL() throws Exception {
-        WebClient client = WebClient.create(WADL_ADDRESS);
-        // wait for 20 secs or so
-        for (int i = 0; i < 2; i++) {
-            Thread.currentThread();
-            Thread.sleep(1000);
-            Response response = client.get();
-            if (response.getStatus() == 200) {
-                break;
+        
+        if(!portIsBusy("localhost", 33389) && !portIsBusy("localhost", 9000)) {
+            try {
+                super.setUp();
+                serverStarted = true;
+            } catch(Exception e) {
+                
             }
         }
-        // no WADL is available yet - throw an exception or give tests a chance to run anyway
+    }
+    
+    /**
+     * Checks if a network host / port is already occupied.
+     * 
+     * @param host
+     * @param port
+     * @return
+     */
+    private static boolean portIsBusy(String host, int port) {
+        ServerSocket ss = null;
+        DatagramSocket ds = null;
+        try {
+            ss = new ServerSocket(port);
+            ss.setReuseAddress(true);
+            ds = new DatagramSocket(port);
+            ds.setReuseAddress(true);
+            return false;
+        } catch (IOException e) {
+        } finally {
+            if (ds != null) {
+                ds.close();
+            }
+            if (ss != null) {
+                try {
+                    ss.close();
+                } catch (IOException e) {
+                    /* should not be thrown */
+                }
+            }
+        }
+        return true;
     }
 
     @Override
@@ -113,9 +102,11 @@ public class SecurityTest extends BaseAuthenticationTest {
 
     @Test
     public void testSuite() {
-        springAuthenticationTest();
-        webClientAccessTest();
-        proxyAccessTest();
+        if(serverStarted) {
+            springAuthenticationTest();
+            webClientAccessTest();
+            proxyAccessTest();
+        }
     }
 
     protected void springAuthenticationTest() {
