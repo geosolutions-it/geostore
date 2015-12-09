@@ -244,6 +244,16 @@
 				</dependency>
 			</dependencies>
 		</profile>
+
+		<profile>
+			<id>auditing</id>
+			<dependencies>
+				<dependency>
+					<groupId>it.geosolutions.geostore</groupId>
+					<artifactId>geostore-rest-auditing</artifactId>
+				</dependency>
+			</dependencies>
+		</profile>
 	</profiles>
 
 	<build>

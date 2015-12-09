@@ -246,6 +246,12 @@
                 <artifactId>geostore-rest-extjs</artifactId>
                 <version>${geostore-version}</version>
             </dependency>
+            
+	    <dependency>
+                <groupId>it.geosolutions.geostore</groupId>
+                <artifactId>geostore-rest-auditing</artifactId>
+                <version>${geostore-version}</version>
+            </dependency>
 
 		    <!-- =========================================================== -->
 		    <!--     Quartz                                                  -->
