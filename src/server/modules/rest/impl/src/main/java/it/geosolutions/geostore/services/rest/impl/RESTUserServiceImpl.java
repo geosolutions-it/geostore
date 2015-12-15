@@ -27,6 +27,16 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import javax.ws.rs.core.SecurityContext;
+
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.log4j.Logger;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -41,16 +51,6 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import javax.ws.rs.core.SecurityContext;
-
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.log4j.Logger;
 
 /**
  * Class RESTUserServiceImpl.
@@ -126,9 +126,11 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             boolean userUpdated = false;
             if (authUser.getRole().equals(Role.ADMIN)) {
                 String npw = user.getNewPassword();
-                if (npw != null) {
+                if (npw != null && !npw.isEmpty()) {
                     old.setNewPassword(user.getNewPassword());
                     userUpdated = true;
+                } else {
+                    old.setNewPassword(null);
                 }
 
                 Role nr = user.getRole();
@@ -147,9 +149,11 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 }
             } else if (old.getName().equals(authUser.getName())) { // Check if the User is the same
                 String npw = user.getNewPassword();
-                if (npw != null) {
+                if (npw != null && !npw.isEmpty()) {
                     old.setNewPassword(user.getNewPassword());
                     userUpdated = true;
+                } else {
+                    old.setNewPassword(null);
                 }
             }
             //

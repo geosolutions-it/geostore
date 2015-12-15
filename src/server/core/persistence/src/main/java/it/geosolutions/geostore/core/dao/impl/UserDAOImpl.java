@@ -58,7 +58,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
         for (User user : entities) {
             String newpw = user.getNewPassword();
-            if (newpw != null) {
+            if (newpw != null && !newpw.isEmpty()) {
                 String enc = PwEncoder.encode(newpw);
                 user.setPassword(enc);
             }
@@ -96,7 +96,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
     @Override
     public User merge(User entity) {
         String newpw = entity.getNewPassword();
-        if (newpw != null) {
+        if (newpw != null && !newpw.isEmpty()) {
             String enc = PwEncoder.encode(newpw);
             entity.setPassword(enc);
         }
@@ -161,7 +161,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
         for (User user : entities) {
             String newpw = user.getNewPassword();
-            if (newpw != null) {
+            if (newpw != null && !newpw.isEmpty()) {
                 String enc = PwEncoder.encode(newpw);
                 user.setPassword(enc);
             }
