@@ -4,7 +4,7 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-rest-root</artifactId>
-        <version>1.3</version>
+        <version>1.3-SNAPSHOT</version>
     </parent>
 
     <groupId>it.geosolutions.geostore</groupId>
