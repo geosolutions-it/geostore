@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/geosolutions-it/geostore.svg?branch=master)](https://travis-ci.org/geosolutions-it/geostore)
+
 `GeoStore <http://github.com/geosolutions-it/geostore>`_ is an open source Java enterprise application for storing, searching and retrieving data on the fly.
 
 GeoStore performs authentication internally (auth framework shall be pluggable), and internal authorization rules grant permissions on single Resources or whole Categories.
@@ -6,15 +8,15 @@ A comprehensive `REST API <https://github.com/geosolutions-it/geostore/wiki/REST
 
 Documentation
 -------------
-For more information check the [GeoStore wiki](https://github.com/geosolutions-it/geostore/wiki/Documentation-index).
+For more information check the `GeoStore wiki <https://github.com/geosolutions-it/geostore/wiki/Documentation-index>`_ .
 
 License
 ------------
-**GeoStore** core modules are free and Open Source software, released under the [GPL v3](http://www.gnu.org/licenses/gpl.html) license.
+**GeoStore** core modules are free and Open Source software, released under the `GPL v3 <http://www.gnu.org/licenses/gpl.html`_ license.
 
 Professional Support
 ---------------------
-GeoStore is being developed by [GeoSolutions](http://www.geo-solutions.it/) hence you can talk to us for professional support. Anyway the project is a real Open Source project hence you can contribute to it (see section below).
+GeoStore is being developed by `GeoSolutions <http://www.geo-solutions.it/`_ hence you can talk to us for professional support. Anyway the project is a real Open Source project hence you can contribute to it (see section below).
 
 Contributing
 ---------------------
