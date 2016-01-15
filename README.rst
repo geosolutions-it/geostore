@@ -6,5 +6,21 @@ A comprehensive `REST API <https://github.com/geosolutions-it/geostore/wiki/REST
 
 Documentation
 -------------
-* `Documentation page <https://github.com/geosolutions-it/geostore/wiki/Documentation-index>`_
+For more information check the [GeoStore wiki](https://github.com/geosolutions-it/geostore/wiki/Documentation-index).
 
+License
+------------
+**GeoStore** core modules are free and Open Source software, released under the [GPL v3](http://www.gnu.org/licenses/gpl.html) license.
+
+Professional Support
+---------------------
+GeoStore is being developed by [GeoSolutions](http://www.geo-solutions.it/) hence you can talk to us for professional support. Anyway the project is a real Open Source project hence you can contribute to it (see section below).
+
+Contributing
+---------------------
+We welcome contributions in any form:
+
+* pull requests for new features
+* pull requests for bug fixes
+* pull requests for documentation
+* funding for any combination of the above
