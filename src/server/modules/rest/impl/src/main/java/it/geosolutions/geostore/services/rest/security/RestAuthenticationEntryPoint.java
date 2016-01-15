@@ -38,41 +38,40 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
+
 /**
- * This Class wrap the AuthenticationEntryPoint to reply with forbidden for the 
- * /users/user/details path.
+ * This Class wrap the AuthenticationEntryPoint to reply with forbidden for the /users/user/details path. 
  * It is used to emulate the login without showing a WWW-Authenticate window in the browser
+ * 
  * @author Lorenzo Natali (lorenzo.natali at geo-solutions.it)
- *
+ * 
  */
-public class RestAuthenticationEntryPoint extends  BasicAuthenticationEntryPoint {
-	private static final String LOGIN_PATH="users/user/details";
-	 private static final Logger LOGGER = Logger.getLogger(RestAuthenticationEntryPoint.class);
-	@Override
-	public void commence(HttpServletRequest request,
-			HttpServletResponse response, AuthenticationException authException)
-			throws IOException, ServletException {
-			URI url=null;
-			try {
-				url = new URI(request.getRequestURI());
-			} catch (URISyntaxException e) {
-				// TODO Auto-generated catch block
-				LOGGER.error("Invalid URI:"+ request.getRequestURI());
-				super.commence(request, response, authException);
-				return;
-			}
-			if(url == null){
-				super.commence(request, response, authException);
-				return;
-			}
-		if( url.getPath().contains(LOGIN_PATH) ){
-			response.setHeader("WWW-Authenticate", "FormBased");
-			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		}
-		else{
-			super.commence(request, response, authException);
-			
-		}
-		
-	}
+public class RestAuthenticationEntryPoint extends BasicAuthenticationEntryPoint {
+    private static final String LOGIN_PATH = "users/user/details";
+
+    private static final Logger LOGGER = Logger.getLogger(RestAuthenticationEntryPoint.class);
+
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response,
+            AuthenticationException authException) throws IOException, ServletException {
+        URI url = null;
+        try {
+            url = new URI(request.getRequestURI());
+        } catch (URISyntaxException e) {
+            // TODO Auto-generated catch block
+            LOGGER.error("Invalid URI:" + request.getRequestURI());
+            super.commence(request, response, authException);
+            return;
+        }
+        if (url == null) {
+            super.commence(request, response, authException);
+            return;
+        }
+        if (url.getPath().contains(LOGIN_PATH)) {
+            response.setHeader("WWW-Authenticate", "FormBased");
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        } else {
+            super.commence(request, response, authException);
+        }
+    }
 }
