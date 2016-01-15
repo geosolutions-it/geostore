@@ -3,5 +3,6 @@ jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
-  - openjdk6
+before_install:
+  - export MAVEN_OPTS="-Xmx512M -XX:MaxPermSize=256M"
 script: sh travis-run-tests.sh
