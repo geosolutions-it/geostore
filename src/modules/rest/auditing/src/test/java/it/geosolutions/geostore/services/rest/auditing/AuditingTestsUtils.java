@@ -104,7 +104,7 @@ final class AuditingTestsUtils {
             byte[] data = new byte[(int) file.length()];
             input.read(data);
             input.close();
-            return new String(data);
+            return new String(data).replaceAll("\\r\\n", "\n");
         } catch (Exception exception) {
             throw new AuditingException(exception, "Error reading file '%s' content.", file.getAbsolutePath());
         }
