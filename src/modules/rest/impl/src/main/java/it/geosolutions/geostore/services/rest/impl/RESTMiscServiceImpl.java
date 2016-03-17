@@ -52,6 +52,7 @@ import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.security.GroupsRolesService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
@@ -190,7 +191,8 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         List<ShortResource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            resources = resourceService.getResources(filter, user);
+            
+            resources = getShortResourcesAllowed(resourceService.getResources(filter, user), user);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -198,6 +200,28 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         }
 
         return new ShortResourceList(resources);
+    }
+    
+    /**
+     * Get resources filtered by authUser
+     * 
+     * @param resources
+     * @param authUser
+     * 
+     * @return resources allowed for auth user
+     */
+    public List<Resource> getResourcesAllowed(List<Resource> resources, User authUser){
+
+        List<Resource> allowedResources = new ArrayList<Resource>();
+        //
+        // Authorization check.
+        //
+        for (Resource r: resources) {
+            if (resourceAccessRead(authUser, r.getId())) {
+                allowedResources.add(r);
+            }
+        }
+        return allowedResources;
     }
     
     /*
@@ -232,8 +256,8 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         List<Resource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            resources = resourceService.getResources(filter, null, null, includeAttributes,
-                    includeData, user);
+            resources = getResourcesAllowed(resourceService.getResources(filter, null, null, includeAttributes,
+                    includeData, user), user);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -262,7 +286,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
      */
     @Override
     protected SecurityService getSecurityService() {
-        throw new NotImplementedException("This method is not implemented yet...");
+        return resourceService;
     }
 
     @Override
