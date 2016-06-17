@@ -11,7 +11,7 @@ A comprehensive [REST API](https://github.com/geosolutions-it/geostore/wiki/REST
 
 Documentation
 -------------
-For more information check the [GeoStore wik](https://github.com/geosolutions-it/geostore/wiki/Documentation-index>) .
+For more information check the [GeoStore wiki](https://github.com/geosolutions-it/geostore/wiki/Documentation-index>) .
 
 License
 ------------
