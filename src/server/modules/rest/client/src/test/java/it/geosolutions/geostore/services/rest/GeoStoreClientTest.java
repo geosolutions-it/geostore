@@ -30,11 +30,13 @@ import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -370,6 +372,45 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
 
 
     }
+
+    @Test
+    public void testGetDataRaw() {
+
+        createDefaultCategory();
+
+        final String DATA = "we wish you a merry xmas and a happy new year";
+        final String ENCODED  = Base64.encodeBase64String(DATA.getBytes());
+
+        RESTStoredData storedData = new RESTStoredData();
+        storedData.setData(ENCODED);
+
+
+        RESTResource origResource = new RESTResource();
+        origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
+        origResource.setName("rest_test_getrawdata");
+        origResource.setStore(storedData);
+
+        Long rid = client.insert(origResource);
+        System.out.println("RESOURCE has ID " + rid);
+
+        // make sure data has been saved
+        {
+            String data = client.getData(rid);
+            assertEquals(ENCODED, data);
+        }
+
+        // test with no decoding
+        {
+            String decoded = client.getRawData(rid, null);
+            assertEquals(ENCODED, decoded);
+        }
+        
+        {
+            String decoded = client.getRawData(rid, RawFormat.BASE64);
+            assertEquals(DATA, decoded);
+        }
+    }
+
 
     @Test
     public void testSearch01() {
