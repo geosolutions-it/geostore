@@ -47,6 +47,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
+import org.junit.Ignore;
 
 public class AdministratorGeostoreClientTest{
 
@@ -817,6 +818,7 @@ public class AdministratorGeostoreClientTest{
     }
     
     @Test
+    @Ignore
     public void getAllGroupsWithoutEveryoneTest(){
         int grpCount = 3;
         addSomeUserGroups(grpCount, "randomGroups");
@@ -826,6 +828,7 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
+    @Ignore
     public void getAllGroupsWithEveryoneTest(){
         int grpCount = 3;
         addSomeUserGroups(grpCount, "randomGroups");
@@ -835,6 +838,7 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
+    @Ignore
     public void searchGroupTest(){
         int grpNum = 4;
         int targetGrpNum = 2;
@@ -847,6 +851,7 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
+    @Ignore
     public void noGroupsForNormalUserTest(){
         String username = "user", password = "user";
 
@@ -858,6 +863,7 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
+    @Ignore
     public void allGroupsOfAnUserTest(){
         int grpTestUserNum = 5, grpUUserNum = 3;
         String usrTestName = "test";
@@ -891,6 +897,7 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
+    @Ignore
     public void userGroupsPaginationTest(){
         int totalGrps = 10;
         int pageSize = 3;
