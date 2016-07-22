@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright (C) 2007 - 2010 GeoSolutions S.A.S.
+ Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  http://www.geo-solutions.it
 
  GPLv3 + Classpath exception
@@ -109,7 +109,11 @@
                     </execution>
                 </executions>
             </plugin>
-
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.15</version>
+            </plugin>
         </plugins>
     </build>
 

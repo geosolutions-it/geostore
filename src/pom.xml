@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  http://www.geo-solutions.it
 
  GPLv3 + Classpath exception
@@ -21,20 +21,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-	<parent>
+    <parent>
         <groupId>it.geosolutions</groupId>
         <artifactId>geostore</artifactId>
         <version>1.4-SNAPSHOT</version>
     </parent>
-	
+
     <groupId>it.geosolutions.geostore</groupId>
     <artifactId>geostore-root</artifactId>
     <version>1.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>GeoStore - 0 Server Root</name>
-    
-	<modules>
+
+    <modules>
         <module>core</module>
         <module>modules</module>
         <module>web</module>
@@ -47,14 +47,13 @@
         <cxf-version>2.3.2</cxf-version>
         <activemq-version>5.3.0.4-fuse</activemq-version>
 
-		<jersey-version>2.5.1</jersey-version>
-		
+        <jersey-version>2.5.1</jersey-version>
         <!--
         spring-security-core 3.0.4 requires spring-core 3.x, otherwise we'd normally use 2.5.6, which
         is what the rest of the app uses
         -->
         <spring-version>3.0.5.RELEASE</spring-version>
-	 
+
         <!-- 2.5.6.SEC01 is the version used by smix-->
         <!-- 2.5.5       is the version used by memberService-->
         <spring-security-version>3.0.5.RELEASE</spring-security-version>
@@ -63,9 +62,9 @@
 
         <velocity-version>1.6.2</velocity-version>
         <javax-mail-version>1.4</javax-mail-version>
-		
+
         <javax-annotation-version>1.0</javax-annotation-version>
-		
+
         <xalan-version>2.7.0</xalan-version>
         <xercesImpl-version>2.8.1</xercesImpl-version>
         <xml-apis-version>1.3.03</xml-apis-version>
@@ -105,7 +104,6 @@
 
         <persistence-version>1.0</persistence-version>
         <hibernate-version>3.3.2.GA</hibernate-version>
-        <hibernate-spatial-version>1.0</hibernate-spatial-version>
         <hibernate-annotations-version>3.3.1.GA</hibernate-annotations-version>
         <hibernate-commons-annotations-version>3.3.0.ga</hibernate-commons-annotations-version>
         <hibernate-generic-dao-version>0.5.1</hibernate-generic-dao-version>
@@ -721,7 +719,7 @@
             <dependency>
                 <groupId>org.hibernatespatial</groupId>
                 <artifactId>hibernate-spatial-postgis</artifactId>
-                <version>${hibernate-spatial-version}</version>
+                <version>1.1.1</version>
             </dependency>
 
 		    <!-- =========================================================== -->
@@ -875,10 +873,10 @@
                     <target>1.6</target>
                     <debug>true</debug>
                     <encoding>UTF-8</encoding>
-					       <!--
-					           On the win32 build box the compiler oom's due to the compiler accumulating
-					           too many classes in the permanent generation, similar to GEOT-2462
-					       -->
+                    <!--
+                        On the win32 build box the compiler oom's due to the compiler accumulating
+                        too many classes in the permanent generation, similar to GEOT-2462
+                    -->
                     <fork>true</fork>
                     <meminitial>128M</meminitial>
                     <maxmem>1512M</maxmem>
@@ -899,16 +897,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <!-- Use 2.4.2 because 2.4.3 has bug with system properties
 				     see http://jira.codehaus.org/browse/SUREFIRE-121 -->
-			    <version>2.4.2</version>
-                <configuration>
-                    <systemProperties>
-                        <property>
-                            <name>dgws.config.dir</name>
-                            <value>src/test/resources</value>
-<!--                            <value>${dgws.config.dir}</value>-->
-                        </property>
-                    </systemProperties>
-                </configuration>
+                <version>2.4.2</version>
             </plugin>
             
         </plugins>
@@ -916,29 +905,14 @@
     </build>
 
     <repositories>
-    		<!-- GeoSolutions -->
+        <!-- GeoSolutions -->
         <repository>
             <id>geosolutions</id>
             <name>GeoSolutions Repository</name>
             <url>http://maven.geo-solutions.it</url>
         </repository>
 
-				<!-- Hibernate Spatial -->
-        <repository>
-            <id>Hibernate Spatial repo</id>
-            <url>http://www.hibernatespatial.org/repository</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-
-<!--        <repository>
-            <id>trg-dao-repo</id>
-            <name>Repository for The Revere Group's Hibernate Generic DAO framework</name>
-            <url>http://hibernate-generic-dao.googlecode.com/svn/trunk/maven-repo/</url>
-        </repository>
--->
-				<!-- Apache -->
+        <!-- Apache -->
         <repository>
             <id>maven2-repository.dev.java.net</id>
             <name>Java.net Repository for Maven</name>
@@ -949,42 +923,7 @@
             </snapshots>
         </repository>
 
-        <repository>
-            <id>apache.snapshots</id>
-            <name>Apache Snapshots Repository</name>
-            <url>http://people.apache.org/repo/m2-snapshot-repository</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-
-        <repository>
-            <id>apache.incubating</id>
-            <name>Apache Incubating Repository</name>
-            <url>http://people.apache.org/repo/m2-incubating-repository</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-
-				<!-- ibiblio -->
-        <repository>
-            <id>ibiblio-maven2-repository</id>
-            <name>ibiblio Repository for Maven</name>
-            <url>http://maven.ibiblio.org/maven2/</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-
-				<!-- JBoss -->
+        <!-- JBoss -->
         <repository>
             <id>jboss-repo</id>
             <name>JBoss Maven2 Repository</name>
@@ -994,7 +933,7 @@
             </snapshots>
         </repository>
 
-				<!-- Spring -->
+        <!-- Spring -->
         <repository>
             <id>spring-release</id>
             <name>Spring Portfolio Release Repository</name>
@@ -1012,26 +951,6 @@
             </snapshots>
         </repository>
 
-        <!-- Java.net -->
-        <repository>
-            <id>java.net</id>
-            <url>http://download.java.net/maven/1</url>
-            <!-- layout>legacy</layout -->
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-
-				<!-- OSGEO -->
-        <repository>
-            <id>opengeo</id>
-            <name>OpenGeo Maven Repository</name>
-            <url>http://repo.opengeo.org/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-
         <repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
@@ -1043,81 +962,30 @@
     </repositories>
 
     <pluginRepositories>
-
-<!--        <pluginRepository>
-            <id>apache.snapshots</id>
-            <name>Apache Snapshots Repository</name>
-            <url>http://people.apache.org/repo/m2-snapshot-repository</url>
+        
+        <pluginRepository>
+            <id>repo.maven.org-maven2</id>
+            <name>repo.maven.org-maven2</name>
+            <url>http://repo.maven.org/maven2/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
             <releases>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </releases>
-        </pluginRepository>
--->
-        <pluginRepository>
-        <id>codehaus-release-repo</id>
-        <name>Codehaus Release Repo</name>
-        <url>http://repository.codehaus.org</url>
-         <snapshots>
-          <enabled>false</enabled>
-         </snapshots>
-         <releases>
-          <enabled>true</enabled>
-         </releases>
-        </pluginRepository> 
-       
-        <pluginRepository>
-         <id>codehaus-snapshot-plugins</id>
-         <name>codehaus-shapshot-plugins</name>
-         <url>http://snapshots.repository.codehaus.org/</url>
-         <snapshots>
-          <enabled>true</enabled>
-         </snapshots>
-         <releases>
-          <enabled>false</enabled>
-         </releases>
-        </pluginRepository>
-        
-        <pluginRepository>
-         <id>repo.maven.org-maven2</id>
-         <name>repo.maven.org-maven2</name>
-         <url>http://repo.maven.org/maven2/</url>
-         <snapshots>
-          <enabled>true</enabled>
-         </snapshots>
-         <releases>
-          <enabled>true</enabled>
-         </releases>
         </pluginRepository>  
         
         <pluginRepository>
-         <id>repo1.maven.org-maven2</id>
-         <name>repo1.maven.org-maven2</name>
-         <url>http://repo1.maven.org/maven2/</url>
-         <snapshots>
-          <enabled>true</enabled>
-         </snapshots>
-         <releases>
-          <enabled>true</enabled>
-         </releases>
-        </pluginRepository>
-
-        <pluginRepository>
-            <id>apache.incubating</id>
-            <name>Apache Incubating Repository</name>
-            <url>http://people.apache.org/repo/m2-incubating-repository</url>
+            <id>repo1.maven.org-maven2</id>
+            <name>repo1.maven.org-maven2</name>
+            <url>http://repo1.maven.org/maven2/</url>
             <snapshots>
-                <enabled>false</enabled>
+                <enabled>true</enabled>
             </snapshots>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
         </pluginRepository>
-
-        <!--pluginRepository>
-            <id>mortbay-repo</id>
-            <name>mortbay-repo</name>
-            <url>http://www.mortbay.org/maven2/snapshot</url>
-        </pluginRepository-->
 
     </pluginRepositories>
 
