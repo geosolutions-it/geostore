@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,11 +19,7 @@
  */
 package it.geosolutions.geostore.services.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -43,13 +39,13 @@ import it.geosolutions.geostore.services.rest.model.RESTStoredData;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
-
+import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.IOUtils;
 import org.apache.log4j.Logger;
 import org.junit.Test;
@@ -383,6 +379,48 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         }
 
     }
+
+    @Test
+    public void testGetDataRaw() {
+
+        createDefaultCategory();
+
+        final String DATA = "we wish you a merry xmas and a happy new year";
+        final String ENCODED  = Base64.encodeBase64String(DATA.getBytes());
+
+        RESTStoredData storedData = new RESTStoredData();
+        storedData.setData(ENCODED);
+
+
+        RESTResource origResource = new RESTResource();
+        origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
+        origResource.setName("rest_test_getrawdata");
+        origResource.setStore(storedData);
+
+        Long rid = client.insert(origResource);
+        LOGGER.info("RESOURCE has ID " + rid);
+
+        // make sure data has been saved
+        {
+            LOGGER.info("RAW data: base check");
+            String encoded = client.getData(rid);
+            assertEquals(ENCODED, encoded);
+        }
+
+        // test with no decoding
+        {
+            LOGGER.info("RAW data: no decoding");
+            byte[] encoded = client.getRawData(rid, null);
+            assertArrayEquals(ENCODED.getBytes(), encoded);
+        }
+        
+        {
+            LOGGER.info("RAW data: base64");
+            byte[] decoded = client.getRawData(rid, RawFormat.BASE64);
+            assertArrayEquals(DATA.getBytes(), decoded);
+        }
+    }
+
 
     @Test
     public void testSearch01() {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -29,6 +29,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -92,5 +93,15 @@ public interface RESTStoredDataService {
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String get(@Context SecurityContext sc, @Context HttpHeaders headers, @PathParam("id") long id)
             throws NotFoundWebEx;
+
+    @GET
+    @Path("/{id}/raw")
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    byte[] getRaw(
+    		@Context SecurityContext sc,
+    		@Context HttpHeaders headers,
+    		@PathParam("id") long id,
+    		@QueryParam("decode") String decodeFormat
+                ) throws NotFoundWebEx;
 
 }

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -29,6 +29,8 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
+
 
 import java.io.StringReader;
 import java.util.Arrays;
@@ -44,6 +46,7 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import net.sf.json.xml.XMLSerializer;
+import org.apache.commons.codec.binary.Base64;
 
 import org.apache.log4j.Logger;
 import org.jdom.Element;
@@ -275,6 +278,33 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             LOGGER.debug("Transformed plaintext -> XML");
 
         return ret;
+    }
+
+    @Override
+    public byte[] getRaw(SecurityContext sc, HttpHeaders headers, long id, String decodeFormat)
+            throws NotFoundWebEx
+    {
+        if(id == -1)
+           return "dummy payload".getBytes();
+
+        StoredData storedData;
+        try {
+            storedData = storedDataService.get(id);
+        } catch(NotFoundServiceEx e){
+        	throw new NotFoundWebEx("Data not found");
+        }
+
+        String data = storedData == null? "" : storedData.getData();
+
+        // prefer no transformation
+        if( decodeFormat == null) {
+            return data.getBytes();
+        } else if(decodeFormat.equalsIgnoreCase(RawFormat.BASE64.name())) {
+            return Base64.decodeBase64(data);
+        } else {
+            LOGGER.warn("Unknown decode format '"+decodeFormat+"'");
+            return data.getBytes();
+        }
     }
 
     /**

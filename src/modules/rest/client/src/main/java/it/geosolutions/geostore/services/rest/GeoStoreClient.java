@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -35,6 +35,7 @@ import javax.ws.rs.core.MediaType;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 
 /**
  * 
@@ -159,6 +160,16 @@ public class GeoStoreClient {
     public String getData(Long id, MediaType acceptMediaType) {
         String data = getBaseWebResource("data", id).accept(acceptMediaType).get(String.class);
         return data;
+    }
+
+    public byte[] getRawData(Long id, RawFormat decodeFrom)
+    {
+        WebResource wr = getBaseWebResource("data", id, "raw");
+        if(decodeFrom != null) {
+            wr = wr.queryParam("decode", decodeFrom.name());
+        }
+
+        return wr.get(byte[].class);
     }
 
     public void setData(Long id, String data) {
