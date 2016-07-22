@@ -381,7 +381,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
     }
 
     @Test
-    public void testGetDataRaw() {
+    public void testGetDataRawBase64() {
 
         createDefaultCategory();
 
@@ -418,6 +418,45 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             LOGGER.info("RAW data: base64");
             byte[] decoded = client.getRawData(rid, RawFormat.BASE64);
             assertArrayEquals(DATA.getBytes(), decoded);
+        }
+    }
+
+    @Test
+    public void testGetDataRawDataURI() {
+
+        createDefaultCategory();
+
+        final String DATA = "we wish you a merry xmas and a happy new year";
+        final String ENCODED_DATA  = Base64.encodeBase64String(DATA.getBytes());
+        final String MEDIATYPE = "test/custom";
+        final String DATAURIHEADER = "data:" + MEDIATYPE + ";base64,";
+        final String FULL_DATA = DATAURIHEADER + ENCODED_DATA;
+
+        RESTStoredData storedData = new RESTStoredData();
+        storedData.setData(FULL_DATA);
+
+
+        RESTResource origResource = new RESTResource();
+        origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
+        origResource.setName("rest_test_rawdatauri");
+        origResource.setStore(storedData);
+
+        Long rid = client.insert(origResource);
+        LOGGER.info("RESOURCE has ID " + rid);
+
+        // make sure data has been saved
+        {
+            LOGGER.info("RAW data: base check");
+            String encoded = client.getData(rid);
+            assertEquals(FULL_DATA, encoded);
+        }
+
+        {
+            LOGGER.info("RAW data: data URI");
+            byte[] decoded = client.getRawData(rid, RawFormat.DATAURI);
+            assertArrayEquals(DATA.getBytes(), decoded);
+
+            // should also test the content type, but the geostore client won't care
         }
     }
 

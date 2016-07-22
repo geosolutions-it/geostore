@@ -33,6 +33,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
@@ -97,7 +98,7 @@ public interface RESTStoredDataService {
     @GET
     @Path("/{id}/raw")
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
-    byte[] getRaw(
+    Response getRaw(
     		@Context SecurityContext sc,
     		@Context HttpHeaders headers,
     		@PathParam("id") long id,

@@ -33,6 +33,7 @@ package it.geosolutions.geostore.services.rest.model.enums;
  */
 public enum RawFormat {
 
-     BASE64
+     BASE64,
+     DATAURI
 
 }

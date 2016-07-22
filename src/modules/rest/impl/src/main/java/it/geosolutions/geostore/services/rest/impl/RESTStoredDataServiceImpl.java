@@ -30,6 +30,7 @@ import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
+import it.geosolutions.geostore.services.rest.utils.DataURIDecoder;
 
 
 import java.io.StringReader;
@@ -39,6 +40,7 @@ import java.util.Collections;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import net.sf.json.JSON;
@@ -281,30 +283,72 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     }
 
     @Override
-    public byte[] getRaw(SecurityContext sc, HttpHeaders headers, long id, String decodeFormat)
+    public Response getRaw(SecurityContext sc, HttpHeaders headers, long id, String decodeFormat)
             throws NotFoundWebEx
     {
         if(id == -1)
-           return "dummy payload".getBytes();
+            return Response.ok().entity("dummy payload").build();
 
         StoredData storedData;
         try {
             storedData = storedDataService.get(id);
         } catch(NotFoundServiceEx e){
-        	throw new NotFoundWebEx("Data not found");
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        String data = storedData == null? "" : storedData.getData();
+        if(storedData == null) {
+            return Response.noContent().build();
+        }
+
+        String data = storedData.getData();
 
         // prefer no transformation
         if( decodeFormat == null) {
-            return data.getBytes();
-        } else if(decodeFormat.equalsIgnoreCase(RawFormat.BASE64.name())) {
-            return Base64.decodeBase64(data);
-        } else {
-            LOGGER.warn("Unknown decode format '"+decodeFormat+"'");
-            return data.getBytes();
+            return Response.ok().entity(data).build();
         }
+        else if(decodeFormat.equalsIgnoreCase(RawFormat.BASE64.name())) {
+            byte[] decoded = Base64.decodeBase64(data);
+            return Response.ok().entity(decoded).build();
+        }
+        else if(decodeFormat.equalsIgnoreCase(RawFormat.DATAURI.name())) {
+            return decodeDataURI(data);
+        }
+        else {
+            LOGGER.warn("Unknown decode format '"+decodeFormat+"'");
+            return Response.ok().entity(data).build();
+        }
+    }
+
+    private Response decodeDataURI(String data) 
+    {
+        if(! data.startsWith("data:")) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Not a data URI").build();
+        }
+
+        String[] split = data.split(",", 2);
+
+        if(split.length < 2) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad data, comma is missing").build();
+        }
+
+        DataURIDecoder dud = new DataURIDecoder(split[0]);
+
+        if(! dud.isValid()) {
+            LOGGER.warn("Could not parse data URI '"+split[0]+"'");
+            return Response.status(Response.Status.BAD_REQUEST).entity("Bad data URI").build();
+        }
+
+        if(dud.getCharset() != null) {
+            LOGGER.warn("TODO: Charset '"+dud.getCharset()+"' should be handled.");
+        }
+
+        if(dud.getEncoding() != null && ! dud.isBase64Encoded()) {
+            LOGGER.warn("TODO: Encoding '"+dud.getEncoding()+"' should be handled.");
+        }
+
+        Object entity = dud.isBase64Encoded() ? Base64.decodeBase64(split[1]) : split[1];
+
+        return Response.ok().type(dud.getNormalizedMediatype()).entity(entity).build();
     }
 
     /**
