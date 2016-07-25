@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -48,6 +48,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
+import it.geosolutions.geostore.core.model.enums.Role;
 
 /**
  * Class ResourceDAOImpl.
@@ -253,61 +254,70 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
     }
 
     /**
-     * Get criteria count by user
-     * @param searchCriteria
-     * @param user
-     * @return resources' count that the user has access 
+     * Add security filtering in order to filter out resources the user has not read access to
      */
-	@Override
-	public long count(Search searchCriteria, User user) {
-        searchCriteria.addField("security");
-        
-        List<Long> groupsId = new ArrayList<Long>();
-        for(UserGroup group: user.getGroups()){
-        	groupsId.add(group.getId());
+    public void addReadSecurityConstraints(Search searchCriteria, User user)
+    {
+        // no further constraints for admin user
+        if(user.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        Filter userFiltering = Filter.equal("user.name", user.getName());
+
+        if(! user.getGroups().isEmpty()) {
+            List<Long> groupsId = new ArrayList<>();
+            for (UserGroup group : user.getGroups()) {
+                groupsId.add(group.getId());
+            }
+            
+            userFiltering = Filter.or( userFiltering, Filter.in("group.id", groupsId));
         }
 
         Filter securityFilter = Filter.some(
                 "security",
-                Filter.and(Filter.or(Filter.in("group.id", groupsId),
-                		Filter.equal("user.name", user.getName())),
-            		Filter.equal("canRead", true)
-                        ));
-        searchCriteria.addFilter(securityFilter);
-		return count(searchCriteria);
-	}
+                Filter.and(
+                        Filter.equal("canRead", true),
+                        userFiltering
+                        )
+                );
 
-	/* (non-Javadoc)
+        searchCriteria.addFilter(securityFilter);
+    }
+
+    /* (non-Javadoc)
      * @see it.geosolutions.geostore.core.dao.ResourceDAO#findByName(java.lang.String)
      */
-	@Override
-	public Resource findByName(String resourceName) {
-		Search searchCriteria = new Search(Resource.class);
-		Filter filter = Filter.equal("name", resourceName);
-		searchCriteria.addFilter(filter);
-		
-		Resource foundResource = null;
-		
-		try {
-			foundResource = super.searchUnique(searchCriteria);
-		} catch (NoResultException ex) {
-			// I ignore the exception and return null on purpose, mimicking the behavior of ResourceDAO#find(java.lang.Long) 
-			foundResource = null;
-		}
-		
-		return foundResource;
-	}
-	
-	@Override
-	public List<String> findResourceNamesMatchingPattern(String pattern) {
-		Search searchCriteria = new Search(Resource.class);
-    	searchCriteria.addField("name");
-    	searchCriteria.addFilterLike("name", pattern);
-    	searchCriteria.setResultMode(Search.RESULT_SINGLE);
-    	
-    	List<String> resourceNames = super.search(searchCriteria);
-    	
-    	return resourceNames;
-	}
+    @Override
+    public Resource findByName(String resourceName)
+    {
+        Search searchCriteria = new Search(Resource.class);
+        Filter filter = Filter.equal("name", resourceName);
+        searchCriteria.addFilter(filter);
+
+        Resource foundResource = null;
+
+        try {
+            foundResource = super.searchUnique(searchCriteria);
+        } catch (NoResultException ex) {
+            // I ignore the exception and return null on purpose, mimicking the behavior of ResourceDAO#find(java.lang.Long)
+            foundResource = null;
+        }
+
+        return foundResource;
+    }
+
+    @Override
+    public List<String> findResourceNamesMatchingPattern(String pattern)
+    {
+        Search searchCriteria = new Search(Resource.class);
+        searchCriteria.addField("name");
+        searchCriteria.addFilterLike("name", pattern);
+        searchCriteria.setResultMode(Search.RESULT_SINGLE);
+
+        List<String> resourceNames = super.search(searchCriteria);
+
+        return resourceNames;
+    }
 
 }

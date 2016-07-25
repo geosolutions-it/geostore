@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -63,16 +63,10 @@ import it.geosolutions.geostore.services.rest.utils.Convert;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.springframework.security.access.annotation.Secured;
 
 /**
  * Class RESTResourceServiceImpl.
@@ -119,10 +113,11 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         // This list holds the security rules for this resources
-        // By default when a resource is inserted are create 2 rules: 
-        // ONE is related to the User that insert the rule and THE OTHER ONE is related to its group
-        List<SecurityRule> securities = new ArrayList<SecurityRule>();
-        
+        // By default, when a resource is inserted, 2 rules are created :
+        // - one is related to the User that inserts the rule 
+        // - the other one is related to its group
+        List<SecurityRule> securities = new ArrayList<>();
+
         // User Security rule: the user that insert the resource (the "owner") is allowed to Read and Write the resources
         SecurityRule userSecurityRule = new SecurityRule();
         userSecurityRule.setCanRead(true);
@@ -141,8 +136,8 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         } catch (DuplicatedResourceNameServiceEx e) {
-			throw new ConflictWebEx(e.getMessage());
-		}
+            throw new ConflictWebEx(e.getMessage());
+        }
     }
 
     /**
@@ -194,10 +189,10 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
                     old.setMetadata(resource.getMetadata());
 
                 try {
-					resourceService.update(old);
-				} catch (DuplicatedResourceNameServiceEx e) {
-					throw new ConflictWebEx(e.getMessage());
-				}
+                    resourceService.update(old);
+                } catch (DuplicatedResourceNameServiceEx e) {
+                    throw new ConflictWebEx(e.getMessage());
+                }
 
                 //
                 // Check Attribute list

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -17,9 +17,11 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.services;
+package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.impl.UserDAOImpl;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -28,46 +30,69 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.CategoryService;
+import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.StoredDataService;
+import it.geosolutions.geostore.services.UserGroupService;
+import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.RESTResourceService;
+import it.geosolutions.geostore.services.rest.RESTUserService;
+import it.geosolutions.geostore.services.rest.model.RESTCategory;
+import it.geosolutions.geostore.services.rest.model.RESTResource;
+import java.security.Principal;
+import java.util.Collections;
 
 import java.util.List;
-
-import junit.framework.TestCase;
+import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
+import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
+import org.springframework.aop.framework.Advised;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
 /**
  * Class ServiceTestBase.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
-public class ServiceTestBase extends TestCase {
+public class ServiceTestBase  {
+
+
+    protected static RESTResourceService restResourceService;
+    protected static RESTUserService restUserService;
 
     protected static StoredDataService storedDataService;
-
     protected static ResourceService resourceService;
-
     protected static CategoryService categoryService;
-
     protected static UserService userService;
-    
     protected static UserGroupService userGroupService;
-    
+
     protected static ResourceDAO resourceDAO;
+    protected static UserDAO userDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
 
+    @Rule
+    public TestName testName = new TestName();
+    
     protected final Logger LOGGER = Logger.getLogger(getClass());
+
+
 
     /**
      *
      */
     public ServiceTestBase() {
+        
         synchronized (ServiceTestBase.class) {
             if (ctx == null) {
                 String[] paths = { "classpath*:applicationContext.xml"
@@ -75,23 +100,26 @@ public class ServiceTestBase extends TestCase {
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
-                storedDataService = (StoredDataService) ctx.getBean("storedDataService");
+                restResourceService = ctx.getBean("restResourceService", RESTResourceService.class);
+                restUserService = ctx.getBean("restUserService", RESTUserService.class);
+
+                storedDataService = ctx.getBean("storedDataService", StoredDataService.class);
                 resourceService = (ResourceService) ctx.getBean("resourceService");
                 categoryService = (CategoryService) ctx.getBean("categoryService");
                 userService = (UserService) ctx.getBean("userService");
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
+
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
+                userDAO = (UserDAO) ctx.getBean("userDAO");
             }
         }
     }
 
-    /*
-     * (non-Javadoc) @see junit.framework.TestCase#setUp()
-     */
-    @Override
+    @Before
     protected void setUp() throws Exception {
-        LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + getName());
-        super.setUp();
+        testCheckServices();
+
+        LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + testName.getMethodName());
         removeAll();
     }
 
@@ -99,11 +127,19 @@ public class ServiceTestBase extends TestCase {
      *
      */
     public void testCheckServices() {
+
+        assertNotNull(restResourceService);
+        assertNotNull(restUserService);
+
+
         assertNotNull(storedDataService);
         assertNotNull(resourceService);
         assertNotNull(categoryService);
         assertNotNull(userService);
         assertNotNull(userGroupService);
+
+        assertNotNull(resourceDAO);
+        assertNotNull(userDAO);
     }
 
     /**
@@ -121,7 +157,7 @@ public class ServiceTestBase extends TestCase {
 
     /**
      * @throws BadRequestServiceEx
-     * @throws NotFoundServiceEx 
+     * @throws NotFoundServiceEx
      */
     private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
         List<UserGroup> list = userGroupService.getAll(null, null);
@@ -135,7 +171,7 @@ public class ServiceTestBase extends TestCase {
         assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
     }
 
-    
+
     /**
      * @throws BadRequestServiceEx
      */
@@ -181,7 +217,7 @@ public class ServiceTestBase extends TestCase {
 
     /**
      * @throws BadRequestServiceEx
-     * 
+     *
      */
     private void removeAllResource() throws BadRequestServiceEx {
         List<ShortResource> list = resourceService.getAll(null, null, buildFakeAdminUser());
@@ -227,7 +263,29 @@ public class ServiceTestBase extends TestCase {
 
         return resourceService.insert(resource);
     }
-    
+
+    protected long restCreateResource(String name, String description, String catName, long userId) throws Exception {
+
+        RESTResource resource = new RESTResource();
+        resource.setName(name);
+        resource.setDescription(description);
+        resource.setCategory(new RESTCategory(catName));
+
+        SecurityContext sc = new SimpleSecurityContext(userId);
+
+        return restResourceService.insert(sc, resource);
+    }
+
+    protected long createResource(String name, String description, Category category) throws Exception {
+
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setDescription(description);
+        resource.setCategory(category);
+
+        return resourceService.insert(resource);
+    }
+
     /**
      * @param name
      * @param creation
@@ -252,27 +310,17 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    protected long createResource(String name, String description, Category category)
-            throws Exception {
-
-        Resource resource = new Resource();
-        resource.setName(name);
-        resource.setDescription(description);
-        resource.setCategory(category);
-
-        return resourceService.insert(resource);
-    }
-
     /**
      * @param name
      * @return long
      * @throws Exception
      */
-    protected long createCategory(String name) throws Exception {
+    protected Category createCategory(String name) throws Exception {
         Category category = new Category();
         category.setName(name);
 
-        return categoryService.insert(category);
+        long id = categoryService.insert(category);
+        return categoryService.get(id);
     }
 
     /**
@@ -288,9 +336,42 @@ public class ServiceTestBase extends TestCase {
         user.setRole(role);
         user.setNewPassword(password);
 
+        UserAttribute attr = new UserAttribute();
+        attr.setName("attname");
+        attr.setValue("attvalue");
+        user.setAttribute(Collections.singletonList(attr));
+
         return userService.insert(user);
     }
-    
+
+    protected long restCreateUser(String name, Role role, String password) throws Exception {
+        User user = new User();
+        user.setName(name);
+        user.setRole(role);
+        user.setNewPassword(password);
+
+        UserAttribute attr = new UserAttribute();
+        attr.setName("attname");
+        attr.setValue("RESTattvalue");
+        user.setAttribute(Collections.singletonList(attr));
+
+        long id = restUserService.insert(null, user);
+
+//        UserDAOImpl impl = getTargetObject(userDAO, UserDAOImpl.class);
+//        impl.flush();
+
+        return id;
+    }
+
+    protected <T> T getTargetObject(Object proxy, Class<T> targetClass) throws Exception
+    {
+        if (AopUtils.isJdkDynamicProxy(proxy)) {
+            return (T) ((Advised) proxy).getTargetSource().getTarget();
+        } else {
+            return (T) proxy; // expected to be cglib proxy then, which is simply a specialized class
+        }
+    }
+
     protected long createUser(String name, Role role, String password, List<UserAttribute> attributes) throws Exception {
         User user = new User();
         user.setName(name);
@@ -299,7 +380,7 @@ public class ServiceTestBase extends TestCase {
         user.setAttribute(attributes);
         return userService.insert(user);
     }
-    
+
     /**
      * @param name
      * @param role
@@ -314,6 +395,50 @@ public class ServiceTestBase extends TestCase {
         return userGroupService.insert(group);
     }
 
+    class SimpleSecurityContext implements SecurityContext {
+
+        private Principal userPrincipal;
+
+        public SimpleSecurityContext()
+        {
+        }
+
+        public SimpleSecurityContext(long userId)
+        {
+            userPrincipal = new UsernamePasswordAuthenticationToken(userDAO.find(userId), null);
+        }
+
+        @Override
+        public Principal getUserPrincipal()
+        {
+            return userPrincipal;
+        }
+
+        @Override
+        public boolean isUserInRole(String role)
+        {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public boolean isSecure()
+        {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public String getAuthenticationScheme()
+        {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        public void setUserPrincipal(Principal userPrincipal)
+        {
+            this.userPrincipal = userPrincipal;
+        }
+
+    }
+    
     protected User buildFakeAdminUser() {
         User user = new User();
         user.setRole(Role.ADMIN);

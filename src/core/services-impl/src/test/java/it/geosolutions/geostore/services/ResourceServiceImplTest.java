@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -103,7 +103,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
     @Test
     public void testGetAllData() throws Exception {
-        assertEquals(0, resourceService.getAll(null, null, null).size());
+        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
 
         for (int i = 0; i < 10; i++) {
             createResource("name" + i, "description" + i, "MAP1" + i);
@@ -113,13 +113,13 @@ public class ResourceServiceImplTest extends ServiceTestBase {
             createResource("test name" + i, "description" + i, "MAP2" + i);
         }
 
-        assertEquals(20, resourceService.getAll(null, null, null).size());
+        assertEquals(20, resourceService.getAll(null, null, buildFakeAdminUser()).size());
         assertEquals(10, resourceService.getCount("name%"));
-        assertEquals(10, resourceService.getList("name%", null, null, null).size());
+        assertEquals(10, resourceService.getList("name%", null, null, buildFakeAdminUser()).size());
         assertEquals(20, resourceService.getCount("%name%"));
-        assertEquals(20, resourceService.getList("%name%", null, null, null).size());
+        assertEquals(20, resourceService.getList("%name%", null, null, buildFakeAdminUser()).size());
         assertEquals(2, resourceService.getCount("%name1%"));
-        assertEquals(2, resourceService.getList("%name1%", null, null, null).size());
+        assertEquals(2, resourceService.getList("%name1%", null, null, buildFakeAdminUser()).size());
     }
 
     @Test
@@ -139,29 +139,29 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         Category c1n = new Category();
         c1n.setName("category1");
 
-        assertEquals(0, resourceService.getAll(null, null, null).size());
+        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
 
         long r0 = createResource("res0", "des0", c0);
         long r1 = createResource("res1", "des1", c1i);
         long r2 = createResource("res2", "des2", c1n);
-        assertEquals(3, resourceService.getAll(null, null, null).size());
+        assertEquals(3, resourceService.getAll(null, null, buildFakeAdminUser()).size());
 
         {
             SearchFilter filter = new CategoryFilter("category0", SearchOperator.EQUAL_TO);
-            List<ShortResource> list = resourceService.getResources(filter, null);
+            List<ShortResource> list = resourceService.getResources(filter, buildFakeAdminUser());
             assertEquals(1, list.size());
             assertEquals(r0, list.get(0).getId());
         }
 
         {
             SearchFilter filter = new CategoryFilter("%1", SearchOperator.LIKE);
-            List<ShortResource> list = resourceService.getResources(filter, null);
+            List<ShortResource> list = resourceService.getResources(filter, buildFakeAdminUser());
             assertEquals(2, list.size());
         }
 
         {
             SearchFilter filter = new CategoryFilter("cat%", SearchOperator.LIKE);
-            List<ShortResource> list = resourceService.getResources(filter, null);
+            List<ShortResource> list = resourceService.getResources(filter, buildFakeAdminUser());
             assertEquals(3, list.size());
         }
     }
@@ -176,7 +176,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     	UserGroup group = new UserGroup();
     	group.setId(groupId);
     	
-    	List<SecurityRule> rules = new ArrayList<SecurityRule>();
+    	List<SecurityRule> rules = new ArrayList<>();
     	
     	SecurityRule rule = new SecurityRule();
     	rule.setUser(user);

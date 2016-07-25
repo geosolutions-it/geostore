@@ -83,7 +83,6 @@
         <jaxb-api-version>2.1</jaxb-api-version>
         <jaxb-impl-version>2.1.2</jaxb-impl-version>
 
-        <junit-version>4.4</junit-version>
         <log4j-version>1.2.14</log4j-version>
         <slf4japi-version>1.7.2</slf4japi-version>
         <dom4j-version>1.6.1</dom4j-version>
@@ -665,7 +664,7 @@
             <dependency>
                 <groupId>junit</groupId>
                 <artifactId>junit</artifactId>
-                <version>${junit-version}</version>
+                <version>4.12</version>
                 <scope>test</scope>
             </dependency>
 
@@ -867,10 +866,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.5.1</version>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                     <debug>true</debug>
                     <encoding>UTF-8</encoding>
                     <!--
@@ -886,7 +885,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>2.7</version>
+                <version>3.0.1</version>
                 <configuration>
                     <encoding>UTF-8</encoding>
                 </configuration>

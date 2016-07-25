@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -99,7 +99,7 @@ public class SearchConverterTest extends ServiceTestBase {
 
             List<ShortAttribute> sAttributes = resourceService.getAttributes(resourceId);
             assertNotNull(sAttributes);
-            assertTrue(sAttributes.size() == 3);
+            assertEquals(3, sAttributes.size());
 
             assertNotNull(resourceService.get(resourceId));
             assertTrue(resourceService.getAttributes(resourceId).size() == 3);
@@ -122,7 +122,7 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<ShortResource> resources = resourceService.getResources(searchFilter, null);
+            List<ShortResource> resources = resourceService.getResources(searchFilter, buildFakeAdminUser());
             assertEquals(1, resources.size());
         }
 
@@ -145,7 +145,7 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<ShortResource> resources = resourceService.getResources(searchFilter, null);
+            List<ShortResource> resources = resourceService.getResources(searchFilter, buildFakeAdminUser());
             assertEquals(2, resources.size());
         }
     }
@@ -216,8 +216,9 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true,
-                    false, null);
+
+
+            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, false, buildFakeAdminUser());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);
@@ -241,8 +242,7 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, false,
-                    true, null);
+            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, false, true, buildFakeAdminUser());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);
@@ -264,8 +264,7 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, true,
-                    null);
+            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, true, buildFakeAdminUser());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);

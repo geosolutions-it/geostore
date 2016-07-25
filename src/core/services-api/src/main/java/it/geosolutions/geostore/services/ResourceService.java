@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -114,7 +114,10 @@ public interface ResourceService extends SecurityService{
     /**
      * @param nameLike
      * @return long
+     *
+     * @deprecated count should be done on a per-user basis
      */
+    @Deprecated
     long getCount(String nameLike);
 
     /**
@@ -122,7 +125,10 @@ public interface ResourceService extends SecurityService{
      * @return long
      * @throws InternalErrorServiceEx
      * @throws BadRequestServiceEx
+     *
+     * @deprecated count should be done on a per-user basis
      */
+    @Deprecated
     long getCountByFilter(SearchFilter filter) throws InternalErrorServiceEx, BadRequestServiceEx;
 
     /**
@@ -228,9 +234,13 @@ public interface ResourceService extends SecurityService{
      * @param user
      * @return resources' count that the user has access
      * @throws InternalErrorServiceEx 
-     * @throws BadRequestServiceEx 
+     * @throws BadRequestServiceEx
+     *
+     * @deprecated rename into count()
      */
-	long getCountByFilterAndUser(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx;
+    @Deprecated
+    long getCountByFilterAndUser(SearchFilter filter, User user)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
      * Get filter count by namerLike and user
@@ -238,11 +248,14 @@ public interface ResourceService extends SecurityService{
      * @param user
      * @return resources' count that the user has access
      * @throws BadRequestServiceEx 
+     * @deprecated rename into count()
      */
-	long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx;
+    @Deprecated
+    long getCountByFilterAndUser(String nameLike, User user)
+            throws BadRequestServiceEx;
 
-	long insertAttribute(long id, String name, String value, DataType type)
-			throws InternalErrorServiceEx;
+    long insertAttribute(long id, String name, String value, DataType type)
+        throws InternalErrorServiceEx;
 
 
 }

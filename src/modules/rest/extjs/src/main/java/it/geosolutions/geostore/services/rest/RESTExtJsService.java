@@ -1,11 +1,7 @@
 /*
- * $ Header: it.geosolutions.georepo.services.rest.RESTExtJsService,v. 0.1 9-set-2011 10.39.58 created by tobaro <tobia.dipisa at geo-solutions.it> $
- * $ Revision: 0.1 $
- * $ Date: 8-set-2011 10.39.58 $
- *
  * ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -63,19 +59,14 @@ import org.springframework.security.access.annotation.Secured;
  */
 public interface RESTExtJsService {
 
-    /**
-     * @param sc
-     * @param page
-     * @param entries
-     * @return String
-     * @throws BadRequestWebEx
-     */
     @GET
     @Path("/search/{nameLike}")
     @Produces({ MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
-    String getAllResources(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
-            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit)
+    String getAllResources(@Context SecurityContext sc,
+            @PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit)
             throws BadRequestWebEx;
 
     @GET
@@ -83,42 +74,40 @@ public interface RESTExtJsService {
     @Produces({ MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     String getResourcesByCategory(@Context SecurityContext sc,
-            @PathParam("categoryName") String categoryName, @QueryParam("start") Integer start,
+            @PathParam("categoryName") String categoryName,
+            @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
-            @QueryParam("includeData") @DefaultValue("false") boolean includeData) throws BadRequestWebEx, InternalErrorWebEx;
+            @QueryParam("includeData") @DefaultValue("false") boolean includeData)
+            throws BadRequestWebEx, InternalErrorWebEx;
 
     @GET
-    @Path("/search/category/{categoryName}/{categorySearch}")
+    @Path("/search/category/{categoryName}/{resourceNameLike}")
+    @Produces({ MediaType.APPLICATION_JSON, MediaType.TEXT_XML})
+    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
+    String getResourcesByCategory(@Context SecurityContext sc,
+            @PathParam("categoryName") String categoryName, 
+            @PathParam("resourceNameLike") String resourceNameLike,
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit,
+            @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
+            @QueryParam("includeData") @DefaultValue("false") boolean includeData)
+            throws BadRequestWebEx, InternalErrorWebEx;
+
+    @GET
+    @Path("/search/category/{categoryName}/{resourceNameLike}/{extraAttributes}")
     @Produces({ MediaType.APPLICATION_JSON })
     @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     String getResourcesByCategory(@Context SecurityContext sc,
-            @PathParam("categoryName") String categoryName, @PathParam("categorySearch") String categorySearch, @QueryParam("start") Integer start,
+            @PathParam("categoryName") String categoryName,
+            @PathParam("resourceNameLike") String resourceNameLike,
+            @PathParam("extraAttributes") String extraAttributes,
+            @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
-            @QueryParam("includeData") @DefaultValue("false") boolean includeData) throws BadRequestWebEx, InternalErrorWebEx;
+            @QueryParam("includeData") @DefaultValue("false") boolean includeData)
+            throws BadRequestWebEx, InternalErrorWebEx;
 
-    @GET
-    @Path("/search/category/{categoryName}/{categorySearch}/{extraAttributes}")
-    @Produces({ MediaType.APPLICATION_JSON })
-    @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    String getResourcesByCategory(@Context SecurityContext sc,
-            @PathParam("categoryName") String categoryName, @PathParam("categorySearch") String categorySearch, 
-            @PathParam("extraAttributes") String extraAttributes, @QueryParam("start") Integer start,
-            @QueryParam("limit") Integer limit,
-            @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
-            @QueryParam("includeData") @DefaultValue("false") boolean includeData) throws BadRequestWebEx, InternalErrorWebEx;
-
-    /**
-     * @param sc
-     * @param filter
-     * @param page
-     * @param entries
-     * @param includeAttributes
-     * @return ResourceList
-     * @throws BadRequestWebEx
-     * @throws InternalErrorWebEx
-     */
     @POST
     @GET
     @Path("/search/list")
@@ -126,24 +115,21 @@ public interface RESTExtJsService {
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     ExtResourceList getExtResourcesList(@Context SecurityContext sc,
-            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeData") @DefaultValue("false") boolean includeData,
-            @Multipart("filter") SearchFilter filter) throws BadRequestWebEx, InternalErrorWebEx;
+            @Multipart("filter") SearchFilter filter)
+            throws BadRequestWebEx, InternalErrorWebEx;
 
-    /**
-     * @param sc
-     * @param page
-     * @param entries
-     * @return String
-     * @throws BadRequestWebEx
-     */
     @GET
     @Path("/search/users/{nameLike}")
     @Produces({ MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN"})
-    ExtUserList getUsersList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
-            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit,
+    ExtUserList getUsersList(@Context SecurityContext sc,
+            @PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start,
+            @QueryParam("limit") Integer limit,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes)
             throws BadRequestWebEx;
 
@@ -161,8 +147,11 @@ public interface RESTExtJsService {
     @Path("/search/groups/{nameLike}")
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN", "ROLE_USER"})
-    ExtGroupList getGroupsList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
-            @QueryParam("start") Integer start, @QueryParam("limit") Integer limit, @QueryParam("all") @DefaultValue("false") boolean all)
+    ExtGroupList getGroupsList(@Context SecurityContext sc,
+            @PathParam("nameLike") String nameLike,
+            @QueryParam("start") Integer start, 
+            @QueryParam("limit") Integer limit,
+            @QueryParam("all") @DefaultValue("false") boolean all)
             throws BadRequestWebEx;
 
 }

@@ -1,7 +1,6 @@
-/*
- * ====================================================================
+/* ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -42,11 +41,12 @@ import com.googlecode.genericdao.search.Search;
 
 /**
  * Interface ResourceDAO. Public interface to define operations on Resource
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
+ *
  */
-public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
+public interface ResourceDAO extends RestrictedGenericDAO<Resource>
+{
 
     /**
      * @param userName
@@ -54,9 +54,9 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @return List<SecurityRule>
      */
     public List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
-    
+
     /**
-     * 
+     *
      * @param userName
      * @param resourceId
      * @return
@@ -79,33 +79,31 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @param search
      */
     public void removeResources(ISearch search);
-    
+
     /**
      * @param resourcesIDs A list of resources Ids to search
      */
     public List<Resource> findResources(List<Long> resourcesIds);
 
     /**
-     * Get criteria count by user
-     * @param searchCriteria
-     * @param user
-     * @return resources' count that the user has access 
+     * Gets a resource by name.
+     *
+     * @return the resource with the specified name, or null if none was found
+     * @throws NonUniqueResultException if more than one result
      */
-	public long count(Search searchCriteria, User user);
-	
-	/**
-	 * Gets a resource by name.
-	 * @return the resource with the specified name, or null if none was found
-	 * @throws NonUniqueResultException
-	 *             if more than one result
-	 */
-	public Resource findByName(String resourceName);
-	
-	/**
-	 * Returns a list of resource names matching the specified pattern 
-	 * @param pattern the pattern used to build a LIKE filter  
-	 * @return a list of resource names
-	 */	
-	public List<String> findResourceNamesMatchingPattern(String pattern);
-	
+    public Resource findByName(String resourceName);
+
+    /**
+     * Returns a list of resource names matching the specified pattern
+     *
+     * @param pattern the pattern used to build a LIKE filter
+     * @return a list of resource names
+     */
+    public List<String> findResourceNamesMatchingPattern(String pattern);
+
+    /**
+     * Add security filtering in order to filter out resources the user has not read access to
+     */
+    void addReadSecurityConstraints(Search searchCriteria, User user);
+
 }

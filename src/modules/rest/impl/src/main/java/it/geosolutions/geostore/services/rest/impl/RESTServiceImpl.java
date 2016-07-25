@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2012 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -42,6 +42,7 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -213,7 +214,7 @@ public abstract class RESTServiceImpl{
      * @return the Principal instance
      */
     public Principal createGuestPrincipal(){
-        List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+        List<GrantedAuthority> authorities = new ArrayList<>();
         authorities.add(new GrantedAuthorityImpl("ROLE_GUEST"));
         try {
             User u = userService.get(UserReservedNames.GUEST.userName());
@@ -238,7 +239,7 @@ public abstract class RESTServiceImpl{
      * @return
      */
     public static List<String> extratcGroupNames(Set<UserGroup> groups){
-        List<String> groupNames = new ArrayList<String>();
+        List<String> groupNames = new ArrayList<>(groups.size() + 1);
         for(UserGroup ug : groups){
             groupNames.add(ug.getGroupName());
         }
@@ -270,10 +271,11 @@ public abstract class RESTServiceImpl{
      * @param authUser
      * 
      * @return resources allowed for auth user
+     * @deprecated The resources list should be filtered by auth access on the DB and not by postprocessing, otherwise the limit/page params are not honored.
      */
     public List<Resource> getResourcesAllowed(List<Resource> resources, User authUser){
 
-        List<Resource> allowedResources = new ArrayList<Resource>();
+        List<Resource> allowedResources = new LinkedList<>();
         //
         // Authorization check.
         //
@@ -292,10 +294,12 @@ public abstract class RESTServiceImpl{
      * @param authUser
      * 
      * @return short resources allowed for auth user
+     *
+     * @deprecated The resources list should be filtered by auth access on the DB and not by postprocessing, otherwise the limit/page params are not honored.
      */
     public List<ShortResource> getShortResourcesAllowed(List<ShortResource> resources, User authUser){
 
-        List<ShortResource> allowedResources = new ArrayList<ShortResource>();
+        List<ShortResource> allowedResources = new LinkedList<>();
         //
         // Authorization check.
         //
