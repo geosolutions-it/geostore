@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2012 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -192,7 +192,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         try {
             User user = extractAuthUser(sc);
             
-            resources = getShortResourcesAllowed(resourceService.getResources(filter, user), user);
+            resources = resourceService.getResources(filter, user);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -201,29 +201,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
         return new ShortResourceList(resources);
     }
-    
-    /**
-     * Get resources filtered by authUser
-     * 
-     * @param resources
-     * @param authUser
-     * 
-     * @return resources allowed for auth user
-     */
-    public List<Resource> getResourcesAllowed(List<Resource> resources, User authUser){
-
-        List<Resource> allowedResources = new ArrayList<Resource>();
-        //
-        // Authorization check.
-        //
-        for (Resource r: resources) {
-            if (resourceAccessRead(authUser, r.getId())) {
-                allowedResources.add(r);
-            }
-        }
-        return allowedResources;
-    }
-    
+        
     /*
      * (non-Javadoc)
      * 
@@ -256,8 +234,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         List<Resource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            resources = getResourcesAllowed(resourceService.getResources(filter, null, null, includeAttributes,
-                    includeData, user), user);
+            resources = resourceService.getResources(filter, null, null, includeAttributes, includeData, user);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {

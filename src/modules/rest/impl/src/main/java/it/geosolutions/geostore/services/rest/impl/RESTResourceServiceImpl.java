@@ -325,7 +325,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         nameLike = nameLike.replaceAll("[*]", "%");
 
         try {
-            return new ShortResourceList(getShortResourcesAllowed(resourceService.getList(nameLike, page, entries, authUser), authUser));
+            return new ShortResourceList(resourceService.getList(nameLike, page, entries, authUser));
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
@@ -342,7 +342,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         try {
-            return new ShortResourceList(getShortResourcesAllowed(resourceService.getAll(page, entries, authUser), authUser));
+            return new ShortResourceList(resourceService.getAll(page, entries, authUser));
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
@@ -496,7 +496,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         try {
-            return new ShortResourceList(getShortResourcesAllowed(resourceService.getResources(filter, authUser), authUser));
+            return new ShortResourceList(resourceService.getResources(filter, authUser));
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(e.getMessage());
@@ -519,8 +519,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             boolean includeAttributes, boolean includeData, SearchFilter filter) {
         User authUser = extractAuthUser(sc);
         try {
-            return new ResourceList(getResourcesAllowed(resourceService.getResources(filter, page, entries,
-                    includeAttributes, includeData, authUser), authUser));
+            return new ResourceList(resourceService.getResources(filter, page, entries, includeAttributes, includeData, authUser));
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled())
                 LOGGER.info(e.getMessage());

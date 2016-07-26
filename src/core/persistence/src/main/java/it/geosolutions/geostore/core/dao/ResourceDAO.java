@@ -52,7 +52,10 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource>
      * @param userName
      * @param resourceId
      * @return List<SecurityRule>
+     *
+     * @deprecated move to SecurityDAO
      */
+    @Deprecated
     public List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
 
     /**
@@ -60,13 +63,17 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource>
      * @param userName
      * @param resourceId
      * @return
+     * @deprecated move to SecurityDAO
      */
+    @Deprecated
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId);
 
     /**
      * @param resourceId
      * @return List<SecurityRule>
+     * @deprecated move to SecurityDAO
      */
+    @Deprecated
     public List<SecurityRule> findSecurityRules(long resourceId);
 
     /**

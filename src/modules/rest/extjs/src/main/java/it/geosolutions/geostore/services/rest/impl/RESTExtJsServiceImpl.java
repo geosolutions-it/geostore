@@ -284,8 +284,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            List<Resource> resources = getResourcesAllowed(resourceService.getResources(filter, page, limit,
-                    includeAttributes, includeData, authUser), authUser);
+            List<Resource> resources = resourceService.getResources(filter, page, limit,
+                    includeAttributes, includeData, authUser);
 
             // Here the Read permission on each resource must be checked due to will be returned the full Resource not just a ShortResource
             // N.B. This is a bad method to check the permissions on each requested resource, it can perform 2 database access for each resource.

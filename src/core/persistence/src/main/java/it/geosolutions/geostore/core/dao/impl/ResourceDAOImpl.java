@@ -106,7 +106,9 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
      * @param userName
      * @param resourceId
      * @return List<SecurityRule>
+     * @deprecated move to SecurityDAO
      */
+    @Deprecated
     @Override
     public List<SecurityRule> findUserSecurityRule(String userName, long resourceId) {
         Search searchCriteria = new Search(Resource.class);
@@ -124,7 +126,9 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
     /**
      * @param resourceId
      * @return List<SecurityRule>
+     * @deprecated move to SecurityDAO
      */
+    @Deprecated
     @Override
     public List<SecurityRule> findSecurityRules(long resourceId) {
         Search searchCriteria = new Search(Resource.class);
@@ -209,7 +213,9 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.core.dao.ResourceDAO#findGroupSecurityRule(java.lang.String, long)
+     * @deprecated move to SecurityDAO
      */
+    @Deprecated
     @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
         Search searchCriteria = new Search(Resource.class);
