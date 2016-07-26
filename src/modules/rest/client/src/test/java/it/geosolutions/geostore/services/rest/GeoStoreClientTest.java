@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import com.sun.jersey.api.client.ClientResponse;
 import static org.junit.Assert.*;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
@@ -455,8 +456,19 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             LOGGER.info("RAW data: data URI");
             byte[] decoded = client.getRawData(rid, RawFormat.DATAURI);
             assertArrayEquals(DATA.getBytes(), decoded);
+        }
 
-            // should also test the content type, but the geostore client won't care
+        // Also test the content type
+        {
+            LOGGER.info("RAW data: test content type");
+            ClientResponse response = client.getRawData(ClientResponse.class, rid, RawFormat.DATAURI);
+
+            byte[] decoded = response.getEntity(byte[].class);
+
+            assertEquals(200, response.getStatus());
+            assertArrayEquals(DATA.getBytes(), decoded);
+            List<String> contenttypes = response.getHeaders().get("Content-Type");
+            assertTrue(contenttypes.contains(MEDIATYPE));
         }
     }
 
