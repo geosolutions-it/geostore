@@ -67,6 +67,7 @@ public class SearchConverter implements FilterVisitor {
         ops.put(SearchOperator.LESS_THAN, Filter.OP_LESS_THAN);
         ops.put(SearchOperator.LESS_THAN_OR_EQUAL_TO, Filter.OP_LESS_OR_EQUAL);
         ops.put(SearchOperator.LIKE, Filter.OP_LIKE);
+        ops.put(SearchOperator.ILIKE, Filter.OP_ILIKE);
 
         ops_rest_trg = Collections.unmodifiableMap(ops);
     }

@@ -219,7 +219,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             SearchFilter filter = new CategoryFilter(categoryName, SearchOperator.EQUAL_TO);
             if (resourceNameLike != null) {
                 resourceNameLike = resourceNameLike.replaceAll("[*]", "%");
-                filter = new AndFilter(filter, new FieldFilter(BaseField.NAME, resourceNameLike, SearchOperator.LIKE));
+                filter = new AndFilter(filter, new FieldFilter(BaseField.NAME, resourceNameLike, SearchOperator.ILIKE));
             }
 
             List<Resource> resources = resourceService.getResources(filter,

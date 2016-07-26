@@ -174,6 +174,52 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
     }
 
 
+    @Test
+    public void testGetAllResources_ilike() throws Exception
+    {
+        final String CAT0_NAME = "CAT000";
+        final String CAT1_NAME = "CAT111";
+        final String RES_NAME = "a MiXeD cAsE sTrInG";
+
+        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+
+        long u0 = restCreateUser("u0", Role.USER, "p0");
+
+        createCategory(CAT0_NAME);
+        createCategory(CAT1_NAME);
+
+        restCreateResource(RES_NAME, "x", CAT0_NAME, u0);
+        restCreateResource(RES_NAME.toLowerCase(), "x", CAT0_NAME, u0);
+        restCreateResource(RES_NAME.toUpperCase(), "x", CAT0_NAME, u0);
+
+        restCreateResource(RES_NAME + " in another category", "x", CAT1_NAME, u0);
+
+        restCreateResource("just an extra resource we shouldnt care about", "x", CAT0_NAME, u0);
+
+
+        {
+            SecurityContext sc = new SimpleSecurityContext(u0);
+            String response = restExtJsService.getAllResources(sc, "*mIxEd*", 0, 1000);
+
+            System.out.println("JSON " + response);
+
+            JSONResult result = parse(response);
+            assertEquals(4, result.total);
+            assertEquals(4, result.returnedCount);
+        }
+
+        {
+            SecurityContext sc = new SimpleSecurityContext(u0);
+            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);;
+
+            System.out.println("JSON " + response);
+
+            JSONResult result = parse(response);
+            assertEquals(3, result.total);
+            assertEquals(3, result.returnedCount);
+        }
+    }
+
 
     private JSONResult parse(String jsonString)
     {

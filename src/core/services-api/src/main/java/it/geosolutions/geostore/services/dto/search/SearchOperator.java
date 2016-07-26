@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -30,19 +30,16 @@ import javax.xml.bind.annotation.XmlType;
 public enum SearchOperator {
 
     GREATER_THAN_OR_EQUAL_TO,
-
     GREATER_THAN,
 
     LESS_THAN,
-
     LESS_THAN_OR_EQUAL_TO,
 
     EQUAL_TO,
 
     LIKE,
+    ILIKE,
 
     IS_NULL,
-
     IS_NOT_NULL;
-
 }
