@@ -44,9 +44,7 @@ import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 public class GeoStoreClient {
 
     private String username = null;
-
     private String password = null;
-
     private String geostoreRestUrl = null;
 
     public GeoStoreClient() {
@@ -61,20 +59,20 @@ public class GeoStoreClient {
      *             {@link #searchResources(it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, java.lang.Boolean, java.lang.Boolean) }
      */
     @Deprecated
-    public ShortResourceList searchResources(SearchFilter searchFilter) {
-        // WebResource wr = getBaseWebResource();
-        //
-        // ShortResourceList resourceList = wr.path("resources").path("search")
+    public ShortResourceList searchResources(SearchFilter searchFilter)
+    {
         ShortResourceList resourceList = getBaseWebResource("resources", "search")
-                .header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+                .header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
                 .post(ShortResourceList.class, searchFilter);
 
         return resourceList;
     }
 
-    public ResourceList searchResources(SearchFilter searchFilter, Integer page, Integer entries,
-            Boolean includeAttributes, Boolean includeData) {
-
+    public ResourceList searchResources(SearchFilter searchFilter,
+            Integer page, Integer entries,
+            Boolean includeAttributes, Boolean includeData)
+    {
         WebResource wb = getBaseWebResource("resources", "search", "list");
 
         wb = addQParam(wb, "page", page);
@@ -83,52 +81,59 @@ public class GeoStoreClient {
         wb = addQParam(wb, "includeAttributes", includeAttributes);
         wb = addQParam(wb, "includeData", includeData);
 
-        return wb.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+        return wb.header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
                 .post(ResourceList.class, searchFilter);
     }
 
-    protected WebResource addQParam(WebResource wb, String key, Object value) {
+    protected WebResource addQParam(WebResource wb, String key, Object value)
+    {
         if (value != null)
             return wb.queryParam(key, value.toString());
         else
             return wb;
     }
 
-    public Long insert(RESTResource resource) {
-        // WebResource wr = getBaseWebResource();
-        //
-        // String sid = wr.path("resources")
-        String sid = getBaseWebResource("resources").header("Content-Type", MediaType.TEXT_XML)
-                .accept(MediaType.TEXT_PLAIN).post(String.class, resource);
+    public Long insert(RESTResource resource)
+    {
+        String sid = getBaseWebResource("resources")
+                .header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_PLAIN)
+                .post(String.class, resource);
 
         return Long.parseLong(sid);
     }
 
-    public Resource getResource(Long id, boolean full) {
-        // WebResource wr = getBaseWebResource();
-        // Resource resource = wr.path("resources").path("resource").path(id.toString())
+    public Resource getResource(Long id, boolean full)
+    {
         WebResource resource = getBaseWebResource("resources", "resource", id);
         if (full)
-            resource = resource.queryParam("full", Boolean.valueOf(full).toString());
+            resource = resource.queryParam("full", Boolean.toString(full));
 
-        return resource.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+        return resource.header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
                 .get(Resource.class);
     }
 
-    public Resource getResource(Long id) {
+    public Resource getResource(Long id)
+    {
         return getResource(id, false);
     }
 
-    public void deleteResource(Long id) {
+    public void deleteResource(Long id)
+    {
         getBaseWebResource("resources", "resource", id).delete();
     }
 
-    public void updateResource(Long id, RESTResource resource) {
-        getBaseWebResource("resources", "resource", id).header("Content-Type", MediaType.TEXT_XML)
+    public void updateResource(Long id, RESTResource resource)
+    {
+        getBaseWebResource("resources", "resource", id)
+                .header("Content-Type", MediaType.TEXT_XML)
                 .put(resource);
     }
 
-    public ShortResourceList getAllShortResource(Integer page, Integer entries) {
+    public ShortResourceList getAllShortResource(Integer page, Integer entries)
+    {
         WebResource wr = getBaseWebResource("resources");
         return wr.queryParam("page", page.toString())
                  .queryParam("entries", entries.toString())
@@ -137,15 +142,19 @@ public class GeoStoreClient {
                  .get(ShortResourceList.class);
     }
     
-    public SecurityRuleList getSecurityRules(Long resourceId) {
+    public SecurityRuleList getSecurityRules(Long resourceId)
+    {
     	WebResource wr = getBaseWebResource("resources", "resource", resourceId, "permissions");
-    	return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+    	return wr.header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
                 .get(SecurityRuleList.class);
     }
     
-    public void updateSecurityRules(Long resourceId, SecurityRuleList rules) {
+    public void updateSecurityRules(Long resourceId, SecurityRuleList rules)
+    {
     	 getBaseWebResource("resources", "resource", resourceId, "permissions")
-    	 	.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_PLAIN)
+    	 	.header("Content-Type", MediaType.TEXT_XML)
+                 .accept(MediaType.TEXT_PLAIN)
     	 	.post(rules);
     }
 
@@ -153,87 +162,132 @@ public class GeoStoreClient {
     // === DATA
     // ==========================================================================
 
-    public String getData(Long id) {
+    public String getData(Long id)
+    {
         return getData(id, MediaType.WILDCARD_TYPE);
     }
 
-    public String getData(Long id, MediaType acceptMediaType) {
-        String data = getBaseWebResource("data", id).accept(acceptMediaType).get(String.class);
-        return data;
+    public String getData(Long id, MediaType acceptMediaType)
+    {
+        return getBaseWebResource("data", id)
+                .accept(acceptMediaType)
+                .get(String.class);
     }
 
     public byte[] getRawData(Long id, RawFormat decodeFrom)
+    {
+        return getRawData(byte[].class, id, decodeFrom);
+    }
+
+    public <T> T getRawData(Class<T> clazz, Long id, RawFormat decodeFrom)
     {
         WebResource wr = getBaseWebResource("data", id, "raw");
         if(decodeFrom != null) {
             wr = wr.queryParam("decode", decodeFrom.name());
         }
 
-        return wr.get(byte[].class);
+        return wr.get(clazz);
     }
 
-    public void setData(Long id, String data) {
+    public void setData(Long id, String data)
+    {
         getBaseWebResource("data", id).put(data);
     }
 
-    public void updateData(Long id, String data) {
-        getBaseWebResource("data", id).header("Content-Type", MediaType.TEXT_PLAIN).put(data);
+    public void updateData(Long id, String data)
+    {
+        getBaseWebResource("data", id)
+                .header("Content-Type", MediaType.TEXT_PLAIN)
+                .put(data);
     }
 
     // ==========================================================================
     // === CATEGORIES
     // ==========================================================================
 
-    public Long insert(RESTCategory category) {
-        String sid = getBaseWebResource("categories").header("Content-Type", MediaType.TEXT_XML)
-                .accept(MediaType.TEXT_PLAIN).post(String.class, category);
+    public Long insert(RESTCategory category)
+    {
+        String sid = getBaseWebResource("categories")
+                .header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_PLAIN)
+                .post(String.class, category);
 
         return Long.parseLong(sid);
     }
 
-    public Category getCategory(Long id) {
+    public Category getCategory(Long id)
+    {
         Category category = getBaseWebResource("categories", "category", id)
-                .header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+                .header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
                 .get(Category.class);
 
         return category;
     }
 
-    public Long getCategoryCount(String nameLike) {
-        String count = getBaseWebResource("categories", "count", nameLike).accept(
-                MediaType.TEXT_PLAIN).get(String.class);
+    public Long getCategoryCount(String nameLike)
+    {
+        String count = getBaseWebResource("categories", "count", nameLike)
+                .accept(MediaType.TEXT_PLAIN)
+                .get(String.class);
 
         return Long.parseLong(count);
     }
 
-    // @GET
-    // @Path("/")
-    // @RolesAllowed({"ADMIN", "USER", "GUEST"})
-    // CategoryList getAll(
-    // @Context SecurityContext sc,
-    // @QueryParam("page") Integer page,
-    // @QueryParam("entries") Integer entries)throws BadRequestWebEx;
-
-    public CategoryList getCategories(Integer page, Integer entries) {
-        return getBaseWebResource("categories").queryParam("page", page.toString())
+    public CategoryList getCategories(Integer page, Integer entries)
+    {
+        return getBaseWebResource("categories")
+                .queryParam("page", page.toString())
                 .queryParam("entries", entries.toString())
-                .header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML)
+                .header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
                 .get(CategoryList.class);
     }
 
-    public CategoryList getCategories() {
-        return getBaseWebResource("categories").header("Content-Type", MediaType.TEXT_XML)
-                .accept(MediaType.TEXT_XML).get(CategoryList.class);
+    public CategoryList getCategories()
+    {
+        return getBaseWebResource("categories")
+                .header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
+                .get(CategoryList.class);
     }
 
-    public void deleteCategory(Long id) {
+    public void deleteCategory(Long id)
+    {
         getBaseWebResource("categories", "category", id).delete();
     }
 
     // ==========================================================================
+    // ExtJS
+    // ==========================================================================
+    // These methods should not belong here, since they are needed for JS only.
+    // Anyway we can use these methods to test the logic in integrations tests.
     // ==========================================================================
 
-    protected WebResource getBaseWebResource() {
+    public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike, boolean all)
+    {
+        WebResource wr = getBaseWebResource("extjs", "search", "groups", nameLike);
+    
+        wr = wr.queryParam("start", start.toString())
+               .queryParam("limit", limit.toString())
+               .queryParam("all", Boolean.toString(all));
+
+        return wr.header("Content-Type", MediaType.TEXT_XML)
+                .accept(MediaType.TEXT_XML)
+                .get(ExtGroupList.class);
+
+    }
+
+    public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike)
+    {
+        return searchUserGroup(start, limit, nameLike, false);
+    }
+
+    // ==========================================================================
+    // ==========================================================================
+
+    protected WebResource getBaseWebResource()
+    {
         if (geostoreRestUrl == null)
             throw new IllegalStateException("GeoStore URL not set");
 
@@ -247,24 +301,8 @@ public class GeoStoreClient {
         return wr;
     }
 
-    // protected WebResource getBaseWebResource(Object ...path) {
-    // if(geostoreRestUrl == null)
-    // throw new IllegalStateException("GeoStore URL not set");
-    //
-    // Client c = Client.create();
-    // if (username != null || password != null) {
-    // c.addFilter(new HTTPBasicAuthFilter(username != null ? username : "", password != null ? password : ""));
-    // }
-    //
-    // WebResource wr = c.resource(geostoreRestUrl);
-    //
-    // for (Object o : path) {
-    // wr = wr.path(o.toString());
-    // }
-    // return wr;
-    // }
-
-    protected WebResource getBaseWebResource(Object... path) {
+    protected WebResource getBaseWebResource(Object... path)
+    {
         if (geostoreRestUrl == null)
             throw new IllegalStateException("GeoStore URL not set");
 
@@ -286,6 +324,7 @@ public class GeoStoreClient {
     }
 
     // ==========================================================================
+
     public String getPassword() {
         return password;
     }
@@ -310,15 +349,4 @@ public class GeoStoreClient {
         this.geostoreRestUrl = geostoreRestUrl;
     }
 
-    public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike, boolean all){
-        WebResource wr =getBaseWebResource("extjs", "search", "groups", nameLike);
-        wr = wr.queryParam("start", start.toString()).queryParam("limit", limit.toString()).queryParam("all", all+"");
-
-        return wr.header("Content-Type", MediaType.TEXT_XML).accept(MediaType.TEXT_XML).get(ExtGroupList.class);
-
-    }
-
-    public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike){
-        return searchUserGroup(start, limit, nameLike, false);
-    }
 }
