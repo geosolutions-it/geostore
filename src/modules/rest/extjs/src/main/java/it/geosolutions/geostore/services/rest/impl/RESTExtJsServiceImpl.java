@@ -51,7 +51,9 @@ import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
+import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -521,6 +523,29 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         return jsonObj;
     }
 
+    @Override
+    public ShortResource getResource(SecurityContext sc, long id) throws NotFoundWebEx {
+
+        User authUser = extractAuthUser(sc);
+        ResourceAuth auth = getResourceAuth(authUser, id);
+        
+        if(! auth.canRead ){
+            throw new ForbiddenErrorWebEx("Resource is protected");
+        }
+
+        Resource ret = resourceService.get(id);
+
+        if (ret == null) {
+            throw new NotFoundWebEx("Resource not found");
+        }
+
+        ShortResource sr = new ShortResource(ret);
+        sr.setCanEdit(auth.canWrite);
+        sr.setCanDelete(auth.canWrite);
+
+        return sr;
+    }
+
     /**
      * Encapsulates resource/short resource and credentials to perform operations with resources
      *
@@ -614,7 +639,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                             }
                         } else if (userGroup != null) {
                             if (authUser.getGroups() != null
-                                    && authUser.getGroups().contains(
+                                    && authUser.getGroups().contains( // FIXME: Given object cannot contain instances of String (expected UserGroup)
                                             userGroup.getGroupName())) {
                                 if (rule.isCanWrite()) {
                                     canEdit = true;

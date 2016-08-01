@@ -1,3 +1,23 @@
+/*
+ *  Copyright (C) 2016 GeoSolutions S.A.S.
+ *  http://www.geo-solutions.it
+ *
+ *  GPLv3 + Classpath exception
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package it.geosolutions.geostore.services.rest;
 
 import static org.junit.Assert.assertEquals;
@@ -41,15 +61,13 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
-import org.junit.Ignore;
+import java.util.Arrays;
 
-public class AdministratorGeostoreClientTest{
+public class AdministratorGeostoreClientTest {
 
     AdministratorGeoStoreClient geoStoreClient;
     GeoStoreClient geoStoreUserClient;
@@ -95,13 +113,6 @@ public class AdministratorGeostoreClientTest{
         }
     }
 
-    @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
 
     @Before
     public void before() throws Exception {
@@ -112,7 +123,7 @@ public class AdministratorGeostoreClientTest{
         removeAllUsers(geoStoreClient);
         removeAllUserGroup(geoStoreClient);
         removeAllResources(geoStoreClient);
-         removeAllCategories(geoStoreClient);
+        removeAllCategories(geoStoreClient);
     }
 
     // ==========================================================================
@@ -279,44 +290,23 @@ public class AdministratorGeostoreClientTest{
     
     @Test
     public void insertGetDeleteAssign_UserGroupTest() {
-        
-        User u1 = new User();
-        u1.setName("u1");
-        u1.setRole(Role.USER);
-        User u2 = new User();
-        u2.setName("u2");
-        u2.setRole(Role.USER);
-        Set<User> userSet = new HashSet<User>();
+
+        long uid1 = createUser("u1", Role.USER, "-");
+        User u1 = geoStoreClient.getUser(uid1);
+        assertNotNull(u1);
+
+        long uid2 = createUser("u2", Role.USER, "-");
+        User u2 = geoStoreClient.getUser(uid2);
+        assertNotNull(u2);
+
+        Set<User> userSet = new HashSet<>();
         userSet.add(u1);
         userSet.add(u2);
-        geoStoreClient.insert(u1);
-        geoStoreClient.insert(u2);
-        
-        UserList uli = geoStoreClient.getUsers(0,1000);
-        long uid1 = -1;
-        long uid2 = -1;
-        for(RESTUser u : uli.getList()){
-            if(!("admin".equals(u.getName()) || "user".equals(u.getName()))){
-                try{
-                    if("u1".equals(u.getName())){
-                        uid1 = u.getId();
-                    }
-                    else{
-                        uid2 = u.getId();
-                    }
-                }
-                catch(Exception e){
-                    // Swallow any exception...
-                }
-            }
-        }
-        
-        
         
         UserGroup ug = new UserGroup();
         ug.setGroupName("usergroupTest1");
         ug.setUsers(userSet);
-        long ugid= geoStoreClient.insertUserGroup(ug);
+        long ugid = geoStoreClient.insertUserGroup(ug);
         
         //get created group 
         RESTUserGroup restUG1 = geoStoreClient.getUserGroup(ugid);
@@ -348,9 +338,7 @@ public class AdministratorGeostoreClientTest{
         u = geoStoreClient.getUser(uid2);
         usergroups = u.getGroups();
         //the null is not a vaild response, the EVERYONE group at least is expected
-        if(usergroups == null){
-        	fail();
-        }
+        assertNotNull(usergroups);
         assertEquals(0, usergroups.size());
         //
         //reassign
@@ -406,12 +394,12 @@ public class AdministratorGeostoreClientTest{
         ugl = geoStoreClient.getUserGroups(0, 1000, true);
         assertEquals(1,ugl.getUserGroupList().size());
         UserList ul = geoStoreClient.getUsers(0, 1000);
-        List<RESTUser> ull = ul.getList();
-        assertEquals(4, ull.size());
+        assertEquals(3, ul.getList().size()); // the 2 users added in this test, plus the admin
+
         geoStoreClient.deleteUser(uid1);
         geoStoreClient.deleteUser(uid2);
         ul = geoStoreClient.getUsers(0, 1000);
-        assertEquals(2, ul.getList().size());
+        assertEquals(1, ul.getList().size()); // only the admin 
     }
     
     @Test
@@ -419,35 +407,33 @@ public class AdministratorGeostoreClientTest{
         
         // Create a resource with Stored Data using the user "User"
         createDefaultCategory();
+
+        createUser("user", Role.USER, "user");
+
         ShortResource sr = createAResource();
-        
+
         GeoStoreClient userGeoStoreClient = createUserClient("user","user");
         String data = userGeoStoreClient.getData(sr.getId());
         assertEquals("we wish you a merry xmas and a happy new year", data);
         
         //try to get the related Stored Data with the user "u1", must not be possible due to authorization rules
-        User u1 = new User();
-        u1.setName("u1");
-        u1.setRole(Role.USER);
-        u1.setNewPassword("u1");
-        Set<User> userSet = new HashSet<User>();
-        userSet.add(u1);
-        geoStoreClient.insert(u1);
+        createUser("u1", Role.USER, "u1");
         userGeoStoreClient = createUserClient("u1","u1");
-        int u1StatusR = -1;
         try{
             userGeoStoreClient.getData(sr.getId());
+            fail("Untrapped exception");
         }
         catch(UniformInterfaceException e){
-            u1StatusR = e.getResponse().getStatus();
+            int u1StatusR = e.getResponse().getStatus();
+            assertEquals(403,u1StatusR);
         }
-        assertEquals(403,u1StatusR);
     }
     
     @Test
     public void testEVERYONEassignmentResources(){
         // Create a resource with Stored Data using the user "User"
         createDefaultCategory();
+        createUser("user", Role.USER, "user");
         ShortResource sr = createAResource();
         
         SecurityRuleList srlFinal = geoStoreUserClient.getSecurityRules(sr.getId());
@@ -482,6 +468,7 @@ public class AdministratorGeostoreClientTest{
     @Test
     public void testEVERYONEassignmentUsers(){
         RESTUserGroup ug = geoStoreClient.getUserGroup(GroupReservedNames.EVERYONE.toString());
+        createUser("user", Role.USER, "user");
         User u = geoStoreClient.getUser("user");
         
         int errorCode = -1;
@@ -506,7 +493,7 @@ public class AdministratorGeostoreClientTest{
     @Test
     public void testUserInitialization(){
         UserList ul = geoStoreClient.getUsers(0,100);
-        assertEquals(2, ul.getList().size());
+        assertEquals(1, ul.getList().size()); // admin only
         for(RESTUser u : ul.getList()){
             assertNull(u.getGroupsNames());
         }
@@ -518,15 +505,13 @@ public class AdministratorGeostoreClientTest{
         UserGroupList ugl = geoStoreClient.getUserGroups(0, 1000, true);
         assertEquals(1, ugl.getUserGroupList().size());
         assertEquals("everyone", ugl.getUserGroupList().get(0).getGroupName());
+        
+        createUser("user", Role.USER, "user");
         createDefaultCategory();
         ShortResource sr = createAResource();
-        
-        User u1 = new User();
-        u1.setName("u1");
-        u1.setRole(Role.USER);
-        u1.setNewPassword("u1");
-        long uID = geoStoreClient.insert(u1);
-        GeoStoreClient userGeoStoreClient = createUserClient("u1","u1");
+
+        long uID = createUser("u1", Role.USER, "u1");
+        GeoStoreClient userGeoStoreClient = createUserClient("u1", "u1");
         
         
         int u1StatusR = -1;
@@ -604,18 +589,9 @@ public class AdministratorGeostoreClientTest{
         UserGroup anotherGroup = new UserGroup();
         anotherGroup.setGroupName("g2");
         long anotherGid = geoStoreClient.insertUserGroup(anotherGroup);
-        
-        Set<UserGroup> ugroups = new HashSet<UserGroup>();
-        ugroups.add(ug);
-        
+                
         // Create a user
-        User u1 = new User();
-        u1.setName("u1");
-        u1.setNewPassword("u1");
-        u1.setRole(Role.USER);
-        u1.setGroups(ugroups);
-        
-        geoStoreClient.insert(u1);
+        createUser("user", Role.USER, "user", ug);
         
         // Create a resource with the user "user". So user will be the owner
         createDefaultCategory();
@@ -625,8 +601,8 @@ public class AdministratorGeostoreClientTest{
         ShortResource sr4 = createAResource();
         
         ShortResourceList srl = geoStoreUserClient.getAllShortResource(0, 1000);
-        List<ShortResource> listG1 = new ArrayList<ShortResource>();
-        List<ShortResource> listG2 = new ArrayList<ShortResource>();
+        List<ShortResource> listG1 = new ArrayList<>();
+        List<ShortResource> listG2 = new ArrayList<>();
         int i = 0;
         for(ShortResource r : srl.getList()){
             if(i<2){
@@ -638,6 +614,7 @@ public class AdministratorGeostoreClientTest{
         }
         
         // Ok, now it's time to test something.
+        createUser("u1", Role.USER, "u1", ug);
         GeoStoreClient u1Client = createUserClient("u1", "u1");
         
         // Since all resources inserted belong to user "user" and no groups security rules are added
@@ -710,68 +687,58 @@ public class AdministratorGeostoreClientTest{
         anotherGroup.setGroupName("anotherGroup");
         long anotherGid = geoStoreClient.insertUserGroup(anotherGroup);
         
-        Set<UserGroup> ugroups = new HashSet<UserGroup>();
+        Set<UserGroup> ugroups = new HashSet<>();
         ugroups.add(ug);
         ugroups.add(anotherGroup);
         
         // Create 2 user
-        User u1 = new User();
-        u1.setName("u1");
-        u1.setNewPassword("u1");
-        u1.setRole(Role.USER);
-        
-        User u2 = new User();
-        u2.setName("u2");
-        u2.setNewPassword("u2");
-        u2.setRole(Role.USER);
-        u2.setGroups(ugroups);
-        
-        geoStoreClient.insert(u1);
-        geoStoreClient.insert(u2);
-        
+        createUser("u1", Role.USER, "u1");
+        createUser("u2", Role.USER, "u2", ug, anotherGroup);
+                
         GeoStoreClient u1Client = createUserClient("u1", "u1");
         GeoStoreClient u2Client = createUserClient("u2", "u2");
         
         // Create a resource with the user "user". So user will be the owner
+        createUser("user", Role.USER, "user");
         createDefaultCategory();
         ShortResource sr = createAResource();
         ShortResource sr2 = createAResource();
         
-        int u1StatusW = -1;
-        int u1StatusR = -1;
-        int u2StatusR = -1;
-        int u2StatusW = -1;
         
         // Since "user" is the owner the users
-        // "u1" and "u2" should have both READ and WRITE doesn't allowed because it isn't the owner of the reosource, it belong to at least one group and the resource doesn't have any groups rule security 
+        // "u1" and "u2" should not be allowed to READ or WRITE, because they are not the owner of the reosource, it belong to at least one group and the resource doesn't have any groups rule security
         try{
             u1Client.getResource(sr.getId(), true);
+            fail("Untrapped exception");
         }
         catch(UniformInterfaceException e){
-            u1StatusR = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u1StatusR);
+
         try{
             u2Client.getResource(sr.getId(), true);
+            fail("Untrapped exception");
         }
         catch(UniformInterfaceException e){
-            u2StatusR = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u2StatusR);
+
         try{
             u1Client.updateResource(sr.getId(), new RESTResource());
+            fail("Untrapped exception");
         }
         catch(UniformInterfaceException e){
-            u1StatusW = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u1StatusW);
+
         try{
             u2Client.updateResource(sr.getId(), new RESTResource());
+            fail("Untrapped exception");
         }
         catch(UniformInterfaceException e){
-            u2StatusW = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u2StatusW);
+
         
         // Update permissions for users belong to "usergroupTest1" ("u1") group
         // The effect of this service call will be: 
@@ -790,45 +757,40 @@ public class AdministratorGeostoreClientTest{
         assertEquals(2, srlf.getList().size());
         
         // READ shouldn't allowed, WRITE allowed
-        u1StatusW = -1;
-        u1StatusR = -1;
-        u2StatusR = -1;
         try{
             u1Client.getResource(sr.getId(), true);
         }
         catch(UniformInterfaceException e){
-            u1StatusR = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u1StatusR);
+
         try{
             u2Client.getResource(sr.getId(), true);
         }
         catch(UniformInterfaceException e){
-            u2StatusR = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u2StatusR);
+
         try{
             u1Client.updateResource(sr.getId(), new RESTResource());
         }
         catch(UniformInterfaceException e){
-            u1StatusW = e.getResponse().getStatus();
+            assertEquals(403, e.getResponse().getStatus());
         }
-        assertEquals(403,u1StatusW);
+
         u2Client.updateResource(sr.getId(), new RESTResource());
     }
     
     @Test
-    @Ignore
     public void getAllGroupsWithoutEveryoneTest(){
-        int grpCount = 3;
-        addSomeUserGroups(grpCount, "randomGroups");
+        final int GROUP_NUM = 3;
+        addSomeUserGroups(GROUP_NUM, "randomGroups");
 
         ExtGroupList res = geoStoreClient.searchUserGroup(0, 10, "*");
-        assertEquals(grpCount, res.getCount());
+        assertEquals("Bad number of user group", GROUP_NUM, res.getCount());
     }
 
     @Test
-    @Ignore
     public void getAllGroupsWithEveryoneTest(){
         int grpCount = 3;
         addSomeUserGroups(grpCount, "randomGroups");
@@ -838,7 +800,6 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
-    @Ignore
     public void searchGroupTest(){
         int grpNum = 4;
         int targetGrpNum = 2;
@@ -851,19 +812,18 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
-    @Ignore
     public void noGroupsForNormalUserTest(){
-        String username = "user", password = "user";
 
         addSomeUserGroups(8, "randomGrp");
 
-        GeoStoreClient client = createUserClient(username, password);
+        createUser("user", Role.USER, "user");
+        GeoStoreClient client = createUserClient("user", "user");
+
         ExtGroupList result = client.searchUserGroup(0, 10, "*");
         assertEquals(result.getCount(), 0);
     }
 
     @Test
-    @Ignore
     public void allGroupsOfAnUserTest(){
         int grpTestUserNum = 5, grpUUserNum = 3;
         String usrTestName = "test";
@@ -897,7 +857,6 @@ public class AdministratorGeostoreClientTest{
     }
 
     @Test
-    @Ignore
     public void userGroupsPaginationTest(){
         int totalGrps = 10;
         int pageSize = 3;
@@ -954,12 +913,12 @@ public class AdministratorGeostoreClientTest{
         List<RESTUser> usersList = users.getList();
         usersList = (usersList == null)?new ArrayList<RESTUser>():usersList;
         for(RESTUser u : usersList){
-            if(!("admin".equals(u.getName()) || "user".equals(u.getName()))){
+            if(!("admin".equals(u.getName()))){
                 try{
                     geoStoreClient.deleteUser(u.getId());
                 }
                 catch(Exception e){
-                    // Swallow any exception...
+                    LOGGER.error("Error removing " + u);
                 }
             }
         }
@@ -974,7 +933,7 @@ public class AdministratorGeostoreClientTest{
                 geoStoreClient.deleteUserGroup(ug.getId());
             }
             catch(Exception e){
-                // Swallow any exception...
+                LOGGER.error("Error removing " + ug);
             }
         }
     }
@@ -989,7 +948,7 @@ public class AdministratorGeostoreClientTest{
         RESTStoredData storedData = new RESTStoredData();
         storedData.setData("we wish you a merry xmas and a happy new year");
 
-        List<ShortAttribute> attrList = new ArrayList<ShortAttribute>();
+        List<ShortAttribute> attrList = new ArrayList<>();
         attrList.add(new ShortAttribute(KEY_STRING, origString, DataType.STRING));
 
         String timeid = Long.toString(System.currentTimeMillis());
@@ -1054,5 +1013,17 @@ public class AdministratorGeostoreClientTest{
         }
     }
     
+    protected long createUser(String name, Role role, String pw, UserGroup ...group) {
+
+        User user = new User();
+        user.setName(name);
+        user.setRole(role);
+        user.setNewPassword(pw);
+        if(group != null) {
+            user.setGroups(new HashSet(Arrays.asList(group)));
+        }
+
+        return geoStoreClient.insert(user);
+    }
     
 }

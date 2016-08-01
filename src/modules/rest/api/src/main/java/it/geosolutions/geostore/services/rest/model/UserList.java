@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -43,7 +43,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * 
  */
 @XmlRootElement(name = "UserList")
-public class UserList implements Iterable<User> {
+public class UserList implements Iterable<RESTUser> {
 
     private List<RESTUser> list;
 
@@ -74,7 +74,7 @@ public class UserList implements Iterable<User> {
     }
 
     @Override
-    public Iterator<User> iterator() {
+    public Iterator<RESTUser> iterator() {
         return list == null ? Collections.EMPTY_LIST.iterator() : list.iterator();
     }
 

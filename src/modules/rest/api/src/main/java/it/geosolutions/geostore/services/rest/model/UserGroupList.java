@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2016 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,8 +19,6 @@
  */
 package it.geosolutions.geostore.services.rest.model;
 
-import it.geosolutions.geostore.core.model.UserGroup;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -34,7 +32,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * 
  */
 @XmlRootElement(name = "UserGroupList")
-public class UserGroupList implements Iterable<UserGroup> {
+public class UserGroupList implements Iterable<RESTUserGroup> {
 
     private List<RESTUserGroup> list;
 
@@ -70,7 +68,7 @@ public class UserGroupList implements Iterable<UserGroup> {
     }
 
     @Override
-    public Iterator<UserGroup> iterator() {
+    public Iterator<RESTUserGroup> iterator() {
         return list == null ? Collections.EMPTY_LIST.iterator() : list.iterator();
     }
 }

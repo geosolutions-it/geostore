@@ -35,6 +35,7 @@ import javax.ws.rs.core.MediaType;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
+import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 
 /**
@@ -281,6 +282,12 @@ public class GeoStoreClient {
     public ExtGroupList searchUserGroup(Integer start,Integer limit, String nameLike)
     {
         return searchUserGroup(start, limit, nameLike, false);
+    }
+
+    public ShortResource getShortResource(long id)
+    {
+        WebResource wr = getBaseWebResource("extjs", "resource", id);
+        return wr.get(ShortResource.class);
     }
 
     // ==========================================================================

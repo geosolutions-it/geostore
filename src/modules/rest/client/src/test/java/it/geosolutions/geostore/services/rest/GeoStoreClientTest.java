@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services.rest;
 
 import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.ClientResponse.Status;
 import static org.junit.Assert.*;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
@@ -52,6 +53,8 @@ import org.apache.log4j.Logger;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
+import it.geosolutions.geostore.services.dto.ShortResource;
+import java.util.Collections;
 
 /**
  * 
@@ -538,10 +541,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
     
     @Test
     public void testupdateSecurityRules() {
-    	AdministratorGeoStoreClient adminClient = new AdministratorGeoStoreClient();
-    	adminClient.setGeostoreRestUrl("http://localhost:9191/geostore/rest");
-    	adminClient.setUsername("admin");
-    	adminClient.setPassword("admin");
     	
     	createDefaultCategory();
 
@@ -551,10 +550,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         String timeid = Long.toString(System.currentTimeMillis());
         res.setName("rest_test_resource_" + timeid);
 
-        User u1 = new User();
-        u1.setName("u1_" + timeid);
-        u1.setRole(Role.USER);
-        Long userId = adminClient.insert(u1);
+        Long userId = createUser("u1_" + timeid, Role.USER, "---");
         
         UserGroup g1 = new UserGroup();
         g1.setGroupName("g1_"  + timeid);
@@ -587,7 +583,77 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         assertNotNull(writtenRules.getList());
         assertEquals(2, rules.getList().size());
     }
-    
+
+
+    @Test
+    public void testGetShortResource() {
+
+        final String DATA = "we wish you a merry xmas and a happy new year";
+
+        UserGroup g1 = createUserGroup("g1xyz");
+
+        createUser("u1", Role.USER, "u1", g1);
+        createUser("u2", Role.USER, "u2", g1);
+
+        createDefaultCategory();
+
+        RESTResource r1 = buildResource("r1", DEFAULTCATEGORYNAME);
+
+        GeoStoreClient c1 = createClient("u1", "u1");
+        GeoStoreClient c2 = createClient("u2", "u2");
+
+        long rId1 = c1.insert(r1);
+
+        // make sure data has been saved
+        {
+            ShortResource res = client.getShortResource(rId1);
+            assertEquals("r1", res.getName());
+        }
+
+        // proper user loads resource
+        {
+            ShortResource loaded = c1.getShortResource(rId1);
+            assertEquals("r1", loaded.getName());
+            assertTrue(loaded.isCanEdit());
+            assertTrue(loaded.isCanDelete());
+        }
+
+        // other user loads resource
+        {
+            try {
+                ShortResource loaded = c2.getShortResource(rId1);
+                assertEquals("r1", loaded.getName());
+            } catch (UniformInterfaceException ex) {
+                assertEquals(Status.FORBIDDEN, ex.getResponse().getClientResponseStatus());
+            }
+            // 403
+        }
+
+        SecurityRule sr = new SecurityRule();
+        sr.setGroup(g1);
+        sr.setCanRead(true);
+        sr.setCanWrite(false);
+
+        SecurityRuleList srlist = new SecurityRuleList(Collections.singletonList(sr));
+        c1.updateSecurityRules(rId1, srlist);
+
+        // other user loads resource
+        {
+            ShortResource loaded = c2.getShortResource(rId1);
+            assertEquals("r1", loaded.getName());
+            assertFalse(loaded.isCanEdit());
+        }
+
+    }
+
+    private RESTResource buildResource(String name, String catName)
+    {
+        RESTResource res = new RESTResource();
+        res.setCategory(new RESTCategory(catName));
+        res.setName(name);
+        return res;
+    }
+
     protected Long createDefaultCategory() {
         Long catid = client.insert(new RESTCategory(DEFAULTCATEGORYNAME));
         assertNotNull(catid);

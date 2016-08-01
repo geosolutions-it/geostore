@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.model.Resource;
 
 import java.io.Serializable;
 import java.util.Date;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class ShortResource.
@@ -39,6 +40,7 @@ import java.util.Date;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * 
  */
+@XmlRootElement(name = "ShortResource")
 public class ShortResource implements Serializable {
 
     /** The Constant serialVersionUID. */
