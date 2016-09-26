@@ -83,7 +83,7 @@
         <jaxb-api-version>2.1</jaxb-api-version>
         <jaxb-impl-version>2.1.2</jaxb-impl-version>
 
-        <log4j-version>1.2.14</log4j-version>
+        <log4j-version>1.2.16</log4j-version>
         <slf4japi-version>1.7.2</slf4japi-version>
         <dom4j-version>1.6.1</dom4j-version>
 
@@ -318,7 +318,7 @@
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
-                <version>1.4</version>
+                <version>2.1</version>
             </dependency>
             <dependency>
                 <groupId>commons-httpclient</groupId>
