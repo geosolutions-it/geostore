@@ -31,6 +31,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 /**
@@ -40,9 +41,17 @@ abstract class AuditingTestsBase {
 
     protected final File TESTS_ROOT_DIRECTORY = new File(System.getProperty("java.io.tmpdir"), "auditing-tests-" + UUID.randomUUID().toString());
     protected final File OUTPUT_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "output");
-    protected final File TEMPLATES_DIRECTORY = new File(AuditingTestsUtils.class.getClassLoader().getResource("templates").getFile());
+    protected final File TEMPLATES_DIRECTORY = getTemplatesDirectory();
     protected final File CONFIGURATION_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "configuration");
     protected final File CONFIGURATION_FILE_PATH = new File(CONFIGURATION_DIRECTORY, "auditing.properties");
+
+    private File getTemplatesDirectory() {
+        try {
+            return new File(AuditingTestsUtils.class.getClassLoader().getResource("templates").toURI().getPath());
+        } catch (URISyntaxException exception) {
+            throw new RuntimeException("Error getting tests templates directory.");
+        }
+    }
 
     @Before
     public void before() {
