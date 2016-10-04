@@ -28,9 +28,6 @@
 package it.geosolutions.geostore.services.rest.auditing;
 
 import freemarker.template.TemplateException;
-import junit.framework.Assert;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -40,28 +37,18 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class AuditingTemplatesTest {
+import static junit.framework.TestCase.assertEquals;
 
-    @Before
-    public void before() {
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-        AuditingTestsUtils.createDefaultConfiguration();
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.OUTPUT_DIRECTORY);
-    }
-
-    @AfterClass
-    public static void after() {
-        AuditingTestsUtils.deleteDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-    }
+public final class AuditingTemplatesTest extends AuditingTestsBase {
 
     @Test
     public void testTemplatesWriting() throws InterruptedException, IOException, TemplateException {
-        File outputFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt");
+        File outputFile = new File(OUTPUT_DIRECTORY, "audit-geostore.txt");
         AuditingConfiguration configuration = new AuditingConfiguration();
         AuditingTemplates templates = new AuditingTemplates(configuration.getTemplatesDirectory());
-        Assert.assertEquals(templates.getHeaderTemplate().getName(), "header.ftl");
-        Assert.assertEquals(templates.getBodyTemplate().getName(), "body.ftl");
-        Assert.assertEquals(templates.getFooterTemplate().getName(), "footer.ftl");
+        assertEquals(templates.getHeaderTemplate().getName(), "header.ftl");
+        assertEquals(templates.getBodyTemplate().getName(), "body.ftl");
+        assertEquals(templates.getFooterTemplate().getName(), "footer.ftl");
         FileWriter writer = new FileWriter(outputFile);
         templates.getHeaderTemplate().process(Collections.EMPTY_MAP, writer);
         Map<String, String> content = createContent();

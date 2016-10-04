@@ -30,13 +30,10 @@ package it.geosolutions.geostore.services.rest.auditing;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import junit.framework.Assert;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.security.core.Authentication;
@@ -47,18 +44,10 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Map;
 
-public final class AuditInfoExtractorTest {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-    @Before
-    public void before() {
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-        AuditingTestsUtils.createDefaultConfiguration();
-    }
-
-    @AfterClass
-    public static void after() {
-        AuditingTestsUtils.deleteDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-    }
+public final class AuditInfoExtractorTest extends AuditingTestsBase {
 
     private static HttpServletRequest getHttpServletRequest() {
         HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
@@ -135,26 +124,26 @@ public final class AuditInfoExtractorTest {
         Mockito.when(exchange.getOutMessage()).thenReturn(outSuccessMessage);
         Mockito.when(exchange.get(AuditInfo.START_TIME.getKey())).thenReturn(1000l);
         Map<String, String> auditInfo = AuditInfoExtractor.extract(message);
-        Assert.assertEquals(auditInfo.size(), 18);
-        Assert.assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
-        Assert.assertEquals(auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()), "application/octet-stream");
-        Assert.assertEquals(auditInfo.get(AuditInfo.HTTP_METHOD.getKey()), "GET");
-        Assert.assertEquals(auditInfo.get(AuditInfo.BODY_AS_STRING.getKey()), "body-content");
-        Assert.assertEquals(auditInfo.get(AuditInfo.USER_ROLE.getKey()), "ADMIN");
-        Assert.assertEquals(auditInfo.get(AuditInfo.REMOTE_HOST.getKey()), "127.0.0.1");
-        Assert.assertEquals(auditInfo.get(AuditInfo.START_TIME.getKey()), "1000");
-        Assert.assertEquals(auditInfo.get(AuditInfo.RESPONSE_LENGTH.getKey()), "150");
-        Assert.assertEquals(auditInfo.get(AuditInfo.BASE_PATH.getKey()), "users");
-        Assert.assertEquals(auditInfo.get(AuditInfo.QUERY_STRING.getKey()), "");
-        Assert.assertEquals(auditInfo.get(AuditInfo.USER_GROUPS.getKey()), "everyone");
-        Assert.assertEquals(auditInfo.get(AuditInfo.RESPONSE_STATUS_CODE.getKey()), "200");
-        Assert.assertEquals(auditInfo.get(AuditInfo.PATH.getKey()), "users/user/15");
-        Assert.assertEquals(auditInfo.get(AuditInfo.USER_NAME.getKey()), "admin");
-        Assert.assertEquals(auditInfo.get(AuditInfo.REMOTE_ADDR.getKey()), "127.0.0.1");
-        Assert.assertEquals(auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
+        assertEquals(auditInfo.size(), 18);
+        assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
+        assertEquals(auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()), "application/octet-stream");
+        assertEquals(auditInfo.get(AuditInfo.HTTP_METHOD.getKey()), "GET");
+        assertEquals(auditInfo.get(AuditInfo.BODY_AS_STRING.getKey()), "body-content");
+        assertEquals(auditInfo.get(AuditInfo.USER_ROLE.getKey()), "ADMIN");
+        assertEquals(auditInfo.get(AuditInfo.REMOTE_HOST.getKey()), "127.0.0.1");
+        assertEquals(auditInfo.get(AuditInfo.START_TIME.getKey()), "1000");
+        assertEquals(auditInfo.get(AuditInfo.RESPONSE_LENGTH.getKey()), "150");
+        assertEquals(auditInfo.get(AuditInfo.BASE_PATH.getKey()), "users");
+        assertEquals(auditInfo.get(AuditInfo.QUERY_STRING.getKey()), "");
+        assertEquals(auditInfo.get(AuditInfo.USER_GROUPS.getKey()), "everyone");
+        assertEquals(auditInfo.get(AuditInfo.RESPONSE_STATUS_CODE.getKey()), "200");
+        assertEquals(auditInfo.get(AuditInfo.PATH.getKey()), "users/user/15");
+        assertEquals(auditInfo.get(AuditInfo.USER_NAME.getKey()), "admin");
+        assertEquals(auditInfo.get(AuditInfo.REMOTE_ADDR.getKey()), "127.0.0.1");
+        assertEquals(auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
                 "User[id=2, name=admin, group=[UserGroup[id=1, groupName=everyone]], role=ADMIN]");
-        Assert.assertNotNull(auditInfo.get(AuditInfo.END_TIME.getKey()));
-        Assert.assertEquals(Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
+        assertNotNull(auditInfo.get(AuditInfo.END_TIME.getKey()));
+        assertEquals(Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
                 Long.parseLong(auditInfo.get(AuditInfo.END_TIME.getKey())) - 1000);
     }
 
@@ -169,28 +158,28 @@ public final class AuditInfoExtractorTest {
         Mockito.when(exchange.getOutFaultMessage()).thenReturn(outFaultMessage);
         Mockito.when(exchange.get(AuditInfo.START_TIME.getKey())).thenReturn(1000l);
         Map<String, String> auditInfo = AuditInfoExtractor.extract(message);
-        Assert.assertEquals(auditInfo.size(), 20);
-        Assert.assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
-        Assert.assertEquals(auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()), "application/octet-stream");
-        Assert.assertEquals(auditInfo.get(AuditInfo.HTTP_METHOD.getKey()), "GET");
-        Assert.assertEquals(auditInfo.get(AuditInfo.BODY_AS_STRING.getKey()), "body-content");
-        Assert.assertEquals(auditInfo.get(AuditInfo.USER_ROLE.getKey()), "ADMIN");
-        Assert.assertEquals(auditInfo.get(AuditInfo.REMOTE_HOST.getKey()), "127.0.0.1");
-        Assert.assertEquals(auditInfo.get(AuditInfo.START_TIME.getKey()), "1000");
-        Assert.assertEquals(auditInfo.get(AuditInfo.RESPONSE_LENGTH.getKey()), "100");
-        Assert.assertEquals(auditInfo.get(AuditInfo.BASE_PATH.getKey()), "users");
-        Assert.assertEquals(auditInfo.get(AuditInfo.QUERY_STRING.getKey()), "");
-        Assert.assertEquals(auditInfo.get(AuditInfo.USER_GROUPS.getKey()), "everyone");
-        Assert.assertEquals(auditInfo.get(AuditInfo.RESPONSE_STATUS_CODE.getKey()), "500");
-        Assert.assertEquals(auditInfo.get(AuditInfo.PATH.getKey()), "users/user/15");
-        Assert.assertEquals(auditInfo.get(AuditInfo.USER_NAME.getKey()), "admin");
-        Assert.assertEquals(auditInfo.get(AuditInfo.REMOTE_ADDR.getKey()), "127.0.0.1");
-        Assert.assertEquals(auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
+        assertEquals(auditInfo.size(), 20);
+        assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
+        assertEquals(auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()), "application/octet-stream");
+        assertEquals(auditInfo.get(AuditInfo.HTTP_METHOD.getKey()), "GET");
+        assertEquals(auditInfo.get(AuditInfo.BODY_AS_STRING.getKey()), "body-content");
+        assertEquals(auditInfo.get(AuditInfo.USER_ROLE.getKey()), "ADMIN");
+        assertEquals(auditInfo.get(AuditInfo.REMOTE_HOST.getKey()), "127.0.0.1");
+        assertEquals(auditInfo.get(AuditInfo.START_TIME.getKey()), "1000");
+        assertEquals(auditInfo.get(AuditInfo.RESPONSE_LENGTH.getKey()), "100");
+        assertEquals(auditInfo.get(AuditInfo.BASE_PATH.getKey()), "users");
+        assertEquals(auditInfo.get(AuditInfo.QUERY_STRING.getKey()), "");
+        assertEquals(auditInfo.get(AuditInfo.USER_GROUPS.getKey()), "everyone");
+        assertEquals(auditInfo.get(AuditInfo.RESPONSE_STATUS_CODE.getKey()), "500");
+        assertEquals(auditInfo.get(AuditInfo.PATH.getKey()), "users/user/15");
+        assertEquals(auditInfo.get(AuditInfo.USER_NAME.getKey()), "admin");
+        assertEquals(auditInfo.get(AuditInfo.REMOTE_ADDR.getKey()), "127.0.0.1");
+        assertEquals(auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
                 "User[id=2, name=admin, group=[UserGroup[id=1, groupName=everyone]], role=ADMIN]");
-        Assert.assertEquals(auditInfo.get(AuditInfo.ERROR_MESSAGE.getKey()), "exception-message");
-        Assert.assertEquals(auditInfo.get(AuditInfo.FAILED.getKey()), "true");
-        Assert.assertNotNull(auditInfo.get(AuditInfo.END_TIME.getKey()));
-        Assert.assertEquals(Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
+        assertEquals(auditInfo.get(AuditInfo.ERROR_MESSAGE.getKey()), "exception-message");
+        assertEquals(auditInfo.get(AuditInfo.FAILED.getKey()), "true");
+        assertNotNull(auditInfo.get(AuditInfo.END_TIME.getKey()));
+        assertEquals(Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
                 Long.parseLong(auditInfo.get(AuditInfo.END_TIME.getKey())) - 1000);
     }
 }

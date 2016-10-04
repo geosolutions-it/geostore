@@ -27,48 +27,35 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import junit.framework.Assert;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 
-public final class AuditingFilesManagerTest {
+import static org.junit.Assert.assertEquals;
 
-    @Before
-    public void before() {
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-        AuditingTestsUtils.createDefaultConfiguration();
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.OUTPUT_DIRECTORY);
-    }
-
-    @AfterClass
-    public static void after() {
-        AuditingTestsUtils.deleteDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-    }
+public final class AuditingFilesManagerTest extends AuditingTestsBase {
 
     @Test
     public void testCleanInit() {
         AuditingFilesManager auditingFilesManager =
-                new AuditingFilesManager(AuditingTestsUtils.OUTPUT_DIRECTORY.getPath(), "txt");
-        File expectedOutputFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt");
-        Assert.assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY, expectedOutputFile);
+                new AuditingFilesManager(OUTPUT_DIRECTORY.getPath(), "txt");
+        File expectedOutputFile = new File(OUTPUT_DIRECTORY, "audit-geostore.txt");
+        assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY, expectedOutputFile);
     }
 
     @Test
     public void testInitWithExistingFiles() {
         AuditingTestsUtils.createFile(
-                new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt"),
+                new File(OUTPUT_DIRECTORY, "audit-geostore.txt"),
                 "existing1");
         AuditingFilesManager auditingFilesManager =
-                new AuditingFilesManager(AuditingTestsUtils.OUTPUT_DIRECTORY.getPath(), "txt");
-        File expectedOutputFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt");
-        File expectedExistingFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY,
+                new AuditingFilesManager(OUTPUT_DIRECTORY.getPath(), "txt");
+        File expectedOutputFile = new File(OUTPUT_DIRECTORY, "audit-geostore.txt");
+        File expectedExistingFile = new File(OUTPUT_DIRECTORY,
                 String.format("audit-geostore-%s-1.txt", auditingFilesManager.getCurrentDayTag()));
-        Assert.assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY,
+        assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY,
                 expectedOutputFile, expectedExistingFile);
         AuditingTestsUtils.checkFileExistsWithContent(expectedExistingFile, "existing1");
         AuditingTestsUtils.checkFileExistsWithContent(expectedOutputFile, "");
@@ -77,15 +64,15 @@ public final class AuditingFilesManagerTest {
     @Test
     public void testRollingFiles() {
         AuditingFilesManager auditingFilesManager =
-                new AuditingFilesManager(AuditingTestsUtils.OUTPUT_DIRECTORY.getPath(), "txt");
-        File expectedOutputFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt");
-        Assert.assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY, expectedOutputFile);
+                new AuditingFilesManager(OUTPUT_DIRECTORY.getPath(), "txt");
+        File expectedOutputFile = new File(OUTPUT_DIRECTORY, "audit-geostore.txt");
+        assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY, expectedOutputFile);
         AuditingTestsUtils.writeToFile(expectedOutputFile, "rolled1");
         auditingFilesManager.rollOutputFile();
-        File expectedExistingFile1 = new File(AuditingTestsUtils.OUTPUT_DIRECTORY,
+        File expectedExistingFile1 = new File(OUTPUT_DIRECTORY,
                 String.format("audit-geostore-%s-1.txt", auditingFilesManager.getCurrentDayTag()));
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY,
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY,
                 expectedOutputFile, expectedExistingFile1);
         AuditingTestsUtils.checkFileExistsWithContent(expectedExistingFile1, "rolled1");
         AuditingTestsUtils.checkFileExistsWithContent(expectedOutputFile, "");
@@ -93,9 +80,9 @@ public final class AuditingFilesManagerTest {
         AuditingTestsUtils.writeToFile(expectedOutputFile, "rolled2");
         auditingFilesManager.rollOutputFile();
         int rolledFileIndex = previousCurrentTagDay.equals(auditingFilesManager.getCurrentDayTag()) ? 2 : 1;
-        File expectedExistingFile2 = new File(AuditingTestsUtils.OUTPUT_DIRECTORY,
+        File expectedExistingFile2 = new File(OUTPUT_DIRECTORY,
                 String.format("audit-geostore-%s-%d.txt", auditingFilesManager.getCurrentDayTag(), rolledFileIndex));
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY,
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY,
                 expectedOutputFile, expectedExistingFile1, expectedExistingFile2);
         AuditingTestsUtils.checkFileExistsWithContent(expectedExistingFile1, "rolled1");
         AuditingTestsUtils.checkFileExistsWithContent(expectedExistingFile2, "rolled2");
@@ -105,13 +92,13 @@ public final class AuditingFilesManagerTest {
     @Test
     public void testMakeFileExists() {
         AuditingFilesManager auditingFilesManager =
-                new AuditingFilesManager(AuditingTestsUtils.OUTPUT_DIRECTORY.getPath(), "txt");
-        File expectedOutputFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt");
-        Assert.assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY, expectedOutputFile);
+                new AuditingFilesManager(OUTPUT_DIRECTORY.getPath(), "txt");
+        File expectedOutputFile = new File(OUTPUT_DIRECTORY, "audit-geostore.txt");
+        assertEquals(auditingFilesManager.getOutputFile(), expectedOutputFile);
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY, expectedOutputFile);
         AuditingTestsUtils.deleteFile(expectedOutputFile);
-        AuditingTestsUtils.checkDirectoryIsEmpty(AuditingTestsUtils.OUTPUT_DIRECTORY);
+        AuditingTestsUtils.checkDirectoryIsEmpty(OUTPUT_DIRECTORY);
         auditingFilesManager.makeOutputFileExists();
-        AuditingTestsUtils.checkDirectoryContainsFiles(AuditingTestsUtils.OUTPUT_DIRECTORY, expectedOutputFile);
+        AuditingTestsUtils.checkDirectoryContainsFiles(OUTPUT_DIRECTORY, expectedOutputFile);
     }
 }
