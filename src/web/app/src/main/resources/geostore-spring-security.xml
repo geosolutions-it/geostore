@@ -23,6 +23,7 @@
 	<security:http auto-config="true" create-session="never" >
 		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
 		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
+		<security:custom-filter ref="sessionTokenProcessingFilter" after="FORM_LOGIN_FILTER"/>
 		<security:anonymous />
 	</security:http>
 	<!-- Entry point -->
@@ -36,6 +37,10 @@
 	
 	<bean class="it.geosolutions.geostore.services.rest.security.UserAttributeTokenAuthenticationFilter"
         id="authenticationTokenProcessingFilter">
+	</bean>
+	
+	<bean class="it.geosolutions.geostore.services.rest.security.SessionTokenAuthenticationFilter"
+        id="sessionTokenProcessingFilter">
 	</bean>
 	
 	<!-- bean class="it.geosolutions.geostore.services.rest.security.WebServiceTokenAuthenticationFilter"
