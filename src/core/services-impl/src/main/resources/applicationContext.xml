@@ -26,5 +26,7 @@
     
     <bean id="userGroupService" class="it.geosolutions.geostore.services.UserGroupServiceImpl">
     </bean>
+    <bean id="userSessionService" class="it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl">
+    </bean>
     
 </beans>
