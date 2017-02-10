@@ -57,16 +57,16 @@ public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
 
     @Test
     public void testSessionStorage() throws Exception {
-    	UserSessionService service =new InMemoryUserSessionServiceImpl();
+    	UserSessionService service = new InMemoryUserSessionServiceImpl();
     	User u = new User();
     	u.setId(1L);
     	u.setName("TEST");
-    	UserSession session = new UserSessionImpl(u, new GregorianCalendar());
+    	UserSession session = new UserSessionImpl(u, new GregorianCalendar(3000, 1,1));
     	String sessionId = service.registerNewSession(session);
     	User sessUser = service.getUserData(sessionId);
     	assertEquals(sessUser, u);
     	assertTrue(service.isOwner(sessionId, u));
-    	UserSession session2 = new UserSessionImpl(u, new GregorianCalendar());
+    	UserSession session2 = new UserSessionImpl(u, new GregorianCalendar(3000, 1,1));
     	service.registerNewSession("ID_SESSION", session2);
     	assertTrue(service.isOwner("ID_SESSION", u));
     	service.refreshSession(sessionId);
