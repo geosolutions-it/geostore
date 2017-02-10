@@ -38,19 +38,34 @@ import it.geosolutions.geostore.core.model.User;
  * @author Lorenzo Natali
  */
 public interface UserSession {
+	
+	public void setId(String id);
+    
     public String getId();
     
-    public User getUser();
-    
-    public void setId(String id);
-    
     public void setUser(User user);
+    
+    public User getUser();
     
     public void setRefreshToken(String refreshToken);
     
     public String getRefreshToken();
+
+    void setExpirationInterval(long expirationInterval);
+
+	long getExpirationInterval();
     
+	/**
+	 * Check if the token has expired
+	 * @return true if it is expired
+	 */
     public boolean isExpired();
     
+    
+    /**
+     * Update expirationDate
+     * adding expiration time (in seconds)
+     */
     public void refresh();
+
 }

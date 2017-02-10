@@ -49,7 +49,8 @@ public class UserSessionImpl implements UserSession {
     
     private long expirationInterval = 0l;
     
-    private String refreshToken;
+
+	private String refreshToken;
 
 	public UserSessionImpl(String id, User user, Calendar expiration) {
         super();
@@ -72,13 +73,6 @@ public class UserSessionImpl implements UserSession {
         this.user = user;
     }
 
-    public void setExpiration(Calendar expiration) {
-        this.expiration = expiration;
-        if(expiration != null) {
-        	expirationInterval = expiration.getTimeInMillis() - Calendar.getInstance().getTimeInMillis();
-        }
-    }
-    
     public String getRefreshToken() {
 		return refreshToken;
 	}
@@ -109,10 +103,23 @@ public class UserSessionImpl implements UserSession {
 	public void refresh() {
 		if(expiration != null) {
 			Calendar newExpiration = Calendar.getInstance();
-			newExpiration.setTimeInMillis(newExpiration.getTimeInMillis() + expirationInterval);
+			newExpiration.setTimeInMillis(newExpiration.getTimeInMillis() + expirationInterval* 1000);
 			setExpiration(newExpiration);
 		}
 		
+	}
+	public void setExpiration(Calendar expiration) {
+        this.expiration = expiration;
+    }
+    
+	@Override
+	public long getExpirationInterval() {
+		return expirationInterval;
+	}
+
+	@Override
+	public void setExpirationInterval(long expirationInterval) {
+		this.expirationInterval = expirationInterval;
 	}
 
 

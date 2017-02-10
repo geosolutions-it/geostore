@@ -62,7 +62,10 @@ public class UserSessionTest extends TestCase {
     	session.refresh();
     	session= new UserSessionImpl(u, new GregorianCalendar(1900,1,1));
     	assertTrue(session.isExpired());
-    	
+    	session.setExpirationInterval(100);
+    	assertEquals(session.getExpirationInterval(), 100);
+    	session.refresh();
+    	assertFalse(session.isExpired());
     }
 
    

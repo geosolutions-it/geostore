@@ -54,6 +54,7 @@ public interface RESTSessionService {
      * Gets the User object associated to the given sessionId (if it exists).
      * 
      * @param sessionId
+     * @param refresh flag to automatically refresh the session (only if enabled)
      * @return
      */
 	@GET
@@ -68,6 +69,7 @@ public interface RESTSessionService {
      * Gets the username associated to the given sessionId (if it exists).
      * 
      * @param sessionId
+     * @param refresh flag to automatically refresh the session (only if enabled)
      * @return
      */
 	@GET
@@ -81,7 +83,7 @@ public interface RESTSessionService {
 	/**
      * Creates a new session for the User in SecurityContext.
      * 
-     * @return
+     * @return the session key
      * @throws ParseException 
      */
     
@@ -95,7 +97,7 @@ public interface RESTSessionService {
 	/**
      * Creates a new session for the User in SecurityContext.
      * 
-     * @return
+     * @return The session token with expiring time (in seconds and refresh token.
      * @throws ParseException 
      */
     
@@ -104,6 +106,22 @@ public interface RESTSessionService {
     @Produces({MediaType.APPLICATION_JSON})
     @Secured({ "ROLE_ADMIN", "ROLE_USER" })
     public SessionToken login(@Context SecurityContext sc) throws ParseException;
+    
+	/**
+     * Refresh the session token
+     * 
+     * @param sessionId the current session token
+     * @param refreshToken the token that allow you to refresh the session
+     * 
+     * @return the new session token with the new informations
+     * @throws ParseException 
+     */
+    
+    @POST
+    @Path("/refresh/{sessionId}/{refreshToken}")
+    @Produces({MediaType.APPLICATION_JSON})
+    @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    public SessionToken refresh(@Context SecurityContext sc, @PathParam("sessionId") String sessionId, @PathParam("refreshToken") String refreshToken)  throws ParseException;
     /**
      * Removes the given session.
      * 

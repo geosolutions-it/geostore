@@ -43,6 +43,7 @@ import it.geosolutions.geostore.services.dto.UserSession;
  * In memory implementation of a UserSessionService.
  * 
  * @author Mauro Bartolomeoli
+ * @author Lorenzo Natali
  *
  */
 public class InMemoryUserSessionServiceImpl implements UserSessionService {
@@ -141,11 +142,23 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
     }
 
 	@Override
-	public void refreshSession(String sessionId) {
+	public UserSession refreshSession(String sessionId, String refreshToken) {
 		if(sessions.containsKey(sessionId)) {
-			sessions.get(sessionId).refresh();
+			UserSession sess = sessions.get(sessionId);
+			if(sess.getRefreshToken().equals(refreshToken));
+				sess.refresh();
+				return sess;
 		}
+		return null;
 		
+	}
+
+	@Override
+	public String getRefreshToken(String sessionId) {
+		if(sessions.containsKey(sessionId)) {
+			return sessions.get(sessionId).getRefreshToken();
+		}
+		return sessionId;
 	}
 
 }

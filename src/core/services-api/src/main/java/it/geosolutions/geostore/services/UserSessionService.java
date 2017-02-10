@@ -47,12 +47,20 @@ public interface UserSessionService {
 	 */
     public User getUserData(String sessionId);
     
+	/**
+	 * Gets refresh token for a given session id (if existing).
+	 * 
+	 * @param sessionId
+	 * @return
+	 */
+    public String getRefreshToken(String sessionId);
+    
     /**
      * Refresh an expiring session by the given interval.
      * 
      * @param sessionId
      */
-    public void refreshSession(String sessionId);
+    public UserSession refreshSession(String sessionId, String refreshToken);
     
     /**
      * Register a new session. The session id is given.

@@ -36,9 +36,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- * Class UserServiceImplTest.
+ * Class InMemoryUserSessionServiceImplTest.
  * 
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
+ * @author Lorenzo Natali (lorenzo.natali at geo-solutions.it)
  * 
  */
 public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
@@ -69,7 +69,7 @@ public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
     	UserSession session2 = new UserSessionImpl(u, new GregorianCalendar(3000, 1,1));
     	service.registerNewSession("ID_SESSION", session2);
     	assertTrue(service.isOwner("ID_SESSION", u));
-    	service.refreshSession(sessionId);
+    	service.refreshSession(sessionId, session.getRefreshToken());
     	service.removeSession("ID_SESSION");
     	assertFalse(service.isOwner("ID_SESSION", u));
     	service.removeAllSessions();
