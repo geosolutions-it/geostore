@@ -44,10 +44,13 @@ import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
+import it.geosolutions.geostore.services.rest.model.SessionToken;
 
 public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService{
 	@Autowired
 	UserSessionService userSessionService;
+	
+	private int sessionTimeout = 86400; // 1 day
 
 	public UserSessionService getUserSessionService() {
 		return userSessionService;
@@ -116,6 +119,27 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
 		return null;
 	}
+	
+	@Override
+	public SessionToken login(SecurityContext sc) throws ParseException {
+		Calendar expires = new GregorianCalendar();
+		expires.add(Calendar.SECOND, getSessionTimeout());
+		User user = extractAuthUser(sc);
+		if (user != null) {
+			
+			UserSession session = null;
+			if (user instanceof User) {
+				session = new UserSessionImpl(null, user, expires);
+			}
+			String accessToken = userSessionService.registerNewSession(session);
+			SessionToken token = new SessionToken();
+			token.setAccess_token(accessToken);
+			token.setExpires(getSessionTimeout());
+			token.setToken_type("Bearer");
+			return token;
+		}
+		return null;
+	}
 
 
 	/**
@@ -161,6 +185,14 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 	@Override
 	protected SecurityService getSecurityService() {
 		return null;
+	}
+
+	public int getSessionTimeout() {
+		return sessionTimeout;
+	}
+
+	public void setSessionTimeout(int sessionTimeout) {
+		this.sessionTimeout = sessionTimeout;
 	}
 
 	

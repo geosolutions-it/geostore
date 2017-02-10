@@ -62,7 +62,10 @@
 	<bean id="restUserGroupService"
 		class="it.geosolutions.geostore.services.rest.impl.RESTUserGroupServiceImpl">
 	</bean>
-
+    <bean id="restSessionService" 
+    	class="it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl">
+    	<property name="sessionTimeout" value="86400" />
+    </bean>
 	<!-- ==================================================================== -->
 	<!-- === REST Services ================================================== -->
 	<!-- ==================================================================== -->
@@ -185,7 +188,30 @@
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
 	</jaxrs:server>
+	
+    
+    <jaxrs:server id="geoStoreRESTSessionService" address="/session">
+        <jaxrs:serviceBeans>
+          <ref bean="restSessionService"/>
+        </jaxrs:serviceBeans>
 
+        <jaxrs:features>
+             <cxf:logging/>
+        </jaxrs:features>
+
+        <jaxrs:providers>
+           <ref bean="jaxbXmlProvider"/>
+           <bean class="org.apache.cxf.jaxrs.provider.JSONProvider">
+	           <property name="dropRootElement" value="true"/>
+	     </bean>
+           <ref bean="jaxbContextResolver"/>
+           <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
+        </jaxrs:providers>    
+
+    </jaxrs:server>
+    <!-- ====================================================================-->
+    <!-- === REST Services ==================================================-->
+    <!-- ====================================================================-->
 
 	<!-- <jaxrs:server id="geoStoreRESTExtJs" address="/extjs">
 		<jaxrs:serviceBeans> 

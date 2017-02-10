@@ -33,6 +33,7 @@ import java.text.ParseException;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -45,6 +46,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.springframework.security.access.annotation.Secured;
 
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.services.rest.model.SessionToken;
 
 public interface RESTSessionService {
 	
@@ -90,7 +92,18 @@ public interface RESTSessionService {
     public String createSession(
     		@DefaultValue("") @QueryParam("expires") String expires, @Context SecurityContext sc) throws ParseException;
     
+	/**
+     * Creates a new session for the User in SecurityContext.
+     * 
+     * @return
+     * @throws ParseException 
+     */
     
+    @POST
+    @Path("/login")
+    @Produces({MediaType.APPLICATION_JSON})
+    @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    public SessionToken login(@Context SecurityContext sc) throws ParseException;
     /**
      * Removes the given session.
      * 
