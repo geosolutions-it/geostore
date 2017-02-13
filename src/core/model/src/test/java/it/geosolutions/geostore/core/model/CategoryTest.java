@@ -19,15 +19,14 @@
  */
 package it.geosolutions.geostore.core.model;
 
-import it.geosolutions.geostore.core.model.enums.DataType;
+import static org.junit.Assert.assertTrue;
+
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.Date;
+
 import javax.xml.bind.JAXB;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 /**
  * 
@@ -35,7 +34,7 @@ import static org.junit.Assert.*;
  */
 public class CategoryTest {
 
-    private final static TestMarshaller<Category> MARSHALER = new TestMarshaller<Category>(Category.class);
+    private final static TMarshaler<Category> MARSHALER = new TMarshaler<Category>(Category.class);
 
     public CategoryTest() {
     }
@@ -61,3 +60,23 @@ public class CategoryTest {
     }
 }
 
+class TMarshaler<T> {
+
+    private final Class<T> _class;
+
+    public TMarshaler(Class<T> _class) {
+        this._class = _class;
+    }
+
+    protected String marshal(T a) {
+        StringWriter sw = new StringWriter();
+        JAXB.marshal(a, sw);
+        return sw.toString();
+    }
+
+    protected T unmarshal(String s) {
+        StringReader sr = new StringReader(s);
+        return JAXB.unmarshal(sr, _class);
+    }
+
+}
