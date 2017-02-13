@@ -158,7 +158,7 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
 		if(sessions.containsKey(sessionId)) {
 			return sessions.get(sessionId).getRefreshToken();
 		}
-		return sessionId;
+		return null;
 	}
 
 }
