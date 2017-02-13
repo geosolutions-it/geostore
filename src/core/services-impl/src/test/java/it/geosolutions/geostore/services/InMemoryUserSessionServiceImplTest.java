@@ -56,6 +56,12 @@ public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testInitialization() {
+    	InMemoryUserSessionServiceImpl service = new InMemoryUserSessionServiceImpl();
+    	service.setCleanUpSeconds(500);
+    	assertTrue(true);
+    }
+    @Test
     public void testSessionStorage() throws Exception {
     	UserSessionService service = new InMemoryUserSessionServiceImpl();
     	User u = new User();
@@ -69,11 +75,26 @@ public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
     	UserSession session2 = new UserSessionImpl(u, new GregorianCalendar(3000, 1,1));
     	service.registerNewSession("ID_SESSION", session2);
     	assertTrue(service.isOwner("ID_SESSION", u));
-    	service.refreshSession(sessionId, session.getRefreshToken());
+    	service.refreshSession(sessionId, service.getRefreshToken(sessionId));
     	service.removeSession("ID_SESSION");
     	assertFalse(service.isOwner("ID_SESSION", u));
     	service.removeAllSessions();
     	assertFalse(service.isOwner(sessionId, u));
+
+    }
+    @Test
+    public void testSessionMissing() throws Exception {
+    	UserSessionService service = new InMemoryUserSessionServiceImpl();
+    	User u = new User();
+    	u.setId(1L);
+    	u.setName("TEST");
+    	UserSession session = new UserSessionImpl(u, new GregorianCalendar(3000, 1,1));
+    	String sessionId = service.registerNewSession(session);
+    	User sessUser = service.getUserData(sessionId);
+    	assertEquals(sessUser, u);
+    	assertTrue(service.isOwner(sessionId, u));
+    	assertNull(service.getRefreshToken("NOT_A SESSION"));
+    	assertNull(service.getUserData("NOT_A SESSION"));
 
     }
 
