@@ -131,7 +131,14 @@
             <artifactId>servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-    	      
+    	<!-- =========================================================== -->
+		<!--     SPRING SECURITY                                         -->
+		<!-- =========================================================== -->
+        <!-- for security module and encriptyion -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-core</artifactId>
+		</dependency> 
         <!-- ================================================================-->
         <!-- CXF -->
         <!-- ================================================================-->

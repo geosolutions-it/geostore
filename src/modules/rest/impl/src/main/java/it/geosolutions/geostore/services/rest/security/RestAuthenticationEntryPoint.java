@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2017 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -47,6 +47,7 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationEn
  */
 public class RestAuthenticationEntryPoint extends  BasicAuthenticationEntryPoint {
 	private static final String LOGIN_PATH="users/user/details";
+	private static final String SESSION_LOGIN_PATH= "session/";
 	 private static final Logger LOGGER = Logger.getLogger(RestAuthenticationEntryPoint.class);
 	@Override
 	public void commence(HttpServletRequest request,
@@ -65,7 +66,7 @@ public class RestAuthenticationEntryPoint extends  BasicAuthenticationEntryPoint
 				super.commence(request, response, authException);
 				return;
 			}
-		if( url.getPath().contains(LOGIN_PATH) ){
+		if( url.getPath().contains(LOGIN_PATH) || url.getPath().contains(SESSION_LOGIN_PATH)){
 			response.setHeader("WWW-Authenticate", "FormBased");
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 		}
