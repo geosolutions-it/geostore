@@ -50,14 +50,10 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
-import it.geosolutions.geostore.services.rest.security.GroupsRolesService;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;

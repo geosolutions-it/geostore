@@ -34,8 +34,6 @@ import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
 
-import net.sf.json.JSONObject;
-
 
 /**
  * Maps user attributes for a JSON object.

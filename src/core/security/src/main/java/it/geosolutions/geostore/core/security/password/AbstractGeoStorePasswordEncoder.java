@@ -19,11 +19,6 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
-import java.security.Security;
-import java.util.logging.Logger;
-
-
-
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.encoding.PasswordEncoder;
 

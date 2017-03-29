@@ -19,14 +19,12 @@
  */
 package it.geosolutions.geostore.services;
 
-import it.geosolutions.geostore.core.model.Resource;
-import java.util.Date;
-
-import it.geosolutions.geostore.core.model.StoredData;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.StoredData;
 
 /**
  * Class StoredDataServiceImplTest.

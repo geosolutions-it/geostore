@@ -28,7 +28,6 @@
         <version>1.4-SNAPSHOT</version>
     </parent>
 
-    <groupId>it.geosolutions.geostore</groupId>
     <artifactId>geostore-services-impl</artifactId>
     <packaging>jar</packaging>
     <name>GeoStore - Core - Services implementation</name>
@@ -42,7 +41,6 @@
         <dependency>
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-model</artifactId>
-            <version>1.4-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
 

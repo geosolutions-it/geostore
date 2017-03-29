@@ -28,14 +28,9 @@
 package it.geosolutions.geostore.services.rest.auditing;
 
 import org.apache.cxf.interceptor.Fault;
-import org.apache.cxf.jaxrs.ext.MessageContext;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
-import org.apache.log4j.Logger;
-
-import javax.ws.rs.core.Context;
-import java.util.Map;
 
 public final class AuditingInterceptorSendEnding extends AbstractPhaseInterceptor<Message> {
 

@@ -35,8 +35,6 @@ import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.log4j.Logger;

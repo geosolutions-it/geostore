@@ -28,8 +28,6 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 

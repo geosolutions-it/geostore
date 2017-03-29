@@ -20,7 +20,6 @@
 package it.geosolutions.geostore.services;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 import it.geosolutions.geostore.core.model.User;

@@ -27,8 +27,6 @@
  */
 package it.geosolutions.geostore.core.security;
 
-import org.springframework.security.core.userdetails.UserDetails;
-
 import it.geosolutions.geostore.core.model.User;
 
 /**

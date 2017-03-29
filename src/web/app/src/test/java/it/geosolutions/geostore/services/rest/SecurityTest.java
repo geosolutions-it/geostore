@@ -23,14 +23,8 @@ import java.net.ServerSocket;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.impl.RESTCategoryServiceImpl;
 
-import javax.ws.rs.core.Response;
-
-import org.apache.cxf.endpoint.Server;
-import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

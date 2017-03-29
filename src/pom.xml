@@ -29,7 +29,6 @@
 
     <groupId>it.geosolutions.geostore</groupId>
     <artifactId>geostore-root</artifactId>
-    <version>1.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>GeoStore - 0 Server Root</name>
@@ -961,18 +960,6 @@
     </repositories>
 
     <pluginRepositories>
-        
-        <pluginRepository>
-            <id>repo.maven.org-maven2</id>
-            <name>repo.maven.org-maven2</name>
-            <url>http://repo.maven.org/maven2/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </pluginRepository>  
         
         <pluginRepository>
             <id>repo1.maven.org-maven2</id>

@@ -29,8 +29,6 @@ package it.geosolutions.geostore.services.dto;
 
 import java.util.Calendar;
 
-import org.springframework.security.core.userdetails.UserDetails;
-
 import it.geosolutions.geostore.core.model.User;
 
 /**

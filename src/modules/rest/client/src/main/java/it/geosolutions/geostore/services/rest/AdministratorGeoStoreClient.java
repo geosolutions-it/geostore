@@ -2,7 +2,6 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.services.rest.client.model.ExtGroupList;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;

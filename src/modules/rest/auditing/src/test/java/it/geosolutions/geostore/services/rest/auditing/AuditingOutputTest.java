@@ -27,7 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import junit.framework.Assert;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;

@@ -27,8 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.model;
 
-import it.geosolutions.geostore.core.model.User;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
