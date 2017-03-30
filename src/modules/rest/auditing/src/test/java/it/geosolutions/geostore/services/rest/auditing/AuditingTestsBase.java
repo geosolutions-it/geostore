@@ -37,7 +37,7 @@ import java.util.UUID;
 /**
  * Base class that defines the necessary tests directories and make everything is cleaned at the end.
  */
-abstract class AuditingTestsBase {
+abstract public class AuditingTestsBase {
 
     protected final File TESTS_ROOT_DIRECTORY = new File(System.getProperty("java.io.tmpdir"), "auditing-tests-" + UUID.randomUUID().toString());
     protected final File OUTPUT_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "output");
