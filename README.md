@@ -3,7 +3,7 @@
 [![Build Status](http://winbuild.geo-solutions.it/jenkins/buildStatus/icon?job=GeoStore-Master)](http://winbuild.geo-solutions.it/jenkins/job/GeoStore-Master/)
 [![Coverage Status](https://coveralls.io/repos/github/geosolutions-it/geostore/badge.svg?branch=master)](https://coveralls.io/github/geosolutions-it/geostore?branch=master)
 
-[GeoStore](http://github.com/geosolutions-it/geostore>) is an open source Java enterprise application for storing, searching and retrieving data on the fly.
+[GeoStore](https://github.com/geosolutions-it/geostore) is an open source Java enterprise application for storing, searching and retrieving data on the fly.
 
 GeoStore performs authentication internally (auth framework shall be pluggable), and internal authorization rules grant permissions on single Resources or whole Categories.
 
@@ -11,7 +11,7 @@ A comprehensive [REST API](https://github.com/geosolutions-it/geostore/wiki/REST
 
 Documentation
 -------------
-For more information check the [GeoStore wiki](https://github.com/geosolutions-it/geostore/wiki/Documentation-index>) .
+For more information check the [GeoStore wiki](https://github.com/geosolutions-it/geostore/wiki/Documentation-index) .
 
 License
 ------------
