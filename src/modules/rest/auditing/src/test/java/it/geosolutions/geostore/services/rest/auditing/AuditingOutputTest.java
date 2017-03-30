@@ -28,8 +28,6 @@
 package it.geosolutions.geostore.services.rest.auditing;
 
 import junit.framework.Assert;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -37,34 +35,22 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public final class AuditingOutputTest {
-
-    @Before
-    public void before() {
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.OUTPUT_DIRECTORY);
-    }
-
-    @AfterClass
-    public static void after() {
-        AuditingTestsUtils.deleteDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-    }
+public final class AuditingOutputTest extends AuditingTestsBase {
 
     @Test
     public void testAuditOutput() throws InterruptedException {
-        AuditingTestsUtils.createDefaultConfiguration();
         AuditingOutput auditingOutput = new AuditingOutput();
         Assert.assertEquals(auditingOutput.isAuditEnable(), true);
         Map<String, String> message1 = createTestMessage("1");
         Map<String, String> message2 = createTestMessage("2");
         Map<String, String> message3 = createTestMessage("3");
-        File outputFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY, "audit-geostore.txt");
+        File outputFile = new File(OUTPUT_DIRECTORY, "audit-geostore.txt");
         offerMessage(auditingOutput, outputFile, message1);
         AuditingTestsUtils.checkFileExistsWithContent(outputFile, contentWithoutEnd(message1));
         offerMessage(auditingOutput, outputFile, message2);
         AuditingTestsUtils.checkFileExistsWithContent(outputFile, contentWithoutEnd(message1, message2));
         offerMessage(auditingOutput, outputFile, message3);
-        File rolledFile = new File(AuditingTestsUtils.OUTPUT_DIRECTORY,
+        File rolledFile = new File(OUTPUT_DIRECTORY,
                 String.format("audit-geostore-%s-1.txt", auditingOutput.getAuditingFilesManager().getCurrentDayTag()));
         AuditingTestsUtils.waitFileExists(rolledFile, 5000);
         AuditingTestsUtils.checkFileExistsWithContent(outputFile, "*START*");

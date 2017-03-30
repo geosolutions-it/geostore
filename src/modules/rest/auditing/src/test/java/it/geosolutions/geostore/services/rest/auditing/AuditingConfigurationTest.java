@@ -27,48 +27,35 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import junit.framework.Assert;
-import org.apache.commons.io.FileUtils;
-import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Map;
 
-public final class AuditingConfigurationTest {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-    @Before
-    public void before() {
-        AuditingTestsUtils.initDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-        AuditingTestsUtils.createDefaultConfiguration();
-    }
-
-    @AfterClass
-    public static void after() {
-        AuditingTestsUtils.deleteDirectory(AuditingTestsUtils.TESTS_ROOT_DIRECTORY);
-    }
+public final class AuditingConfigurationTest extends AuditingTestsBase {
 
     @Test
     public void testSimpleConfiguration() {
         AuditingConfiguration auditingConfiguration = new AuditingConfiguration();
-        Assert.assertEquals(auditingConfiguration.isAuditEnable(), true);
-        Assert.assertEquals(auditingConfiguration.getMaxRequestPerFile(), 3);
-        Assert.assertEquals(auditingConfiguration.getTemplatesVersion(), 1);
-        Assert.assertEquals(auditingConfiguration.getOutputDirectory(), AuditingTestsUtils.OUTPUT_DIRECTORY.getAbsolutePath());
-        Assert.assertEquals(auditingConfiguration.getOutputFilesExtension(), "txt");
-        Assert.assertEquals(auditingConfiguration.getTemplatesDirectory(), AuditingTestsUtils.TEMPLATES_DIRECTORY.getAbsolutePath());
+        assertEquals(auditingConfiguration.isAuditEnable(), true);
+        assertEquals(auditingConfiguration.getMaxRequestPerFile(), 3);
+        assertEquals(auditingConfiguration.getTemplatesVersion(), 1);
+        assertEquals(auditingConfiguration.getOutputDirectory(), OUTPUT_DIRECTORY.getAbsolutePath());
+        assertEquals(auditingConfiguration.getOutputFilesExtension(), "txt");
+        assertEquals(auditingConfiguration.getTemplatesDirectory(), TEMPLATES_DIRECTORY.getAbsolutePath());
     }
 
     @Test
     public void testUpdateConfiguration() {
         AuditingConfiguration auditingConfiguration = new AuditingConfiguration();
-        Assert.assertEquals(auditingConfiguration.isAuditEnable(), true);
-        Map<String, String> properties = AuditingTestsUtils.getDefaultProperties();
+        assertEquals(auditingConfiguration.isAuditEnable(), true);
+        Map<String, String> properties = AuditingTestsUtils.getDefaultProperties(OUTPUT_DIRECTORY, TEMPLATES_DIRECTORY);
         properties.put(AuditingConfiguration.AUDIT_ENABLE, "false");
-        AuditingTestsUtils.createFile(AuditingTestsUtils.CONFIGURATION_FILE_PATH,
+        AuditingTestsUtils.createFile(CONFIGURATION_FILE_PATH,
                 AuditingTestsUtils.propertiesToString(properties));
         AuditingConfiguration newAuditingConfiguration = auditingConfiguration.checkForNewConfiguration();
-        Assert.assertNotNull(newAuditingConfiguration);
+        assertNotNull(newAuditingConfiguration);
     }
 }

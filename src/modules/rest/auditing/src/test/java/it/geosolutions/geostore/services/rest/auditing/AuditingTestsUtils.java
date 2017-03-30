@@ -36,22 +36,19 @@ import java.io.FileWriter;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 final class AuditingTestsUtils {
 
-    static final File TESTS_ROOT_DIRECTORY = new File(System.getProperty("java.io.tmpdir"), "auditing-tests");
+    static File randomDirectory(File original) {
+        return new File(original.getPath() + "-" + UUID.randomUUID().toString());
+    }
 
-    static final File OUTPUT_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "output");
-    static final File TEMPLATES_DIRECTORY = new File(AuditingTestsUtils.class.getClassLoader().getResource("templates").getFile());
-    static final File CONFIGURATION_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "configuration");
-
-    static final File CONFIGURATION_FILE_PATH = new File(CONFIGURATION_DIRECTORY, "auditing.properties");
-
-    static void createDefaultConfiguration() {
-        initDirectory(CONFIGURATION_DIRECTORY);
-        System.setProperty(AuditingConfiguration.CONFIGURATION_PATH, CONFIGURATION_FILE_PATH.getAbsolutePath());
-        String properties = propertiesToString(getDefaultProperties());
-        createFile(CONFIGURATION_FILE_PATH, properties);
+    static void createDefaultConfiguration(File configurationDirectory, File configurationFilePath, File outputDirectory, File templatesDirectory) {
+        initDirectory(configurationDirectory);
+        System.setProperty(AuditingConfiguration.CONFIGURATION_PATH, configurationFilePath.getAbsolutePath());
+        String properties = propertiesToString(getDefaultProperties(outputDirectory, templatesDirectory));
+        createFile(configurationFilePath, properties);
     }
 
     static void initDirectory(File directory) {
@@ -72,7 +69,7 @@ final class AuditingTestsUtils {
     }
 
     static void deleteFile(File file) {
-        if(!file.getAbsolutePath().contains("auditing-tests")) {
+        if (!file.getAbsolutePath().contains("auditing-tests")) {
             throw new AuditingException("This path '%s' requested to delete looks suspicious.", file.getAbsolutePath());
         }
         try {
@@ -110,13 +107,13 @@ final class AuditingTestsUtils {
         }
     }
 
-    static Map<String, String> getDefaultProperties() {
+    static Map<String, String> getDefaultProperties(File outputDirectory, File templatesDirectory) {
         Map<String, String> properties = new HashMap<String, String>();
         properties.put(AuditingConfiguration.AUDIT_ENABLE, "true");
         properties.put(AuditingConfiguration.MAX_RESQUEST_PER_FILE, "3");
-        properties.put(AuditingConfiguration.OUTPUT_DIRECTORY, OUTPUT_DIRECTORY.getAbsolutePath().replace("\\", "\\\\"));
+        properties.put(AuditingConfiguration.OUTPUT_DIRECTORY, outputDirectory.getAbsolutePath().replace("\\", "\\\\"));
         properties.put(AuditingConfiguration.OUTPUT_FILES_EXTENSION, "txt");
-        properties.put(AuditingConfiguration.TEMPLATES_DIRECTORY, TEMPLATES_DIRECTORY.getAbsolutePath().replace("\\", "\\\\"));
+        properties.put(AuditingConfiguration.TEMPLATES_DIRECTORY, templatesDirectory.getAbsolutePath().replace("\\", "\\\\"));
         properties.put(AuditingConfiguration.TEMPLATES_VERSION, "1");
         return properties;
     }
