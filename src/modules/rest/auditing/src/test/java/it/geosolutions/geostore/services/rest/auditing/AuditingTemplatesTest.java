@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 public final class AuditingTemplatesTest extends AuditingTestsBase {
 

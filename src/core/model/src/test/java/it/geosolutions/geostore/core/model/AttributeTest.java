@@ -24,8 +24,6 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Date;
 import javax.xml.bind.JAXB;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 

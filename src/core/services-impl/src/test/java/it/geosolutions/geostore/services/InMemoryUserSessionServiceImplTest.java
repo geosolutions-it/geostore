@@ -19,15 +19,8 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.Arrays;
 import java.util.GregorianCalendar;
-import java.util.List;
-import java.util.UUID;
-
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserAttribute;
-import it.geosolutions.geostore.core.model.enums.Role;
-import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.dto.UserSessionImpl;
 

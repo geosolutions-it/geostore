@@ -21,7 +21,6 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
-import it.geosolutions.geostore.core.dao.impl.UserDAOImpl;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;

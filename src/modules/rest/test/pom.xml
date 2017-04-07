@@ -7,7 +7,6 @@
         <version>1.4-SNAPSHOT</version>
     </parent>
 
-    <groupId>it.geosolutions.geostore</groupId>
     <artifactId>geostore-rest-test</artifactId>
     <packaging>war</packaging>
 
@@ -47,8 +46,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <encoding>utf8</encoding>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
 

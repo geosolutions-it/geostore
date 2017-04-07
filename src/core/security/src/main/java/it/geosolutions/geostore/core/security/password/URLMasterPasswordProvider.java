@@ -50,7 +50,6 @@ public final class URLMasterPasswordProvider implements MasterPasswordProvider {
 		this.encrypting = encrypting;
 	}
 
-	private String name="passwd";
 	private boolean encrypting = true;
 	
 	

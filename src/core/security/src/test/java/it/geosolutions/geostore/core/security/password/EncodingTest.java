@@ -21,13 +21,10 @@ package it.geosolutions.geostore.core.security.password;
 
 import java.io.File;
 import java.net.URL;
-import java.util.Enumeration;
-
 import javax.crypto.SecretKey;
 
 import junit.framework.TestCase;
 
-import org.jasypt.exceptions.EncryptionOperationNotPossibleException;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
