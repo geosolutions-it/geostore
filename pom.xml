@@ -4,7 +4,7 @@
 
     <groupId>it.geosolutions</groupId>
     <artifactId>geostore</artifactId>
-    <version>1.4.1</version>
+    <version>1.4.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -63,7 +63,7 @@
     <scm>
         <url>https://github.com/geosolutions-it/geostore</url>
         <connection>scm:git:git@github.com:geosolutions-it/geostore.git</connection>
-      <tag>v1.4.1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <ciManagement>
