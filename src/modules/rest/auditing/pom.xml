@@ -23,11 +23,15 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-rest-root</artifactId>
-        <version>1.4.2-SNAPSHOT</version>
+        <version>1.5.0-SNAPSHOT</version>
     </parent>
     <artifactId>geostore-rest-auditing</artifactId>
     <name>GeoStore - Modules - REST auditing</name>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-core</artifactId>

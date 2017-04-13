@@ -62,7 +62,7 @@
 	<!-- Simple namespace-based configuration -->
 
 	<!-- Starts an internal LDAP server -->
-	<security:ldap-server ldif="classpath*:users.ldif" port="33389" root="dc=geosolutions,dc=it"/>
+	<security:ldap-server ldif="users.ldif" port="33389" root="dc=geosolutions,dc=it"/>
 
 	<security:authentication-manager>
 		<security:ldap-authentication-provider
