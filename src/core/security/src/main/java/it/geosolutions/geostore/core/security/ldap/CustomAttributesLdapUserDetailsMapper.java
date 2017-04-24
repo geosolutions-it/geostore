@@ -54,7 +54,7 @@ public class CustomAttributesLdapUserDetailsMapper extends LdapUserDetailsMapper
 
     @Override
     public UserDetails mapUserFromContext(DirContextOperations ctx, String username,
-            Collection<GrantedAuthority> authorities) {
+            Collection<? extends GrantedAuthority> authorities) {
         LdapUserDetails details =  (LdapUserDetails)super.mapUserFromContext(ctx, username, authorities);
         LdapUserDetailsWithAttributes detailsWithAttributes = new LdapUserDetailsWithAttributes(details);
         for(String attributeName : attributeMappings.keySet()) {

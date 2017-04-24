@@ -24,7 +24,7 @@
      <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>1.4.2-SNAPSHOT</version>
+        <version>1.5.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>geostore-security</artifactId>
@@ -35,7 +35,7 @@
     
         <!-- ================================================================-->
        	<!-- APACHE COMMONS -->
-        <!-- ================================================================-->
+        <!-- ================================================================-->       
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
@@ -49,7 +49,7 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>
@@ -63,7 +63,7 @@
         <!-- ================================================================-->
         <!-- 4J UTILS -->
         <!-- ================================================================-->
-        <dependency> 
+        <dependency>
             <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>
         </dependency>

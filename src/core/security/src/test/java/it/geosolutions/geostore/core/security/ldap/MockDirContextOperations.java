@@ -484,4 +484,10 @@ public class MockDirContextOperations implements DirContextOperations{
         return null;
     }
 
+	@Override
+	public boolean attributeExists(String arg0) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

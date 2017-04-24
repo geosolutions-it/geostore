@@ -47,7 +47,12 @@ import org.springframework.security.ldap.userdetails.LdapUserDetails;
  *
  */
 public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetailsWithAttributes {
-    private LdapUserDetails delegate;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8623656298800133551L;
+
+	private LdapUserDetails delegate;
     
     private Map<String, Object> attributes = new HashMap<String, Object>();
     
@@ -64,7 +69,7 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
         return attributes.get(name);
     }
     
-    public Collection<GrantedAuthority> getAuthorities() {
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return delegate.getAuthorities();
     }
 
