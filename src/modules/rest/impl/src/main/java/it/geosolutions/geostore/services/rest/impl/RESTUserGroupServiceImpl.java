@@ -19,9 +19,11 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.services.UserGroupService;
+import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -33,6 +35,8 @@ import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
@@ -43,11 +47,12 @@ import org.apache.log4j.Logger;
  * @author DamianoG
  *
  */
-public class RESTUserGroupServiceImpl implements RESTUserGroupService{
+public class RESTUserGroupServiceImpl implements RESTUserGroupService {
 
     private final static Logger LOGGER = Logger.getLogger(RESTUserGroupServiceImpl.class);
 
     private UserGroupService userGroupService;
+    private UserService userService;
 
     /**
      * 
@@ -55,6 +60,10 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
      */
     public void setuserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     /* 
@@ -100,14 +109,16 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserGroupService#get(javax.ws.rs.core.SecurityContext, long)
      */
     @Override
-	public	RESTUserGroup get(SecurityContext sc, long id)
-			throws NotFoundWebEx {
-		try {
-			UserGroup g = userGroupService.get(id);
-			return new RESTUserGroup(g.getId(),g.getGroupName(),g.getUsers(), g.getDescription());
-		} catch (BadRequestServiceEx e) {
-			throw new BadRequestWebEx("UserGroup Not found");
-		}
+    public RESTUserGroup get(SecurityContext sc, long id)
+            throws NotFoundWebEx {
+        try {
+            UserGroup g = userGroupService.get(id);
+            Collection<User> users = userService.getByGroup(id);
+
+            return new RESTUserGroup(g.getId(), g.getGroupName(), new HashSet<>(users), g.getDescription());
+        } catch (BadRequestServiceEx e) {
+            throw new BadRequestWebEx("UserGroup Not found");
+        }
     }
     /* 
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserGroupService#assignUserGroup(javax.ws.rs.core.SecurityContext, long, long)
@@ -144,10 +155,11 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
             throws BadRequestWebEx {
         try {
             List<UserGroup> returnList = userGroupService.getAll(page, entries);
-            List<RESTUserGroup> ugl = new ArrayList<RESTUserGroup>();
+            List<RESTUserGroup> ugl = new ArrayList<>(returnList.size());
             for(UserGroup ug : returnList){
                 if(all || GroupReservedNames.isAllowedName(ug.getGroupName())){
-                    RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), ug.getUsers(), ug.getDescription());
+                    Collection<User> users = userService.getByGroup(ug.getId());
+                    RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet<>(users), ug.getDescription());
                     ugl.add(rug);
                 }
             }
@@ -192,13 +204,14 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService{
         return srl;
     }
 
-	@Override
-	public	RESTUserGroup get(SecurityContext sc,  String name)
-			throws NotFoundWebEx {
-		UserGroup ug = userGroupService.get(name);
-		if(ug != null){
-			return new RESTUserGroup(ug.getId(),ug.getGroupName(),ug.getUsers(), ug.getDescription());
-		}
-		return null;
-	}
+    @Override
+    public RESTUserGroup get(SecurityContext sc, String name)
+            throws NotFoundWebEx {
+        UserGroup ug = userGroupService.get(name);
+        if (ug != null) {
+            Collection<User> users = userService.getByGroup(ug.getId());
+            return new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet(users), ug.getDescription());
+        }
+        return null;
+    }
 }

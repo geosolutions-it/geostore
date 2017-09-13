@@ -19,6 +19,9 @@
  */
 package it.geosolutions.geostore.core.dao;
 
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
@@ -26,6 +29,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -159,12 +163,33 @@ public class UserGroupDAOTest extends BaseDAOTest {
             // GROUP REMOVAL, being the entity USER the owner of the relation we should remove manually the entries in the relationship table
             // removing the group association to all user
             UserGroup group2 = userGroupDAO.find(groupId2);
-            Set<User> users = group2.getUsers();
+            assertNotNull(group2);
+            List<User> users;
+            {
+                Search searchByGroup = new Search(User.class);
+                searchByGroup.addFilterSome("groups", Filter.equal("id", groupId2));
+                users = userDAO.search(searchByGroup);
+            }
             assertEquals(1, users.size());
+            assertEquals(2, users.get(0).getGroups().size());
+
             for(User u : users){
-                u.getGroups().remove(group2);
+                LOGGER.info("Removing group " + group2 + " from user " + u);
+                assertTrue(u.removeGroup(groupId2));
                 userDAO.merge(u);
             }
+
+            {
+                Search searchByGroup = new Search(User.class);
+                searchByGroup.addFilterSome("groups", Filter.equal("id", groupId2));
+                users = userDAO.search(searchByGroup);
+
+                for(User u : users){
+                    LOGGER.error("Found user " + u);
+                }
+            }
+            assertEquals(0, users.size());
+
             userGroupDAO.remove(group2);
             assertEquals(1, userGroupDAO.findAll().size());
             assertEquals(1, userGroupDAO.count(null));

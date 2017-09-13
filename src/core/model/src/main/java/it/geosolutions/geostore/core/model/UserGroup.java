@@ -30,7 +30,6 @@ package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -38,7 +37,6 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -103,10 +101,6 @@ public class UserGroup implements Serializable {
         this.enabled = enabled;
     }
 
-	@ManyToMany(mappedBy = "groups", fetch = FetchType.EAGER)
-    @Index(name = "idx_group_user")
-    private Set<User> users;
-
     /**
      * @return the id
      */
@@ -151,21 +145,6 @@ public class UserGroup implements Serializable {
         this.security = security;
     }
 
-    /**
-     * @return the users
-     */
-    @XmlTransient
-    public Set<User> getUsers() {
-        return users;
-    }
-
-    /**
-     * @param users the users to set
-     */
-    public void setUsers(Set<User> users) {
-        this.users = users;
-    }
-    
     /**
      * @return the description
      */
@@ -216,7 +195,6 @@ public class UserGroup implements Serializable {
         result = (prime * result) + ((groupName == null) ? 0 : groupName.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((security == null) ? 0 : security.hashCode());
-        result = (prime * result) + ((users == null) ? 0 : users.hashCode());
 
         return result;
     }
@@ -258,13 +236,6 @@ public class UserGroup implements Serializable {
                 return false;
             }
         } else if (!security.equals(other.security)) {
-            return false;
-        }
-        if (users == null) {
-            if (other.users != null) {
-                return false;
-            }
-        } else if (!users.equals(other.users)) {
             return false;
         }
 

@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -31,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -166,4 +168,20 @@ public class MockedUserService implements UserService {
         return null;
     }
 
+    @Override
+    public Collection<User> getByGroup(long groupId) {
+        List<User> ret = new LinkedList<>();
+        for (User user : USERS.values()) {
+            Set<UserGroup> groups = user.getGroups();
+            if(groups != null) {
+                for (UserGroup group : groups) {
+                    if(group.getId() == groupId) {
+                        ret.add(user);
+                        break;
+                    }
+                }
+            }
+        }
+        return ret;
+    }
 }

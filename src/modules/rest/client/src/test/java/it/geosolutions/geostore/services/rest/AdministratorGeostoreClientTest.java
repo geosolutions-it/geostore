@@ -305,7 +305,7 @@ public class AdministratorGeostoreClientTest {
         
         UserGroup ug = new UserGroup();
         ug.setGroupName("usergroupTest1");
-        ug.setUsers(userSet);
+//!!        ug.setUsers(userSet);
         long ugid = geoStoreClient.insertUserGroup(ug);
         
         //get created group 
@@ -357,7 +357,7 @@ public class AdministratorGeostoreClientTest {
         //
         UserGroup ug2 = new UserGroup();
         ug2.setGroupName("usergroupTest2");
-        ug2.setUsers(userSet);
+//!!        ug2.setUsers(userSet);
         ugid = geoStoreClient.insertUserGroup(ug2);
         RESTUserGroup restUG = geoStoreClient.getUserGroup(ugid);
         assertNotNull(restUG);
