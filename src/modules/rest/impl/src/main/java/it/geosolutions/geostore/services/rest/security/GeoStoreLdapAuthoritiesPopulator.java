@@ -86,6 +86,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends
      * The role prefix that will be prepended to each role name
      */
     private String rolePrefix = "ROLE_";
+    private boolean searchSubtree = false;
     /**
      * Should we convert the role name to uppercase
      */
@@ -102,6 +103,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         super(contextSource, groupSearchBase);
 
         Assert.notNull(contextSource, "contextSource must not be null");
+        
         ldapTemplate = new SpringSecurityLdapTemplate(contextSource);
         ldapTemplate.setSearchControls(searchControls);
 
@@ -147,7 +149,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends
                         + roleSearchFilter + " in search base '" + roleSearchBase + "'");
             }
     
-            String[] rolesRoots = roleSearchBase.split(",");
+            String[] rolesRoots = roleSearchBase.split(";");
             String filter = username == null ? allRolesSearchFilter : roleSearchFilter;
             
             for(String rolesRoot : rolesRoots) {
@@ -161,7 +163,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends
                 logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
                         + groupSearchFilter + " in search base '" + groupSearchBase + "'");
             }
-            String[] groupsRoots = groupSearchBase.split(",");
+            String[] groupsRoots = groupSearchBase.split(";");
             String filter = username == null ? allGroupsSearchFilter : groupSearchFilter;
             for(String groupsRoot : groupsRoots) {
                 addAuthorities(searchParams, authorities, groupsRoot, filter, null);
@@ -234,5 +236,17 @@ public class GeoStoreLdapAuthoritiesPopulator extends
 		super.setRolePrefix(rolePrefix);
 		this.rolePrefix = rolePrefix;
 	}
+
+	public void setSearchSubtree(boolean searchSubtree) {
+		if (searchSubtree) {
+        	searchControls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        } else {
+        	searchControls.setSearchScope(SearchControls.ONELEVEL_SCOPE);
+        }
+        
+		this.searchSubtree = searchSubtree;
+	}
+	
+	
 
 }
