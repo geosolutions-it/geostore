@@ -39,18 +39,18 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Vector;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 
 /**
  * @author DamianoG
  *
  */
-public class UserGroupServiceImpl implements UserGroupService{
+public class UserGroupServiceImpl implements UserGroupService {
 
     private static final Logger LOGGER = Logger.getLogger(UserGroupServiceImpl.class);
 
@@ -132,13 +132,20 @@ public class UserGroupServiceImpl implements UserGroupService{
         if(!GroupReservedNames.isAllowedName(group.getGroupName())){
             throw new BadRequestServiceEx("Delete a special usergroup ('" + group.getGroupName() + "' in this case) isn't possible");
         }
-        Set<User> users = group.getUsers();
-        for(User u : users){
-            u.getGroups().remove(group);
+
+        for(User u : getUsersByGroup(id)){
+            u.removeGroup(id);
             userDAO.merge(u);
         }
+
         userGroupDAO.remove(group);
         return true;
+    }
+
+    private Collection<User> getUsersByGroup(long groupId) {
+        Search searchByGroup = new Search(User.class);
+        searchByGroup.addFilterSome("groups", Filter.equal("id", groupId));
+        return userDAO.search(searchByGroup);
     }
 
     /* (non-Javadoc)
@@ -181,19 +188,10 @@ public class UserGroupServiceImpl implements UserGroupService{
         if(groupToAssign == null || targetUser == null){
             throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");
         }
-        if(targetUser.getGroups() != null){
-        	Set<UserGroup> ugs = targetUser.getGroups();
-        	for( UserGroup group : ugs){
-        		if( group.getId() == groupId){
-        			targetUser.getGroups().remove(group);
-        			userDAO.merge(targetUser);
-        			return;
-        		}
-        	}
-        	
-            
+
+        if(targetUser.removeGroup(groupId)) {
+            userDAO.merge(targetUser);
         }
-      
     }
 
     /* (non-Javadoc)
@@ -230,11 +228,10 @@ public class UserGroupServiceImpl implements UserGroupService{
         }
         searchCriteria.addSortAsc("groupName");
 
-        Role userRole = user.getRole();
-        if (userRole.equals((Role)Role.USER)){
+        if (user.getRole() == Role.USER) {
             Set<UserGroup> userGrp = user.getGroups();
-            Collection<Long> grpIds = new Vector<Long>();
-            for(UserGroup grp :userGrp){
+            List<Long> grpIds = new ArrayList<>(userGrp.size());
+            for(UserGroup grp : userGrp){
                 grpIds.add(grp.getId());
             }
             searchCriteria.addFilterIn("id", grpIds);
@@ -336,27 +333,22 @@ public class UserGroupServiceImpl implements UserGroupService{
         return true;
     }
 
-	@Override
-	public UserGroup get(long id) throws BadRequestServiceEx {
-		return userGroupDAO.find(id);
-	}
+    @Override
+    public UserGroup get(long id) throws BadRequestServiceEx {
+        return userGroupDAO.find(id);
+    }
 
-	@Override
-	public UserGroup get(String name) {
-		//
-        // Searching the corresponding UserGroups
-        //
+    @Override
+    public UserGroup get(String name) {
         Search searchCriteria = new Search(UserGroup.class);
         searchCriteria.addFilterEqual("groupName", name);
 
         List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
-        if(existingGroups.size()>0){
-        	return existingGroups.get(0);
-        	
+        if (existingGroups.size() > 0) {
+            return existingGroups.get(0);
         }
         return null;
-		
-	}
+    }
 
     @Override
     public long getCount(User user, String nameLike, boolean all) throws BadRequestServiceEx {
@@ -367,10 +359,9 @@ public class UserGroupServiceImpl implements UserGroupService{
 
         searchCriteria.addSortAsc("groupName");
 
-        Role userRole = user.getRole();
-        if (userRole.equals((Role)Role.USER)){
+        if (user.getRole() ==  Role.USER){
             Set<UserGroup> userGrp = user.getGroups();
-            Collection<Long> grpIds = new Vector<Long>();
+            Collection<Long> grpIds = new ArrayList<>();
             for(UserGroup grp :userGrp){
                 grpIds.add(grp.getId());
             }

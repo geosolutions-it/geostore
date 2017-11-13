@@ -127,5 +127,6 @@ public interface UserService {
      * @return
      */
     public Collection<User>  getByAttribute(UserAttribute attribute);
+    public Collection<User>  getByGroup(long groupId);
 
 }

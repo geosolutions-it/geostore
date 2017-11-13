@@ -40,6 +40,7 @@ import java.util.Set;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 
 /**
@@ -436,5 +437,13 @@ public class UserServiceImpl implements UserService {
             }
         }
         return users;
+    }
+
+    @Override
+    public Collection<User> getByGroup(long groupId) {
+
+        Search searchByGroup = new Search(User.class);
+        searchByGroup.addFilterSome("groups", Filter.equal("id", groupId));
+        return userDAO.search(searchByGroup);
     }
 }

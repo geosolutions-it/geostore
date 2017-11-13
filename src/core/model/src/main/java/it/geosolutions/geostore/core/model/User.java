@@ -55,6 +55,8 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Index;
 import org.hibernate.annotations.Type;
 
@@ -101,6 +103,7 @@ public class User implements Serializable {
     private transient String newPassword = null;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
     private List<UserAttribute> attribute;
 
     /*
@@ -149,6 +152,21 @@ public class User implements Serializable {
      */
     public void setGroups(Set<UserGroup> groups) {
         this.groups = groups;
+    }
+
+    /**
+     * @return true if the group with id groupId was associated with the user and was removed.
+     */
+    public boolean removeGroup(long groupId) {
+        if(groups != null) {
+            for (UserGroup group : groups) {
+                if(groupId == group.getId()) {
+                    return groups.remove(group);
+                }
+            }
+        }
+        
+        return false;
     }
 
     /**

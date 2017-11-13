@@ -34,6 +34,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import org.hibernate.Hibernate;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -113,8 +114,8 @@ public abstract class BaseDAOTest extends TestCase {
         removeAllAttribute();
         removeAllUserAttribute();
         removeAllCategory();
-        removeAllUserGroup();
         removeAllUser();
+        removeAllUserGroup();
     }
 
     private void removeAllUser() {
@@ -125,18 +126,13 @@ public abstract class BaseDAOTest extends TestCase {
             assertTrue("User not removed", ret);
         }
 
-        assertEquals("UserGroup have not been properly deleted", 0, userGroupDAO.count(null));
+        assertEquals("Users have not been properly deleted", 0, userDAO.count(null));
     }
-    
+
     private void removeAllUserGroup() {
         List<UserGroup> list = userGroupDAO.findAll();
         for (UserGroup item : list) {
             LOGGER.info("Removing " + item.getId());
-            Set<User> users = item.getUsers();
-            for(User u : users){
-                u.getGroups().remove(item);
-                userDAO.merge(u);
-            }
             boolean ret = userGroupDAO.remove(item);
             assertTrue("UserGroup not removed", ret);
         }
