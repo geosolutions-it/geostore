@@ -1,5 +1,9 @@
 The following files allow to bind geostore user groups and roles with GeoServer.
 
+**Important Note**
+The current implmentation of this integration dosn't allow user changes from the GeoServer's UI. Any attempt to change users, groups or roles from the GeoServer's UI may cause errors. 
+You should use MapStore 2 or GeoStore's REST API to apply these changes.
+
 ====================================
 Binding GeoStore and GeoServer users
 ====================================
