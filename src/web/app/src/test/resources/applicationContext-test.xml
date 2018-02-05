@@ -73,8 +73,7 @@
 		</jaxrs:features>
 
 		<jaxrs:providers>
-			<ref bean="jaxbXmlProvider" />
-			<ref bean="jsonProvider" />
+			<bean class="it.geosolutions.geostore.services.providers.StringTextProvider" />
 			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
 		</jaxrs:providers>
 
