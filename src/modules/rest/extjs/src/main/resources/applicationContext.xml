@@ -46,7 +46,10 @@
            <ref bean="jaxbXmlProvider"/>
            <ref bean="jsonProvider"/>
            <ref bean="jaxbContextResolver"/>
-        </jaxrs:providers>    
+        </jaxrs:providers>
+        <jaxrs:outInterceptors>
+			<ref bean="noCacheInterceptor" />
+		</jaxrs:outInterceptors>    
 
     </jaxrs:server>
 	
