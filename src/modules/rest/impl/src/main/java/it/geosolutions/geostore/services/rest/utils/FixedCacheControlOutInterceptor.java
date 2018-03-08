@@ -14,13 +14,7 @@ import org.apache.cxf.phase.Phase;
  *
  */
 public class FixedCacheControlOutInterceptor extends AbstractPhaseInterceptor<Message> {
-	String value = "no-cache";
-	public String getValue() {
-		return value;
-	}
-	public void setValue(String value) {
-		this.value = value;
-	}
+
     public FixedCacheControlOutInterceptor () {
         super(Phase.MARSHAL);
     }
@@ -36,6 +30,7 @@ public class FixedCacheControlOutInterceptor extends AbstractPhaseInterceptor<Me
             headers = new MetadataMap<String, Object>();
         }   
         headers.add("Cache-Control", new String("no-cache"));
+        headers.add("Expires", new String("-1"));
         message.put(Message.PROTOCOL_HEADERS, headers);
     }
 }

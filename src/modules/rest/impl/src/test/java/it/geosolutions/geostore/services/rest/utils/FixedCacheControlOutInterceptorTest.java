@@ -43,7 +43,7 @@ public class FixedCacheControlOutInterceptorTest {
     	interceptor.handleMessage(message);
     	@SuppressWarnings("unchecked")
 		MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
-    	
+    	assertEquals(((List)headers.get("Expires")).get(0), "-1");
     	assertEquals(((List)headers.get("Cache-Control")).get(0), "no-cache");
     }
     @SuppressWarnings("unchecked")
@@ -65,6 +65,7 @@ public class FixedCacheControlOutInterceptorTest {
 		headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
 		((List)headers.get("Cache-Control")).get(0);
     	assertEquals(((List)headers.get("Cache-Control")).get(0), "no-cache");
+    	assertEquals(((List)headers.get("Expires")).get(0), "-1");
     	assertEquals(((List)headers.get("Test")).get(0), new String("Test"));
     }
 
