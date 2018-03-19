@@ -232,6 +232,33 @@ public class ServiceTestBase extends TestCase {
      * @param name
      * @param creation
      * @param description
+     * @param data
+     *
+     * @return long
+     * @throws Exception
+     */
+    protected long createResource(String name, String description, String catName, String data) throws Exception {
+
+        Category category = new Category();
+        category.setName(catName);
+
+        categoryService.insert(category);
+
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setDescription(description);
+        resource.setCategory(category);
+        StoredData storedData = new StoredData();
+        storedData.setData(data);
+        resource.setData(storedData);
+
+        return resourceService.insert(resource);
+    }
+    
+    /**
+     * @param name
+     * @param creation
+     * @param description
      * @param storedData
      * @return long
      * @throws Exception
