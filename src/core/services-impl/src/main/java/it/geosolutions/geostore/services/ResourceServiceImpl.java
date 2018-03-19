@@ -192,41 +192,47 @@ public class ResourceServiceImpl implements ResourceService
         } catch (DataIntegrityViolationException exc) {
             throw new BadRequestServiceEx(exc.getLocalizedMessage());
         }
-
-        //
-        // Persisting Attributes
-        //
-        List<Attribute> attributes = resource.getAttribute();
-        if (attributes != null) {
-            for (Attribute a : attributes) {
-                a.setResource(r);
-                attributeDAO.persist(a);
+        try {
+            //
+            // Persisting Attributes
+            //
+            List<Attribute> attributes = resource.getAttribute();
+            if (attributes != null) {
+                for (Attribute a : attributes) {
+                    a.setResource(r);
+                    attributeDAO.persist(a);
+                }
             }
-        }
 
-        //
-        // Persisting StoredData
-        //
-        StoredData data = resource.getData();
-        if (data != null) {
-            data.setId(r.getId());
-            data.setResource(r);
-            storedDataDAO.persist(data);
-        }
-
-        //
-        // Persisting SecurityRule
-        //
-        List<SecurityRule> rules = resource.getSecurity();
-
-        if (rules != null) {
-            for (SecurityRule rule : rules) {
-                rule.setResource(r);
-                securityDAO.persist(rule);
+            //
+            // Persisting StoredData
+            //
+            StoredData data = resource.getData();
+            if (data != null) {
+                data.setId(r.getId());
+                data.setResource(r);
+                storedDataDAO.persist(data);
             }
-        }
 
-        return r.getId();
+            //
+            // Persisting SecurityRule
+            //
+            List<SecurityRule> rules = resource.getSecurity();
+
+            if (rules != null) {
+                for (SecurityRule rule : rules) {
+                    rule.setResource(r);
+                    securityDAO.persist(rule);
+                }
+            }
+
+            return r.getId();
+        } catch(Exception e) {
+            // remove resource if we cannot persist other objects bound to the resource
+            // (attributes, data, etc.)
+            delete(r.getId());
+            throw e;
+        }
     }
 
     /*

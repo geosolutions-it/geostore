@@ -271,6 +271,31 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     }
     
     @Test
+    public void testInsertTooBigResource() throws Exception {
+        final String ORIG_RES_NAME = "testRes";
+        final String DESCRIPTION = "description";
+        final String CATEGORY_NAME = "MAP";
+        String bigData = createDataSize(10000000);
+        boolean error = false;
+        assertEquals(0, resourceService.getCount(null));
+        try {
+            createResource(ORIG_RES_NAME, DESCRIPTION, CATEGORY_NAME, bigData);
+        } catch(Exception e) {
+            error = true;
+        }
+        assertEquals(0, resourceService.getCount(null));
+        assertTrue(error);
+    }
+    
+    private static String createDataSize(int msgSize) {
+        StringBuilder sb = new StringBuilder(msgSize);
+        for (int i = 0; i < msgSize; i++) {
+            sb.append('a');
+        }
+        return sb.toString();
+    }
+    
+    @Test
     public void testInsertUpdateDuplicatedResource() throws Exception {
     	final String ORIG_RES_NAME = "testRes";
     	final String DESCRIPTION = "description";
