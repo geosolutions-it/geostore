@@ -68,7 +68,7 @@ public class UserGroup implements Serializable {
     @GeneratedValue
     private Long id;
 
-    @Column(nullable = false, updatable = false, length = 20)
+    @Column(nullable = false, updatable = false, length = 100)
     @Index(name = "idx_usergroup_name")
     private String groupName;
 
