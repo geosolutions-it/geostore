@@ -98,8 +98,8 @@ public class UserGroupDAOTest extends BaseDAOTest {
             
             groupId2 = g2.getId();
             
-            assertEquals(2, userGroupDAO.count(null));
-            assertEquals(2, userGroupDAO.findAll().size());
+            assertEquals(3, userGroupDAO.count(null));
+            assertEquals(3, userGroupDAO.findAll().size());
 
             //Create User1, associate to him group1 and group2 and set an example security rule 
             User user1 = new User();
@@ -166,8 +166,8 @@ public class UserGroupDAOTest extends BaseDAOTest {
             assertEquals(1, securityDAO.findAll().size());
             assertEquals(1, userDAO.findAll().size());
             assertEquals(1, userDAO.count(null));
-            assertEquals(2, userGroupDAO.findAll().size());
-            assertEquals(2, userGroupDAO.count(null));
+            assertEquals(3, userGroupDAO.findAll().size());
+            assertEquals(3, userGroupDAO.count(null));
             assertNull("SecurityRule not deleted", securityDAO.find(securityId1));
             assertNotNull("Group SecurityRule deleted... that's a mistake!", securityDAO.find(securityId2));
             
@@ -202,8 +202,8 @@ public class UserGroupDAOTest extends BaseDAOTest {
             assertEquals(0, users.size());
 
             userGroupDAO.remove(group2);
-            assertEquals(1, userGroupDAO.findAll().size());
-            assertEquals(1, userGroupDAO.count(null));
+            assertEquals(2, userGroupDAO.findAll().size());
+            assertEquals(2, userGroupDAO.count(null));
             assertNull("Group SecurityRule not deleted", securityDAO.find(securityId2));
             userDAO.remove(user2);
         }

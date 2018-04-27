@@ -53,10 +53,6 @@ public class UserGroupTest {
         String s = MARSHALER.marshal(g0);
         UserGroup ug = MARSHALER.unmarshal(s);
 
-        System.out.println(g0);
-        System.out.println(ug);
-        System.out.println(s);
-
         assertTrue(g0.equals(ug));
     }
 

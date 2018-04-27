@@ -36,7 +36,7 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
     create table gs_resource (
         id int8 not null,
         creation timestamp not null,
-        description varchar(255),
+        description varchar(10000),
         lastUpdate timestamp,
         metadata varchar(30000),
         name varchar(255) not null,
@@ -59,7 +59,7 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
 
     create table gs_stored_data (
         id int8 not null,
-        stored_data varchar(500000) not null,
+        stored_data varchar(10000000) not null,
         resource_id int8 not null,
         primary key (id),
         unique (resource_id)
