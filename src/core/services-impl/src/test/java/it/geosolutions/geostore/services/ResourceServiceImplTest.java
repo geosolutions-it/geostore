@@ -275,7 +275,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         final String ORIG_RES_NAME = "testRes";
         final String DESCRIPTION = "description";
         final String CATEGORY_NAME = "MAP";
-        String bigData = createDataSize(10000000);
+        String bigData = createDataSize(100000000);
         boolean error = false;
         assertEquals(0, resourceService.getCount(null));
         try {

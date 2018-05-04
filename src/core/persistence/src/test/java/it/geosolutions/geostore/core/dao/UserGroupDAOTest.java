@@ -19,21 +19,23 @@
  */
 package it.geosolutions.geostore.core.dao;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.persistence.PersistenceException;
+
+import org.apache.log4j.Logger;
+import org.junit.Test;
+
 import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.apache.log4j.Logger;
-import org.junit.Test;
 
 /**
  * Class UserGroupDAOTest.
@@ -79,15 +81,25 @@ public class UserGroupDAOTest extends BaseDAOTest {
             g1.setGroupName("GROUP1");
             UserGroup g2 = new UserGroup();
             g2.setGroupName("GROUP2");
+            
+            try{
+                UserGroup g3 = new UserGroup();
+                g3.setGroupName("GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3GROUP3");
+                userGroupDAO.persist(g3);
+            }catch(PersistenceException e){
+            	assertTrue(true);
+            }
+            
             groups.add(g1);
             groups.add(g2);
 
             userGroupDAO.persist(g1);
             userGroupDAO.persist(g2);
+            
             groupId2 = g2.getId();
             
-            assertEquals(2, userGroupDAO.count(null));
-            assertEquals(2, userGroupDAO.findAll().size());
+            assertEquals(3, userGroupDAO.count(null));
+            assertEquals(3, userGroupDAO.findAll().size());
 
             //Create User1, associate to him group1 and group2 and set an example security rule 
             User user1 = new User();
@@ -100,8 +112,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
             userId1 = user1.getId();
             
             assertEquals(1, userDAO.findAll().size());
-            assertEquals(1, userDAO.count(null));
-            
+            assertEquals(1, userDAO.count(null));            
 
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
@@ -155,8 +166,8 @@ public class UserGroupDAOTest extends BaseDAOTest {
             assertEquals(1, securityDAO.findAll().size());
             assertEquals(1, userDAO.findAll().size());
             assertEquals(1, userDAO.count(null));
-            assertEquals(2, userGroupDAO.findAll().size());
-            assertEquals(2, userGroupDAO.count(null));
+            assertEquals(3, userGroupDAO.findAll().size());
+            assertEquals(3, userGroupDAO.count(null));
             assertNull("SecurityRule not deleted", securityDAO.find(securityId1));
             assertNotNull("Group SecurityRule deleted... that's a mistake!", securityDAO.find(securityId2));
             
@@ -191,8 +202,8 @@ public class UserGroupDAOTest extends BaseDAOTest {
             assertEquals(0, users.size());
 
             userGroupDAO.remove(group2);
-            assertEquals(1, userGroupDAO.findAll().size());
-            assertEquals(1, userGroupDAO.count(null));
+            assertEquals(2, userGroupDAO.findAll().size());
+            assertEquals(2, userGroupDAO.count(null));
             assertNull("Group SecurityRule not deleted", securityDAO.find(securityId2));
             userDAO.remove(user2);
         }

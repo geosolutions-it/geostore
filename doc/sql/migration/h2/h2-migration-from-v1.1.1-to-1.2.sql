@@ -7,8 +7,6 @@
 -- The script assumes that the tables are located into the schema called "geostore" 
 --      if not find/replace geostore. with <yourschemaname>.
 
--- Tested only with postgres9.1
-
 -- Run the script with an unprivileged application user allowed to work on schema geostore
 
 alter table gs_user add column enabled char(1) NOT NULL DEFAULT 'Y';

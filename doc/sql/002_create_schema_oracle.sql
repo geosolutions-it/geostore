@@ -21,7 +21,7 @@
     create table gs_resource (
         id number(19,0) not null,
         creation timestamp not null,
-        description varchar2(255 char),
+        description varchar2(10000 char),
         lastUpdate timestamp,
         metadata varchar2(4000 char),
         name varchar2(255 char) not null,
