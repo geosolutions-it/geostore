@@ -281,7 +281,7 @@ public interface RESTResourceService {
      */
     @POST
     @Path("/resource/{id}/permissions")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON  })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     void updateSecurityRules(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("rules") SecurityRuleList securityRules);
     

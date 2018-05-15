@@ -119,7 +119,9 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
                 Filter.and(Filter.equal("resource.id", resourceId),
                         Filter.equal("user.name", userName)));
         searchCriteria.addFilter(securityFilter);
-
+        // now rules are not properly filtered. 
+        // so no user rules have to be removed externally (see RESTServiceImpl > ResourceServiceImpl)
+        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
         return super.search(searchCriteria);
     }
 

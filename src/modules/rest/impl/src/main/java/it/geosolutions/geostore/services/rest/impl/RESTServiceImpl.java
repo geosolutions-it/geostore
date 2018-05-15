@@ -138,10 +138,12 @@ public abstract class RESTServiceImpl{
                     authUser.getName(), resourceId);
 
             if (userSecurityRules != null && userSecurityRules.size() > 0){
-                SecurityRule sr = userSecurityRules.get(0);
-                if (sr.isCanWrite()){
-                    return true;
-                }
+            	for(SecurityRule sr : userSecurityRules){
+            		// the getUserSecurityRules returns all rules instead of user rules. So the user name check is necessary until problem with DAO is solved
+	                if (sr.isCanWrite() && sr.getUser() != null && sr.getUser().getName() == authUser.getName()){
+	                    return true;
+	                }
+            	}
             }
             
             List<String> groupNames = extratcGroupNames(authUser.getGroups());
@@ -181,9 +183,11 @@ public abstract class RESTServiceImpl{
                     authUser.getName(), resourceId);
 
             if (userSecurityRules != null && userSecurityRules.size() > 0){
-                SecurityRule sr = userSecurityRules.get(0);
-                if (sr.isCanRead()){
-                    return true;
+            	// the getUserSecurityRules returns all rules instead of user rules. So the user name check is necessary until problem with DAO is solved
+                for(SecurityRule sr : userSecurityRules){
+	                if (sr.isCanRead() && sr.getUser() != null && sr.getUser().getName() == authUser.getName()){
+	                    return true;
+	                }
                 }
             }
             
