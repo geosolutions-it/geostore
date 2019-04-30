@@ -24,7 +24,7 @@
     <parent>
         <groupId>it.geosolutions</groupId>
         <artifactId>geostore</artifactId>
-        <version>1.4.2-SNAPSHOT</version>
+        <version>1.4.3-SNAPSHOT</version>
     </parent>
 
     <groupId>it.geosolutions.geostore</groupId>
@@ -40,7 +40,7 @@
     </modules>
 
     <properties>
-        <geostore-version>1.4.2-SNAPSHOT</geostore-version>
+        <geostore-version>1.4.3-SNAPSHOT</geostore-version>
         <main-prefix>geostore</main-prefix>
 
         <cxf-version>2.3.2</cxf-version>
@@ -893,9 +893,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                
                 <!-- Use 2.4.2 because 2.4.3 has bug with system properties
 				     see http://jira.codehaus.org/browse/SUREFIRE-121 -->
                 <version>2.4.2</version>
+                <configuration>
+                    <argLine>-Dfile.encoding=UTF-8</argLine>
+                  </configuration>
             </plugin>
             
         </plugins>
