@@ -237,22 +237,29 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         }
         for (Object authority : ldapAuthorities) {
         	Authority ldapAuthority = (Authority)authority;
-            addAuthority(authorities, authorityPrefix, ldapAuthority.getName());
-            if (hierarchical && level < maxLevelGroupsSearch) {
+        	
+            boolean added = addAuthority(authorities, authorityPrefix, ldapAuthority.getName());
+            if (added && hierarchical && level < maxLevelGroupsSearch) {
                 String[] searchParams = new String[] {ldapAuthority.getDn(), ldapAuthority.getName()};
                 addAuthorities(searchParams, authorities, root, groupInGroupSearchFilter, authorityPrefix, hierarchical, level + 1);
             }
         }
     }
 
-    private void addAuthority(Set<GrantedAuthority> authorities, String authorityPrefix,
+    private boolean addAuthority(Set<GrantedAuthority> authorities, String authorityPrefix,
             String authority) {
         if (convertToUpperCase) {
             authority = authority.toUpperCase();
         }
 
         String prefix = (authorityPrefix != null && !authority.startsWith(authorityPrefix) ? authorityPrefix : "");
-        authorities.add(new GrantedAuthorityImpl(prefix + authority));
+        
+        GrantedAuthorityImpl role = new GrantedAuthorityImpl(prefix + authority);
+        if (!authorities.contains(role)) {
+            authorities.add(role);
+            return true;
+        }
+        return false;
     }
 
 	@Override
