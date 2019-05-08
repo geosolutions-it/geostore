@@ -111,6 +111,11 @@
 				<constructor-arg value="ou=roles" />
 				<property name="groupSearchFilter" value="(lrGroupOccupant={0})" />
 				<property name="roleSearchFilter" value="(roleOccupant={0})" />
+				
+				<!-- nested groups support -->
+				<property name="enableHierarchicalGroups" value="false" />
+				<property name="groupInGroupSearchFilter" value="(lrGroupInGroupOccupant={0})" />
+				<property name="maxLevelGroupsSearch" value="3" />
 				<!-- the GeoStore convetion is:
 				  * Groups starting with 'ROLE_' will be threated as Auth Roles
 				  * Groups starting withOUT 'ROLE_' will be threated as Groups
