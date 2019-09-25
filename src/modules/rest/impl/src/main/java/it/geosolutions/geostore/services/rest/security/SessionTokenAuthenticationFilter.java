@@ -34,6 +34,7 @@ import org.springframework.security.core.Authentication;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.UserSessionService;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 /**
  * Token based authentication filter that looks for the token in a user session service.
@@ -60,8 +61,21 @@ public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter 
     	}
     	User ud = userSessionService.getUserData(token);
     	if(ud != null) {
-			User user;
-			user = userService.get((Long) ud.getId());
+			User user = null;;
+			if(ud.getId() != null) {
+				user = userService.get((Long) ud.getId());
+			} else if (ud.getName() != null){
+				try {
+					// in case of external authentication provider the user may not come from the UserService
+					// so try to use the name to retrieve from the userservice (that should be populated in the meanwhile).
+					user = userService.get(ud.getName());
+				} catch (NotFoundServiceEx e) {
+					LOGGER.error("User " + ud.getName() + " not found on the database because of an exception", e);
+				}  
+			} else  {
+				LOGGER.error("User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
+			}
+			
 			if (user != null) {
 				return createAuthenticationForUser(user);
 			}
