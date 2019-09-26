@@ -3,8 +3,7 @@ env:
   - secure: "m0vxvQKaatE4BRB7Z+fvfUGSBGWSPY3W79EVgYHpAEWxta2Eqegr9p9RwJTJt8W9IMbbodp7HpEINdOaMl81XZPDfBN/nM5a9H7sgvJUTjnF2TvjHEiL7QQHFa0u8P2mDtvE5y/2TC08kxRwVPrFIsVAzcRG5TjfvNRGjQJrIWyckBHwSuBarMk+OevNTwqp3cTvVJGBOvneJQ676Eqhcpch6gk9W8KfpAvTxvErCwRRYugYDKJtfNc1vg0jdYS2TtWn78NjlZaq6ddSABDHs5BrEdx20gfKp452SrNS+ZY0xUocAV+qEqPpEKSdju764jndF0kWUYauxtoQmmncA7lYylRS3LJt1AW2EllwNQ5SEaaJk9crHePSwpqjsyUaCVG4JB3lu6y6lO8ZSg9TGNE9y+KinHiwkLvV97XcqbfSXmeyNow9+asMB23x7MM0t2cek6XHNfUVi6wc0iHU7/i5zqvZs9HjJVtQXZ4mJ1WJlJmPnXOXK3hbSs4lhcj/ZE8C85ehax/9n+t2wzDdWJoz2ww8I0KcrbVEM81uZWtpSR62F9kIMsXNQsxKz8BBHCl5HBgSakmoIk7rjNp+TTqMC2lLCmzXU9TQ22Ev8+0a5+97SO60rt+8w4M6S0Vq2QQO4dEyl2ppWC5hl60oaCU/KbJe79WeNfixBNVuOwY="
 language: java
 jdk:
-  - oraclejdk8
-  - openjdk7
+  - openjdk8
 before_script:
   - echo "MAVEN_OPTS='-Xmx512m -XX:MaxPermSize=256m'" > ~/.mavenrc
 script: mvn clean install -Pextjs,h2_disk,auditing -DrepoToken=$repoToken 
