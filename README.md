@@ -1,6 +1,5 @@
 [![Build Status](https://travis-ci.org/geosolutions-it/geostore.svg?branch=master)](https://travis-ci.org/geosolutions-it/geostore)
 [![Build Status](http://build.geo-solutions.it/jenkins/buildStatus/icon?job=GeoStore-Master)](http://build.geo-solutions.it/jenkins/job/GeoStore-Master)
-[![Build Status](http://winbuild.geo-solutions.it/jenkins/buildStatus/icon?job=GeoStore-Master)](http://winbuild.geo-solutions.it/jenkins/job/GeoStore-Master/)
 [![Coverage Status](https://coveralls.io/repos/github/geosolutions-it/geostore/badge.svg?branch=master)](https://coveralls.io/github/geosolutions-it/geostore?branch=master)
 
 [GeoStore](https://github.com/geosolutions-it/geostore) is an open source Java enterprise application for storing, searching and retrieving data on the fly.
