@@ -49,6 +49,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.GrantedAuthorityImpl;
 
@@ -83,7 +84,7 @@ public abstract class RESTServiceImpl{
                 // So I'm going to create a Principal to be used during resources-based authorization.
                 principal = createGuestPrincipal();
             }
-            if (!(principal instanceof UsernamePasswordAuthenticationToken)) {
+            if (!(principal instanceof Authentication)) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Mismatching auth principal");
                 }
@@ -91,7 +92,7 @@ public abstract class RESTServiceImpl{
                         + ")");
             }
 
-            UsernamePasswordAuthenticationToken usrToken = (UsernamePasswordAuthenticationToken) principal;
+            Authentication usrToken = (Authentication) principal;
 
             //DamianoG 06/03/2014 Why create a new Instance when we can deal with the object taken from the DB? Being the instance taken from DB Transient we avoid problems saving security rules...
 //            User user = new User();
@@ -110,12 +111,18 @@ public abstract class RESTServiceImpl{
 //                        user.setRole(Role.GUEST);
 //                }
 //            }
-            User user = (User)usrToken.getPrincipal();
-            
-            LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                    + user.getRole());
+            if (usrToken.getPrincipal() instanceof User) {
+                User user = (User)usrToken.getPrincipal();
+                
+                LOGGER.info("Accessing service with user " + user.getName() + " and role "
+                        + user.getRole());
 
-            return user;
+                return user;
+            }
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info("Mismatching auth principal");
+            }
+            throw new InternalErrorWebEx("Mismatching auth principal (not a GeoStore User)");
         }
     }
     
