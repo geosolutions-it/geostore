@@ -314,7 +314,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
 
         User ret = null;
         try {
-            authUser = userService.get(authUser.getName());
+            if (!authUser.isTrusted()) {
+                authUser = userService.get(authUser.getName());
+            }
 
             if (authUser != null) {
         		if(authUser.getRole().equals(Role.GUEST)){

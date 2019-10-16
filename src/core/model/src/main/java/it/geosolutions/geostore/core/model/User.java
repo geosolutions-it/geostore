@@ -101,6 +101,7 @@ public class User implements Serializable {
      * NOT to be saved on DB
      */
     private transient String newPassword = null;
+    private transient boolean trusted = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @Fetch(FetchMode.SUBSELECT)
@@ -278,6 +279,20 @@ public class User implements Serializable {
      */
     public void setRole(Role role) {
         this.role = role;
+    }
+    
+    /**
+     * A trusted user is not validated through the database.
+     * Used when we want to externalize user authentication and we get the user from the external source.
+     * 
+     * @return
+     */
+    public boolean isTrusted() {
+        return trusted;
+    }
+
+    public void setTrusted(boolean trusted) {
+        this.trusted = trusted;
     }
 
     /*
