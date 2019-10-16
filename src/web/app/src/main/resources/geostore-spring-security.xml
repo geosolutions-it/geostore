@@ -24,6 +24,10 @@
 		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
 		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
 		<security:custom-filter ref="sessionTokenProcessingFilter" after="FORM_LOGIN_FILTER"/>
+		<!--
+		To enable SSO headers based authentication uncomment the following 
+		<security:custom-filter ref="headersProcessingFilter" before="FORM_LOGIN_FILTER"/>
+		-->
 		<security:anonymous />
 	</security:http>
 	<!-- Entry point -->
@@ -53,6 +57,26 @@
 		<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
 		<!-- security:authentication-provider ref='geostoreLdapProvider' / -->
 	</security:authentication-manager>
+
+    <!-- SSO headers based authentication provider
+    <security:authentication-manager>
+        <security:authentication-provider ref='preauthenticatedAuthenticationProvider' />
+    </security:authentication-manager>
+    
+    <bean id="preauthenticatedAuthenticationProvider" class="it.geosolutions.geostore.services.rest.security.PreAuthenticatedAuthenticationProvider">
+    </bean>
+    
+    <bean class="it.geosolutions.geostore.services.rest.security.HeadersAuthenticationFilter" id="headersProcessingFilter">
+        <property name="usernameHeader" value="x-geostore-user"/>
+        <property name="groupsHeader" value="x-geostore-groups"/>
+        <property name="roleHeader" value="x-geostore-role"/>
+        <property name="listDelimiter" value=","/>
+        <property name="defaultRole" value="USER"/>
+        
+        <property name="authoritiesMapper" ref="...options mapper..."/>
+    </bean>
+    
+     -->
 
 	<!-- LDAP Auth Provider -->
 	<!-- Simple namespace-based configuration -->
