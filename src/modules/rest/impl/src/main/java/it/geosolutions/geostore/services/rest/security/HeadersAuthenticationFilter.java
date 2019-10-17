@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -65,7 +66,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
             user.setName(username);
             user.setRole(getUserRole(defaultRole));
             String groups = req.getHeader(groupsHeader);
-            List<GrantedAuthority> groupAuthorities = new ArrayList<GrantedAuthority>();
+            Set<GrantedAuthority> groupAuthorities = new HashSet<GrantedAuthority>();
             user.setGroups(new HashSet<UserGroup>());
             if (groups != null) {
                 String[] groupsList = groups.split(listDelimiter);
@@ -81,22 +82,20 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                 }
                 
             }
-            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
             String role = req.getHeader(roleHeader);
             if (role != null) {
                 user.setRole(getUserRole(role));
                 authorities.add(createRole(role));
             } else if (authoritiesMapper != null) {
-                
+                Role chosenRole = user.getRole();
                 for (GrantedAuthority authority : authoritiesMapper.mapAuthorities(groupAuthorities)) {
                     authorities.add(createRole(authority.getAuthority()));
-                    if (role == null) {
-                        Role userRole = getUserRole(authority.getAuthority());
-                        if (userRole != null) {
-                            user.setRole(morePrivileged(userRole, user.getRole()));
-                        }
-                    }
+                    Role userRole = getUserRole(authority.getAuthority());
+                    chosenRole = morePrivileged(userRole, chosenRole);
                 }
+                user.setRole(chosenRole);
+                authorities.add(createRole(user.getRole().name()));
             } else {
                 authorities.add(createRole(user.getRole().name()));
             }
