@@ -65,6 +65,7 @@ public class HeadersAuthenticationFilterTest {
     
     @Before
     public void setUp() {
+        SecurityContextHolder.getContext().setAuthentication(null);
         filter = new HeadersAuthenticationFilter();
         
         request = Mockito.mock(HttpServletRequest.class);

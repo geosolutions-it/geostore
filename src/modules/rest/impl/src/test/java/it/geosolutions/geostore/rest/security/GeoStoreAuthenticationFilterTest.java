@@ -44,10 +44,11 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 public class GeoStoreAuthenticationFilterTest {
     
@@ -73,6 +74,11 @@ public class GeoStoreAuthenticationFilterTest {
         Mockito.when(req.getHeader("header1")).thenReturn("value1");
         Mockito.when(req.getHeaderNames()).thenReturn(
                 new Vector(Arrays.asList(USERNAME_HEADER, "header1")).elements());
+    }
+    
+    @After
+    public void tearDown() {
+        SecurityContextHolder.getContext().setAuthentication(null);
     }
     
     @Test
