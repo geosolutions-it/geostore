@@ -419,7 +419,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
-        resourceDAO.addReadSecurityConstraints(searchCriteria, authUser);
+        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
 
         if(LOGGER.isTraceEnabled()) {
             LOGGER.trace("Get Resource List: " + searchCriteria);
@@ -457,7 +457,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
-        resourceDAO.addReadSecurityConstraints(searchCriteria, authUser);
+        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
 
         List<Resource> found = resourceDAO.search(searchCriteria);
 
@@ -758,7 +758,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
-        resourceDAO.addReadSecurityConstraints(searchCriteria, authUser);
+        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
 
         List<Resource> resources = this.resourceDAO.search(searchCriteria);
         resources = this.configResourceList(resources, includeAttributes, includeData, authUser);
@@ -825,7 +825,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
-        resourceDAO.addReadSecurityConstraints(searchCriteria, authUser);
+        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
         
         List<Resource> resources = this.resourceDAO.search(searchCriteria);
 
@@ -854,7 +854,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.setDistinct(true);
         searchCriteria.addFetch("data");
 
-        resourceDAO.addReadSecurityConstraints(searchCriteria, authUser);
+        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
 
         List<Resource> resources = this.resourceDAO.search(searchCriteria);
 
@@ -868,7 +868,7 @@ public class ResourceServiceImpl implements ResourceService
     @Override
     public List<SecurityRule> getUserSecurityRule(String userName, long resourceId)
     {
-        return resourceDAO.findUserSecurityRule(userName, resourceId);
+        return securityDAO.findUserSecurityRule(userName, resourceId);
     }
 
     /* (non-Javadoc)
@@ -877,14 +877,14 @@ public class ResourceServiceImpl implements ResourceService
     @Override
     public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long resourceId)
     {
-        return resourceDAO.findGroupSecurityRule(groupNames, resourceId);
+        return securityDAO.findGroupSecurityRule(groupNames, resourceId);
     }
 
     @Override
     public List<SecurityRule> getSecurityRules(long id)
             throws BadRequestServiceEx, InternalErrorServiceEx
     {
-        return resourceDAO.findSecurityRules(id);
+        return securityDAO.findSecurityRules(id);
     }
 
     @Override
@@ -906,14 +906,6 @@ public class ResourceServiceImpl implements ResourceService
             // insert new rules
             for (SecurityRule rule : rules) {
                 rule.setResource(resource);
-                //Retrieve from db the entity usergroup, if the securityrule is related to a group
-                if (rule.getGroup() != null) {
-                    UserGroup ug = userGroupDAO.find(rule.getGroup().getId());
-                    if (ug == null) {
-                        throw new InternalErrorServiceEx("The usergroup having the provided Id doesn't exist");
-                    }
-                    rule.setGroup(ug);
-                }
                 securityDAO.persist(rule);
             }
         } else {
@@ -933,7 +925,7 @@ public class ResourceServiceImpl implements ResourceService
     public long getCountByFilterAndUser(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx
     {
         Search searchCriteria = SearchConverter.convert(filter);
-        resourceDAO.addReadSecurityConstraints(searchCriteria, user);
+        securityDAO.addReadSecurityConstraints(searchCriteria, user);
         return resourceDAO.count(searchCriteria);
     }
 
@@ -955,7 +947,7 @@ public class ResourceServiceImpl implements ResourceService
             searchCriteria.addFilterILike("name", nameLike);
         }
 
-        resourceDAO.addReadSecurityConstraints(searchCriteria, user);
+        securityDAO.addReadSecurityConstraints(searchCriteria, user);
 
         return resourceDAO.count(searchCriteria);
     }

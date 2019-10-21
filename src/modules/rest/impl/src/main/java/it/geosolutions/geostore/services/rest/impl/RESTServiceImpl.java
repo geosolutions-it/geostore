@@ -147,7 +147,7 @@ public abstract class RESTServiceImpl{
             if (userSecurityRules != null && userSecurityRules.size() > 0){
             	for(SecurityRule sr : userSecurityRules){
             		// the getUserSecurityRules returns all rules instead of user rules. So the user name check is necessary until problem with DAO is solved
-	                if (sr.isCanWrite() && sr.getUser() != null && sr.getUser().getName() == authUser.getName()){
+	                if (sr.isCanWrite() && sr.getUser() != null && sr.getUser().getName().equals(authUser.getName())){
 	                    return true;
 	                }
             	}
@@ -192,7 +192,7 @@ public abstract class RESTServiceImpl{
             if (userSecurityRules != null && userSecurityRules.size() > 0){
             	// the getUserSecurityRules returns all rules instead of user rules. So the user name check is necessary until problem with DAO is solved
                 for(SecurityRule sr : userSecurityRules){
-	                if (sr.isCanRead() && sr.getUser() != null && sr.getUser().getName() == authUser.getName()){
+	                if (sr.isCanRead() && sr.getUser() != null && sr.getUser().getName().equals(authUser.getName())){
 	                    return true;
 	                }
                 }

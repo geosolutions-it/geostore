@@ -20,9 +20,6 @@
 
 package it.geosolutions.geostore.core.dao;
 
-import java.util.List;
-
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 
 /**
@@ -31,20 +28,5 @@ import it.geosolutions.geostore.core.model.StoredData;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public interface StoredDataDAO extends RestrictedGenericDAO<StoredData> {
-
-    /**
-     * @param name
-     * @param resourceId
-     * @return List<SecurityRule>
-     */
-    List<SecurityRule> findUserSecurityRule(String name, long resourceId);
-    
-    /**
-     * 
-     * @param name
-     * @param resourceId
-     * @return
-     */
-    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId);
 
 }

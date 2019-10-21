@@ -19,18 +19,17 @@
  */
 package it.geosolutions.geostore.services;
 
+import java.util.Date;
 import java.util.List;
-
+import org.apache.log4j.Logger;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
-import java.util.Date;
-import org.apache.log4j.Logger;
 
 /**
  * Class StoredDataServiceImpl.
@@ -45,6 +44,8 @@ public class StoredDataServiceImpl implements StoredDataService {
     private StoredDataDAO storedDataDAO;
 
     private ResourceDAO resourceDAO;
+    
+    private SecurityDAO securityDAO;
 
     /**
      * @param resourceDAO the resourceDAO to set
@@ -58,6 +59,10 @@ public class StoredDataServiceImpl implements StoredDataService {
      */
     public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
         this.storedDataDAO = storedDataDAO;
+    }
+    
+    public void setSecurityDAO(SecurityDAO securityDAO) {
+        this.securityDAO = securityDAO;
     }
 
     @Override
@@ -132,7 +137,7 @@ public class StoredDataServiceImpl implements StoredDataService {
         for (StoredData data : found) {
             Resource resource = data.getResource();
             if (resource != null) {
-                List<SecurityRule> security = resourceDAO.findSecurityRules(resource.getId());
+                List<SecurityRule> security = securityDAO.findSecurityRules(resource.getId());
                 resource.setSecurity(security);
 
                 List<Attribute> attribute = resourceDAO.findAttributes(resource.getId());
@@ -149,7 +154,7 @@ public class StoredDataServiceImpl implements StoredDataService {
      */
     @Override
     public List<SecurityRule> getUserSecurityRule(String name, long storedDataId) {
-        return storedDataDAO.findUserSecurityRule(name, storedDataId);
+        return securityDAO.findUserSecurityRule(name, storedDataId);
     }
 
     /* (non-Javadoc)
@@ -157,7 +162,7 @@ public class StoredDataServiceImpl implements StoredDataService {
      */
     @Override
     public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long storedDataId) {
-        return storedDataDAO.findGroupSecurityRule(groupNames, storedDataId);
+        return securityDAO.findGroupSecurityRule(groupNames, storedDataId);
     }
 
 }

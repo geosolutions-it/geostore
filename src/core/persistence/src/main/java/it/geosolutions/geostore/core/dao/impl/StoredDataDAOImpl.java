@@ -78,44 +78,4 @@ public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements Stor
     public boolean removeById(Long id) {
         return super.removeById(id);
     }
-
-    @Override
-    public List<SecurityRule> findUserSecurityRule(String name, long resourceId) {
-        Search searchCriteria = new Search(StoredData.class);
-        searchCriteria.addField("resource.security");
-
-        Filter securityFilter = Filter.some(
-                "resource.security",
-                Filter.and(Filter.equal("resource.security.resource.id", resourceId),
-                        Filter.equal("resource.security.user.name", name)));
-        searchCriteria.addFilter(securityFilter);
-
-        return super.search(searchCriteria);
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.core.dao.StoredDataDAO#findGroupSecurityRule(java.lang.String, long)
-     */
-    @Override
-    public List<SecurityRule> findGroupSecurityRule(List<String> userGroups, long resourceId) {
-        Search searchCriteria = new Search(StoredData.class);
-        
-         //get all the security rules
-          searchCriteria.addField("resource.security");
-          Filter securityFilter = Filter.some(
-                  "resource.security",Filter.equal("resource.security.resource.id", resourceId)
-          );
-          searchCriteria.addFilter(securityFilter);
-          
-        List<SecurityRule> rules = super.search(searchCriteria);
-        //WORKAROUND (See ResourceDAOImpl)
-        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
-        for(SecurityRule sr : rules){
-            if(sr.getGroup() != null && userGroups.contains(sr.getGroup().getGroupName())){
-                filteredRules.add(sr);
-            }
-        }
-        return filteredRules;
-    }
-
 }

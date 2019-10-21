@@ -103,47 +103,6 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
     }
 
     /**
-     * @param userName
-     * @param resourceId
-     * @return List<SecurityRule>
-     * @deprecated move to SecurityDAO
-     */
-    @Deprecated
-    @Override
-    public List<SecurityRule> findUserSecurityRule(String userName, long resourceId) {
-        Search searchCriteria = new Search(Resource.class);
-        searchCriteria.addField("security");
-
-        Filter securityFilter = Filter.some(
-                "security",
-                Filter.and(Filter.equal("resource.id", resourceId),
-                        Filter.equal("user.name", userName)));
-        searchCriteria.addFilter(securityFilter);
-        // now rules are not properly filtered. 
-        // so no user rules have to be removed externally (see RESTServiceImpl > ResourceServiceImpl)
-        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
-        return super.search(searchCriteria);
-    }
-
-    /**
-     * @param resourceId
-     * @return List<SecurityRule>
-     * @deprecated move to SecurityDAO
-     */
-    @Deprecated
-    @Override
-    public List<SecurityRule> findSecurityRules(long resourceId) {
-        Search searchCriteria = new Search(Resource.class);
-        searchCriteria.addField("security");
-
-        Filter securityFilter = Filter.some("security", Filter.equal("resource.id", resourceId));
-
-        searchCriteria.addFilter(securityFilter);
-
-        return super.search(searchCriteria);
-    }
-
-    /**
      * @param resourceId
      * @return List<Attribute>
      */
@@ -213,35 +172,6 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
         return super.removeById(id);
     }
 
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findGroupSecurityRule(java.lang.String, long)
-     * @deprecated move to SecurityDAO
-     */
-    @Deprecated
-    @Override
-    public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
-        Search searchCriteria = new Search(Resource.class);
-        searchCriteria.addField("security");
-        
-        Filter securityFilter = Filter.some("security", Filter.equal("resource.id", resourceId));
-        //Advanced filters Filters doesn't work, I don't know why...
-//        Filter securityFilter = Filter.some(
-//                "security",
-//                Filter.and(Filter.equal("resource.id", resourceId),
-//                        Filter.in("group.groupName", groupNames),
-//                        Filter.isNotEmpty("group")));
-        
-        searchCriteria.addFilter(securityFilter);
-        List<SecurityRule> rules = super.search(searchCriteria);
-        //WORKAROUND
-        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
-        for(SecurityRule sr : rules){
-            if(sr.getGroup() != null && groupNames.contains(sr.getGroup().getGroupName())){
-                filteredRules.add(sr);
-            }
-        }
-        return filteredRules;
-    }
 
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.core.dao.ResourceDAO#findResources(java.util.List)
@@ -259,38 +189,6 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
             }
         }
         return resourceToSet;
-    }
-
-    /**
-     * Add security filtering in order to filter out resources the user has not read access to
-     */
-    public void addReadSecurityConstraints(Search searchCriteria, User user)
-    {
-        // no further constraints for admin user
-        if(user.getRole() == Role.ADMIN) {
-            return;
-        }
-
-        Filter userFiltering = Filter.equal("user.name", user.getName());
-
-        if(! user.getGroups().isEmpty()) {
-            List<Long> groupsId = new ArrayList<>();
-            for (UserGroup group : user.getGroups()) {
-                groupsId.add(group.getId());
-            }
-            
-            userFiltering = Filter.or( userFiltering, Filter.in("group.id", groupsId));
-        }
-
-        Filter securityFilter = Filter.some(
-                "security",
-                Filter.and(
-                        Filter.equal("canRead", true),
-                        userFiltering
-                        )
-                );
-
-        searchCriteria.addFilter(securityFilter);
     }
 
     /* (non-Javadoc)

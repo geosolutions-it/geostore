@@ -22,7 +22,9 @@ package it.geosolutions.geostore.core.dao;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
-
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
@@ -112,6 +114,174 @@ public class SecurityDAOTest extends BaseDAOTest {
 
             assertEquals(1, securityDAO.count(null));
             assertEquals(1, securityDAO.findAll().size());
+        }
+
+        //
+        // UPDATE
+        //
+        {
+            SecurityRule loaded = securityDAO.find(securityId);
+            assertNotNull("Can't retrieve Security", loaded);
+
+            assertTrue(loaded.isCanWrite());
+
+            loaded.setCanWrite(false);
+            securityDAO.merge(loaded);
+
+            loaded = securityDAO.find(securityId);
+            assertNotNull("Can't retrieve Security", loaded);
+            assertFalse(loaded.isCanWrite());
+        }
+
+        //
+        // LOAD, REMOVE
+        //
+        {
+            securityDAO.removeById(securityId);
+            assertNull("Security not deleted", securityDAO.find(categoryId));
+        }
+
+    }
+    
+    @Test
+    public void testPersistSecurityUsingNames() throws Exception {
+
+        final String NAME = "NAME";
+        final String USERNAME= "USER";
+        final String GROUPNAME= "GROUP";
+
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Persisting Security");
+        }
+
+        long categoryId;
+        long resourceId;
+        long securityId;
+        long userId;
+        long groupId;
+
+        //
+        // PRE-PERSIST
+        //
+        {
+            Category category = new Category();
+            category.setName("MAP");
+
+            categoryDAO.persist(category);
+            categoryId = category.getId();
+
+            assertEquals(1, categoryDAO.count(null));
+            assertEquals(1, categoryDAO.findAll().size());
+            
+            User user = new User();
+            user.setName(USERNAME);
+            user.setRole(Role.USER);
+            userDAO.persist(user);
+            userId = user.getId();
+            assertEquals(1, userDAO.count(null));
+            assertEquals(1, userDAO.findAll().size());
+            
+            UserGroup group = new UserGroup();
+            group.setGroupName(GROUPNAME);
+            userGroupDAO.persist(group);
+            groupId = group.getId();
+            assertEquals(1, userGroupDAO.count(null));
+            assertEquals(1, userGroupDAO.findAll().size());
+
+            Resource resource = new Resource();
+            resource.setName(NAME);
+            resource.setCreation(new Date());
+            resource.setCategory(category);
+
+            resourceDAO.persist(resource);
+            resourceId = resource.getId();
+
+            assertEquals(1, resourceDAO.count(null));
+            assertEquals(1, resourceDAO.findAll().size());
+
+        }
+
+        //
+        // PERSIST WITH USERNAME
+        //
+        {
+            SecurityRule security = new SecurityRule();
+            security.setCanRead(true);
+            security.setCanWrite(true);
+            security.setResource(resourceDAO.find(resourceId));
+            security.setUsername("testuser");
+            securityDAO.persist(security);
+            securityId = security.getId();
+
+            assertEquals(1, securityDAO.count(null));
+            assertEquals(1, securityDAO.findAll().size());
+            SecurityRule rule = securityDAO.find(securityId);
+            assertNotNull(rule);
+            assertNotNull(rule.getUsername());
+            securityDAO.removeById(securityId);
+        }
+        
+        //
+        // PERSIST WITH USER
+        //
+        {
+            SecurityRule security = new SecurityRule();
+            security.setCanRead(true);
+            security.setCanWrite(true);
+            security.setResource(resourceDAO.find(resourceId));
+            User testUser = new User();
+            testUser.setId(userId);
+            security.setUser(testUser);
+            securityDAO.persist(security);
+            securityId = security.getId();
+
+            assertEquals(1, securityDAO.count(null));
+            assertEquals(1, securityDAO.findAll().size());
+            SecurityRule rule = securityDAO.find(securityId);
+            assertNotNull(rule);
+            assertNotNull(rule.getUser());
+            securityDAO.removeById(securityId);
+        }
+        
+        //
+        // PERSIST WITH GROUPNAME
+        //
+        {
+            SecurityRule security = new SecurityRule();
+            security.setCanRead(true);
+            security.setCanWrite(true);
+            security.setResource(resourceDAO.find(resourceId));
+            security.setGroupname("testgroup");
+            securityDAO.persist(security);
+            securityId = security.getId();
+
+            assertEquals(1, securityDAO.count(null));
+            assertEquals(1, securityDAO.findAll().size());
+            SecurityRule rule = securityDAO.find(securityId);
+            assertNotNull(rule);
+            assertNotNull(rule.getGroupname());
+            securityDAO.removeById(securityId);
+        }
+        
+        //
+        // PERSIST WITH GROUP
+        //
+        {
+            SecurityRule security = new SecurityRule();
+            security.setCanRead(true);
+            security.setCanWrite(true);
+            security.setResource(resourceDAO.find(resourceId));
+            UserGroup testGroup = new UserGroup();
+            testGroup.setId(groupId);
+            security.setGroup(testGroup);
+            securityDAO.persist(security);
+            securityId = security.getId();
+
+            assertEquals(1, securityDAO.count(null));
+            assertEquals(1, securityDAO.findAll().size());
+            SecurityRule rule = securityDAO.find(securityId);
+            assertNotNull(rule);
+            assertNotNull(rule.getGroup());
         }
 
         //
