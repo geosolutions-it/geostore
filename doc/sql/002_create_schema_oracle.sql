@@ -37,6 +37,8 @@
         group_id number(19,0),
         resource_id number(19,0),
         user_id number(19,0),
+        username varchar2(255 char),
+        groupname varchar2(255 char),
         primary key (id),
         unique (user_id, resource_id),
         unique (resource_id, group_id)
@@ -140,6 +142,10 @@
     create index idx_security_write on gs_security (canWrite);
 
     create index idx_security_read on gs_security (canRead);
+    
+    create index idx_security_username on gs_security (username);
+    
+    create index idx_security_groupname on gs_security (groupname);
 
     alter table gs_security 
         add constraint fk_security_user 

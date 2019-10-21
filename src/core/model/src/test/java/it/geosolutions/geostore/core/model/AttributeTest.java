@@ -79,24 +79,3 @@ public class AttributeTest {
         doTheTest(a0);
     }
 }
-
-class Marshaler<T> {
-
-    private final Class<T> _class;
-
-    public Marshaler(Class<T> _class) {
-        this._class = _class;
-    }
-
-    protected String marshal(T a) {
-        StringWriter sw = new StringWriter();
-        JAXB.marshal(a, sw);
-        return sw.toString();
-    }
-
-    protected T unmarshal(String s) {
-        StringReader sr = new StringReader(s);
-        return JAXB.unmarshal(sr, _class);
-    }
-
-}

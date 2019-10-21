@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2019 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  * 
  *  GPLv3 + Classpath exception
@@ -19,44 +19,27 @@
  */
 package it.geosolutions.geostore.core.model;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.StringReader;
 import java.io.StringWriter;
-
 import javax.xml.bind.JAXB;
 
-import org.junit.Test;
+class Marshaler<T> {
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
-public class CategoryTest {
+    private final Class<T> _class;
 
-    private final static Marshaler<Category> MARSHALER = new Marshaler<Category>(Category.class);
-
-    public CategoryTest() {
+    public Marshaler(Class<T> _class) {
+        this._class = _class;
     }
 
-    @Test
-    public void testMarshallingString() throws Exception {
-        Category c0 = new Category();
-        c0.setName("testatt");
-        c0.setId(1l);
-
-        doTheTest(c0);
+    protected String marshal(T a) {
+        StringWriter sw = new StringWriter();
+        JAXB.marshal(a, sw);
+        return sw.toString();
     }
 
-    private void doTheTest(Category a0) {
-        String s = MARSHALER.marshal(a0);
-        Category a1 = MARSHALER.unmarshal(s);
-
-        System.out.println(a0);
-        System.out.println(a1);
-        System.out.println(s);
-
-        assertTrue(a0.equals(a1));
+    protected T unmarshal(String s) {
+        StringReader sr = new StringReader(s);
+        return JAXB.unmarshal(sr, _class);
     }
+
 }
-

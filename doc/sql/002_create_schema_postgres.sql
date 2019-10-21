@@ -52,6 +52,8 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
         group_id int8,
         resource_id int8,
         user_id int8,
+        username varchar(255),
+        groupname varchar(255),
         primary key (id),
         unique (user_id, resource_id),
         unique (resource_id, group_id)
@@ -155,6 +157,10 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
     create index idx_security_write on gs_security (canWrite);
 
     create index idx_security_read on gs_security (canRead);
+    
+    create index idx_security_username on gs_security (username);
+    
+    create index idx_security_groupname on gs_security (groupname);
 
     alter table gs_security 
         add constraint fk_security_user 
