@@ -68,6 +68,12 @@
 	
 	<bean id="securityDAO" class="it.geosolutions.geostore.core.dao.impl.SecurityDAOImpl" >
 		<property name="searchProcessor" ref="geostoreSearchProcessor" />
+		<property name="userGroupDAO" ref="userGroupDAO"/>
 	</bean>
+	
+	<bean id="externalSecurityDAO" class="it.geosolutions.geostore.core.dao.impl.ExternalSecurityDAOImpl" >
+        <property name="searchProcessor" ref="geostoreSearchProcessor" />
+        <property name="userGroupDAO" ref="userGroupDAO"/>
+    </bean>
 	
 </beans>

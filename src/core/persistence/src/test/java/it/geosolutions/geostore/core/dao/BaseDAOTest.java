@@ -20,6 +20,11 @@
 
 package it.geosolutions.geostore.core.dao;
 
+import java.util.List;
+import org.apache.log4j.Logger;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import it.geosolutions.geostore.core.dao.impl.ExternalSecurityDAOImpl;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -27,16 +32,7 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
-
-import java.util.List;
-import java.util.Set;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.Logger;
-import org.hibernate.Hibernate;
-import org.junit.Test;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Class BaseDAOTest
@@ -57,6 +53,8 @@ public abstract class BaseDAOTest extends TestCase {
     protected static CategoryDAO categoryDAO;
 
     protected static SecurityDAO securityDAO;
+    
+    protected static SecurityDAO externalSecurityDAO;
 
     protected static UserAttributeDAO userAttributeDAO;
 
@@ -81,6 +79,7 @@ public abstract class BaseDAOTest extends TestCase {
                 attributeDAO = (AttributeDAO) ctx.getBean("attributeDAO");
                 categoryDAO = (CategoryDAO) ctx.getBean("categoryDAO");
                 securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
+                externalSecurityDAO = (SecurityDAO) ctx.getBean("externalSecurityDAO");
                 userAttributeDAO = (UserAttributeDAO) ctx.getBean("userAttributeDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
                 userGroupDAO = (UserGroupDAO) ctx.getBean("userGroupDAO");
@@ -103,6 +102,7 @@ public abstract class BaseDAOTest extends TestCase {
         assertNotNull(attributeDAO);
         assertNotNull(categoryDAO);
         assertNotNull(securityDAO);
+        assertNotNull(externalSecurityDAO);
         assertNotNull(userAttributeDAO);
         assertNotNull(userDAO);
         assertNotNull(userGroupDAO);
