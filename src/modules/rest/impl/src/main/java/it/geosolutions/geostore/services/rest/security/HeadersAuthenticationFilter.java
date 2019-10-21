@@ -27,9 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
@@ -39,6 +37,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 
@@ -52,6 +51,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     private String roleHeader = DEFAULT_ROLE_HEADER;
     private String listDelimiter=",";
     private String defaultRole = "USER";
+    private boolean addEveryOneGroup = false;
     
     private GrantedAuthoritiesMapper authoritiesMapper;
         
@@ -68,12 +68,16 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
             String groups = req.getHeader(groupsHeader);
             Set<GrantedAuthority> groupAuthorities = new HashSet<GrantedAuthority>();
             user.setGroups(new HashSet<UserGroup>());
+            boolean everyoneFound = false;
+            long groupCounter = 1;
             if (groups != null) {
                 String[] groupsList = groups.split(listDelimiter);
-                long groupCounter = 1;
+                
                 for (String groupName : groupsList) {
+                    if (groupName.equals(GroupReservedNames.EVERYONE.groupName())) {
+                        everyoneFound = true;
+                    }
                     UserGroup group = new UserGroup();
-                    group.setId(-1L);
                     group.setGroupName(groupName);
                     group.setId(groupCounter++);
                     group.setEnabled(true);
@@ -81,6 +85,14 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                     groupAuthorities.add(new GrantedAuthorityImpl(groupName));
                 }
                 
+            }
+            if (!everyoneFound && addEveryOneGroup) {
+                UserGroup group = new UserGroup();
+                group.setGroupName(GroupReservedNames.EVERYONE.groupName());
+                group.setId(groupCounter++);
+                group.setEnabled(true);
+                user.getGroups().add(group);
+                groupAuthorities.add(new GrantedAuthorityImpl(GroupReservedNames.EVERYONE.groupName()));
             }
             Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
             String role = req.getHeader(roleHeader);
@@ -179,6 +191,12 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
         this.authoritiesMapper = authoritiesMapper;
     }
-    
-    
+
+    public boolean isAddEveryOneGroup() {
+        return addEveryOneGroup;
+    }
+
+    public void setAddEveryOneGroup(boolean addEveryOneGroup) {
+        this.addEveryOneGroup = addEveryOneGroup;
+    }
 }
