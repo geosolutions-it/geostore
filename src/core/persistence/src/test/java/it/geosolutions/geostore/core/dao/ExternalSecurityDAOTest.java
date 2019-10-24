@@ -79,25 +79,6 @@ public class ExternalSecurityDAOTest extends BaseDAOTest {
 
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());
-
-            // SecurityRule security = new SecurityRule();
-            // security.setCanRead(true);
-            // security.setCanWrite(true);
-            // security.setCategory(category);
-            // security.setResource(resource);
-            //
-            // // ///////////////////////////////////////////////////////
-            // // The Exception should be trapped because only one
-            // // between resource and category can be specified
-            // // ///////////////////////////////////////////////////////
-            // try{
-            // securityDAO.persist(security);
-            // fail("Exception not trapped");
-            // } catch(Exception exc) {
-            // if(LOGGER.isDebugEnabled()){
-            // LOGGER.debug("OK: exception trapped", exc);
-            // }
-            // }
         }
 
         //

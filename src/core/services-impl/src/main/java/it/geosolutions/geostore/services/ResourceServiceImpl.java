@@ -906,6 +906,12 @@ public class ResourceServiceImpl implements ResourceService
             // insert new rules
             for (SecurityRule rule : rules) {
                 rule.setResource(resource);
+                if (rule.getGroup() != null) {
+                    UserGroup ug = userGroupDAO.find(rule.getGroup().getId());
+                    if (ug != null) {
+                        rule.setGroup(ug);
+                    }
+                }
                 securityDAO.persist(rule);
             }
         } else {
