@@ -139,12 +139,14 @@ public class Convert {
 			if(rule.getUser() != null) {
 				User user = new User();
 				user.setId(rule.getUser().getId());
+				user.setName(rule.getUser().getName());
 				securityRule.setUser(user);
 			}
 			
 			if(rule.getGroup() != null) {
 				UserGroup group = new UserGroup();
 				group.setId(rule.getGroup().getId());
+				group.setGroupName(rule.getGroup().getGroupName());
 				securityRule.setGroup(group);
 			}
 			

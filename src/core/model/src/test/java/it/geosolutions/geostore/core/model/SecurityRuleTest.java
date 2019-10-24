@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2019 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  * 
  *  GPLv3 + Classpath exception
@@ -20,43 +20,31 @@
 package it.geosolutions.geostore.core.model;
 
 import static org.junit.Assert.assertTrue;
-
-import java.io.StringReader;
-import java.io.StringWriter;
-
-import javax.xml.bind.JAXB;
-
 import org.junit.Test;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
-public class CategoryTest {
-
-    private final static Marshaler<Category> MARSHALER = new Marshaler<Category>(Category.class);
-
-    public CategoryTest() {
-    }
-
+public class SecurityRuleTest {
+    private final static Marshaler<SecurityRule> MARSHALER = new Marshaler<SecurityRule>(SecurityRule.class);
+    
     @Test
-    public void testMarshallingString() throws Exception {
-        Category c0 = new Category();
-        c0.setName("testatt");
-        c0.setId(1l);
-
-        doTheTest(c0);
+    public void testMarshallingUsername() throws Exception {
+        SecurityRule sr0 = new SecurityRule();
+        sr0.setUsername("testuser");
+        doTheTest(sr0);
+    }
+    
+    @Test
+    public void testMarshallingGroupname() throws Exception {
+        SecurityRule sr0 = new SecurityRule();
+        sr0.setGroupname("testgroup");
+        doTheTest(sr0);
     }
 
-    private void doTheTest(Category a0) {
+    private void doTheTest(SecurityRule a0) {
         String s = MARSHALER.marshal(a0);
-        Category a1 = MARSHALER.unmarshal(s);
-
-        System.out.println(a0);
-        System.out.println(a1);
-        System.out.println(s);
+        SecurityRule a1 = MARSHALER.unmarshal(s);
 
         assertTrue(a0.equals(a1));
     }
 }
+
 

@@ -19,15 +19,19 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
-import com.googlecode.genericdao.search.ISearch;
-
+import java.util.ArrayList;
 import java.util.List;
-
-import it.geosolutions.geostore.core.dao.SecurityDAO;
-import it.geosolutions.geostore.core.model.SecurityRule;
-
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
+import it.geosolutions.geostore.core.dao.SecurityDAO;
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 
 /**
  * Class SecurityDAOImpl.
@@ -40,6 +44,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
 
     private static final Logger LOGGER = Logger.getLogger(SecurityDAOImpl.class);
 
+    private UserGroupDAO userGroupDAO;
     /*
      * (non-Javadoc)
      * 
@@ -50,8 +55,20 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         if (LOGGER.isDebugEnabled()) {
             LOGGER.info("Inserting new entities for Security ... ");
         }
-
+        for (SecurityRule rule : entities) {
+            validateGroup(rule);
+        }
         super.persist(entities);
+    }
+    
+    protected void validateGroup(SecurityRule rule) throws InternalError {
+        if (rule.getGroup() != null) {
+            UserGroup ug = userGroupDAO.find(rule.getGroup().getId());
+            if (ug == null) {
+                throw new InternalError("The usergroup having the provided Id doesn't exist");
+            }
+            rule.setGroup(ug);
+        }
     }
 
     /*
@@ -104,5 +121,96 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     public boolean removeById(Long id) {
         return super.removeById(id);
     }
+    
+    /**
+     * Add security filtering in order to filter out resources the user has not read access to
+     */
+    public void addReadSecurityConstraints(Search searchCriteria, User user)
+    {
+        // no further constraints for admin user
+        if(user.getRole() == Role.ADMIN) {
+            return;
+        }
 
+        Filter userFiltering = Filter.equal("user.name", user.getName());
+
+        if(! user.getGroups().isEmpty()) {
+            List<Long> groupsId = new ArrayList<>();
+            for (UserGroup group : user.getGroups()) {
+                groupsId.add(group.getId());
+            }
+            
+            userFiltering = Filter.or( userFiltering, Filter.in("group.id", groupsId));
+        }
+
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(
+                        Filter.equal("canRead", true),
+                        userFiltering
+                        )
+                );
+
+        searchCriteria.addFilter(securityFilter);
+    }
+
+    /**
+     * @param userName
+     * @param resourceId
+     * @return List<SecurityRule>
+     */
+    @Override
+    public List<SecurityRule> findUserSecurityRule(String userName, long resourceId) {
+        Search searchCriteria = new Search(SecurityRule.class);
+
+        Filter securityFilter = 
+                Filter.and(Filter.equal("resource.id", resourceId),
+                        Filter.equal("user.name", userName));
+        searchCriteria.addFilter(securityFilter);
+        // now rules are not properly filtered. 
+        // so no user rules have to be removed externally (see RESTServiceImpl > ResourceServiceImpl)
+        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
+        return super.search(searchCriteria);
+    }
+
+    /**
+     * @param resourceId
+     * @return List<SecurityRule>
+     */
+    @Override
+    public List<SecurityRule> findSecurityRules(long resourceId) {
+        Search searchCriteria = new Search(SecurityRule.class);
+
+        Filter securityFilter = Filter.equal("resource.id", resourceId);
+
+        searchCriteria.addFilter(securityFilter);
+
+        return super.search(searchCriteria);
+    }
+    
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findGroupSecurityRule(java.lang.String, long)
+     */
+    @Override
+    public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
+        List<SecurityRule> rules = findSecurityRules(resourceId);
+        //WORKAROUND
+        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
+        for(SecurityRule sr : rules){
+            if(sr.getGroup() != null && groupNames.contains(sr.getGroup().getGroupName())){
+                filteredRules.add(sr);
+            }
+        }
+        return filteredRules;
+    }
+
+    public UserGroupDAO getUserGroupDAO() {
+        return userGroupDAO;
+    }
+
+    public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
+        this.userGroupDAO = userGroupDAO;
+    }
+    
+    
 }

@@ -20,12 +20,6 @@
 package it.geosolutions.geostore.core.model;
 
 import static org.junit.Assert.assertTrue;
-
-import java.io.StringReader;
-import java.io.StringWriter;
-
-import javax.xml.bind.JAXB;
-
 import org.junit.Test;
 
 /**
@@ -34,7 +28,7 @@ import org.junit.Test;
  */
 public class UserGroupTest {
 
-    private final static GMarshaler<UserGroup> MARSHALER = new GMarshaler<UserGroup>(UserGroup.class);
+    private final static Marshaler<UserGroup> MARSHALER = new Marshaler<UserGroup>(UserGroup.class);
 
     public UserGroupTest() {
     }
@@ -57,24 +51,3 @@ public class UserGroupTest {
     }
 
 }	
-
-class GMarshaler<T> {
-
-    private final Class<T> _class;
-
-    public GMarshaler(Class<T> _class) {
-        this._class = _class;
-    }
-
-    protected String marshal(T a) {
-        StringWriter sw = new StringWriter();
-        JAXB.marshal(a, sw);
-        return sw.toString();
-    }
-
-    protected T unmarshal(String s) {
-        StringReader sr = new StringReader(s);
-        return JAXB.unmarshal(sr, _class);
-    }
-
-}

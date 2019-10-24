@@ -36,9 +36,9 @@ import org.junit.Test;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * 
  */
-public class SecurityDAOTest extends BaseDAOTest {
+public class ExternalSecurityDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(SecurityDAOTest.class);
+    final private static Logger LOGGER = Logger.getLogger(ExternalSecurityDAOTest.class);
 
     /**
      * @throws Exception
@@ -79,25 +79,6 @@ public class SecurityDAOTest extends BaseDAOTest {
 
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());
-
-            // SecurityRule security = new SecurityRule();
-            // security.setCanRead(true);
-            // security.setCanWrite(true);
-            // security.setCategory(category);
-            // security.setResource(resource);
-            //
-            // // ///////////////////////////////////////////////////////
-            // // The Exception should be trapped because only one
-            // // between resource and category can be specified
-            // // ///////////////////////////////////////////////////////
-            // try{
-            // securityDAO.persist(security);
-            // fail("Exception not trapped");
-            // } catch(Exception exc) {
-            // if(LOGGER.isDebugEnabled()){
-            // LOGGER.debug("OK: exception trapped", exc);
-            // }
-            // }
         }
 
         //
@@ -109,26 +90,26 @@ public class SecurityDAOTest extends BaseDAOTest {
             security.setCanWrite(true);
             security.setResource(resourceDAO.find(resourceId));
 
-            securityDAO.persist(security);
+            externalSecurityDAO.persist(security);
             securityId = security.getId();
 
-            assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());
+            assertEquals(1, externalSecurityDAO.count(null));
+            assertEquals(1, externalSecurityDAO.findAll().size());
         }
 
         //
         // UPDATE
         //
         {
-            SecurityRule loaded = securityDAO.find(securityId);
+            SecurityRule loaded = externalSecurityDAO.find(securityId);
             assertNotNull("Can't retrieve Security", loaded);
 
             assertTrue(loaded.isCanWrite());
 
             loaded.setCanWrite(false);
-            securityDAO.merge(loaded);
+            externalSecurityDAO.merge(loaded);
 
-            loaded = securityDAO.find(securityId);
+            loaded = externalSecurityDAO.find(securityId);
             assertNotNull("Can't retrieve Security", loaded);
             assertFalse(loaded.isCanWrite());
         }
@@ -137,7 +118,7 @@ public class SecurityDAOTest extends BaseDAOTest {
         // LOAD, REMOVE
         //
         {
-            securityDAO.removeById(securityId);
+            externalSecurityDAO.removeById(securityId);
             assertNull("Security not deleted", securityDAO.find(categoryId));
         }
 
@@ -210,15 +191,15 @@ public class SecurityDAOTest extends BaseDAOTest {
             security.setCanWrite(true);
             security.setResource(resourceDAO.find(resourceId));
             security.setUsername("testuser");
-            securityDAO.persist(security);
+            externalSecurityDAO.persist(security);
             securityId = security.getId();
 
-            assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());
-            SecurityRule rule = securityDAO.find(securityId);
+            assertEquals(1, externalSecurityDAO.count(null));
+            assertEquals(1, externalSecurityDAO.findAll().size());
+            SecurityRule rule = externalSecurityDAO.find(securityId);
             assertNotNull(rule);
             assertNotNull(rule.getUsername());
-            securityDAO.removeById(securityId);
+            externalSecurityDAO.removeById(securityId);
         }
         
         //
@@ -231,16 +212,17 @@ public class SecurityDAOTest extends BaseDAOTest {
             security.setResource(resourceDAO.find(resourceId));
             User testUser = new User();
             testUser.setId(userId);
+            testUser.setName(USERNAME);
             security.setUser(testUser);
-            securityDAO.persist(security);
+            externalSecurityDAO.persist(security);
             securityId = security.getId();
 
-            assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());
-            SecurityRule rule = securityDAO.find(securityId);
+            assertEquals(1, externalSecurityDAO.count(null));
+            assertEquals(1, externalSecurityDAO.findAll().size());
+            SecurityRule rule = externalSecurityDAO.find(securityId);
             assertNotNull(rule);
-            assertNotNull(rule.getUser());
-            securityDAO.removeById(securityId);
+            assertNotNull(rule.getUsername());
+            externalSecurityDAO.removeById(securityId);
         }
         
         //
@@ -252,15 +234,15 @@ public class SecurityDAOTest extends BaseDAOTest {
             security.setCanWrite(true);
             security.setResource(resourceDAO.find(resourceId));
             security.setGroupname("testgroup");
-            securityDAO.persist(security);
+            externalSecurityDAO.persist(security);
             securityId = security.getId();
 
-            assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());
-            SecurityRule rule = securityDAO.find(securityId);
+            assertEquals(1, externalSecurityDAO.count(null));
+            assertEquals(1, externalSecurityDAO.findAll().size());
+            SecurityRule rule = externalSecurityDAO.find(securityId);
             assertNotNull(rule);
             assertNotNull(rule.getGroupname());
-            securityDAO.removeById(securityId);
+            externalSecurityDAO.removeById(securityId);
         }
         
         //
@@ -273,30 +255,31 @@ public class SecurityDAOTest extends BaseDAOTest {
             security.setResource(resourceDAO.find(resourceId));
             UserGroup testGroup = new UserGroup();
             testGroup.setId(groupId);
+            testGroup.setGroupName(GROUPNAME);
             security.setGroup(testGroup);
-            securityDAO.persist(security);
+            externalSecurityDAO.persist(security);
             securityId = security.getId();
 
-            assertEquals(1, securityDAO.count(null));
-            assertEquals(1, securityDAO.findAll().size());
-            SecurityRule rule = securityDAO.find(securityId);
+            assertEquals(1, externalSecurityDAO.count(null));
+            assertEquals(1, externalSecurityDAO.findAll().size());
+            SecurityRule rule = externalSecurityDAO.find(securityId);
             assertNotNull(rule);
-            assertNotNull(rule.getGroup());
+            assertNotNull(rule.getGroupname());
         }
 
         //
         // UPDATE
         //
         {
-            SecurityRule loaded = securityDAO.find(securityId);
+            SecurityRule loaded = externalSecurityDAO.find(securityId);
             assertNotNull("Can't retrieve Security", loaded);
 
             assertTrue(loaded.isCanWrite());
 
             loaded.setCanWrite(false);
-            securityDAO.merge(loaded);
+            externalSecurityDAO.merge(loaded);
 
-            loaded = securityDAO.find(securityId);
+            loaded = externalSecurityDAO.find(securityId);
             assertNotNull("Can't retrieve Security", loaded);
             assertFalse(loaded.isCanWrite());
         }
@@ -305,8 +288,8 @@ public class SecurityDAOTest extends BaseDAOTest {
         // LOAD, REMOVE
         //
         {
-            securityDAO.removeById(securityId);
-            assertNull("Security not deleted", securityDAO.find(categoryId));
+            externalSecurityDAO.removeById(securityId);
+            assertNull("Security not deleted", externalSecurityDAO.find(categoryId));
         }
 
     }

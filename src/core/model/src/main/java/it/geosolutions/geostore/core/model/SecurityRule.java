@@ -107,6 +107,14 @@ public class SecurityRule implements Serializable {
     @Column(nullable = false, updatable = true)
     @Index(name = "idx_security_write")
     private boolean canWrite;
+    
+    @Column(nullable = true, updatable = true)
+    @Index(name = "idx_security_username")
+    private String username;
+    
+    @Column(nullable = true, updatable = true)
+    @Index(name = "idx_security_groupname")
+    private String groupname;
 
     /**
      * @throws Exception
@@ -192,6 +200,38 @@ public class SecurityRule implements Serializable {
      */
     public void setGroup(UserGroup group) {
         this.group = group;
+    }
+
+    /**
+     * 
+     * @return the username (from external authentication)
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * 
+     * @param username the user name to set
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * 
+     * @return the group name (from external authentication)
+     */
+    public String getGroupname() {
+        return groupname;
+    }
+
+    /**
+     * 
+     * @param groupname the group name to set
+     */
+    public void setGroupname(String groupname) {
+        this.groupname = groupname;
     }
 
     /**

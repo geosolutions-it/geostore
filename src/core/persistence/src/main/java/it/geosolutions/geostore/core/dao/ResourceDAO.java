@@ -27,17 +27,11 @@
  */
 package it.geosolutions.geostore.core.dao;
 
+import java.util.List;
+import javax.persistence.NonUniqueResultException;
+import com.googlecode.genericdao.search.ISearch;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.User;
-
-import java.util.List;
-
-import javax.persistence.NonUniqueResultException;
-
-import com.googlecode.genericdao.search.ISearch;
-import com.googlecode.genericdao.search.Search;
 
 /**
  * Interface ResourceDAO. Public interface to define operations on Resource
@@ -47,34 +41,6 @@ import com.googlecode.genericdao.search.Search;
  */
 public interface ResourceDAO extends RestrictedGenericDAO<Resource>
 {
-
-    /**
-     * @param userName
-     * @param resourceId
-     * @return List<SecurityRule>
-     *
-     * @deprecated move to SecurityDAO
-     */
-    @Deprecated
-    public List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
-
-    /**
-     *
-     * @param userName
-     * @param resourceId
-     * @return
-     * @deprecated move to SecurityDAO
-     */
-    @Deprecated
-    public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId);
-
-    /**
-     * @param resourceId
-     * @return List<SecurityRule>
-     * @deprecated move to SecurityDAO
-     */
-    @Deprecated
-    public List<SecurityRule> findSecurityRules(long resourceId);
 
     /**
      * @param resourceId
@@ -107,10 +73,4 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource>
      * @return a list of resource names
      */
     public List<String> findResourceNamesMatchingPattern(String pattern);
-
-    /**
-     * Add security filtering in order to filter out resources the user has not read access to
-     */
-    void addReadSecurityConstraints(Search searchCriteria, User user);
-
 }
