@@ -29,6 +29,7 @@ package it.geosolutions.geostore.core.security.ldap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import it.geosolutions.geostore.core.ldap.MockDirContextOperations;
 import it.geosolutions.geostore.core.security.UserDetailsWithAttributes;
 import it.geosolutions.geostore.core.security.ldap.CustomAttributesLdapUserDetailsMapper;
 

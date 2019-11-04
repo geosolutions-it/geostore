@@ -20,16 +20,16 @@
 package it.geosolutions.geostore.services;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.UUID;
-
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserAttribute;
-import it.geosolutions.geostore.core.model.enums.Role;
-import it.geosolutions.geostore.core.security.password.PwEncoder;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 
 /**
  * Class UserServiceImplTest.
@@ -117,6 +117,24 @@ public class UserServiceImplTest extends ServiceTestBase {
         assertEquals(1, userService.getByAttribute(attribute).size());
     }
 
+    @Test
+    public void testGetByGroupId() throws Exception {
+        long groupId = createGroup("testgroup");
+        createUser("test", Role.USER, "tesPW", groupId);
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
+        Collection<User> users = userService.getByGroup(group);
+        assertEquals(1, users.size());
+    }
     
+    @Test
+    public void testGetByGroupName() throws Exception {
+        long groupId = createGroup("testgroup");
+        createUser("test", Role.USER, "tesPW", groupId);
+        UserGroup group = new UserGroup();
+        group.setGroupName("testgroup");
+        Collection<User> users = userService.getByGroup(group);
+        assertEquals(1, users.size());
+    }
 
 }
