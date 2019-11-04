@@ -440,10 +440,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Collection<User> getByGroup(long groupId) {
+    public Collection<User> getByGroup(UserGroup group) {
 
         Search searchByGroup = new Search(User.class);
-        searchByGroup.addFilterSome("groups", Filter.equal("id", groupId));
+        searchByGroup.addFilterSome("groups", Filter.equal("groupName", group.getGroupName()));
         return userDAO.search(searchByGroup);
     }
 }

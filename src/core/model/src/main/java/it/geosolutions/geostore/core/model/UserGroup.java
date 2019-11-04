@@ -29,8 +29,8 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -42,7 +42,6 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Index;
@@ -85,6 +84,16 @@ public class UserGroup implements Serializable {
     @Column(nullable = false,updatable =true)
     private boolean enabled=true;
     
+    private transient List<User> users = new ArrayList<User>();
+    
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
+
     /**
      * 
      * @return the enabled flag

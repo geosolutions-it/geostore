@@ -169,13 +169,13 @@ public class MockedUserService implements UserService {
     }
 
     @Override
-    public Collection<User> getByGroup(long groupId) {
+    public Collection<User> getByGroup(UserGroup ug) {
         List<User> ret = new LinkedList<>();
         for (User user : USERS.values()) {
             Set<UserGroup> groups = user.getGroups();
             if(groups != null) {
                 for (UserGroup group : groups) {
-                    if(group.getId() == groupId) {
+                    if(group.getId() == ug.getId() || group.getGroupName().equals(ug.getGroupName())) {
                         ret.add(user);
                         break;
                     }

@@ -37,6 +37,7 @@ public class UserGroupList implements Iterable<RESTUserGroup> {
     private List<RESTUserGroup> list;
 
     public UserGroupList() {
+        this.list = new ArrayList<RESTUserGroup>();
     }
 
     /**

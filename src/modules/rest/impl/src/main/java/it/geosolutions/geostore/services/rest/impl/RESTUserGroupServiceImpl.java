@@ -113,7 +113,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
             throws NotFoundWebEx {
         try {
             UserGroup g = userGroupService.get(id);
-            Collection<User> users = userService.getByGroup(id);
+            Collection<User> users = userService.getByGroup(g);
 
             return new RESTUserGroup(g.getId(), g.getGroupName(), new HashSet<>(users), g.getDescription());
         } catch (BadRequestServiceEx e) {
@@ -158,7 +158,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
             List<RESTUserGroup> ugl = new ArrayList<>(returnList.size());
             for(UserGroup ug : returnList){
                 if(all || GroupReservedNames.isAllowedName(ug.getGroupName())){
-                    Collection<User> users = userService.getByGroup(ug.getId());
+                    Collection<User> users = userService.getByGroup(ug);
                     RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet<>(users), ug.getDescription());
                     ugl.add(rug);
                 }
@@ -209,7 +209,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
             throws NotFoundWebEx {
         UserGroup ug = userGroupService.get(name);
         if (ug != null) {
-            Collection<User> users = userService.getByGroup(ug.getId());
+            Collection<User> users = userService.getByGroup(ug);
             return new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet(users), ug.getDescription());
         }
         return null;
