@@ -1,4 +1,4 @@
-package it.geosolutions.geostore.core.security.ldap;
+package it.geosolutions.geostore.core.ldap;
 
 import java.util.HashMap;
 import java.util.Hashtable;

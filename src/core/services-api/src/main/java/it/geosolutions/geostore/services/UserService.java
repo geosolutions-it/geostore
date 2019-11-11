@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
@@ -127,6 +128,6 @@ public interface UserService {
      * @return
      */
     public Collection<User>  getByAttribute(UserAttribute attribute);
-    public Collection<User>  getByGroup(long groupId);
+    public Collection<User>  getByGroup(UserGroup group);
 
 }

@@ -1,4 +1,4 @@
-package it.geosolutions.geostore.rest.security;
+package it.geosolutions.geostore.core.ldap;
 
 import java.util.Iterator;
 
@@ -8,7 +8,7 @@ import javax.naming.NamingException;
 public class IterableNamingEnumeration<T> implements NamingEnumeration<T> {
     private final Iterator<T> iterator;
 
-    IterableNamingEnumeration(Iterable<T> iterable) {
+    public IterableNamingEnumeration(Iterable<T> iterable) {
         this.iterator = iterable.iterator();
     }
 

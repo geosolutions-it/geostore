@@ -287,6 +287,7 @@ public class User implements Serializable {
      * 
      * @return
      */
+    @XmlTransient
     public boolean isTrusted() {
         return trusted;
     }

@@ -327,6 +327,16 @@ public class ServiceTestBase extends TestCase {
         return userService.insert(user);
     }
     
+    protected long createUser(String name, Role role, String password, long groupId) throws Exception {
+        User user = new User();
+        user.setName(name);
+        user.setRole(role);
+        user.setNewPassword(password);
+        long id = userService.insert(user);
+        userGroupService.assignUserGroup(id, groupId);
+        return id;
+    }
+    
     /**
      * @param name
      * @param role

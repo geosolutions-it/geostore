@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2019 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  * 
  *  GPLv3 + Classpath exception
@@ -19,42 +19,31 @@
  */
 package it.geosolutions.geostore.core.model;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import java.util.Arrays;
 import org.junit.Test;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
-public class UserGroupTest {
+public class UserTest {
+    private final static Marshaler<User> MARSHALER = new Marshaler<User>(User.class);
 
-    private final static Marshaler<UserGroup> MARSHALER = new Marshaler<UserGroup>(UserGroup.class);
-
-    public UserGroupTest() {
+    public UserTest() {
     }
 
     @Test
     public void testMarshallingString() throws Exception {
-    	UserGroup g0 = new UserGroup();
-    	g0.setGroupName("group name");
-    	g0.setDescription("desciption");
-    	g0.setEnabled(true);
-    	
-    	User u0 = new User();
-    	u0.setName("user name");
-    	u0.setEnabled(true);
-    	g0.setUsers(Arrays.asList(u0));
-    	
-        doTheTest(g0);
+        User u0 = new User();
+        u0.setName("user name");
+        u0.setEnabled(true);
+        u0.setTrusted(true);
+        
+        doTheTest(u0);
     }
 
-    private void doTheTest(UserGroup g0) {
-        String s = MARSHALER.marshal(g0);
-        UserGroup ug = MARSHALER.unmarshal(s);
-        assertEquals(0, ug.getUsers().size());
-        assertTrue(g0.equals(ug));
-    }
+    private void doTheTest(User u0) {
+        String s = MARSHALER.marshal(u0);
+        User u = MARSHALER.unmarshal(s);
 
-}	
+        assertTrue(u0.equals(u));
+        assertFalse(u.isTrusted());
+    }
+}

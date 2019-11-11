@@ -151,4 +151,25 @@
 		</constructor-arg>
 	</bean>
 
+    <bean id="ldapUserDAO" class="it.geosolutions.geostore.core.dao.ldap.impl.UserDAOImpl">
+        <constructor-arg ref="contextSource"/>
+        <property name="searchBase" value="ou=users"/>
+        <property name="memberPattern" value="^uid=([^,]+).*$"/>
+        <property name="attributesMapper">
+            <map>
+                <entry key="mail" value="email"/>
+                <entry key="givenName" value="fullname"/>
+                <entry key="description" value="description"/>
+            </map>
+        </property>
+    </bean>
+    <bean id="ldapUserGroupDAO" class="it.geosolutions.geostore.core.dao.ldap.impl.UserGroupDAOImpl">
+        <constructor-arg ref="contextSource"/>
+        <property name="searchBase" value="ou=roles"/>
+        <property name="addEveryOneGroup" value="true"/>
+    </bean>
+    <!-- Enable LDAP readonly User and UserGroup fetching -->
+    <!--alias name="ldapUserGroupDAO" alias="userGroupDAO"/>
+    <alias name="ldapUserDAO" alias="userDAO"/-->
+    
 </beans>
