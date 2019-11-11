@@ -91,6 +91,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public void persist(User... entities) {
+        throw new UnsupportedOperationException();
      // NOT SUPPORTED
     }
 
@@ -174,8 +175,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public User merge(User entity) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return entity;
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -185,8 +185,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public boolean remove(User entity) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return true;
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -196,8 +195,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public boolean removeById(Long id) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return true;
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -219,8 +217,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public User[] save(User... entities) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return entities;
+        throw new UnsupportedOperationException();
     }
 
     @Override

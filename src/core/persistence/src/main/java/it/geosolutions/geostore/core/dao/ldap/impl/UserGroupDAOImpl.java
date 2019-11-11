@@ -94,7 +94,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public void persist(UserGroup... entities) {
-        // NOT SUPPORTED
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -216,8 +216,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public UserGroup merge(UserGroup entity) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return entity;
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -227,8 +226,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public boolean remove(UserGroup entity) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return true;
+        throw new UnsupportedOperationException();
     }
 
     /*
@@ -238,14 +236,12 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public boolean removeById(Long id) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return true;
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public UserGroup[] save(UserGroup... entities) {
-        // DO NOTHING: PERSITENCE IS NOT SUPPORTED
-        return entities;
+        throw new UnsupportedOperationException();
     }
 
     @Override
