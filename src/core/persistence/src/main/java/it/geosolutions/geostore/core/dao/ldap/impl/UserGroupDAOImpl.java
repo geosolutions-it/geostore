@@ -117,7 +117,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public UserGroup find(Long id) {
-        // Not supported yet, we can eventually map an LDAP attribute and use it as an ID
+        // Not supported yet, we can possibly map an LDAP attribute and use it as an ID
         // If needed in any use case
         return null;
     }
