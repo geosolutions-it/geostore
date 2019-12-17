@@ -24,7 +24,7 @@
     <parent>
         <groupId>it.geosolutions</groupId>
         <artifactId>geostore</artifactId>
-        <version>1.4.3-SNAPSHOT</version>
+        <version>1.4.2</version>
     </parent>
 
     <groupId>it.geosolutions.geostore</groupId>
@@ -40,7 +40,7 @@
     </modules>
 
     <properties>
-        <geostore-version>1.4.3-SNAPSHOT</geostore-version>
+        <geostore-version>1.4.2</geostore-version>
         <main-prefix>geostore</main-prefix>
 
         <cxf-version>2.3.2</cxf-version>
@@ -925,7 +925,7 @@
             </snapshots>
         </repository>
 
-        <!-- JBoss -->
+        <!-- JBoss 
         <repository>
             <id>jboss-repo</id>
             <name>JBoss Maven2 Repository</name>
@@ -933,7 +933,7 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>
+        </repository-->
 
         <!-- Spring -->
         <repository>
