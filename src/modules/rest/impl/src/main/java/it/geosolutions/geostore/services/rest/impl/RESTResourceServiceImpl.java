@@ -52,6 +52,7 @@ import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTAttribute;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
@@ -484,6 +485,15 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      */
     public long updateAttribute(SecurityContext sc,  long id,String name, String value) {
 		return updateAttribute(sc, id, name, value, null);
+	}
+
+    @Override
+	public long updateAttribute(SecurityContext sc, long id, RESTAttribute content) {
+		if (content != null && content.getName() != null) {
+			// TODO: type
+			return updateAttribute(sc, id, content.getName(), content.getValue(), content.getType());
+		}
+		throw new BadRequestWebEx("missing attribute content or attribute name in request");
 	}
 
     /*

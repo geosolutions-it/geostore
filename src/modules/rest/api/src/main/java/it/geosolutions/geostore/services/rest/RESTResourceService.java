@@ -28,19 +28,6 @@
 
 package it.geosolutions.geostore.services.rest;
 
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.enums.DataType;
-import it.geosolutions.geostore.services.dto.search.SearchFilter;
-import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
-import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
-import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import it.geosolutions.geostore.services.rest.model.RESTResource;
-import it.geosolutions.geostore.services.rest.model.ResourceList;
-import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
-import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
-import it.geosolutions.geostore.services.rest.model.ShortResourceList;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -57,6 +44,20 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
+
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
+import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTAttribute;
+import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
+import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
+import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 
 /**
  * Interface RESTResourceService.
@@ -240,6 +241,26 @@ public interface RESTResourceService {
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String getAttribute(@Context SecurityContext sc, @PathParam("id") long id,
             @PathParam("name") String name) throws NotFoundWebEx;
+
+    /**
+     * Updates the attribute using the PUT request body (JSON).
+     *
+     * @param id id of the resource
+     * @param content the attribute object
+     * @return long
+     * @throws NotFoundWebEx
+     * @throws InternalErrorWebEx
+     */
+    @PUT
+    @Path("/resource/{id}/attributes/")
+    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    long updateAttribute(
+        @Context SecurityContext sc,
+        @PathParam("id") long id,
+        RESTAttribute content
+	);
 
     /**
      * @param id
