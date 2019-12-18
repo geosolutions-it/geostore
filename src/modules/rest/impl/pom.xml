@@ -144,6 +144,14 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!--  Test dependencies  -->
+        <dependency>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-services-impl</artifactId>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
     
     </dependencies>
 
