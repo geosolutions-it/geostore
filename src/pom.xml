@@ -248,10 +248,20 @@
                 <version>${geostore-version}</version>
             </dependency>
             
-	    <dependency>
+            <dependency>
                 <groupId>it.geosolutions.geostore</groupId>
                 <artifactId>geostore-rest-auditing</artifactId>
                 <version>${geostore-version}</version>
+            </dependency>
+
+            <!-- TEST PACKAGE DEPENDENCY RESOULTION -->
+
+            <dependency>
+                <groupId>it.geosolutions.geostore</groupId>
+                <artifactId>geostore-services-impl</artifactId>
+                <version>${geostore-version}</version>
+                <type>test-jar</type>
+                <scope>test</scope>
             </dependency>
 
 		    <!-- =========================================================== -->
