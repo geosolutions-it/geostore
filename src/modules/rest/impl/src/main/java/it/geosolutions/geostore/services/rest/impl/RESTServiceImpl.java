@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import it.geosolutions.geostore.services.SecurityService;
@@ -70,6 +71,14 @@ public abstract class RESTServiceImpl{
     
     protected abstract SecurityService getSecurityService();
     
+    
+    
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+
+
     /**
      * @return User - The authenticated user that is accessing this service, or null if guest access.
      */
@@ -280,7 +289,13 @@ public abstract class RESTServiceImpl{
         User guest = new User();
         guest.setName("guest");
         guest.setRole(Role.GUEST);
-        guest.setGroups(new HashSet<UserGroup>());
+        HashSet<UserGroup> groups = new HashSet<UserGroup>();
+        UserGroup everyoneGroup = new UserGroup();
+        everyoneGroup.setEnabled(true);
+        everyoneGroup.setId(-1L);
+        everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
+        groups.add(everyoneGroup);
+        guest.setGroups(groups);
         Principal principal = new UsernamePasswordAuthenticationToken(guest,"", authorities);
         return principal;
     }
