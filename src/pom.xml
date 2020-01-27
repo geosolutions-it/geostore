@@ -968,7 +968,7 @@
         <pluginRepository>
             <id>repo1.maven.org-maven2</id>
             <name>repo1.maven.org-maven2</name>
-            <url>http://repo1.maven.org/maven2/</url>
+            <url>https://repo1.maven.org/maven2/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
