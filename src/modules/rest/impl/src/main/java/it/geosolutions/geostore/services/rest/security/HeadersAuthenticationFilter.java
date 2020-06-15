@@ -54,8 +54,12 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     private boolean addEveryOneGroup = false;
     
     private GrantedAuthoritiesMapper authoritiesMapper;
-        
-    @Override
+    /**
+     * remove this prefix from groups header
+     */
+    private String groupHeaderPrefix = null;
+
+	@Override
     protected void authenticate(HttpServletRequest req) {
         String username = req.getHeader(usernameHeader);
         
@@ -76,6 +80,9 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                 for (String groupName : groupsList) {
                     if (groupName.equals(GroupReservedNames.EVERYONE.groupName())) {
                         everyoneFound = true;
+                    }
+                    if(groupHeaderPrefix != null && groupName.startsWith(groupHeaderPrefix)) {
+                    	groupName = groupName.replaceAll(groupHeaderPrefix, "");
                     }
                     UserGroup group = new UserGroup();
                     group.setGroupName(groupName);
@@ -199,4 +206,11 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public void setAddEveryOneGroup(boolean addEveryOneGroup) {
         this.addEveryOneGroup = addEveryOneGroup;
     }
+    public String getGroupHeaderPrefix() {
+		return groupHeaderPrefix;
+	}
+
+	public void setGroupHeaderPrefix(String groupHeaderPrefix) {
+		this.groupHeaderPrefix = groupHeaderPrefix;
+	}
 }
