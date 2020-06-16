@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.security;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,6 +41,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
+import it.geosolutions.geostore.services.rest.utils.GroupMapper;
 
 public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public static final String DEFAULT_USERNAME_HEADER = "x-geostore-user";
@@ -57,7 +59,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     /**
      * remove this prefix from groups header
      */
-    private String groupHeaderPrefix = null;
+    private GroupMapper groupMapper = null;
 
 	@Override
     protected void authenticate(HttpServletRequest req) {
@@ -81,8 +83,8 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                     if (groupName.equals(GroupReservedNames.EVERYONE.groupName())) {
                         everyoneFound = true;
                     }
-                    if(groupHeaderPrefix != null && groupName.startsWith(groupHeaderPrefix)) {
-                    	groupName = groupName.replaceAll(groupHeaderPrefix, "");
+                    if(groupMapper != null) {
+                    	groupName = groupMapper.transform(groupName);
                     }
                     UserGroup group = new UserGroup();
                     group.setGroupName(groupName);
@@ -206,11 +208,13 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public void setAddEveryOneGroup(boolean addEveryOneGroup) {
         this.addEveryOneGroup = addEveryOneGroup;
     }
-    public String getGroupHeaderPrefix() {
-		return groupHeaderPrefix;
+
+	public GroupMapper getGroupMapper() {
+		return groupMapper;
 	}
 
-	public void setGroupHeaderPrefix(String groupHeaderPrefix) {
-		this.groupHeaderPrefix = groupHeaderPrefix;
+	public void setGroupMapper(GroupMapper groupMapper) {
+		this.groupMapper = groupMapper;
 	}
+    
 }

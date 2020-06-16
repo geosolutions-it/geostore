@@ -56,6 +56,7 @@ import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.HeadersAuthenticationFilter;
+import it.geosolutions.geostore.services.rest.utils.SpelMapper;
 
 public class HeadersAuthenticationFilterTest {
     private HeadersAuthenticationFilter filter;
@@ -135,7 +136,7 @@ public class HeadersAuthenticationFilterTest {
     }
     @Test
     public void prefixedGroupsHeaderAuthentication() throws IOException, ServletException, BadRequestServiceEx, NotFoundServiceEx {
-    	filter.setGroupHeaderPrefix("ROLE_");
+    	filter.setGroupMapper(new SpelMapper("name.replace('ROLE_', '')"));
         Mockito.when(request.getHeader(HeadersAuthenticationFilter.DEFAULT_USERNAME_HEADER)).thenReturn(SAMPLE_USER);
         Mockito.when(request.getHeader(HeadersAuthenticationFilter.DEFAULT_GROUPS_HEADER)).thenReturn(SAMPLE_GROUP1+","+"ROLE_"+SAMPLE_GROUP2);
         
