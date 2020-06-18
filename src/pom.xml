@@ -117,7 +117,7 @@
     </properties>
 
     <ciManagement>
-        <system>jenkins</system>    
+        <system>jenkins</system>
         <url>http://ci.geo-solutions.it/</url>
     </ciManagement>
 
@@ -160,7 +160,7 @@
                 <artifactId>geostore-model</artifactId>
                 <version>${geostore-version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>it.geosolutions.geostore</groupId>
                 <artifactId>geostore-security</artifactId>
@@ -235,7 +235,7 @@
                 <artifactId>geostore-rest-impl</artifactId>
                 <version>${geostore-version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>it.geosolutions.geostore</groupId>
                 <artifactId>geostore-rest-test</artifactId>
@@ -247,7 +247,7 @@
                 <artifactId>geostore-rest-extjs</artifactId>
                 <version>${geostore-version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>it.geosolutions.geostore</groupId>
                 <artifactId>geostore-rest-auditing</artifactId>
@@ -361,7 +361,7 @@
                 <artifactId>guava</artifactId>
                 <version>${guava-version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
@@ -369,7 +369,7 @@
                 <scope>test</scope>
             </dependency>
 
-            
+
 		    <!-- =========================================================== -->
 		    <!--     JERSEY                                                  -->
 		    <!-- =========================================================== -->
@@ -384,7 +384,7 @@
 				<artifactId>jersey-spring3</artifactId>
 				<version>${jersey-version}</version>
 			</dependency>
-		
+
 		    <!-- =========================================================== -->
 		    <!--     APACHE CXF                                              -->
 		    <!-- =========================================================== -->
@@ -581,7 +581,7 @@
                 <artifactId>spring-security-acl</artifactId>
                 <version>${spring-security-version}</version>
             </dependency>
- 
+
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-web</artifactId>
@@ -592,7 +592,7 @@
                 <artifactId>spring-security-config</artifactId>
                 <version>${spring-security-version}</version>
             </dependency>
-			
+
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-ldap</artifactId>
@@ -780,7 +780,7 @@
                 <artifactId>jsr-275</artifactId>
                 <version>1.0-beta-2</version>
             </dependency>
-			
+
             <dependency>
                 <groupId>javax.annotation</groupId>
                 <artifactId>jsr250-api</artifactId>
@@ -899,11 +899,11 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                
+
                 <!-- Use 2.4.2 because 2.4.3 has bug with system properties
 				     see http://jira.codehaus.org/browse/SUREFIRE-121 -->
                 <version>2.4.2</version>
@@ -911,7 +911,7 @@
                     <argLine>-Dfile.encoding=UTF-8</argLine>
                   </configuration>
             </plugin>
-            
+
         </plugins>
 
     </build>
@@ -934,7 +934,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-
         <!-- JBoss -->
         <repository>
             <id>jboss-repo</id>
@@ -966,7 +965,7 @@
         <repository>
             <id>osgeo</id>
             <name>Open Source Geospatial Foundation Repository</name>
-            <url>http://download.osgeo.org/webdav/geotools/</url>
+            <url>https://repo.osgeo.org/repository/release/</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -974,7 +973,7 @@
     </repositories>
 
     <pluginRepositories>
-        
+
         <pluginRepository>
             <id>repo1.maven.org-maven2</id>
             <name>repo1.maven.org-maven2</name>

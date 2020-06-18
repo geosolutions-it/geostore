@@ -30,8 +30,13 @@ package it.geosolutions.geostore.rest.security;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -45,11 +50,13 @@ import org.springframework.security.core.authority.GrantedAuthorityImpl;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.google.common.collect.Lists;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.HeadersAuthenticationFilter;
+import it.geosolutions.geostore.services.rest.utils.SpelMapper;
 
 public class HeadersAuthenticationFilterTest {
     private HeadersAuthenticationFilter filter;
@@ -110,6 +117,42 @@ public class HeadersAuthenticationFilterTest {
         User authUser = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         assertEquals(2, authUser.getGroups().size());
     }
+    @Test
+    public void defaultNoPrefixedGroupsHeaderAuthentication() throws IOException, ServletException, BadRequestServiceEx, NotFoundServiceEx {
+        Mockito.when(request.getHeader(HeadersAuthenticationFilter.DEFAULT_USERNAME_HEADER)).thenReturn(SAMPLE_USER);
+        Mockito.when(request.getHeader(HeadersAuthenticationFilter.DEFAULT_GROUPS_HEADER)).thenReturn(SAMPLE_GROUP1+","+"ROLE_"+SAMPLE_GROUP2);
+        
+        filter.doFilter(request, response, chain);
+        
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        User authUser = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        assertEquals(2, authUser.getGroups().size());
+        List<String> groups = new ArrayList<String>();
+        groups.add(SAMPLE_GROUP1);
+        groups.add("ROLE_"+SAMPLE_GROUP2);
+        for(UserGroup ug : authUser.getGroups()) {
+        	assertTrue(groups.contains(ug.getGroupName()));
+        }
+    }
+    @Test
+    public void prefixedGroupsHeaderAuthentication() throws IOException, ServletException, BadRequestServiceEx, NotFoundServiceEx {
+    	filter.setGroupMapper(new SpelMapper("name.replace('ROLE_', '')"));
+        Mockito.when(request.getHeader(HeadersAuthenticationFilter.DEFAULT_USERNAME_HEADER)).thenReturn(SAMPLE_USER);
+        Mockito.when(request.getHeader(HeadersAuthenticationFilter.DEFAULT_GROUPS_HEADER)).thenReturn(SAMPLE_GROUP1+","+"ROLE_"+SAMPLE_GROUP2);
+        
+        filter.doFilter(request, response, chain);
+        
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        User authUser = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        assertEquals(2, authUser.getGroups().size());
+        List<String> groups = new ArrayList<String>();
+        groups.add(SAMPLE_GROUP1);
+        groups.add(SAMPLE_GROUP2);
+        for(UserGroup ug : authUser.getGroups()) {
+        	assertTrue(groups.contains(ug.getGroupName()));
+        }
+    }
+    
     
     @Test
     public void usernameAndRoleHeaderAuthentication() throws IOException, ServletException, BadRequestServiceEx, NotFoundServiceEx {

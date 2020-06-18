@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.security;
 
 import java.util.HashSet;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -40,6 +41,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
+import it.geosolutions.geostore.services.rest.utils.GroupMapper;
 
 public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public static final String DEFAULT_USERNAME_HEADER = "x-geostore-user";
@@ -54,8 +56,12 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     private boolean addEveryOneGroup = false;
     
     private GrantedAuthoritiesMapper authoritiesMapper;
-        
-    @Override
+    /**
+     * remove this prefix from groups header
+     */
+    private GroupMapper groupMapper = null;
+
+	@Override
     protected void authenticate(HttpServletRequest req) {
         String username = req.getHeader(usernameHeader);
         
@@ -76,6 +82,9 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                 for (String groupName : groupsList) {
                     if (groupName.equals(GroupReservedNames.EVERYONE.groupName())) {
                         everyoneFound = true;
+                    }
+                    if(groupMapper != null) {
+                    	groupName = groupMapper.transform(groupName);
                     }
                     UserGroup group = new UserGroup();
                     group.setGroupName(groupName);
@@ -199,4 +208,13 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public void setAddEveryOneGroup(boolean addEveryOneGroup) {
         this.addEveryOneGroup = addEveryOneGroup;
     }
+
+	public GroupMapper getGroupMapper() {
+		return groupMapper;
+	}
+
+	public void setGroupMapper(GroupMapper groupMapper) {
+		this.groupMapper = groupMapper;
+	}
+    
 }
