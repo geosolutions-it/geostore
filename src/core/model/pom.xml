@@ -18,21 +18,21 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses />.
  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">    
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5.0</version>
     </parent>
-  
+
     <artifactId>geostore-model</artifactId>
     <packaging>jar</packaging>
     <name>GeoStore - Core - Model</name>
-  
+
     <dependencies>
-  
+
   	<!-- JAXB -->
         <dependency>
             <groupId>javax.xml.bind</groupId>
@@ -42,7 +42,7 @@
             <groupId>com.sun.xml.bind</groupId>
             <artifactId>jaxb-impl</artifactId>
         </dependency>
-  	
+
         <dependency>
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-annotations</artifactId>
@@ -95,7 +95,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-	  	
+
 		  	<!-- CGLIB -->
         <dependency>
             <groupId>asm</groupId>
@@ -107,7 +107,7 @@
             <artifactId>cglib-nodep</artifactId>
             <scope>provided</scope> <!-- the dao module should import them for runtime -->
         </dependency>
-   		
+
    	<!-- Apache Commons -->
         <dependency>
             <groupId>commons-beanutils</groupId>

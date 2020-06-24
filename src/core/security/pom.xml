@@ -24,15 +24,15 @@
      <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5.0</version>
     </parent>
 
     <artifactId>geostore-security</artifactId>
     <packaging>jar</packaging>
     <name>GeoStore - Core - Security</name>
-    
+
     <dependencies>
-    
+
         <!-- ================================================================-->
        	<!-- APACHE COMMONS -->
         <!-- ================================================================-->
@@ -44,12 +44,12 @@
             <groupId>commons-collections</groupId>
             <artifactId>commons-collections</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>commons-dbcp</groupId>
             <artifactId>commons-dbcp</artifactId>
@@ -58,12 +58,12 @@
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 		</dependency>
-            
-    
+
+
         <!-- ================================================================-->
         <!-- 4J UTILS -->
         <!-- ================================================================-->
-        <dependency> 
+        <dependency>
             <groupId>dom4j</groupId>
             <artifactId>dom4j</artifactId>
         </dependency>
@@ -141,5 +141,5 @@
     </dependency>
     </dependencies>
 
-   
+
 </project>

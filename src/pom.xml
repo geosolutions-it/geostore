@@ -24,7 +24,7 @@
     <parent>
         <groupId>it.geosolutions</groupId>
         <artifactId>geostore</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5.0</version>
     </parent>
 
     <groupId>it.geosolutions.geostore</groupId>
@@ -40,7 +40,7 @@
     </modules>
 
     <properties>
-        <geostore-version>1.5-SNAPSHOT</geostore-version>
+        <geostore-version>1.5.0</geostore-version>
         <main-prefix>geostore</main-prefix>
 
         <cxf-version>2.3.2</cxf-version>

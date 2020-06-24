@@ -19,21 +19,21 @@
  along with this program.  If not, see <http://www.gnu.org/licenses />.
  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.5.0</version>
     </parent>
 
     <artifactId>geostore-services-api</artifactId>
     <packaging>jar</packaging>
     <name>GeoStore - Core - Services API</name>
-    
+
     <dependencies>
-    
+
         <!-- ================================================================-->
         <!-- GeoStore -->
         <!-- ================================================================-->
@@ -99,7 +99,7 @@
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
         </dependency>
-	
+
         <!-- ================================================================-->
     	<!-- SPRING -->
         <!-- ================================================================-->
@@ -123,8 +123,8 @@
             <artifactId>spring-core</artifactId>
             <scope>provided</scope>
         </dependency>
-    
-	
+
+
         <dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
@@ -137,7 +137,7 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-core</artifactId>
-		</dependency> 
+		</dependency>
         <!-- ================================================================-->
         <!-- CXF -->
         <!-- ================================================================-->
@@ -171,7 +171,7 @@
         </dependency>
 
     </dependencies>
-  
+
     <build>
 
         <plugins>
