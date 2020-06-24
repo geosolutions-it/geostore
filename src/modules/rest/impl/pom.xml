@@ -19,13 +19,13 @@
  along with this program.  If not, see <http://www.gnu.org/licenses />.
  -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    
+
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-rest-root</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>1.6-SNAPSHOT</version>
     </parent>
 
     <artifactId>geostore-rest-impl</artifactId>
@@ -61,13 +61,13 @@
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-rest-api</artifactId>
         </dependency>
-        
+
         <dependency>
              <groupId>commons-httpclient</groupId>
              <artifactId>commons-httpclient</artifactId>
         </dependency>
 
-        
+
         <dependency>
           <groupId>it.geosolutions.geostore</groupId>
           <artifactId>geostore-security</artifactId>
@@ -94,12 +94,12 @@
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
@@ -119,25 +119,25 @@
             <artifactId>javassist</artifactId>
             <scope>runtime</scope>
         </dependency>
-		
+
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>net.sf.json-lib</groupId>
             <artifactId>json-lib</artifactId>
             <version>2.4</version>
             <classifier>jdk15</classifier>
         </dependency>
-		
+
         <dependency>
             <groupId>xom</groupId>
             <artifactId>xom</artifactId>
             <version>1.1</version>
         </dependency>
-    
+
         <!-- JUnit -->
         <dependency>
             <groupId>junit</groupId>
@@ -152,7 +152,7 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
-    
+
     </dependencies>
 
     <build>
@@ -165,7 +165,7 @@
 	        </includes>
 	      </resource>
 	    </resources>
-	    
+
 	    <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
