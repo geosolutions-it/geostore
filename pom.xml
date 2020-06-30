@@ -4,7 +4,7 @@
 
     <groupId>it.geosolutions</groupId>
     <artifactId>geostore</artifactId>
-    <version>1.5.0</version>
+    <version>1.5-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -187,7 +187,7 @@
                 <configuration>
                     <links>
                         <link>http://commons.apache.org/lang/api</link>
-                        <link>http://java.sun.com/j2se/1.5.0/docs/api</link>
+                        <link>http://java.sun.com/j2se/1.5-SNAPSHOT/docs/api</link>
                         <link>http://www.jdom.org/docs/apidocs</link>
                     </links>
                 </configuration>
