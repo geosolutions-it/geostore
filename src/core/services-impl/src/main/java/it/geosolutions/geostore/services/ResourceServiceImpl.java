@@ -865,7 +865,10 @@ public class ResourceServiceImpl implements ResourceService
      */
     private List<Resource> search(Search searchCriteria) {
     	// apply defaults for sorting
-    	searchCriteria.addSort(new Sort("name"));
+    	if(searchCriteria != null) {
+    		searchCriteria.addSort(new Sort("name"));
+    	}
+    	
     	// search
     	return resourceDAO.search(searchCriteria);
 	}
