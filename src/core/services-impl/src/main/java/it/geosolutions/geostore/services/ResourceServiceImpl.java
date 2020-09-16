@@ -64,6 +64,8 @@ import org.apache.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.googlecode.genericdao.search.Search;
+import com.googlecode.genericdao.search.Sort;
+
 import java.util.LinkedList;
 
 /**
@@ -424,8 +426,7 @@ public class ResourceServiceImpl implements ResourceService
         if(LOGGER.isTraceEnabled()) {
             LOGGER.trace("Get Resource List: " + searchCriteria);
         }
-
-        List<Resource> found = resourceDAO.search(searchCriteria);
+        List<Resource> found = search(searchCriteria);
 
         return convertToShortList(found, authUser);
     }
@@ -458,8 +459,8 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.setDistinct(true);
 
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-
-        List<Resource> found = resourceDAO.search(searchCriteria);
+        
+        List<Resource> found = search(searchCriteria);
 
         return convertToShortList(found, authUser);
     }
@@ -601,7 +602,6 @@ public class ResourceServiceImpl implements ResourceService
         Search searchCriteria = new Search(Attribute.class);
         searchCriteria.addFilterEqual("resource.id", id);
         searchCriteria.addFilterEqual("name", name);
-
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
@@ -759,8 +759,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.setDistinct(true);
 
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-
-        List<Resource> resources = this.resourceDAO.search(searchCriteria);
+        List<Resource> resources = this.search(searchCriteria);
         resources = this.configResourceList(resources, includeAttributes, includeData, authUser);
 
         return resources;
@@ -826,8 +825,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.setDistinct(true);
 
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-        
-        List<Resource> resources = this.resourceDAO.search(searchCriteria);
+        List<Resource> resources = this.search(searchCriteria);
 
         return convertToShortList(resources, authUser);
     }
@@ -855,13 +853,27 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("data");
 
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-
-        List<Resource> resources = this.resourceDAO.search(searchCriteria);
+        List<Resource> resources = this.search(searchCriteria);
 
         return resources;
     }
 
-    /*
+    /**
+     * Internal method to apply default search options and search
+     * @param searchCriteria search criteria	
+     * @return results of the search
+     */
+    private List<Resource> search(Search searchCriteria) {
+    	// apply defaults for sorting
+    	if(searchCriteria != null) {
+    		searchCriteria.addSort(new Sort("name"));
+    	}
+    	
+    	// search
+    	return resourceDAO.search(searchCriteria);
+	}
+
+	/*
      * (non-Javadoc)
      * @see it.geosolutions.geostore.services.SecurityService#getUserSecurityRule(java.lang.String, long)
      */

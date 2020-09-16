@@ -19,6 +19,14 @@
  */
 package it.geosolutions.geostore.services;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -26,17 +34,12 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 /**
  * Class ResourceServiceImplTest.
@@ -55,7 +58,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     }
 
     public ResourceServiceImplTest() {
-    }
+    }    
 
     @Test
     public void testInsertDeleteResource() throws Exception {
@@ -120,6 +123,82 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(20, resourceService.getList("%name%", null, null, buildFakeAdminUser()).size());
         assertEquals(2, resourceService.getCount("%name1%"));
         assertEquals(2, resourceService.getList("%name1%", null, null, buildFakeAdminUser()).size());
+    }
+    /**
+     * Tests if the results are sorted by name
+     * @throws Exception
+     */
+    @Test
+    public void testSorting() throws Exception {
+    	assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+    	// setup data. First set is ordered
+        for (int i = 0; i < 20; i++) {
+            createResource("FIRST SET - " + i, "description" + i, "MAP1" + i);
+        }
+        // note: inverse name order to check the final results are returned
+        // "test name 10", "test name 9"..., "test name 0";
+        // so second set is inserted in reverse order
+        for (int i = 19; i >= 0; i--) {
+            createResource("SECOND SET - " + i, "description" + i, "MAP2" + i);
+        }
+        // check getAll
+        List<ShortResource> getAllResult = resourceService.getAll(null, null, buildFakeAdminUser());
+        assertEquals(40, getAllResult.size());
+        assertTrue(isSorted(getAllResult));
+        
+        //
+        // check getResources, various filters
+        // 
+        
+        // category like 
+        SearchFilter MAPCategoryFilter = new CategoryFilter("MAP%", SearchOperator.LIKE);
+        List<ShortResource> getResourcesMAPResult = resourceService.getResources(MAPCategoryFilter, buildFakeAdminUser());
+        assertEquals(40, getResourcesMAPResult.size());
+        assertTrue(isSorted(getResourcesMAPResult));
+        SearchFilter MAP1CategoryFilter = new CategoryFilter("MAP1%", SearchOperator.LIKE);
+        List<ShortResource> getResourcesMAP1Result = resourceService.getResources(MAP1CategoryFilter, buildFakeAdminUser());
+        assertEquals(20, getResourcesMAP1Result.size());
+        assertTrue(isSorted(getResourcesMAP1Result));
+        SearchFilter MAP2CategoryFilter = new CategoryFilter("MAP2%", SearchOperator.LIKE);
+        List<ShortResource> getResourcesMAP2Result = resourceService.getResources(MAP2CategoryFilter, buildFakeAdminUser());
+        assertEquals(20, getResourcesMAP2Result.size());
+        assertTrue(isSorted(getResourcesMAP2Result));
+        
+        // name like
+        SearchFilter nameContain1Filter = new FieldFilter(BaseField.NAME, "%1%", SearchOperator.LIKE);
+        List<ShortResource> nameContain1Result = resourceService.getResources(nameContain1Filter, buildFakeAdminUser());
+        // 22 resources contain 1 in the name: "FIRST SET - 1" + "FIRST SET - 10" ... "FIRST SET - 19", same for second set
+        assertEquals(22, nameContain1Result.size());
+        assertTrue(isSorted(nameContain1Result));
+        
+        SearchFilter nameContain2Filter = new FieldFilter(BaseField.NAME, "%2%", SearchOperator.LIKE);
+        List<ShortResource> nameContain2Result = resourceService.getResources(nameContain2Filter, buildFakeAdminUser());
+        // 4 resources contain 1 in the name: "FIRST SET - 2" + "FIRST SET - 12" 
+        assertEquals(4, nameContain2Result.size());
+        assertTrue(isSorted(nameContain2Result));
+        
+    }
+    
+    /**
+     * Check if the List passed is sorted by name 
+     * @param resourcesList
+     * @return
+     */
+    private static boolean isSorted(List<ShortResource> resourcesList) {
+        if (resourcesList.size() == 1) {
+            return true;
+        }
+     
+        Iterator<ShortResource> iter = resourcesList.iterator();
+        ShortResource current, previous = iter.next();
+        while (iter.hasNext()) {
+            current = iter.next();
+            if (previous.getName().compareTo(current.getName()) > 0) {
+                return false;
+            }
+            previous = current;
+        }
+        return true;
     }
 
     @Test
