@@ -58,7 +58,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
      * 
      * @param userGroupService
      */
-    public void setuserGroupService(UserGroupService userGroupService) {
+    public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
 
@@ -151,14 +151,14 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
      * @see it.geosolutions.geostore.services.rest.RESTUserGroupService#getAll(javax.ws.rs.core.SecurityContext, java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public UserGroupList getAll(SecurityContext sc, Integer page, Integer entries, boolean all)
+    public UserGroupList getAll(SecurityContext sc, Integer page, Integer entries, boolean all, boolean includeUsers)
             throws BadRequestWebEx {
         try {
             List<UserGroup> returnList = userGroupService.getAll(page, entries);
             List<RESTUserGroup> ugl = new ArrayList<>(returnList.size());
             for(UserGroup ug : returnList){
-                if(all || GroupReservedNames.isAllowedName(ug.getGroupName())){
-                    Collection<User> users = userService.getByGroup(ug);
+                if(all || GroupReservedNames.isAllowedName(ug.getGroupName())) {
+                    Collection<User> users = includeUsers ? userService.getByGroup(ug) : new HashSet<User>();
                     RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet<>(users), ug.getDescription());
                     ugl.add(rug);
                 }

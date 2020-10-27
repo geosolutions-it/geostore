@@ -93,7 +93,7 @@ public interface RESTUserGroupService {
     @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN" })
     UserGroupList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
-            @QueryParam("entries") Integer entries, @QueryParam("all") @DefaultValue("false") boolean all) throws BadRequestWebEx;
+            @QueryParam("entries") Integer entries, @QueryParam("all") @DefaultValue("false") boolean all, @QueryParam("users") @DefaultValue("true") boolean includeUsers) throws BadRequestWebEx;
     
     @PUT
     @Path("/update_security_rules/{groupId}/{canRead}/{canWrite}")
