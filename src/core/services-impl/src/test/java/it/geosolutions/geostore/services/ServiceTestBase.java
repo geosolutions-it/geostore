@@ -19,6 +19,12 @@
  */
 package it.geosolutions.geostore.services;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -31,13 +37,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
-import java.util.List;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.Logger;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Class ServiceTestBase.
@@ -316,6 +316,17 @@ public class ServiceTestBase extends TestCase {
         user.setNewPassword(password);
 
         return userService.insert(user);
+    }
+    
+    protected long createUserGroup(String name, long[] usersId) throws Exception {
+    	UserGroup group = new UserGroup();
+    	group.setGroupName(name);
+    	group.setDescription("");
+    	long groupId = userGroupService.insert(group);
+    	for (long userId : usersId) {
+    		userGroupService.assignUserGroup(userId, groupId);
+    	}
+    	return groupId;
     }
     
     protected long createUser(String name, Role role, String password, List<UserAttribute> attributes) throws Exception {

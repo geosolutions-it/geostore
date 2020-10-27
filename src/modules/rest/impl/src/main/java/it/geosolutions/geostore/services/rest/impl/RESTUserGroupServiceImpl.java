@@ -58,7 +58,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
      * 
      * @param userGroupService
      */
-    public void setuserGroupService(UserGroupService userGroupService) {
+    public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
 
