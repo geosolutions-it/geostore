@@ -40,71 +40,8 @@ import it.geosolutions.geostore.core.ldap.MockDirContextOperations;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 
-public class UserGroupDAOTest {
-    DirContext buildContextForGroups() {
-        return new DirContextAdapter() {
-            @Override
-            public NamingEnumeration<SearchResult> search(String name, String filter, SearchControls cons)
-                    throws NamingException {
-                if ("ou=groups".equals(name)) {
-                    if ("cn=*".equals(filter)) {
-                        SearchResult sr1 = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=group,ou=groups";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "group";
-                                }
-                                return "";
-                            }
-
-                        }, new BasicAttributes());
-                        SearchResult sr2 = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=group2,ou=groups";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "group2";
-                                }
-                                return "";
-                            }
-
-                        }, new BasicAttributes());
-                        return new IterableNamingEnumeration(Arrays.asList(sr1, sr2));
-                    } else if ("(& (cn=*) (cn=group))".equals(filter)) {
-                        SearchResult sr = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=group,ou=groups";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "group";
-                                }
-                                return "";
-                            }
-                            
-                        }, new BasicAttributes());
-                        return new IterableNamingEnumeration(Collections.singletonList(sr));
-                    } 
-                }
-                return new IterableNamingEnumeration(Collections.EMPTY_LIST);
-            }
-        };
-    }
+public class UserGroupDAOTest extends BaseDAOTest {
+    
     
     @Test
     public void testFindAll() {

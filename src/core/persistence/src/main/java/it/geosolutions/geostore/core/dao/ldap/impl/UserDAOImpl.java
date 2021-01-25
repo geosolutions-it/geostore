@@ -21,20 +21,28 @@ package it.geosolutions.geostore.core.dao.ldap.impl;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.naming.directory.SearchControls;
+
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.support.AbstractContextMapper;
+
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 
 /**
  * Class UserDAOImpl.
@@ -46,6 +54,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
     protected Map<String, String> attributesMapper = new HashMap<String, String>();
     private Pattern memberPattern = Pattern.compile("^(.*)$");
+    private String adminRoleGroup = "ADMIN";
     
     UserGroupDAOImpl userGroupDAO = null;
     
@@ -60,7 +69,21 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
         }
     }
     
+    public String getAdminRoleGroup() {
+		return adminRoleGroup;
+	}
+
     /**
+     * Case insensitive name of the group associated to the ADMIN role.
+     * This is used to assign ADMIN role to users belonging to a specific LDAP group.
+     * 
+     * @param adminRoleGroup ADMIN role group name (default to ADMIN)
+     */
+	public void setAdminRoleGroup(String adminRoleGroup) {
+		this.adminRoleGroup = adminRoleGroup;
+	}
+
+	/**
      * Sets regular expression used to extract the member user name from a member LDAP attribute.
      * The LDAP attribute can contain a DN, so this is useful to extract the real member name from it.
      * 
@@ -91,8 +114,10 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public void persist(User... entities) {
-        throw new UnsupportedOperationException();
-     // NOT SUPPORTED
+        // we don't want to throw an exception on write operations, because
+        // some authentication providers try to persist stuff for synchronization
+        // purposes and they don't know  DAOs can be readonly
+        // TODO: make readonly behaviour explicit
     }
 
     /*
@@ -114,6 +139,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
     @Override
     public List<User> search(ISearch search) {
         if (isNested(search)) {
+            // users belonging to a group
             List<User> users = new ArrayList<User>();
             for(UserGroup group :  userGroupDAO.search(getNestedSearch(search))) {
                 users.addAll(group.getUsers());
@@ -152,21 +178,68 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
                 user.setId((long)counter++); // TODO: optionally map an attribute to the id
                 user.setEnabled(true);
                 user.setName(ctx.getStringAttribute(nameAttribute));
-                List<UserAttribute> attributes = new ArrayList<UserAttribute>();
-                for (String ldapAttr : attributesMapper.keySet()) {
-                    String value = ctx.getStringAttribute(ldapAttr);
-                    String userAttr = attributesMapper.get(ldapAttr);
-                    UserAttribute attr = new UserAttribute();
-                    attr.setName(userAttr);
-                    attr.setValue(value);
-                    attributes.add(attr);
-                }
-                user.setAttribute(attributes);
+                user.setAttribute(fetchAttributes(ctx));
+                assignGroupsAndRole(ctx, user);
                 return user;
             }
-            
         }, processor);
     }
+    
+    /**
+     * Gets all the attributes defined in AttributeMapper.
+     * 
+     * @param ctx
+     * @return
+     */
+    private List<UserAttribute> fetchAttributes(DirContextOperations ctx) {
+        List<UserAttribute> attributes = new ArrayList<UserAttribute>();
+        for (String ldapAttr : attributesMapper.keySet()) {
+            String value = ctx.getStringAttribute(ldapAttr);
+            String userAttr = attributesMapper.get(ldapAttr);
+            UserAttribute attr = new UserAttribute();
+            attr.setName(userAttr);
+            attr.setValue(value);
+            attributes.add(attr);
+        }
+        return attributes;
+    }
+        
+    /**
+     * If UserGroupDAO is defined, fetches all the groups
+     * using a membership filter (member=<userDN>) on groups.
+     * 
+     * Assigns the ADMIN role to users belonging to the adminRoleGroup group.
+     * 
+     * @param ctx
+     * @param user
+     */
+    private void assignGroupsAndRole(DirContextOperations ctx, User user) {
+        // defaults to no groups and USER role
+        user.setGroups(new HashSet<UserGroup>());
+        user.setRole(Role.USER);
+        if (userGroupDAO != null) {
+            Search searchCriteria = new Search(UserGroup.class);
+            searchCriteria.addFilterSome("user",
+                    new Filter("name", ctx.getNameInNamespace(), Filter.OP_EQUAL));
+            for (UserGroup ug : userGroupDAO.search(searchCriteria)) {
+                if (isAdminGroup(ug)) {
+                    user.setRole(Role.ADMIN);
+                }
+                user.getGroups().add(ug);
+            }
+            
+        }
+    }
+    
+    /**
+     * Returns truew if the given group is the adminRoleGroup group.
+     * 
+     * @param ug
+     * @return
+     */
+    private boolean isAdminGroup(UserGroup ug) {
+		return ug.getGroupName().equalsIgnoreCase(adminRoleGroup);
+	}
 
     /*
      * (non-Javadoc)
@@ -175,7 +248,11 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public User merge(User entity) {
-        throw new UnsupportedOperationException();
+        // we don't want to throw an exception on write operations, because
+        // some authentication providers try to persist stuff for synchronization
+        // purposes and they don't know  DAOs can be readonly
+        // TODO: make readonly behaviour explicit
+    	return entity;
     }
 
     /*
@@ -185,7 +262,11 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public boolean remove(User entity) {
-        throw new UnsupportedOperationException();
+        // we don't want to throw an exception on write operations, because
+        // some authentication providers try to persist stuff for synchronization
+        // purposes and they don't know  DAOs can be readonly
+        // TODO: make readonly behaviour explicit
+        return true;
     }
 
     /*
@@ -195,7 +276,11 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
      */
     @Override
     public boolean removeById(Long id) {
-        throw new UnsupportedOperationException();
+        // we don't want to throw an exception on write operations, because
+        // some authentication providers try to persist stuff for synchronization
+        // purposes and they don't know  DAOs can be readonly
+        // TODO: make readonly behaviour explicit
+        return true;
     }
 
     /*
