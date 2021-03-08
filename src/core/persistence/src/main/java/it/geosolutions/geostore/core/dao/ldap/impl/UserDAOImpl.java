@@ -232,7 +232,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
     }
     
     /**
-     * Returns truew if the given group is the adminRoleGroup group.
+     * Returns true if the given group is the adminRoleGroup group.
      * 
      * @param ug
      * @return
