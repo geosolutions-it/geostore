@@ -65,26 +65,25 @@ public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter 
     	if(ud != null) {
     	    User user = null;
     	    if (validateUserFromService) {
+    	        // we search user by id first, if available
     			if(ud.getId() != null) {
     				user = userService.get((Long) ud.getId());
-    			} else if (ud.getName() != null){
+    			}
+    			// then by name if no id is available or the service cannot search by id (e.g. LDAP)
+    			if (user == null && ud.getName() != null){
     				try {
-    					// in case of external authentication provider the user may not come from the UserService
-    					// so try to use the name to retrieve from the userservice (that should be populated in the meanwhile).
     					user = userService.get(ud.getName());
     				} catch (NotFoundServiceEx e) {
     					LOGGER.error("User " + ud.getName() + " not found on the database because of an exception", e);
     				}  
-    			} else  {
-    				LOGGER.error("User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
     			}
-    			
-    			
     	    } else {
     	        user = ud;
     	    }
     	    if (user != null) {
                 return createAuthenticationForUser(user);
+            } else {
+            	LOGGER.error("User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
             }
     	}
         return null;

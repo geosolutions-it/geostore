@@ -133,5 +133,33 @@ public class SessionTokenAuthenticationFilterTest {
         assertNotNull(authUser.getId());
     }
     
-   
+    @Test
+    public void userWorksWithFakeIdTest() throws IOException, ServletException, BadRequestServiceEx, NotFoundServiceEx {
+        User user = new User();
+        user.setName(SAMPLE_USER);
+        user.setRole(Role.USER);
+        filter.setCacheExpiration(1);
+        // different users, same name
+        User sessionUser = new User();
+        sessionUser.setId(-1L);
+        sessionUser.setName(SAMPLE_USER);
+        sessionUser.setRole(Role.USER);
+        // here the mock service sets the id.
+        filter.getUserService().insert(user);
+        
+        Mockito.when(request.getHeader(DEFAULT_HEADER)).thenReturn(DEFAULT_PREFIX + SAMPLE_TOKEN);
+        
+        Calendar expires = new GregorianCalendar();
+        expires.add(Calendar.SECOND, (int) 60* 60 * 24* 15);
+        
+        filter.getUserSessionService().registerNewSession(SAMPLE_TOKEN, new UserSessionImpl(sessionUser, expires));
+        
+        filter.doFilter(request, response, chain);
+        
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        User authUser = (User)SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        assertEquals(SAMPLE_USER, authUser.getName());
+        assertNotNull(authUser.getId());
+    }
+    
 }

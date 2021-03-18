@@ -41,113 +41,10 @@ import it.geosolutions.geostore.core.ldap.IterableNamingEnumeration;
 import it.geosolutions.geostore.core.ldap.MockContextSource;
 import it.geosolutions.geostore.core.ldap.MockDirContextOperations;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.enums.Role;
 
-public class UserDAOTest {
+public class UserDAOTest extends BaseDAOTest {
     
-    DirContext buildContextForUsers() {
-        return new DirContextAdapter() {
-            @Override
-            public NamingEnumeration<SearchResult> search(String name, String filter, SearchControls cons)
-                    throws NamingException {
-                if ("ou=users".equals(name)) {
-                    if("cn=*".equals(filter)) {
-                        SearchResult sr1 = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=username,ou=users";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "username";
-                                }
-                                return "";
-                            }
-                            
-                        }, new BasicAttributes());
-                        SearchResult sr2 = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=username2,ou=users";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "username2";
-                                }
-                                return "";
-                            }
-                            
-                        }, new BasicAttributes());
-                        return new IterableNamingEnumeration(Arrays.asList(sr1, sr2));
-                    } else if ("(& (cn=*) (cn=username))".equals(filter)) {
-                        SearchResult sr = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=username,ou=users";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "username";
-                                }
-                                return "";
-                            }
-                            
-                        }, new BasicAttributes());
-                        return new IterableNamingEnumeration(Collections.singletonList(sr));
-                    } 
-                }
-                return new IterableNamingEnumeration(Collections.EMPTY_LIST);
-            }
-        };
-    }
-    
-    DirContext buildContextForGroups(final String memberString) {
-        return new DirContextAdapter() {
-            @Override
-            public NamingEnumeration<SearchResult> search(String name, String filter, SearchControls cons)
-                    throws NamingException {
-                if ("ou=groups".equals(name)) {
-                    if ("(& (cn=*) (cn=group))".equals(filter)) {
-                        SearchResult sr = new SearchResult("cn=*", null, new MockDirContextOperations() {
-
-                            @Override
-                            public String getNameInNamespace() {
-                                return "cn=group,ou=groups";
-                            }
-
-                            @Override
-                            public String getStringAttribute(String name) {
-                                if ("cn".equals(name)) {
-                                    return "group";
-                                }
-                                return "";
-                            }
-
-                            @Override
-                            public String[] getStringAttributes(String name) {
-                                if ("member".equals(name)) {
-                                    return new String[] {memberString == null ? "username" : memberString};
-                                }
-                                return new String[] {};
-                            }
-                            
-                            
-                        }, new BasicAttributes());
-                        return new IterableNamingEnumeration(Collections.singletonList(sr));
-                    }
-                }
-                return new IterableNamingEnumeration(Collections.EMPTY_LIST);
-            }
-        };
-    }
     
     @Test
     public void testFindAll() {
@@ -171,6 +68,43 @@ public class UserDAOTest {
     }
     
     @Test
+    public void testGroupsAreFetched() {
+        UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
+        userDAO.setSearchBase("ou=users");
+        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+        userGroupDAO.setSearchBase("ou=groups");
+        userDAO.setUserGroupDAO(userGroupDAO);
+        
+        Search search = new Search(User.class);
+        List<User> users = userDAO.search(search.addFilter(Filter.equal("name", "username")));
+        
+        User user = users.get(0);
+        assertEquals(2, user.getGroups().size());
+    }
+    
+    @Test
+    public void testRolesAreAssigned() {
+        UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
+        userDAO.setSearchBase("ou=users");
+        userDAO.setAdminRoleGroup("admin");
+        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+        userGroupDAO.setSearchBase("ou=groups");
+        userDAO.setUserGroupDAO(userGroupDAO);
+        
+        Search search = new Search(User.class);
+        List<User> users = userDAO.search(search.addFilter(Filter.equal("name", "username")));
+        
+        User user = users.get(0);
+        assertEquals(Role.ADMIN, user.getRole());
+        
+        search = new Search(User.class);
+        users = userDAO.search(search.addFilter(Filter.equal("name", "username2")));
+        
+        user = users.get(0);
+        assertEquals(Role.USER, user.getRole());
+    }
+    
+    @Test
     public void testAttributesMapper() {
         UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
         Map<String, String> mapper = new HashMap<String, String>();
@@ -186,7 +120,7 @@ public class UserDAOTest {
     
     @Test
     public void testSearchByGroup() {
-        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroups(null)));
+        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroupsMembership(null)));
         userGroupDAO.setSearchBase("ou=groups");
         UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
         userDAO.setUserGroupDAO(userGroupDAO);
@@ -201,7 +135,7 @@ public class UserDAOTest {
     
     @Test
     public void testMemberPattern() {
-        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroups("uid=username,ou=users")));
+        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroupsMembership("uid=username,ou=users")));
         userGroupDAO.setSearchBase("ou=groups");
         UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
         userDAO.setUserGroupDAO(userGroupDAO);

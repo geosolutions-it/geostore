@@ -167,18 +167,23 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public long update(User user) throws NotFoundServiceEx, BadRequestServiceEx {
-        User orig = userDAO.find(user.getId());
+        User orig = get(user.getId());
 
         if (orig == null) {
-            throw new NotFoundServiceEx("User not found " + user.getId());
+        	orig = get(user.getName());
+        	user.setId(orig.getId());
         }
+        
+        if (orig == null) {
+    		throw new NotFoundServiceEx("User not found " + user.getId());
+    	}
 
         //
         // Checking User Group
         //
         Set<UserGroup> groups = user.getGroups();
         List<String> groupNames = new ArrayList<String>();
-        List<UserGroup> existingGroups = new ArrayList<UserGroup>();
+        Set<UserGroup> existingGroups = new HashSet<UserGroup>();
         if (groups != null && groups.size() > 0) {
             for(UserGroup group : groups){
                 String groupName = group.getGroupName();
@@ -193,7 +198,7 @@ public class UserServiceImpl implements UserService {
             Search searchCriteria = new Search(UserGroup.class);
             searchCriteria.addFilterIn("groupName", groupNames);
 
-            existingGroups = userGroupDAO.search(searchCriteria);
+            existingGroups = GroupReservedNames.checkReservedGroups(userGroupDAO.search(searchCriteria));
 
             if (existingGroups == null || (existingGroups != null && groups.size() != existingGroups.size())) {
                 throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());

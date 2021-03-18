@@ -133,7 +133,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
                     Set<UserGroup> groups = new HashSet<UserGroup>();
                     Role role = extractUserRoleAndGroups(user.getRole(), authorities, groups);
                     user.setRole(role);
-                    user.setGroups(checkReservedGroups(groups));
+                    user.setGroups(GroupReservedNames.checkReservedGroups(groups));
 
                     if (userService != null)
                         userService.update(user);
@@ -159,7 +159,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
                     Set<UserGroup> groups = new HashSet<UserGroup>();
                     Role role = extractUserRoleAndGroups(null, authorities, groups);
                     user.setRole(role);
-                    user.setGroups(checkReservedGroups(groups));
+                    user.setGroups(GroupReservedNames.checkReservedGroups(groups));
                     if(userMapper != null) {
                         userMapper.mapUser(ldapUser, user);
                     }
@@ -248,24 +248,5 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
         } else {
             return group;
         }
-    }
-
-	 /**
-     * Utility method to remove Reserved group (for example EVERYONE) from a group list
-     * 
-     * @param groups
-     * @return
-     */
-    private Set<UserGroup> checkReservedGroups(Set<UserGroup> groups){
-        List<UserGroup> reserved = new ArrayList<UserGroup>();
-        for(UserGroup ug : groups){
-            if(!GroupReservedNames.isAllowedName(ug.getGroupName())){
-                reserved.add(ug);
-            }
-        }
-        for(UserGroup ug : reserved){
-			groups.remove(ug);
-        }
-        return groups;
     }
 }

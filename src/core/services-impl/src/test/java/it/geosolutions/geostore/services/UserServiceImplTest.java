@@ -136,5 +136,50 @@ public class UserServiceImplTest extends ServiceTestBase {
         Collection<User> users = userService.getByGroup(group);
         assertEquals(1, users.size());
     }
+    
+    @Test
+    public void testUpdateByUserId() throws Exception {
+        final String NAME = "name1";
+
+        long userId = createUser(NAME, Role.USER, "testPW");
+
+        assertEquals(1, userService.getCount(null));
+        
+        User loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertEquals(NAME, loaded.getName());
+        assertTrue( PwEncoder.isPasswordValid(loaded.getPassword(),"testPW"));
+        assertEquals(Role.USER, loaded.getRole());
+
+        loaded.setNewPassword("testPW2");
+        userService.update(loaded);
+        
+        loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(),"testPW2"));
+    }
+    
+    @Test
+    public void testUpdateByUserName() throws Exception {
+        final String NAME = "name1";
+
+        long userId = createUser(NAME, Role.USER, "testPW");
+
+        assertEquals(1, userService.getCount(null));
+        
+        User loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertEquals(NAME, loaded.getName());
+        assertTrue( PwEncoder.isPasswordValid(loaded.getPassword(),"testPW"));
+        assertEquals(Role.USER, loaded.getRole());
+
+        loaded.setNewPassword("testPW2");
+        loaded.setId(-1L);
+        userService.update(loaded);
+        
+        loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(),"testPW2"));
+    }
 
 }

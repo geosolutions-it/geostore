@@ -28,6 +28,8 @@ import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.support.AbstractContextMapper;
+
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -130,8 +132,16 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
     @SuppressWarnings("unchecked")
     @Override
     public List<UserGroup> search(ISearch search) {
+        String filter;
+        if (isNested(search)) {
+            // membership filter (member = <user>)
+            Filter nested = getNestedFilter(search.getFilters().get(0));
+            filter = memberAttribute + "=" + nested.getValue().toString();
+        } else {
+            filter = getLdapFilter(search, getPropertyMapper());
+        }
         return addEveryOne(
-            ldapSearch(combineFilters(baseFilter, getLdapFilter(search, getPropertyMapper())), getProcessorForSearch(search)),
+            ldapSearch(combineFilters(baseFilter, filter), getProcessorForSearch(search)),
             search
         );
     }

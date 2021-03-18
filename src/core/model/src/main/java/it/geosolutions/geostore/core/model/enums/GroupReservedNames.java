@@ -19,6 +19,13 @@
  */
 package it.geosolutions.geostore.core.model.enums;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import it.geosolutions.geostore.core.model.UserGroup;
 
 /**
  * @author DamianoG
@@ -50,5 +57,21 @@ public enum GroupReservedNames {
             return false;
         }
         return true;
+    }
+    
+    /**
+     * Utility method to remove Reserved group (for example EVERYONE) from a group list
+     * 
+     * @param groups
+     * @return
+     */
+    public static Set<UserGroup> checkReservedGroups(Collection<UserGroup> groups) {
+        Set<UserGroup> result = new HashSet<UserGroup>();
+        for(UserGroup ug : groups){
+            if(GroupReservedNames.isAllowedName(ug.getGroupName())){
+            	result.add(ug);
+            }
+        }
+        return result;
     }
 }

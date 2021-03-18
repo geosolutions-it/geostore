@@ -23,7 +23,10 @@ package it.geosolutions.geostore.core.dao.ldap.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
 import javax.naming.directory.DirContext;
+
+import org.apache.commons.lang.StringUtils;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -31,6 +34,7 @@ import org.springframework.ldap.control.SortControlDirContextProcessor;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.LdapTemplate;
+
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 
@@ -197,6 +201,7 @@ public abstract class LdapBaseDAOImpl {
                 mapper = (Map)propertyMapper.get(property);
             }
         }
+        // we support the minimum set of operators used by GeoStore user and group services
         switch(filter.getOperator()) {
             case Filter.OP_EQUAL:
                 return property + "=" + filter.getValue().toString();
@@ -204,12 +209,30 @@ public abstract class LdapBaseDAOImpl {
                 return getLdapFilter((Filter)filter.getValue(), mapper);
             case Filter.OP_ILIKE:
                 return property + "=" + filter.getValue().toString().replaceAll("[%]", "*");
+            case Filter.OP_IN:
+            	return getInLdapFilter(property, (List)filter.getValue());
             //TODO: implement all operators
         }
         return "";
     }
     
     /**
+     * Builds a filter for property in (values) search type.
+     * This is done by creating a list of property=value combined by or (|).
+     * 
+     * @param property
+     * @param values
+     * @return
+     */
+    private String getInLdapFilter(String property, List values) {
+    	List<String> filters = new ArrayList<String>();
+		for(Object value : values) {
+			filters.add("(" + property + "=" + value.toString() + ")");
+		}
+		return StringUtils.join(filters, "|");
+	}
+
+	/**
      * Returns true if the given search has one or more filters on a nested object.
      * 
      * @param search
@@ -263,7 +286,7 @@ public abstract class LdapBaseDAOImpl {
      * @param filter
      * @return
      */
-    private Filter getNestedFilter(Filter filter) {
+    protected Filter getNestedFilter(Filter filter) {
         if (filter.getOperator() == Filter.OP_SOME || filter.getOperator() == Filter.OP_ALL) {
             return (Filter)filter.getValue();
         }
