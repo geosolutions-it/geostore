@@ -33,6 +33,7 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -127,11 +128,12 @@ public class ServiceTestBase extends TestCase {
         List<UserGroup> list = userGroupService.getAll(null, null);
         for (UserGroup item : list) {
             LOGGER.info("Removing User: " + item.getGroupName());
-
-            boolean ret = userGroupService.delete(item.getId());
-            assertTrue("Group not removed", ret);
+            if (GroupReservedNames.isAllowedName(item.getGroupName())) {
+                boolean ret = userGroupService.delete(item.getId());
+                assertTrue("Group not removed", ret);
+            }
         }
-
+        boolean res = userGroupService.removeSpecialUsersGroups();
         assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
     }
 
@@ -327,6 +329,10 @@ public class ServiceTestBase extends TestCase {
     		userGroupService.assignUserGroup(userId, groupId);
     	}
     	return groupId;
+    }
+    
+    protected void createSpecialUserGroups() {
+        userGroupService.insertSpecialUsersGroups();
     }
     
     protected long createUser(String name, Role role, String password, List<UserAttribute> attributes) throws Exception {

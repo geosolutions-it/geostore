@@ -181,7 +181,7 @@ public class UserServiceImpl implements UserService {
         //
         // Checking User Group
         //
-        Set<UserGroup> groups = user.getGroups();
+        Set<UserGroup> groups = GroupReservedNames.checkReservedGroups(user.getGroups());
         List<String> groupNames = new ArrayList<String>();
         Set<UserGroup> existingGroups = new HashSet<UserGroup>();
         if (groups != null && groups.size() > 0) {

@@ -332,6 +332,25 @@ public class UserGroupServiceImpl implements UserGroupService {
         }
         return true;
     }
+    
+    public boolean removeSpecialUsersGroups(){
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Removing Reserved UsersGroup... ");
+        }
+        
+        Search search = new Search();
+        search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        List<UserGroup> ugEveryone = userGroupDAO.search(search);
+        if (ugEveryone.size() == 1) {
+            UserGroup ug = ugEveryone.get(0);
+            boolean res = userGroupDAO.removeById(ug.getId());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' removed!");
+            }
+            return res;
+        }
+        return false;
+    }
 
     @Override
     public UserGroup get(long id) throws BadRequestServiceEx {

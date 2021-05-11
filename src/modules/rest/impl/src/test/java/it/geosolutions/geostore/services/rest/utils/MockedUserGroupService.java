@@ -86,6 +86,12 @@ public class MockedUserGroupService implements UserGroupService {
         // TODO Auto-generated method stub
         return false;
     }
+    
+    @Override
+    public boolean removeSpecialUsersGroups() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 
     @Override
     public UserGroup get(String name) {

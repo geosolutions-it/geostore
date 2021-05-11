@@ -28,6 +28,7 @@ import org.junit.Test;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
 
@@ -157,6 +158,59 @@ public class UserServiceImplTest extends ServiceTestBase {
         loaded = userService.get(userId);
         assertNotNull(loaded);
         assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(),"testPW2"));
+    }
+    
+    @Test
+    public void testUpdateWithGroups() throws Exception {
+        final String NAME = "name1";
+
+        long userId = createUser(NAME, Role.USER, "testPW");
+        assertEquals(1, userService.getCount(null));
+        
+        createUserGroup("testgroup", new long[] {userId});
+        
+        User loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertEquals(NAME, loaded.getName());
+        assertTrue( PwEncoder.isPasswordValid(loaded.getPassword(),"testPW"));
+        assertEquals(Role.USER, loaded.getRole());
+        assertEquals(1, loaded.getGroups().size());
+
+        loaded.setNewPassword("testPW2");
+        userService.update(loaded);
+        
+        loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(),"testPW2"));
+        assertEquals(1, loaded.getGroups().size());
+    }
+    
+    @Test
+    public void testUpdateWithGroupsAndEveryone() throws Exception {
+        final String NAME = "name1";
+
+        createSpecialUserGroups();
+        
+        long userId = createUser(NAME, Role.USER, "testPW");
+        assertEquals(1, userService.getCount(null));
+        
+        createUserGroup("testgroup", new long[] {userId});
+        
+        
+        User loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertEquals(NAME, loaded.getName());
+        assertTrue( PwEncoder.isPasswordValid(loaded.getPassword(),"testPW"));
+        assertEquals(Role.USER, loaded.getRole());
+        assertEquals(2, loaded.getGroups().size());
+
+        loaded.setNewPassword("testPW2");
+        userService.update(loaded);
+        
+        loaded = userService.get(userId);
+        assertNotNull(loaded);
+        assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(),"testPW2"));
+        assertEquals(2, loaded.getGroups().size());
     }
     
     @Test
