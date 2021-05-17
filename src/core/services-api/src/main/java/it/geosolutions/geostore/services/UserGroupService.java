@@ -110,6 +110,15 @@ public interface UserGroupService {
      * @return true if the persist operation finish with success, false otherwise  
      */
     public boolean insertSpecialUsersGroups();
+    
+    /**
+     * Remove the special UserGroups, those that implies special behavior
+     * 
+     * For obvious reasons this Method MUST NOT exposed through the rest interface.
+     * 
+     * @return true if the removal operation finish with success, false otherwise  
+     */
+    public boolean removeSpecialUsersGroups();
     /**
      * Get The UserGroup from the name
      * @param name
