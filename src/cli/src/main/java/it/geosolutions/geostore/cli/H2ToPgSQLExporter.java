@@ -217,7 +217,9 @@ public class H2ToPgSQLExporter implements Runnable {
         Matcher m = searchDecode.matcher(result);
         while (m.find()) {
             String value = m.group(1);
-            result = result.replace(m.group(0), value.replaceAll("\\\\\"", Matcher.quoteReplacement("\"")));
+            result = result.replace(m.group(0), value
+                    .replaceAll("\\\\\"", Matcher.quoteReplacement("\""))
+                    .replaceAll("\\\\\"", Matcher.quoteReplacement("\"")));
         }
         return result;
     }

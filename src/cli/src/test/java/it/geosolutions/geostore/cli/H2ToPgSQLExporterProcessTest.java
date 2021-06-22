@@ -90,6 +90,18 @@ public class H2ToPgSQLExporterProcessTest extends H2ToPgSQLExporterTest {
     }
     
     @Test
+    public void quotesInJsonAreCorrectlyEncoded() throws IOException {
+        String sql = "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n" + 
+                "(74, STRINGDECODE('{\\\"html\\\":\\\"<h1 style=\\\\\\\"text-align:center;\\\\\\\">TEXT</h1>\\\"}'), 74);\r\n";
+        
+        String normalized = exporter.normalizeInsert(sql); 
+        
+        String expected = "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n" + 
+                "(74, '{\"html\":\"<h1 style=\\\"text-align:center;\\\">TEXT</h1>\"}', 74);\r\n";
+        assertEquals(expected, normalized);
+    }
+    
+    @Test
     public void stringDecodeIsNotNeededForPgSQL() throws IOException {
         String sql = "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n" + 
                 "(36, STRINGDECODE('{\\\"widgets\\\":[]}'), 36);\r\n";
