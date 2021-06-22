@@ -58,7 +58,7 @@
         user_password varchar2(255 char),
         user_role varchar2(255 char) not null,
         group_id number(19,0),
-		enabled char(1) NOT NULL DEFAULT 'Y',
+        enabled char(1) DEFAULT 'Y' NOT NULL,
         primary key (id),
         unique (name)
     );
@@ -76,7 +76,7 @@
         id number(19,0) not null,
         groupName varchar2(255 char) not null,
 		description varchar2(255 char),
-		enabled char(1) NOT NULL DEFAULT 'Y',
+        enabled char(1) DEFAULT 'Y' NOT NULL,
         primary key (id),
         unique (groupName)
     );
@@ -113,10 +113,6 @@
         add constraint fk_attribute_resource 
         foreign key (resource_id) 
         references gs_resource;
-
-    create index idx_category_type on gs_category (name);
-
-    create index idx_resource_name on gs_resource (name);
 
     create index idx_resource_description on gs_resource (description);
 
@@ -171,8 +167,6 @@
 
     create index idx_user_password on gs_user (user_password);
 
-    create index idx_user_name on gs_user (name);
-
     create index idx_user_role on gs_user (user_role);
 
     alter table gs_user 
@@ -190,7 +184,5 @@
         add constraint fk_uattrib_user 
         foreign key (user_id) 
         references gs_user;
-
-    create index idx_usergroup_name on gs_usergroup (groupName);
 
     create sequence hibernate_sequence;
