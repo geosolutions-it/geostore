@@ -62,7 +62,7 @@ public interface RESTUserService {
     @POST
     @Path("/")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON  })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("user") User user)
@@ -71,6 +71,7 @@ public interface RESTUserService {
     @PUT
     @Path("/user/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML,MediaType.APPLICATION_JSON  })
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("user") User user)
@@ -84,7 +85,7 @@ public interface RESTUserService {
 
     @GET
     @Path("/user/{id}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     User get(@Context SecurityContext sc, @PathParam("id") long id,
@@ -93,7 +94,7 @@ public interface RESTUserService {
 
     @GET
     @Path("/search/{name}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     User get(@Context SecurityContext sc, @PathParam("name") String name,
@@ -103,10 +104,12 @@ public interface RESTUserService {
     @GET
     @Path("/")
     // @RolesAllowed({ "ADMIN" })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN" })
     UserList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries) throws BadRequestWebEx;
 
+    @Produces({ MediaType.TEXT_PLAIN })
     @GET
     @Path("/count/{nameLike}")
     // @RolesAllowed({ "ADMIN" })
@@ -115,7 +118,7 @@ public interface RESTUserService {
 
     @GET
     @Path("/user/details/")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     User getAuthUserDetails(@Context SecurityContext sc,
@@ -123,7 +126,7 @@ public interface RESTUserService {
 
     @GET
     @Path("/search/list/{nameLike}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     UserList getUserList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,

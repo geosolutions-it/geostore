@@ -20,9 +20,9 @@
 		</context-param> -->
 
 	<!-- spring context loader -->
-	<listener>
+	<!--listener>
 		<listener-class>org.springframework.web.util.Log4jConfigListener</listener-class>
-	</listener>
+	</listener-->
 
 	<!--
       - Loads the root application context of this web app at startup.

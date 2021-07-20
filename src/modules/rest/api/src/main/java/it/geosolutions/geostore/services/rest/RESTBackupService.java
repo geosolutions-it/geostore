@@ -79,7 +79,7 @@ public interface RESTBackupService {
      */
     @GET
     @Path("/quick")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     RESTQuickBackup quickBackup(@Context SecurityContext sc) throws BadRequestServiceEx;
@@ -91,7 +91,7 @@ public interface RESTBackupService {
      */
     @PUT
     @Path("/quick")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     String quickRestore(@Context SecurityContext sc, @Multipart("backup") RESTQuickBackup backup)

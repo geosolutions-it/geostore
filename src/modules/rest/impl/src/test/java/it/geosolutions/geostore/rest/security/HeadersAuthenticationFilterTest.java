@@ -46,7 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import com.google.common.collect.Lists;
 import it.geosolutions.geostore.core.model.User;
@@ -178,7 +178,7 @@ public class HeadersAuthenticationFilterTest {
                     Collection<? extends GrantedAuthority> authorities) {
                 for (GrantedAuthority authority : authorities) {
                     if (ROLE_GROUP.equals(authority.getAuthority())) {
-                        return Lists.newArrayList(new GrantedAuthorityImpl("ADMIN"));
+                        return Lists.newArrayList(new SimpleGrantedAuthority("ADMIN"));
                     }
                 }
                 return Lists.newArrayList();

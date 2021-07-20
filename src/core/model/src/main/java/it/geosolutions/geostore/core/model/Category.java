@@ -39,13 +39,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Index;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Index;
 
 /**
  * Class Category.
@@ -54,8 +54,10 @@ import org.hibernate.annotations.Index;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Category")
-@Table(name = "gs_category", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
+@Table(name = "gs_category", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) }, indexes = {
+        @Index(name = "idx_category_type", columnList = "name")
+})
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
 @XmlRootElement(name = "Category")
 public class Category implements Serializable {
 
@@ -64,9 +66,8 @@ public class Category implements Serializable {
     @Id
     @GeneratedValue
     private Long id;
-
     @Column(name = "name", nullable = false, updatable = false)
-    @Index(name = "idx_category_type")
+    
     private String name;
 
     /*

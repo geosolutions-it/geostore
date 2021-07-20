@@ -107,6 +107,11 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
     public String toString() {
         return delegate.toString();
     }
+
+    @Override
+    public void eraseCredentials() {
+        delegate.eraseCredentials();
+    }
     
     
 }

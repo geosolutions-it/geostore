@@ -19,8 +19,8 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
+import org.acegisecurity.providers.encoding.PasswordEncoder;
 import org.springframework.dao.DataAccessException;
-import org.springframework.security.authentication.encoding.PasswordEncoder;
 
 /**
  * Abstract base implementation, delegating the encoding 
@@ -90,9 +90,19 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
         return null;
     }
     
-    @Override
     public String encodePassword(String rawPass, Object salt) throws DataAccessException {
         return doEncodePassword(getStringEncoder().encodePassword(rawPass, salt));
+    }
+
+    @Override
+    public String encode(CharSequence rawPass) {
+        return doEncodePassword(getStringEncoder().encodePassword(rawPass.toString(), "salt"));
+    }
+
+    @Override
+    public boolean matches(CharSequence encPass, String rawPass) {
+        if (encPass==null) return false;
+        return getStringEncoder().isPasswordValid(stripPrefix(encPass.toString()), rawPass, "salt");
     }
 
     @Override
@@ -119,7 +129,6 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
         return buff;
     }
 
-    @Override
     public boolean isPasswordValid(String encPass, String rawPass, Object salt)
             throws DataAccessException {
         if (encPass==null) return false;

@@ -11,7 +11,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 public class SimpleGrantedAuthoritiesMapperTest {
     
@@ -29,7 +29,7 @@ public class SimpleGrantedAuthoritiesMapperTest {
    @Test
    public void testMapping() {
        roleMappings.put("A", "B");
-       authorities.add(new GrantedAuthorityImpl("A"));
+       authorities.add(new SimpleGrantedAuthority("A"));
        Collection<? extends GrantedAuthority> mapped = mapper.mapAuthorities(authorities);
        assertEquals(1, mapped.size());
        assertEquals("B", mapped.iterator().next().getAuthority());

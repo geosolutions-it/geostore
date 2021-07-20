@@ -11,7 +11,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.sun.jersey.api.client.ClientHandlerException;
@@ -86,7 +86,7 @@ public class GeoStoreAuthenticationProvider implements AuthenticationProvider {
 			}
 //				return null;
 			List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-			authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
+			authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
 			Authentication a = new UsernamePasswordAuthenticationToken(us, pw,
 					authorities);
 			// a.setAuthenticated(true);

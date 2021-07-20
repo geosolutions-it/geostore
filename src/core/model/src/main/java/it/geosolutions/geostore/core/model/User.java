@@ -44,6 +44,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
+import javax.persistence.ForeignKey;
+import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -57,7 +59,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.Index;
 import org.hibernate.annotations.Type;
 
 /**
@@ -67,8 +68,12 @@ import org.hibernate.annotations.Type;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "User")
-@Table(name = "gs_user", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
+@Table(name = "gs_user", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) }, indexes = {
+        @Index(name = "idx_user_name", columnList = "name"),
+        @Index(name = "idx_user_password", columnList = "user_password"),
+        @Index(name = "idx_user_role", columnList = "user_role")
+})
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
 @XmlRootElement(name = "User")
 public class User implements Serializable {
 
@@ -85,15 +90,12 @@ public class User implements Serializable {
     private Long id;
 
     @Column(nullable = false, updatable = false, length = 255)
-    @Index(name = "idx_user_name")
     private String name;
 
     @Column(name = "user_password", updatable = true)
-    @Index(name = "idx_user_password")
     private String password;
 
     @Column(name = "user_role", nullable = false, updatable = true)
-    @Index(name = "idx_user_role")
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -117,7 +119,6 @@ public class User implements Serializable {
     @JoinTable(name = "gs_usergroup_members", 
         joinColumns = { @JoinColumn(name = "user_id", nullable = false, updatable = false) },
         inverseJoinColumns = { @JoinColumn(name = "group_id", nullable = false, updatable = false) })
-    @Index(name = "idx_user_group")
     private Set<UserGroup> groups;
 
     @Type(type="yes_no")

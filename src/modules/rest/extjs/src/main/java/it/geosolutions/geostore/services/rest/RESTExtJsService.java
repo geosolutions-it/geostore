@@ -113,7 +113,7 @@ public interface RESTExtJsService {
     @POST
     @GET
     @Path("/search/list")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS" })
     ExtResourceList getExtResourcesList(@Context SecurityContext sc,
@@ -147,7 +147,7 @@ public interface RESTExtJsService {
      */
     @GET
     @Path("/search/groups/{nameLike}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN", "ROLE_USER"})
     ExtGroupList getGroupsList(@Context SecurityContext sc,
             @PathParam("nameLike") String nameLike,
@@ -158,7 +158,7 @@ public interface RESTExtJsService {
 
     @GET
     @Path("/resource/{id}")
-    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResource getResource(@Context SecurityContext sc,
             @PathParam("id") long id)

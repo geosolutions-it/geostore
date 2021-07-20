@@ -94,6 +94,7 @@ public interface RESTResourceService {
     @PUT
     @Path("/resource/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id,
@@ -128,7 +129,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/resource/{id}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     Resource get(@Context SecurityContext sc, @PathParam("id") long id,
@@ -144,7 +145,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResourceList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
@@ -159,7 +160,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/search/{nameLike}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortResourceList getList(@Context SecurityContext sc, @PathParam("nameLike") String nameLike,
@@ -173,7 +174,7 @@ public interface RESTResourceService {
     @POST
     @GET
     @Path("/search")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
@@ -195,7 +196,7 @@ public interface RESTResourceService {
     @POST
     @GET
     @Path("/search/list")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
@@ -211,6 +212,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/count/{nameLike}")
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);
@@ -222,7 +224,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/resource/{id}/attributes")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     ShortAttributeList getAttributes(@Context SecurityContext sc, @PathParam("id") long id)
@@ -236,7 +238,7 @@ public interface RESTResourceService {
      */
     @GET
     @Path("/resource/{id}/attributes/{name}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String getAttribute(@Context SecurityContext sc, @PathParam("id") long id,
@@ -253,7 +255,7 @@ public interface RESTResourceService {
      */
     @PUT
     @Path("/resource/{id}/attributes/")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     @Consumes(MediaType.APPLICATION_JSON)
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long updateAttribute(
@@ -272,7 +274,7 @@ public interface RESTResourceService {
      */
     @PUT
     @Path("/resource/{id}/attributes/{name}/{value}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long updateAttribute(@Context SecurityContext sc, @PathParam("id") long id,
@@ -289,7 +291,7 @@ public interface RESTResourceService {
      */
     @PUT
     @Path("/resource/{id}/attributes/{name}/{value}/{type}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long updateAttribute(@Context SecurityContext sc, @PathParam("id") long id,
@@ -309,7 +311,7 @@ public interface RESTResourceService {
     
     @GET
     @Path("/resource/{id}/permissions")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     SecurityRuleList getSecurityRules(@Context SecurityContext sc, @PathParam("id") long id);
 

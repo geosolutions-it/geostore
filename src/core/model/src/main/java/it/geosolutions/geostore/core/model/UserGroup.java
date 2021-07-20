@@ -35,8 +35,11 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -44,7 +47,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Index;
 import org.hibernate.annotations.Type;
 
 /**
@@ -54,8 +56,10 @@ import org.hibernate.annotations.Type;
  * 
  */
 @Entity(name = "UserGroup")
-@Table(name = "gs_usergroup", uniqueConstraints = { @UniqueConstraint(columnNames = { "groupName" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_usergroup")
+@Table(name = "gs_usergroup", uniqueConstraints = { @UniqueConstraint(columnNames = { "groupName" }) }, indexes = {
+        @Index(name = "idx_usergroup_name", columnList = "groupName")
+})
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_usergroup")
 @XmlRootElement(name = "UserGroup")
 public class UserGroup implements Serializable {
 
@@ -68,7 +72,6 @@ public class UserGroup implements Serializable {
     private Long id;
 
     @Column(nullable = false, updatable = false, length = 255)
-    @Index(name = "idx_usergroup_name")
     private String groupName;
 
     @Column(nullable = true, updatable = true, length = 255)

@@ -50,7 +50,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.filter.GenericFilterBean;
 
 /**
@@ -168,7 +168,7 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
             String role = user.getRole().toString();
 
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-            authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
             return new UsernamePasswordAuthenticationToken(user, user.getPassword(), authorities);
         } else {
             LOGGER.error(USER_NOT_FOUND_MSG);

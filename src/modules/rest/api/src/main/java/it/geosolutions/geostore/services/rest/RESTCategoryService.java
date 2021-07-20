@@ -67,7 +67,7 @@ public interface RESTCategoryService {
     @POST
     @Path("/")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("category") Category category)
@@ -82,6 +82,7 @@ public interface RESTCategoryService {
     @PUT
     @Path("/category/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN" })
     @Secured({ "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id,
@@ -104,7 +105,7 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/category/{id}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     Category get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
@@ -129,6 +130,7 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/count/{nameLike}")
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);

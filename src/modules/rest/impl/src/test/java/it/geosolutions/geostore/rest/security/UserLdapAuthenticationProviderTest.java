@@ -21,21 +21,19 @@ package it.geosolutions.geostore.rest.security;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import java.util.Collections;
+import java.util.Set;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider;
 import it.geosolutions.geostore.services.rest.utils.MockedUserGroupService;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
-
-import java.util.Collections;
-import java.util.Set;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
 
 public class UserLdapAuthenticationProviderTest {
     private static final String TEST_GROUP = "testgroup";
@@ -50,7 +48,7 @@ public class UserLdapAuthenticationProviderTest {
 
             @Override
             public Set<GrantedAuthority> getAllGroups() {
-                return Collections.singleton((GrantedAuthority)new GrantedAuthorityImpl(TEST_GROUP));
+                return Collections.singleton((GrantedAuthority)new SimpleGrantedAuthority(TEST_GROUP));
             }
             
         });

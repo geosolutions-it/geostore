@@ -67,7 +67,7 @@ final class AuditInfoExtractor {
         return auditInfo;
     }
 
-    static Integer
+    static Long
     getResponseLength(Message message) {
         try {
             CachedOutputStream outputStream = (CachedOutputStream) message.getContent(OutputStream.class);
