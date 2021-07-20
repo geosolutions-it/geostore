@@ -64,7 +64,7 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
         return attributes.get(name);
     }
     
-    public Collection<GrantedAuthority> getAuthorities() {
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return delegate.getAuthorities();
     }
 

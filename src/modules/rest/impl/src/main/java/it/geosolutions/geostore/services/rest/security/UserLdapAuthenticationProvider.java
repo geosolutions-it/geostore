@@ -99,7 +99,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
         LdapUserDetails ldapUser = null;
         if (authentication.isAuthenticated()) {
 
-            Collection<GrantedAuthority> authorities = null;
+            Collection<? extends GrantedAuthority> authorities = null;
 
             ldapUser = (LdapUserDetails) authentication.getPrincipal();
 
@@ -203,7 +203,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
      * @throws BadRequestServiceEx
      */
     protected Role extractUserRoleAndGroups(Role userRole,
-            Collection<GrantedAuthority> authorities, Set<UserGroup> groups)
+            Collection<? extends GrantedAuthority> authorities, Set<UserGroup> groups)
             throws BadRequestServiceEx {
         Role role = (userRole != null ? userRole : Role.USER);
         for (GrantedAuthority a : authorities) {
