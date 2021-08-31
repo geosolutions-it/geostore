@@ -15,16 +15,19 @@ on:
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        java-version: [ 11 ]
+        distros: [ 'zulu', 'temurin' ]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK ${{ matrix.java-version }}
       uses: actions/setup-java@v2
       with:
-        java-version: '11'
-        distribution: 'adopt'
+        java-version: ${{ matrix.java-version }}
+        distribution: ${{ matrix.distros }}
         cache: maven
     - name: Build with Maven
       run: mvn -B clean install -Pextjs,h2_disk,auditing
