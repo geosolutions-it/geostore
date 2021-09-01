@@ -1,9 +1,7 @@
 package it.geosolutions.geostore.core.security.password;
 
 import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.security.authentication.encoding.PasswordEncoder;
-
-
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Password encoders have to implement this interface to be used in GeoStore
@@ -51,6 +49,8 @@ public interface GeoStorePasswordEncoder extends PasswordEncoder, BeanNameAware 
 	 * @see #encodePassword(String, Object)
 	 */
 	String encodePassword(char[] password, Object salt);
+	
+	String encodePassword(String password, Object salt);
 
 	/**
 	 * Validates a specified "raw" password (as char array) against an encoded
@@ -59,6 +59,8 @@ public interface GeoStorePasswordEncoder extends PasswordEncoder, BeanNameAware 
 	 * @see {@link #isPasswordValid(String, String, Object)
 	 */
 	boolean isPasswordValid(String encPass, char[] rawPass, Object salt);
+	
+	boolean isPasswordValid(String encPass, String rawPass, Object salt);
 
 	/**
 	 * @return a prefix which is stored with the password. This prefix must be

@@ -64,7 +64,7 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
         return attributes.get(name);
     }
     
-    public Collection<GrantedAuthority> getAuthorities() {
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return delegate.getAuthorities();
     }
 
@@ -106,6 +106,11 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
 
     public String toString() {
         return delegate.toString();
+    }
+
+    @Override
+    public void eraseCredentials() {
+        delegate.eraseCredentials();
     }
     
     

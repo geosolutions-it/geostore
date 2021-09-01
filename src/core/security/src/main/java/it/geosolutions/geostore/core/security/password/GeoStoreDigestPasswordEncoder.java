@@ -21,7 +21,7 @@ package it.geosolutions.geostore.core.security.password;
 
 import org.apache.commons.codec.binary.Base64;
 import org.jasypt.digest.StandardByteDigester;
-import org.jasypt.spring.security3.PasswordEncoder;
+import org.jasypt.spring.security.PasswordEncoder;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
 

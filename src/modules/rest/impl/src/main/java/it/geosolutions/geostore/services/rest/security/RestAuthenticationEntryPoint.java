@@ -52,7 +52,7 @@ public class RestAuthenticationEntryPoint extends  BasicAuthenticationEntryPoint
 	@Override
 	public void commence(HttpServletRequest request,
 			HttpServletResponse response, AuthenticationException authException)
-			throws IOException, ServletException {
+			throws IOException {
 			URI url=null;
 			try {
 				url = new URI(request.getRequestURI());

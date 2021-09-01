@@ -34,6 +34,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.ForeignKey;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -42,8 +45,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Index;
 
 /**
  * Class Attribute.
@@ -53,8 +54,12 @@ import org.hibernate.annotations.Index;
  */
 @Entity(name = "UserAttribute")
 @Table(name = "gs_user_attribute", uniqueConstraints = { @UniqueConstraint(columnNames = { "name",
-        "user_id" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
+        "user_id" }) }, indexes = {
+                @Index(name = "idx_user_attribute_name", columnList = "name"),
+                @Index(name = "idx_user_attribute_text", columnList = "string"),
+                @Index(name = "idx_attribute_user", columnList = "user_id")
+        })
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
 @XmlRootElement(name = "UserAttribute")
 public class UserAttribute implements Serializable {
 
@@ -65,16 +70,13 @@ public class UserAttribute implements Serializable {
     private Long id;
 
     @Column(name = "name", nullable = false, updatable = true)
-    @Index(name = "idx_user_attribute_name")
     private String name;
 
     @Column(name = "string", nullable = true, updatable = true)
-    @Index(name = "idx_user_attribute_text")
     private String value;
 
     @ManyToOne(optional = false)
-    @Index(name = "idx_attribute_user")
-    @ForeignKey(name = "fk_uattrib_user")
+    @JoinColumn(foreignKey=@ForeignKey(name="fk_uattrib_user"))
     private User user;
 
     /**

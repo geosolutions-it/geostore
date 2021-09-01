@@ -41,6 +41,9 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.Index;
+import javax.persistence.ForeignKey;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -56,8 +59,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Index;
 
 /**
  * Class Attribute.
@@ -67,8 +68,15 @@ import org.hibernate.annotations.Index;
  */
 @Entity(name = "Attribute")
 @Table(name = "gs_attribute", uniqueConstraints = { @UniqueConstraint(columnNames = { "name",
-        "resource_id" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_attribute")
+        "resource_id" }) }, indexes= {
+                @Index(name = "idx_attribute_name", columnList = "name"),
+                @Index(name = "idx_attribute_text", columnList = "attribute_text"),
+                @Index(name = "idx_attribute_number", columnList = "attribute_number"),
+                @Index(name = "idx_attribute_date", columnList = "attribute_date"),
+                @Index(name = "idx_attribute_type", columnList = "attribute_type"),
+                @Index(name = "idx_attribute_resource", columnList = "resource_id"),
+        })
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_attribute")
 @XmlRootElement(name = "Attribute")
 public class Attribute implements Serializable {
 
@@ -80,30 +88,25 @@ public class Attribute implements Serializable {
     private Long id;
 
     @Column(name = "name", nullable = false, updatable = true)
-    @Index(name = "idx_attribute_name")
+    
     private String name;
 
     @Column(name = "attribute_text", nullable = true, updatable = true)
-    @Index(name = "idx_attribute_text")
     private String textValue;
 
     @Column(name = "attribute_number", nullable = true, updatable = true)
-    @Index(name = "idx_attribute_number")
     private Double numberValue;
 
     @Column(name = "attribute_date", nullable = true, updatable = true)
-    @Index(name = "idx_attribute_date")
     @Temporal(TemporalType.TIMESTAMP)
     private Date dateValue;
 
     @Column(name = "attribute_type", nullable = false, updatable = false)
-    @Index(name = "idx_attribute_type")
     @Enumerated(EnumType.STRING)
     private DataType type;
 
     @ManyToOne(optional = false)
-    @Index(name = "idx_attribute_resource")
-    @ForeignKey(name = "fk_attribute_resource")
+    @JoinColumn(foreignKey=@ForeignKey(name="fk_attribute_resource"))
     private Resource resource;
 
     /**

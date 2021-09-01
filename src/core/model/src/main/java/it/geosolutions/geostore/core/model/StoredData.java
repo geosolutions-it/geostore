@@ -31,7 +31,9 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -39,7 +41,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
 
 /**
  * Class StoredData.
@@ -50,7 +51,7 @@ import org.hibernate.annotations.ForeignKey;
  */
 @Entity(name = "StoreData")
 @Table(name = "gs_stored_data")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_stored_data")
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_stored_data")
 @XmlRootElement(name = "StoredData")
 public class StoredData implements Serializable {
 
@@ -63,7 +64,7 @@ public class StoredData implements Serializable {
     private String data;
 
     @OneToOne(optional = false)
-    @ForeignKey(name = "fk_data_resource")
+    @JoinColumn(foreignKey=@ForeignKey(name="fk_data_resource"))
     private Resource resource;
 
     /**

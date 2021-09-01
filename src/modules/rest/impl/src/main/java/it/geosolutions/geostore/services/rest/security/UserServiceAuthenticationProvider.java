@@ -15,7 +15,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 /**
@@ -72,7 +72,7 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
             String role = user.getRole().toString();
             // return null;
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-            authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
             Authentication a = new UsernamePasswordAuthenticationToken(user, pw, authorities);
             // a.setAuthenticated(true);
             return a;

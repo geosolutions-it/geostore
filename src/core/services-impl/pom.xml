@@ -124,7 +124,7 @@
 -->        <dependency>
             <groupId>com.googlecode.genericdao</groupId>
 <!--            <groupId>com.trg</groupId>-->
-            <artifactId>dao</artifactId>
+            <artifactId>dao-hibernate</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>org.slf4j</groupId>
@@ -198,6 +198,18 @@
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>
 <!--            <scope>test</scope>-->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-extension-providers</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.cxf</groupId>
+            <artifactId>cxf-rt-rs-json-basic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jettison</groupId>
+            <artifactId>jettison</artifactId>
         </dependency>
 
 	    <!-- JUnit -->

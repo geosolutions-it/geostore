@@ -44,6 +44,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Index;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -53,8 +54,6 @@ import com.sun.xml.bind.CycleRecoverable;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Index;
 
 /**
  * Class Resource.
@@ -63,8 +62,15 @@ import org.hibernate.annotations.Index;
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Resource")
-@Table(name = "gs_resource", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
+@Table(name = "gs_resource", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) }, indexes = {
+        @Index(name = "idx_resource_name", columnList = "name"),
+        @Index(name = "idx_resource_description", columnList = "description"),
+        @Index(name = "idx_resource_creation", columnList = "creation"),
+        @Index(name = "idx_resource_update", columnList = "lastUpdate"),
+        @Index(name = "idx_resource_metadata", columnList = "metadata"),
+        @Index(name = "idx_resource_category", columnList = "category_id")
+})
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
 @XmlRootElement(name = "Resource")
 public class Resource implements Serializable, CycleRecoverable {
 
@@ -75,25 +81,20 @@ public class Resource implements Serializable, CycleRecoverable {
     private Long id;
 
     @Column(nullable = false, updatable = true)
-    @Index(name = "idx_resource_name")
     private String name;
 
     @Column(nullable = true, updatable = true, length = 10000)
-    @Index(name = "idx_resource_description")
     private String description;
 
     @Column(nullable = false, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    @Index(name = "idx_resource_creation")
     private Date creation;
 
     @Column(nullable = true, updatable = true)
     @Temporal(TemporalType.TIMESTAMP)
-    @Index(name = "idx_resource_update")
     private Date lastUpdate;
 
     @Column(nullable = true, updatable = true, length = 30000)
-    @Index(name = "idx_resource_metadata")
     private String metadata;
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
@@ -103,8 +104,7 @@ public class Resource implements Serializable, CycleRecoverable {
     private StoredData data;
 
     @ManyToOne(optional = false)
-    @Index(name = "idx_resource_category")
-    @ForeignKey(name = "fk_resource_category")
+    // @ForeignKey(name = "fk_resource_category")
     private Category category;
 
     /*

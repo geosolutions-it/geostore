@@ -43,7 +43,7 @@ public final class AuditingInterceptorPostMarshall extends AbstractPhaseIntercep
 
     @Override
     public void handleMessage(Message message) throws Fault {
-        Integer responseLength = AuditInfoExtractor.getResponseLength(message);
+        Long responseLength = AuditInfoExtractor.getResponseLength(message);
         if (responseLength != null) {
             message.getExchange().put(AuditInfo.RESPONSE_LENGTH.getKey(), responseLength.toString());
         }

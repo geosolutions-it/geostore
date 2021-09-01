@@ -57,7 +57,7 @@ public interface RESTStoredDataService {
     @Path("/{id}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN,
             MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN" })
     long update(@Context SecurityContext sc, @PathParam("id") long id,
@@ -89,7 +89,7 @@ public interface RESTStoredDataService {
      */
     @GET
     @Path("/{id}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String get(@Context SecurityContext sc, @Context HttpHeaders headers, @PathParam("id") long id)
@@ -98,6 +98,7 @@ public interface RESTStoredDataService {
     @GET
     @Path("/{id}/raw")
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     Response getRaw(
     		@Context SecurityContext sc,
     		@Context HttpHeaders headers,

@@ -28,7 +28,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
 import org.springframework.security.ldap.authentication.LdapAuthenticator;
@@ -99,7 +99,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
         LdapUserDetails ldapUser = null;
         if (authentication.isAuthenticated()) {
 
-            Collection<GrantedAuthority> authorities = null;
+            Collection<? extends GrantedAuthority> authorities = null;
 
             ldapUser = (LdapUserDetails) authentication.getPrincipal();
 
@@ -189,7 +189,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
      */
     protected Authentication prepareAuthentication(String pw, User user, Role role) {
         List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
-        grantedAuthorities.add(new GrantedAuthorityImpl("ROLE_" + role));
+        grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
         Authentication a = new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
         // a.setAuthenticated(true);
         return a;
@@ -203,7 +203,7 @@ private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProv
      * @throws BadRequestServiceEx
      */
     protected Role extractUserRoleAndGroups(Role userRole,
-            Collection<GrantedAuthority> authorities, Set<UserGroup> groups)
+            Collection<? extends GrantedAuthority> authorities, Set<UserGroup> groups)
             throws BadRequestServiceEx {
         Role role = (userRole != null ? userRole : Role.USER);
         for (GrantedAuthority a : authorities) {

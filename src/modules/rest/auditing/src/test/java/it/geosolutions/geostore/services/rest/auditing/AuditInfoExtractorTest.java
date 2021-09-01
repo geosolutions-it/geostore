@@ -99,7 +99,7 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
 
     private static CachedOutputStream getCacheOutputStream() {
         CachedOutputStream outputStream = Mockito.mock(CachedOutputStream.class);
-        Mockito.when(outputStream.size()).thenReturn(100);
+        Mockito.when(outputStream.size()).thenReturn(100L);
         return outputStream;
     }
 

@@ -33,7 +33,7 @@ import java.util.Set;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import it.geosolutions.geostore.core.model.User;
@@ -91,7 +91,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                     group.setId(groupCounter++);
                     group.setEnabled(true);
                     user.getGroups().add(group);
-                    groupAuthorities.add(new GrantedAuthorityImpl(groupName));
+                    groupAuthorities.add(new SimpleGrantedAuthority(groupName));
                 }
                 
             }
@@ -101,7 +101,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                 group.setId(groupCounter++);
                 group.setEnabled(true);
                 user.getGroups().add(group);
-                groupAuthorities.add(new GrantedAuthorityImpl(GroupReservedNames.EVERYONE.groupName()));
+                groupAuthorities.add(new SimpleGrantedAuthority(GroupReservedNames.EVERYONE.groupName()));
             }
             Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
             String role = req.getHeader(roleHeader);
@@ -136,8 +136,8 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
         return Role.GUEST;
     }
 
-    private GrantedAuthorityImpl createRole(String role) {
-        return new GrantedAuthorityImpl("ROLE_" + role);
+    private SimpleGrantedAuthority createRole(String role) {
+        return new SimpleGrantedAuthority("ROLE_" + role);
     }
 
     private Role getUserRole(String role) {

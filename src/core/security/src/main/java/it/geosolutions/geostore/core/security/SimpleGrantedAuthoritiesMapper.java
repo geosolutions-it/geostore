@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 /**
  * Map based implementation of GrantedAuthoritiesMapper.
@@ -60,7 +60,7 @@ public class SimpleGrantedAuthoritiesMapper implements GrantedAuthoritiesMapper 
         List<GrantedAuthority> result = new ArrayList<GrantedAuthority>();
         for(GrantedAuthority authority : authorities) {
             if(mappings.containsKey(authority.getAuthority())) {
-                result.add(new GrantedAuthorityImpl(mappings.get(authority.getAuthority())));
+                result.add(new SimpleGrantedAuthority(mappings.get(authority.getAuthority())));
             } else {
                 result.add(authority);
             }

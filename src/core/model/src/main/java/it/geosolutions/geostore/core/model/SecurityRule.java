@@ -33,9 +33,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.ForeignKey;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -43,8 +46,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Index;
 
 /**
  * Class Security.
@@ -60,8 +61,17 @@ import org.hibernate.annotations.Index;
                                                                         * ,
                                                                         * 
                                                                         * @UniqueConstraint(columnNames = {"category_id", "group_id"})
-                                                                        */})
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
+                                                                        */
+        }, indexes = {
+                @Index(name = "idx_security_resource", columnList = "resource_id"),
+                @Index(name = "idx_security_user", columnList = "user_id"),
+                @Index(name = "idx_security_group", columnList = "group_id"),
+                @Index(name = "idx_security_read", columnList = "canread"),
+                @Index(name = "idx_security_write", columnList = "canwrite"),
+                @Index(name = "idx_security_username", columnList = "username"),
+                @Index(name = "idx_security_groupname", columnList = "groupname")
+        })
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
 @XmlRootElement(name = "Security")
 public class SecurityRule implements Serializable {
 
@@ -77,8 +87,7 @@ public class SecurityRule implements Serializable {
      * TODO: it would be nice to have a DB constraint on nonnullability on them.
      */
     @ManyToOne(optional = true)
-    @Index(name = "idx_security_resource")
-    @ForeignKey(name = "fk_security_resource")
+    @JoinColumn(foreignKey=@ForeignKey(name="fk_security_resource"))
     private Resource resource;
 
     // /**
@@ -91,29 +100,23 @@ public class SecurityRule implements Serializable {
     // private Category category;
 
     @ManyToOne(optional = true)
-    @Index(name = "idx_security_user")
-    @ForeignKey(name = "fk_security_user")
+    @JoinColumn(foreignKey=@ForeignKey(name="fk_security_user"))
     private User user;
 
     @ManyToOne(optional = true)
-    @Index(name = "idx_security_group")
-    @ForeignKey(name = "fk_security_group")
+    @JoinColumn(foreignKey=@ForeignKey(name="fk_security_group"))
     private UserGroup group;
 
     @Column(nullable = false, updatable = true)
-    @Index(name = "idx_security_read")
     private boolean canRead;
 
     @Column(nullable = false, updatable = true)
-    @Index(name = "idx_security_write")
     private boolean canWrite;
     
     @Column(nullable = true, updatable = true)
-    @Index(name = "idx_security_username")
     private String username;
     
     @Column(nullable = true, updatable = true)
-    @Index(name = "idx_security_groupname")
     private String groupname;
 
     /**

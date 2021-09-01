@@ -58,6 +58,7 @@ public interface RESTMiscService {
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}/data")
+    @Produces({ MediaType.TEXT_PLAIN })
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
     String getData(@Context SecurityContext sc, @PathParam("cname") String cname,

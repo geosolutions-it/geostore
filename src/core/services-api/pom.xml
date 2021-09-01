@@ -50,12 +50,16 @@
                     <groupId>org.hibernate</groupId>
                 </exclusion>
                 <exclusion>
+                    <groupId>org.hibernate</groupId>
+                    <artifactId>hibernate-ehcache</artifactId>
+                </exclusion>
+                <exclusion>
                     <artifactId>hibernate</artifactId>
                     <groupId>org.hibernate</groupId>
                 </exclusion>
                 <exclusion>
                     <artifactId>hibernate-commons-annotations</artifactId>
-                    <groupId>org.hibernate</groupId>
+                    <groupId>org.hibernate.common</groupId>
                 </exclusion>
                 <exclusion>
                     <artifactId>hibernate-spatial</artifactId>

@@ -54,7 +54,7 @@ public interface RESTUserGroupService {
     @POST
     @Path("/")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML,MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_PLAIN })
     @Secured({ "ROLE_ADMIN" })
     long insert(@Context SecurityContext sc, @Multipart("userGroup") UserGroup userGroup)
             throws BadRequestWebEx;
@@ -67,13 +67,13 @@ public interface RESTUserGroupService {
     @GET
 	@Path("/group/{id}")
     @Secured({ "ROLE_ADMIN" })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     RESTUserGroup get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
     
     @GET
 	@Path("/group/name/{name}")
     @Secured({ "ROLE_ADMIN" })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     RESTUserGroup get(@Context SecurityContext sc, @PathParam("id") String name) throws NotFoundWebEx;
     
     @POST
@@ -90,7 +90,7 @@ public interface RESTUserGroupService {
     
     @GET
     @Path("/")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
     @Secured({ "ROLE_ADMIN" })
     UserGroupList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries, @QueryParam("all") @DefaultValue("false") boolean all, @QueryParam("users") @DefaultValue("true") boolean includeUsers) throws BadRequestWebEx;
@@ -98,7 +98,7 @@ public interface RESTUserGroupService {
     @PUT
     @Path("/update_security_rules/{groupId}/{canRead}/{canWrite}")
     @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })    
+    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })    
     @Secured({ "ROLE_ADMIN" })
     ShortResourceList updateSecurityRules(@Context SecurityContext sc, @Multipart("resourcelist")ShortResourceList resourcesToSet, @PathParam("groupId") Long groupId, @PathParam("canRead") Boolean canRead, @PathParam("canWrite") Boolean canWrite) throws BadRequestWebEx, NotFoundWebEx;
 }

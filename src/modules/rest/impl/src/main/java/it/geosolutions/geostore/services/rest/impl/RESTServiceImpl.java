@@ -52,7 +52,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 /**
  * Class RESTServiceImpl.
@@ -277,7 +277,7 @@ public abstract class RESTServiceImpl{
      */
     public Principal createGuestPrincipal(){
         List<GrantedAuthority> authorities = new ArrayList<>();
-        authorities.add(new GrantedAuthorityImpl("ROLE_GUEST"));
+        authorities.add(new SimpleGrantedAuthority("ROLE_GUEST"));
         try {
             User u = userService.get(UserReservedNames.GUEST.userName());
             return new UsernamePasswordAuthenticationToken(u,"", authorities);
