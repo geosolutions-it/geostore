@@ -63,7 +63,7 @@
     </profiles>
 
     <properties>
-        <geostore-version>1.7-SNAPSHOT</geostore-version>
+        <geostore-version>1.7.0</geostore-version>
         <main-prefix>geostore</main-prefix>
 
         <cxf-version>2.3.2</cxf-version>
