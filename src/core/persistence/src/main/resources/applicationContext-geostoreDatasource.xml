@@ -60,6 +60,17 @@
         <property name="url" value="jdbc:h2:mem:geostore" />
         <property name="username" value="geostore" />
         <property name="password" value="geostore" />
+	<property name="initialSize" value="0" />
+	<property name="maxIdle" value="8" />
+	<property name="minIdle" value="0" />
+	<property name="poolPreparedStatements" value="false" />
+	<property name="maxOpenPreparedStatements" value="-1" />
+	<property name="validationQuery" value="" />
+	<property name="testWhileIdle" value="false" />
+	<property name="testOnBorrow" value="true" />
+	<property name="timeBetweenEvictionRunsMillis" value="-1" />
+	<property name="numTestsPerEvictionRun" value="3" />
+	<property name="minEvictableIdleTimeMillis" value="1800000" />
     </bean>
 
     <bean id="geostoreEntityManagerFactory"
