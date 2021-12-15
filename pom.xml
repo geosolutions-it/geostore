@@ -4,7 +4,7 @@
 
     <groupId>it.geosolutions</groupId>
     <artifactId>geostore</artifactId>
-    <version>-SNAPSHOT</version>
+    <version>1.7-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
