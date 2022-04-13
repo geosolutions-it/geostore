@@ -29,7 +29,7 @@
 
 package it.geosolutions.geostore.core.model.adapter;
 
-import com.vividsolutions.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.MultiPolygon;
 
 /**
  * The Class MultiPolygonAdapter.
