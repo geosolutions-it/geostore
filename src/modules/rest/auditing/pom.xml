@@ -23,7 +23,7 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-rest-root</artifactId>
-        <version>1.8-SNAPSHOT</version>
+        <version>1.8.1</version>
     </parent>
     <artifactId>geostore-rest-auditing</artifactId>
     <name>GeoStore - Modules - REST auditing</name>
