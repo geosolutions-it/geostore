@@ -39,8 +39,8 @@ public class SimpleGrantedAuthoritiesMapperTest {
    public void testDropUnmappedAuthiorities() {
         mapper.setDropUnmapped(true);
         roleMappings.put("A", "B");
-        authorities.add(new GrantedAuthorityImpl("A"));
-        authorities.add(new GrantedAuthorityImpl("C"));
+        authorities.add(new SimpleGrantedAuthority("A"));
+        authorities.add(new SimpleGrantedAuthority("C"));
         Collection<? extends GrantedAuthority> mapped = mapper.mapAuthorities(authorities);
         assertEquals(1, mapped.size());
         assertEquals("B", mapped.iterator().next().getAuthority());
