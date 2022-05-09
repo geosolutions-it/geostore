@@ -124,7 +124,8 @@ public class GeoStoreLdapAuthoritiesPopulator extends
      */
     private boolean convertToUpperCase = true;
     
-    private GrantedAuthoritiesMapper authoritiesMapper = null;
+    private GrantedAuthoritiesMapper roleMapper = null;
+    private GrantedAuthoritiesMapper groupMapper = null;
 
     /**
      * @param contextSource
@@ -156,64 +157,89 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         }
     }
 
+    @Deprecated
     public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
-        this.authoritiesMapper = authoritiesMapper;
+      logger.error("AuthoritiesMapper is deprecated, please set roleMapper and groupMapper separately");
+      this.roleMapper = authoritiesMapper;
+      this.groupMapper = authoritiesMapper;
     }
 
+   public void setRoleMapper(GrantedAuthoritiesMapper roleMapper) {
+      this.roleMapper = roleMapper;
+   }
 
+   public void setGroupMapper(GrantedAuthoritiesMapper groupMapper) {
+      this.groupMapper = groupMapper;
+   }
 
     @Override
     public Set<GrantedAuthority> getGroupMembershipRoles(String userDn, String username) {
-        return getGroupsOrRoles(userDn, username, true, true);
+        // TODO: double check if we really want to return groups+roles
+        Set<GrantedAuthority> ret = new HashSet<>();
+        ret.addAll(getGroups(userDn, username));
+        ret.addAll(getRoles(userDn, username));
+        return ret;
     }
 
-    private Set<GrantedAuthority> getGroupsOrRoles(String userDn, String username, boolean groups, boolean roles) {
-        if (roleSearchBase == null && groupSearchBase == null) {
-            return new HashSet<GrantedAuthority>();
+    private Set<GrantedAuthority> getRoles(String userDn, String username) {
+        if (roleSearchBase == null) {
+            return new HashSet<>();
         }
 
-        Set<GrantedAuthority> authorities = new HashSet<GrantedAuthority>();
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
         String[] searchParams = username == null ? new String[] {} : new String[] {userDn, username};
-        if(roles) {
-            // Searching for ROLES
-            if (logger.isDebugEnabled()) {
-                logger.debug("Searching for roles for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                        + roleSearchFilter + " in search base '" + roleSearchBase + "'");
-            }
-    
-            String[] rolesRoots = roleSearchBase.split(";");
-            String filter = username == null ? allRolesSearchFilter : roleSearchFilter;
-            
-            for(String rolesRoot : rolesRoots) {
-                addAuthorities(searchParams, authorities, rolesRoot, filter, rolePrefix, false);
-            }
+
+         // Searching for ROLES
+         if (logger.isDebugEnabled()) {
+             logger.debug("Searching for roles for user '" + username + "', DN = " + "'" + userDn + "', with filter "
+                     + roleSearchFilter + " in search base '" + roleSearchBase + "'");
+         }
+
+         String[] rolesRoots = roleSearchBase.split(";");
+         String filter = username == null ? allRolesSearchFilter : roleSearchFilter;
+
+         for(String rolesRoot : rolesRoots) {
+             addAuthorities(searchParams, authorities, rolesRoot, filter, rolePrefix, false);
+         }
+
+        if(roleMapper != null) {
+            authorities = new HashSet<>(roleMapper.mapAuthorities(authorities));
         }
-        
-        if(groups) {
-            // Searching for Groups
-            if (logger.isDebugEnabled()) {
-                logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                        + groupSearchFilter + " in search base '" + groupSearchBase + "'");
-            }
-            String[] groupsRoots = groupSearchBase.split(";");
-            String filter = username == null ? allGroupsSearchFilter : groupSearchFilter;
-            for(String groupsRoot : groupsRoots) {
-                addAuthorities(searchParams, authorities, groupsRoot, filter, null, enableHierarchicalGroups);
-            }
+        return authorities;
+    }
+
+    private Set<GrantedAuthority> getGroups(String userDn, String username) {
+        if (groupSearchBase == null) {
+            return new HashSet<>();
         }
+
+        Set<GrantedAuthority> authorities = new HashSet<>();        
+        String[] searchParams = username == null ? new String[] {} : new String[] {userDn, username};
+
+         // Searching for Groups
+         if (logger.isDebugEnabled()) {
+             logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
+                     + groupSearchFilter + " in search base '" + groupSearchBase + "'");
+         }
+         String[] groupsRoots = groupSearchBase.split(";");
+         String filter = username == null ? allGroupsSearchFilter : groupSearchFilter;
+         for(String groupsRoot : groupsRoots) {
+             addAuthorities(searchParams, authorities, groupsRoot, filter, null, enableHierarchicalGroups);
+         }
                 
-        if(authoritiesMapper != null) {
-            return new HashSet<GrantedAuthority>(authoritiesMapper.mapAuthorities(authorities));
+        if(groupMapper != null) {
+            authorities = new HashSet<>(groupMapper.mapAuthorities(authorities));
         }
         return authorities;
     }
 
     public Set<GrantedAuthority> getAllGroups() {
-        return getGroupsOrRoles(null, null, true, false);
+        return getGroups(null, null);
     }
     
     public Set<GrantedAuthority> getAllRoles() {
-        return getGroupsOrRoles(null, null, false, true);
+        return getRoles(null, null);
     }
     
     private void addAuthorities(String[] params, Set<GrantedAuthority> authorities,
@@ -233,7 +259,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         });
 
         if (logger.isDebugEnabled()) {
-            logger.debug("Authorities from search: " + ldapAuthorities);
+            logger.debug("Found " + ldapAuthorities.size() + " authorities from search");
         }
         for (Object authority : ldapAuthorities) {
         	Authority ldapAuthority = (Authority)authority;
@@ -248,17 +274,27 @@ public class GeoStoreLdapAuthoritiesPopulator extends
 
     private boolean addAuthority(Set<GrantedAuthority> authorities, String authorityPrefix,
             String authority) {
+
+        if (logger.isDebugEnabled()) {
+             logger.debug("Adding authority: " + authorityPrefix + "::" + authority);
+        }
+
         if (convertToUpperCase) {
             authority = authority.toUpperCase();
         }
 
         String prefix = (authorityPrefix != null && !authority.startsWith(authorityPrefix) ? authorityPrefix : "");
-        
-        SimpleGrantedAuthority role = new SimpleGrantedAuthority(prefix + authority);
+
+        String rolename = prefix + authority;
+        SimpleGrantedAuthority role = new SimpleGrantedAuthority(rolename);
         if (!authorities.contains(role)) {
             authorities.add(role);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Authority added:  " + rolename);
+            }            
             return true;
         }
+                logger.debug("Authority not added: " + rolename);        
         return false;
     }
 
