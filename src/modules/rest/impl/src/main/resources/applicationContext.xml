@@ -23,6 +23,9 @@
             http://cxf.apache.org/schemas/configuration/http-conf.xsd"
 	default-autowire="byName">
 
+	<!-- === SEC ======================================================== -->
+	<import resource="classpath*:geostore-spring-security.xml" />
+
 	<!-- === CXF ======================================================== -->
 
 	<!-- Load CXF modules from cxf.jar -->
@@ -30,10 +33,6 @@
 	<import resource="classpath*:META-INF/cxf/cxf-*.xml" />
 	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
 	<!-- import resource="classpath:META-INF/cxf/cxf-extension-jaxrs-binding.xml" /> -->
-
-	<!-- === SEC ======================================================== -->
-	<import resource="classpath*:geostore-spring-security.xml" />
-		
 		
 	<!-- Interceptors -->
 	<bean id="noCacheInterceptor" class="it.geosolutions.geostore.services.rest.utils.FixedCacheControlOutInterceptor" />
@@ -72,6 +71,15 @@
     	class="it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl">
     	<property name="sessionTimeout" value="86400" />
     </bean>
+
+	<bean id="sessionServiceDelegate"
+		  class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
+		<constructor-arg ref="restSessionService"/>
+	</bean>
+
+	<bean id="oauthLoginRest"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.OAuth2LoginRestImpl">
+	</bean>
 	<!-- ==================================================================== -->
 	<!-- === REST Services ================================================== -->
 	<!-- ==================================================================== -->
@@ -238,6 +246,29 @@
 			<ref bean="noCacheInterceptor" />
 		</jaxrs:outInterceptors>
     </jaxrs:server>
+
+	<jaxrs:server id="geoStoreRESTOAuthLoginService" address="/openid">
+		<jaxrs:serviceBeans>
+			<ref bean="oauthLoginRest"/>
+		</jaxrs:serviceBeans>
+
+		<jaxrs:features>
+			<cxf:logging/>
+		</jaxrs:features>
+
+		<jaxrs:providers>
+			<ref bean="jaxbXmlProvider"/>
+			<ref bean="jsonProvider"/>
+			<!--bean class="org.apache.cxf.jaxrs.provider.json.JSONProvider">
+                <property name="dropRootElement" value="true"/>
+          </bean-->
+			<ref bean="jaxbContextResolver"/>
+			<bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
+		</jaxrs:providers>
+		<jaxrs:outInterceptors>
+			<ref bean="noCacheInterceptor" />
+		</jaxrs:outInterceptors>
+	</jaxrs:server>
     <!-- ====================================================================-->
     <!-- === REST Services ==================================================-->
     <!-- ====================================================================-->

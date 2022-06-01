@@ -61,6 +61,10 @@
 	<bean id="userDAO" class="it.geosolutions.geostore.core.dao.impl.UserDAOImpl" >
 		<property name="searchProcessor" ref="geostoreSearchProcessor" />
 	</bean>
+
+	<bean id="userGroupAttributeDAO" class="it.geosolutions.geostore.core.dao.impl.UserGroupAttributeDAOImpl" >
+		<property name="searchProcessor" ref="geostoreSearchProcessor" />
+	</bean>
 	
 	<bean id="userGroupDAO" class="it.geosolutions.geostore.core.dao.impl.UserGroupDAOImpl" >
 		<property name="searchProcessor" ref="geostoreSearchProcessor" />

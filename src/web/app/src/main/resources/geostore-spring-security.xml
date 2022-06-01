@@ -25,12 +25,12 @@
 		<security:csrf disabled="true"/>
 		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
 		<security:custom-filter ref="sessionTokenProcessingFilter" after="FORM_LOGIN_FILTER"/>
-		<!--
-		To enable SSO headers based authentication uncomment the following 
-		<security:custom-filter ref="headersProcessingFilter" before="FORM_LOGIN_FILTER"/>
-		-->
+		<security:custom-filter ref="googleOpenIdFilter" after="BASIC_AUTH_FILTER"/>
 		<security:anonymous />
 	</security:http>
+
+
+
 	<!-- Entry point -->
 	<bean id="restAuthenticationEntryPoint" class="it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint" >
 		<property name="realmName" value="GeoStore"></property>
@@ -39,35 +39,52 @@
 	<bean id="geoStoreUserServiceAuthenticationProvider"
 		class="it.geosolutions.geostore.services.rest.security.UserServiceAuthenticationProvider">
 	</bean>
+
+	<!-- OAuth2 beans -->
+	<context:annotation-config/>
+
+	<bean id="googleSessionServiceDelegate"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate">
+		<constructor-arg ref="restSessionService"/>
+	</bean>
+
+	<bean id="googleSecurityConfiguration" class="it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration"/>
+
+	<!-- END OAuth2 beans-->
+
 	
 	<bean class="it.geosolutions.geostore.services.rest.security.UserAttributeTokenAuthenticationFilter"
         id="authenticationTokenProcessingFilter">
 	</bean>
-	
+
 	<bean class="it.geosolutions.geostore.services.rest.security.SessionTokenAuthenticationFilter"
         id="sessionTokenProcessingFilter">
 	</bean>
-	
+
+	<bean id="sessionServiceDelegate"
+		  class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
+		<constructor-arg ref="restSessionService"/>
+	</bean>
+
 	<!-- bean class="it.geosolutions.geostore.services.rest.security.WebServiceTokenAuthenticationFilter"
         id="authenticationTokenProcessingFilter">
-        <constructor-arg><value>http://localhost:8080/geoserver/www/{token}.txt</value></constructor-arg>
+        <constructor-arg><value>http://localhopst:8080/geoserver/www/{token}.txt</value></constructor-arg>
     </bean-->
 
-	<!-- Inject into the Authentication Manager the GeoStore Auth Provider -->
 	<security:authentication-manager>
 		<security:authentication-provider ref='geoStoreUserServiceAuthenticationProvider' />
 		<!-- security:authentication-provider ref='geostoreLdapProvider' / -->
 	</security:authentication-manager>
 
-    <!-- SSO headers based authentication provider
-    <security:authentication-manager>
+
+    <!--security:authentication-manager>
         <security:authentication-provider ref='preauthenticatedAuthenticationProvider' />
-    </security:authentication-manager>
+    </security:authentication-manager-->
     
     <bean id="preauthenticatedAuthenticationProvider" class="it.geosolutions.geostore.services.rest.security.PreAuthenticatedAuthenticationProvider">
     </bean>
     
-    <bean class="it.geosolutions.geostore.services.rest.security.HeadersAuthenticationFilter" id="headersProcessingFilter">
+    <!--bean class="it.geosolutions.geostore.services.rest.security.HeadersAuthenticationFilter" id="headersProcessingFilter">
         <property name="usernameHeader" value="x-geostore-user"/>
         <property name="groupsHeader" value="x-geostore-groups"/>
         <property name="roleHeader" value="x-geostore-role"/>
