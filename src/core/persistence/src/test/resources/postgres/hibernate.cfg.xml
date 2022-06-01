@@ -16,5 +16,6 @@
     <mapping class="it.geosolutions.geostore.core.model.User"/>
     <mapping class="it.geosolutions.geostore.core.model.UserAttribute"/>
     <mapping class="it.geosolutions.geostore.core.model.UserGroup"/>
+    <mapping class="it.geosolutions.geostore.core.model.UserGroupAttribute"/>
   </session-factory>
 </hibernate-configuration>

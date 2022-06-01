@@ -26,6 +26,7 @@ import javax.naming.directory.SearchControls;
 
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
+import com.googlecode.genericdao.search.Search;
 import org.springframework.expression.Expression;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
@@ -125,6 +126,18 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
         // Not supported yet, we can possibly map an LDAP attribute and use it as an ID
         // If needed in any use case
         return null;
+    }
+
+    @Override
+    public UserGroup findByName(String name) {
+        Search searchCriteria = new Search(UserGroup.class);
+        searchCriteria.addFilterEqual(nameAttribute, name);
+        UserGroup result=null;
+        List<UserGroup> existingGroups = search(searchCriteria);
+        if (existingGroups.size() > 0) {
+            result = existingGroups.get(0);
+        }
+        return result;
     }
 
     /*
