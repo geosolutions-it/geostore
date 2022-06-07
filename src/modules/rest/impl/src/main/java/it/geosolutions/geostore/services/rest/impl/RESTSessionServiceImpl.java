@@ -62,6 +62,10 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
 	private Map<String,SessionServiceDelegate> delegates;
 
+	public RESTSessionServiceImpl(){
+		registerDelegate(DEFAULT_NAME, new SessionServiceDelegateImpl());
+	}
+
 	@Autowired
 	UserSessionService userSessionService;
 	private boolean autorefresh = false;

@@ -72,11 +72,6 @@
     	<property name="sessionTimeout" value="86400" />
     </bean>
 
-	<bean id="sessionServiceDelegate"
-		  class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
-		<constructor-arg ref="restSessionService"/>
-	</bean>
-
 	<bean id="oauthLoginRest"
 		  class="it.geosolutions.geostore.services.rest.security.oauth2.OAuth2LoginRestImpl">
 	</bean>

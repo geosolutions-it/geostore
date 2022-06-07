@@ -20,6 +20,9 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
         restSessionService.registerDelegate(DEFAULT_NAME, this);
     }
 
+    public SessionServiceDelegateImpl(){
+    }
+
 
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
