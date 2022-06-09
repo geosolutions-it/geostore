@@ -134,7 +134,7 @@
 
         <geoapi-version>2.3-M1</geoapi-version>
         <gt-version>2.7-RC2</gt-version>
-        <jackson-version>2.13.1</jackson-version>
+        <jackson-version>2.13.2.1</jackson-version>
     </properties>
 
     <ciManagement>
