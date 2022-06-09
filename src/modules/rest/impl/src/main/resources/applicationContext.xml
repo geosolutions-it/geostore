@@ -75,6 +75,13 @@
 	<bean id="oauthLoginRest"
 		  class="it.geosolutions.geostore.services.rest.security.oauth2.OAuth2LoginRestImpl">
 	</bean>
+
+	<bean id="googleSessionServiceDelegate"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate">
+		<constructor-arg ref="restSessionService"/>
+	</bean>
+
+
 	<!-- ==================================================================== -->
 	<!-- === REST Services ================================================== -->
 	<!-- ==================================================================== -->
