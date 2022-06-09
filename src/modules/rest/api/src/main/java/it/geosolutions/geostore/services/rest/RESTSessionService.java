@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest;
 
 import java.text.ParseException;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -43,6 +44,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
 
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 import it.geosolutions.geostore.core.model.User;
@@ -121,6 +123,7 @@ public interface RESTSessionService {
     @Path("/refresh/{sessionId}/{refreshToken}")
     @Produces({MediaType.APPLICATION_JSON})
     @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    @Deprecated
     public SessionToken refresh(@Context SecurityContext sc, @PathParam("sessionId") String sessionId, @PathParam("refreshToken") String refreshToken)  throws ParseException;
     /**
      * Removes the given session.
@@ -130,7 +133,24 @@ public interface RESTSessionService {
     @DELETE
     @Path("/{sessionId}")
     @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    @Deprecated
     public void removeSession(@PathParam("sessionId") String sessionId);
+
+    @POST
+    @Path("/refreshToken")
+    @Produces({MediaType.APPLICATION_JSON})
+    @Consumes({MediaType.APPLICATION_JSON})
+    @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    public SessionToken refresh(SessionToken token)  throws ParseException;
+    /**
+     * Removes the given session.
+     *
+     * @return
+     */
+    @DELETE
+    @Path("/logout")
+    @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    public void removeSession();
     
     /**
      * Removes all sessions.
@@ -141,4 +161,6 @@ public interface RESTSessionService {
     @Path("/")
     @Secured({ "ROLE_ADMIN" })
     public void clear();
+
+    void registerDelegate(String key, SessionServiceDelegate delegate);
 }

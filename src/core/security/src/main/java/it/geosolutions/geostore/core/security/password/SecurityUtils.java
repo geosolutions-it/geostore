@@ -4,9 +4,12 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.security.Principal;
 import java.util.Arrays;
 
 
@@ -155,5 +158,20 @@ public class SecurityUtils {
         Arrays.fill(working[0], '0');
         Arrays.fill(working[1], '0');
         return result;
+    }
+
+    public static String getUsername(Object principal) {
+        String username = null;
+        if (principal != null) {
+            if (principal instanceof UserDetails) {
+                username = ((UserDetails) principal).getUsername();
+            } else if (principal instanceof Principal) {
+                username = ((Principal) principal).getName();
+            } else {
+                username = principal.toString();
+            }
+        }
+
+        return username;
     }
 }

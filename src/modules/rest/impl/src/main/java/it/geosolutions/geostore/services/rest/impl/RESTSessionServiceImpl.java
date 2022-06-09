@@ -32,9 +32,13 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Map;
+import java.util.TreeMap;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 
+import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 
@@ -45,9 +49,23 @@ import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
+import static it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl.DEFAULT_NAME;
 
 public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService{
-	private static final String BEARER_TYPE = "bearer";
+	static final String BEARER_TYPE = "bearer";
+
+	private Map<String,SessionServiceDelegate> delegates;
+
+	public RESTSessionServiceImpl(){
+		registerDelegate(DEFAULT_NAME, new SessionServiceDelegateImpl());
+	}
+
 	@Autowired
 	UserSessionService userSessionService;
 	private boolean autorefresh = false;
@@ -161,8 +179,20 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
 	@Override
 	public SessionToken refresh(SecurityContext sc, String sessionId, String refreshToken) {
-		return toSessionToken(sessionId, userSessionService.refreshSession(sessionId, refreshToken));
+		String provider=(String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY,0);
+		SessionServiceDelegate delegate = getDelegate(provider);
+		return delegate.refresh(refreshToken,sessionId);
+	}
 
+	private SessionServiceDelegate getDelegate(String key){
+		SessionServiceDelegate result;
+		if (key==null)
+			result=delegates.get(DEFAULT_NAME);
+		else result=delegates.get(key);
+
+		if (result==null) result=delegates.get(DEFAULT_NAME);
+
+		return result;
 	}
 
 	/**
@@ -171,7 +201,23 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 	 * @return
 	 */
 	public void removeSession(String sessionId) {
-		userSessionService.removeSession(sessionId);
+		String provider=(String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY,0);
+		SessionServiceDelegate delegate=getDelegate(provider);
+		delegate.doLogout(sessionId);
+	}
+
+	@Override
+	public SessionToken refresh(SessionToken sessionToken) throws ParseException {
+		return refresh(null,sessionToken.getAccessToken(),sessionToken.getRefreshToken());
+	}
+
+	@Override
+	public void removeSession() {
+		HttpServletRequest request=((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+				.getRequest();
+		Authentication authentication=new BearerTokenExtractor().extract(request);
+		if (authentication!=null && authentication.getPrincipal()!=null)
+			removeSession(authentication.getPrincipal().toString());
 	}
 
 	/**
@@ -218,6 +264,10 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 		this.sessionTimeout = sessionTimeout;
 	}
 
-	
-
+	@Override
+	public void registerDelegate(String key, SessionServiceDelegate delegate) {
+		if (delegates==null)
+			this.delegates=new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		this.delegates.put(key,delegate);
+	}
 }

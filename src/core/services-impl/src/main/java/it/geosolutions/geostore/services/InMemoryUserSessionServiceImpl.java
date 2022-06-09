@@ -145,7 +145,7 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
 	public UserSession refreshSession(String sessionId, String refreshToken) {
 		if(sessions.containsKey(sessionId)) {
 			UserSession sess = sessions.get(sessionId);
-			if(sess.getRefreshToken().equals(refreshToken));
+			if(sess!=null && sess.getRefreshToken().equals(refreshToken));
 				sess.refresh();
 				return sess;
 		}
