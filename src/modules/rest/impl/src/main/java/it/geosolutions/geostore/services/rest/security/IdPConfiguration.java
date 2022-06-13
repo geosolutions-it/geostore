@@ -2,9 +2,10 @@ package it.geosolutions.geostore.services.rest.security;
 
 import org.springframework.beans.factory.BeanNameAware;
 
+/**
+ * Base configuration class for authentication mechanisms that rely on external Identity providers.
+ */
 public abstract class IdPConfiguration implements BeanNameAware {
-
-    public static final String CONFIG_NAME_SUFFIX = "OAuth2Config";
 
     protected String beanName;
 

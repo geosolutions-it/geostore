@@ -46,6 +46,8 @@ import java.util.Arrays;
  */
 public class OAuth2Configuration extends IdPConfiguration {
 
+    public static final String CONFIG_NAME_SUFFIX = "OAuth2Config";
+
     private final static Logger LOGGER = Logger.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
 
 

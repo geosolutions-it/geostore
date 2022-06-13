@@ -16,7 +16,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
 
-import static it.geosolutions.geostore.services.rest.security.IdPConfiguration.CONFIG_NAME_SUFFIX;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getAccessToken;
