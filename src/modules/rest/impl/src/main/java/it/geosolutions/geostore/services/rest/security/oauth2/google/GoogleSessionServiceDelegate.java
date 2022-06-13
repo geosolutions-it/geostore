@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.google;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
+import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration.CONF_BEAN_NAME;
@@ -50,6 +51,6 @@ public class GoogleSessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
     @Override
     protected OAuth2RestTemplate restTemplate() {
-        return (OAuth2RestTemplate) applicationContext.getBean("googleOpenIdRestTemplate");
+        return GeoStoreContext.bean("googleOpenIdRestTemplate",OAuth2RestTemplate.class);
     }
 }

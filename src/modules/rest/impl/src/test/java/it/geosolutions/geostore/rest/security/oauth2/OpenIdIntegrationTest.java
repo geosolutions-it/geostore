@@ -72,8 +72,6 @@ public class OpenIdIntegrationTest {
                 WireMock.post(urlPathEqualTo("/token"))
                         .withRequestBody(containing("grant_type=authorization_code"))
                         .withRequestBody(containing("client_id=" + CLIENT_ID))
-                        //                        .withQueryParam("client_secret",
-                        // equalTo(CLIENT_SECRET))
                         .withRequestBody(containing("code=" + CODE))
                         .willReturn(
                                 aResponse()

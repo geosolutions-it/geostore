@@ -36,6 +36,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpServletResponseWrapper;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Arrays;
@@ -80,7 +80,6 @@ import java.util.stream.Stream;
 import static com.google.common.collect.Lists.newArrayList;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.getUsername;
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
 
@@ -104,23 +103,23 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
 
     private AuthenticationEntryPoint authEntryPoint;
 
-    private OAuth2Cache cache;
+    private TokenAuthenticationCache cache;
 
 
     /**
      * @param tokenServices      a RemoteTokenServices instance.
      * @param oAuth2RestTemplate the rest template to use for OAuth2 requests.
      * @param configuration      the OAuth2 configuration.
-     * @param oAuth2Cache        the cache.
+     * @param tokenAuthenticationCache        the cache.
      */
-    public OAuth2GeoStoreAuthenticationFilter(RemoteTokenServices tokenServices, GeoStoreOAuthRestTemplate oAuth2RestTemplate, OAuth2Configuration configuration, OAuth2Cache oAuth2Cache) {
+    public OAuth2GeoStoreAuthenticationFilter(RemoteTokenServices tokenServices, GeoStoreOAuthRestTemplate oAuth2RestTemplate, OAuth2Configuration configuration, TokenAuthenticationCache tokenAuthenticationCache) {
         super("/**");
         super.setTokenServices(tokenServices);
         this.tokenServices = tokenServices;
         super.restTemplate = oAuth2RestTemplate;
         this.configuration = configuration;
         this.authEntryPoint = configuration.getAuthenticationEntryPoint();
-        this.cache = oAuth2Cache;
+        this.cache = tokenAuthenticationCache;
     }
 
     @Override
@@ -313,7 +312,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     }
 
     private void handleUserRedirection(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-        if (req.getRequestURI().contains(configuration.getBeanName().replaceAll(CONFIG_NAME_SUFFIX,"")+"/login")) {
+        if (req.getRequestURI().contains(configuration.getProvider()+"/login")) {
             authEntryPoint.commence(req, resp, null);
         } else {
             if (resp.getStatus() != 302) {
@@ -427,7 +426,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
                 LOGGER.debug("User with username " + username + " not found.");
             }
         }
-        if (user == null && configuration.getAutoCreateUser().booleanValue()) {
+        if (user == null) {
             try {
                 user = createUser(username, null, "");
             } catch (BadRequestServiceEx | NotFoundServiceEx e) {
@@ -456,12 +455,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         userAttribute.setName(OAuth2Configuration.CONFIGURATION_NAME);
         userAttribute.setValue(configuration.getBeanName());
         user.setAttribute(Arrays.asList(userAttribute));
-        Role role = Role.USER;
-        user.setRole(role);
         Set<UserGroup> groups = new HashSet<UserGroup>();
         user.setGroups(groups);
-        if (userService != null) {
-            userService.insert(user);
+        user.setRole(Role.USER);
+        if (userService != null && configuration.isAutoCreateUser()) {
+            long id=userService.insert(user);
+            user=new User(user);
+            user.setId(id);
         }
         return user;
     }
