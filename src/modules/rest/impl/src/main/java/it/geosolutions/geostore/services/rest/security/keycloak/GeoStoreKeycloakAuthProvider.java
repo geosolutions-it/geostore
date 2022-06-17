@@ -12,6 +12,7 @@ import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.adapters.OidcKeycloakAccount;
 import org.keycloak.adapters.RefreshableKeycloakSecurityContext;
 import org.keycloak.adapters.springsecurity.account.KeycloakRole;
+import org.keycloak.adapters.springsecurity.account.SimpleKeycloakAccount;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.representations.AccessToken;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,7 +73,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         if (context instanceof RefreshableKeycloakSecurityContext)
             refreshToken=((RefreshableKeycloakSecurityContext)context).getRefreshToken();
         KeycloakTokenDetails details=new KeycloakTokenDetails(accessTokenStr,refreshToken,expiration);
-        String username= SecurityUtils.getUsername(authentication);
+        String username= getUsername(authentication);
         User user= retrieveUser(username,"");
         if (grantedAuthoritiesMapper!=null) user.getGroups().addAll(grantedAuthoritiesMapper.getGroups());
         if (grantedAuthoritiesMapper!=null) user.setRole(grantedAuthoritiesMapper.getRole());
@@ -118,9 +119,9 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
             user.setName(userName);
             user.setNewPassword(credentials);
             user.setEnabled(true);
+            user.setRole(Role.USER);
             Set<UserGroup> groups = new HashSet<UserGroup>();
             user.setGroups(groups);
-            user.setRole(Role.USER);
             if (userService != null && configuration.isAutoCreateUser()) {
                 try {
                     long id=userService.insert(user);
@@ -132,5 +133,17 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
             }
         }
         return user;
+    }
+
+    private String getUsername(Authentication authentication){
+        String username=null;
+        if (authentication !=null && authentication.getDetails() instanceof SimpleKeycloakAccount) {
+            SimpleKeycloakAccount account = (SimpleKeycloakAccount) authentication.getDetails();
+            AccessToken token = account.getKeycloakSecurityContext().getToken();
+            if (token!=null) username=token.getEmail();
+            if (username==null) username=token.getPreferredUsername();
+        }
+        if(username==null) username=SecurityUtils.getUsername(authentication);
+        return username;
     }
 }
