@@ -25,31 +25,43 @@
  * <http://www.geo-solutions.it/>.
  *
  */
+
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import it.geosolutions.geostore.services.rest.IdPLoginRest;
+import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import org.springframework.security.access.annotation.Secured;
 
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Base interface providing entry points to login using an OAuth2 provider.
+ * This class provides authentication entry point to login using an OAuth2 provider.
  */
-public interface OAuth2LoginRest {
+public class IdPLoginRestImpl implements IdPLoginRest {
 
-    @GET
-    @Path("/{provider}/login")
-    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
-    void login(@PathParam("provider") String provider) throws NotFoundWebEx;
-
-    @GET
-    @Path("/{provider}/callback")
-    @Secured({"ROLE_USER", "ROLE_ADMIN"})
-    Response callback(@PathParam("provider") String provider) throws NotFoundWebEx;
+    private Map<String, IdPLoginService> services =new HashMap<>();
 
 
+    @Override
+    public void login(String provider) {
+        HttpServletRequest request=OAuth2Utils.getRequest();
+        HttpServletResponse resp = OAuth2Utils.getResponse();
+        IdPLoginService service=services.get(provider);
+        service.doLogin(request,resp,provider);
+    }
+
+    @Override
+    public Response callback(String provider) throws NotFoundWebEx {
+        IdPLoginService service= services.get(provider);
+        return service.doInternalRedirect(OAuth2Utils.getRequest(),OAuth2Utils.getResponse(),provider);
+    }
+
+    @Override
+    public void registerService(String providerName,IdPLoginService service){
+        this.services.put(providerName,service);
+    }
 }

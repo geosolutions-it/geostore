@@ -25,11 +25,14 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-package it.geosolutions.geostore.services.rest.security.oauth2;
+package it.geosolutions.geostore.services.rest.security;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalCause;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import org.apache.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -49,7 +52,7 @@ import java.util.concurrent.TimeUnit;
  * A cache for OAuth2 Authentication object. Authentication instances are identified by the
  * corresponding accessToken.
  */
-public class OAuth2Cache implements ApplicationContextAware {
+public class TokenAuthenticationCache implements ApplicationContextAware {
 
     private ApplicationContext context;
 
@@ -58,10 +61,10 @@ public class OAuth2Cache implements ApplicationContextAware {
     private int cacheSize = 1000;
     private int cacheExpirationMinutes = 8;
 
-    private final static Logger LOGGER = Logger.getLogger(OAuth2Cache.class);
+    private final static Logger LOGGER = Logger.getLogger(TokenAuthenticationCache.class);
 
 
-    public OAuth2Cache() {
+    public TokenAuthenticationCache() {
         CacheBuilder<String,Authentication> cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(cacheSize)
                 .expireAfterWrite(cacheExpirationMinutes, TimeUnit.HOURS)

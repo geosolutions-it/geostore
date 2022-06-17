@@ -8,7 +8,7 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
  */
 public interface SessionServiceDelegate {
 
-    public String PROVIDER_KEY="PROVIDER";
+    String PROVIDER_KEY="PROVIDER";
 
     /**
      * Refresh a token,

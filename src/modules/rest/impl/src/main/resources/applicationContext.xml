@@ -33,6 +33,9 @@
 	<import resource="classpath*:META-INF/cxf/cxf-*.xml" />
 	<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
 	<!-- import resource="classpath:META-INF/cxf/cxf-extension-jaxrs-binding.xml" /> -->
+
+
+	<bean id="geostoreContext" class="it.geosolutions.geostore.services.rest.utils.GeoStoreContext"/>
 		
 	<!-- Interceptors -->
 	<bean id="noCacheInterceptor" class="it.geosolutions.geostore.services.rest.utils.FixedCacheControlOutInterceptor" />
@@ -72,13 +75,32 @@
     	<property name="sessionTimeout" value="86400" />
     </bean>
 
-	<bean id="oauthLoginRest"
-		  class="it.geosolutions.geostore.services.rest.security.oauth2.OAuth2LoginRestImpl">
+	<bean id="sessionServiceDelegate"
+		  class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
+		<constructor-arg ref="restSessionService"/>
+	</bean>
+
+	<bean id="keycloakServiceDelegate" class="it.geosolutions.geostore.services.rest.security.keycloak.KeycloakSessionServiceDelegate">
+		<constructor-arg ref="restSessionService"/>
 	</bean>
 
 	<bean id="googleSessionServiceDelegate"
 		  class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate">
 		<constructor-arg ref="restSessionService"/>
+	</bean>
+
+	<bean id="idpLoginRest"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.IdPLoginRestImpl">
+	</bean>
+
+	<bean id="googleLoginService"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.GoogleLoginService">
+		<constructor-arg ref="idpLoginRest"/>
+	</bean>
+
+	<bean id="keycloakLoginService"
+		  class="it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService">
+		<constructor-arg ref="idpLoginRest"/>
 	</bean>
 
 
@@ -251,7 +273,7 @@
 
 	<jaxrs:server id="geoStoreRESTOAuthLoginService" address="/openid">
 		<jaxrs:serviceBeans>
-			<ref bean="oauthLoginRest"/>
+			<ref bean="idpLoginRest"/>
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>

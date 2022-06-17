@@ -28,6 +28,7 @@
 
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.http.HttpMethod;
@@ -43,16 +44,12 @@ import java.util.Arrays;
  * An OAuth2Configuration bean should be provided for each OAuth2 provider. The bean id has to be
  * {providerName}OAuth2Config.
  */
-public class OAuth2Configuration implements BeanNameAware {
+public class OAuth2Configuration extends IdPConfiguration {
 
-    // the suffix that should be shared by all the bean of this type in their id.
     public static final String CONFIG_NAME_SUFFIX = "OAuth2Config";
 
     private final static Logger LOGGER = Logger.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
 
-
-
-    private String beanName;
 
     protected String clientId;
 
@@ -70,17 +67,11 @@ public class OAuth2Configuration implements BeanNameAware {
 
     protected String scopes;
 
-    protected Boolean autoCreateUser = false;
-
     protected String idTokenUri;
 
     protected String discoveryUrl;
 
-    protected String internalRedirectUri;
-
     protected String revokeEndpoint;
-
-    protected boolean enabled;
 
     protected boolean enableRedirectEntryPoint=false;
 
@@ -304,23 +295,6 @@ public class OAuth2Configuration implements BeanNameAware {
 
     /**
      *
-     * @return true if the logged in user should be created on the db if not present.
-     * False otherwise.
-     */
-    public Boolean getAutoCreateUser() {
-        return autoCreateUser;
-    }
-
-    /**
-     * Set the autocreate user flag.
-     * @param autoCreateUser the autoCreateUser flag.
-     */
-    public void setAutoCreateUser(Boolean autoCreateUser) {
-        this.autoCreateUser = autoCreateUser;
-    }
-
-    /**
-     *
      * @return the id Token URI.
      */
     public String getIdTokenUri() {
@@ -352,22 +326,6 @@ public class OAuth2Configuration implements BeanNameAware {
     }
 
     /**
-     * @return The internal redirect uri: the endpoint to which the client is redirected after the
-     * callback endpoint is invoked.
-     */
-    public String getInternalRedirectUri() {
-        return internalRedirectUri;
-    }
-
-    /**
-     * Set the internalRedirectUri.
-     * @param internalRedirectUri the internal redirect URI.
-     */
-    public void setInternalRedirectUri(String internalRedirectUri) {
-        this.internalRedirectUri = internalRedirectUri;
-    }
-
-    /**
      * Check if the configuration is valid or not. Is considered invalid if either one of client id, secret,
      * authorization, accessToke Uri was not provided.
      * @return
@@ -392,25 +350,12 @@ public class OAuth2Configuration implements BeanNameAware {
         this.revokeEndpoint = revokeEndpoint;
     }
 
-    @Override
-    public void setBeanName(String name) {
-        this.beanName = name;
-    }
-
-    /**
-     * Return the bean name of this configuration object.
-     * @return the bean name.
-     */
-    public String getBeanName() {
-        return beanName;
-    }
-
     /**
      * Get the string identifier the provider associated with the configuration.
      * @return the provider name.
      */
     public String getProvider() {
-        return beanName.replaceAll(CONFIG_NAME_SUFFIX, "");
+        return getBeanName().replaceAll(CONFIG_NAME_SUFFIX, "");
     }
 
     /**
@@ -453,21 +398,6 @@ public class OAuth2Configuration implements BeanNameAware {
             result=new Endpoint(HttpMethod.GET,appendParameters(params,logoutUri));
         }
         return result;
-    }
-
-    /**
-     * @return true if the filter to which this configuration object refers is enabled. False otherwise.
-     */
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    /**
-     * Set the enabled flag.
-     * @param enabled true to enable the filter to which this configuration refers.
-     */
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
     /**

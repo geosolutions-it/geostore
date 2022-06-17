@@ -4,6 +4,7 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
+import it.geosolutions.geostore.core.model.User;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.nio.ByteBuffer;
@@ -167,7 +168,10 @@ public class SecurityUtils {
                 username = ((UserDetails) principal).getUsername();
             } else if (principal instanceof Principal) {
                 username = ((Principal) principal).getName();
-            } else {
+            } else if ( principal instanceof User){
+                username=((User)principal).getName();
+            }
+            else {
                 username = principal.toString();
             }
         }

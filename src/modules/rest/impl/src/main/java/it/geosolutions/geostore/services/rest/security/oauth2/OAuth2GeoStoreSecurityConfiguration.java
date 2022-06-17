@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
@@ -140,8 +141,8 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
     }
 
     @Bean
-    public OAuth2Cache oAuth2Cache(){
-        return new OAuth2Cache();
+    public TokenAuthenticationCache oAuth2Cache(){
+        return new TokenAuthenticationCache();
     }
 
     public abstract OAuth2Configuration configuration();

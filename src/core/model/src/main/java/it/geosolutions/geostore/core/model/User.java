@@ -99,6 +99,22 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
 
+
+    public User(){};
+
+    public User(User user) {
+        this.id = user.id;
+        this.name = user.name;
+        this.password = user.password;
+        this.role = user.role;
+        this.newPassword = user.newPassword;
+        this.trusted = user.trusted;
+        this.attribute = user.attribute;
+        this.security = user.security;
+        this.groups = user.groups;
+        this.enabled = user.enabled;
+    }
+
     /*
      * NOT to be saved on DB
      */

@@ -35,6 +35,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Enumeration;
 
 /**
@@ -64,6 +66,13 @@ public class OAuth2Utils {
             token = getBearerToken(request);
         }
         return token;
+    }
+
+    public static Date fiveMinutesFromNow() {
+        Calendar currentTimeNow = Calendar.getInstance();
+        System.out.println("Current time now : " + currentTimeNow.getTime());
+        currentTimeNow.add(Calendar.MINUTE, 5);
+        return currentTimeNow.getTime();
     }
 
     /**
