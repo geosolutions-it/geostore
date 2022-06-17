@@ -15,6 +15,9 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected String internalRedirectUri;
 
+    protected String redirectUri;
+
+
 
 
     /**
@@ -77,5 +80,22 @@ public abstract class IdPConfiguration implements BeanNameAware {
      */
     public void setInternalRedirectUri(String internalRedirectUri) {
         this.internalRedirectUri = internalRedirectUri;
+    }
+
+
+    /**
+     *
+     * @return the redirect URI.
+     */
+    public String getRedirectUri() {
+        return redirectUri;
+    }
+
+    /**
+     * Set the redirect URI.
+     * @param redirectUri the redirect URI.
+     */
+    public void setRedirectUri(String redirectUri) {
+        this.redirectUri = redirectUri;
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.Date;
 
@@ -44,9 +45,8 @@ public class KeyCloakLoginService extends Oauth2LoginService {
                 throw new RuntimeException(e);
             }
         } else {
-            Authentication auth=SecurityContextHolder.getContext().getAuthentication();
-            if (auth.getDetails() instanceof KeycloakTokenDetails){
-                KeycloakTokenDetails details=(KeycloakTokenDetails) auth.getDetails();
+            KeycloakTokenDetails details=getDetails();
+            if (details!=null){
                 String accessToken=details.getAccessToken();
                 String refreshToken=details.getRefreshToken();
                 Date expiresIn=details.getExpiration();
@@ -55,12 +55,16 @@ public class KeyCloakLoginService extends Oauth2LoginService {
                     access.setSecure(false);
                     access.setMaxAge(Long.valueOf(expiresIn.getTime()).intValue());
                     response.addCookie(access);
+                } else if (LOGGER.isDebugEnabled()){
+                    LOGGER.warn("No access token found in auth object...");
                 }
                 if (refreshToken!=null) {
                     Cookie refresh = new Cookie(REFRESH_TOKEN_PARAM, refreshToken);
                     refresh.setSecure(false);
                     refresh.setMaxAge(Long.valueOf(expiresIn.getTime()).intValue());
                     response.addCookie(refresh);
+                } else if (LOGGER.isDebugEnabled()){
+                    LOGGER.warn("No refresh token found in auth object...");
                 }
             }
             try {
@@ -72,4 +76,23 @@ public class KeyCloakLoginService extends Oauth2LoginService {
         }
     }
 
+    @Override
+    public Response doInternalRedirect(HttpServletRequest request, HttpServletResponse response, String provider) {
+        String token =null;
+        String refreshToken=null;
+        KeycloakTokenDetails details=getDetails();
+        if (details!=null){
+            token=details.getAccessToken();
+            refreshToken=details.getRefreshToken();
+        }
+        return buildCallbackResponse(token,refreshToken,provider);
+    }
+
+    private KeycloakTokenDetails getDetails(){
+        KeycloakTokenDetails result=null;
+        Authentication auth=SecurityContextHolder.getContext().getAuthentication();
+        if (auth!=null && auth.getDetails() instanceof KeycloakTokenDetails)
+            result=(KeycloakTokenDetails) auth.getDetails();
+        return result;
+    }
 }
