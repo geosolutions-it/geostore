@@ -48,7 +48,7 @@ public interface IdPLoginRest {
 
     @GET
     @Path("/{provider}/callback")
-    @Secured({"ROLE_USER", "ROLE_ADMIN"})
+    @Secured({"ROLE_USER", "ROLE_ADMIN","ROLE_ANONYMOUS"})
     Response callback(@PathParam("provider") String provider) throws NotFoundWebEx;
 
     void registerService(String providerName,IdPLoginService service);

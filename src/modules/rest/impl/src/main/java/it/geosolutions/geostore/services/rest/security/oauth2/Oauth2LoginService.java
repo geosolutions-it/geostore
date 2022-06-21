@@ -41,9 +41,14 @@ public abstract class Oauth2LoginService implements IdPLoginService {
 
     @Override
     public Response doInternalRedirect(HttpServletRequest request, HttpServletResponse response, String provider) {
-        Response.ResponseBuilder result = new ResponseBuilderImpl();
         String token = getAccessToken();
         String refreshToken = getRefreshAccessToken();
+       return buildCallbackResponse(token,refreshToken,provider);
+    }
+
+
+    protected Response buildCallbackResponse(String token, String refreshToken, String provider){
+        Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
         if (token != null) {
             try {

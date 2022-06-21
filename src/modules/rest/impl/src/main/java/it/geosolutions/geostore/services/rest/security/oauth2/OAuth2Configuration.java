@@ -59,8 +59,6 @@ public class OAuth2Configuration extends IdPConfiguration {
 
     protected String authorizationUri;
 
-    protected String redirectUri;
-
     protected String checkTokenEndpointUrl;
 
     protected String logoutUri;
@@ -228,22 +226,6 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public void setAuthorizationUri(String authorizationUri) {
         this.authorizationUri = authorizationUri;
-    }
-
-    /**
-     *
-     * @return the redirect URI.
-     */
-    public String getRedirectUri() {
-        return redirectUri;
-    }
-
-    /**
-     * Set the redirect URI.
-     * @param redirectUri the redirect URI.
-     */
-    public void setRedirectUri(String redirectUri) {
-        this.redirectUri = redirectUri;
     }
 
     /**

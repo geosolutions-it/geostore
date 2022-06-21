@@ -1,5 +1,6 @@
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
+import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.OAuthRequestAuthenticator;
 import org.keycloak.adapters.OIDCAuthenticationError;
@@ -7,6 +8,7 @@ import org.keycloak.adapters.RequestAuthenticator;
 import org.keycloak.adapters.spi.AdapterSessionStore;
 import org.keycloak.adapters.spi.AuthChallenge;
 import org.keycloak.adapters.spi.HttpFacade;
+import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
 
 /**
  * Custom OAuthAuthenticator.
@@ -43,5 +45,13 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
                 return true;
             }
         };
+    }
+
+    @Override
+    protected String getRequestUrl() {
+        KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
+        String redirectUri=configuration.getRedirectUri();
+        if (redirectUri!=null) return redirectUri;
+        return super.getRequestUrl();
     }
 }
