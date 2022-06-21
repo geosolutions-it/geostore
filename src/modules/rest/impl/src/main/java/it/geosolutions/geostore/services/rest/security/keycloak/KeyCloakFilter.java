@@ -147,8 +147,9 @@ public class KeyCloakFilter extends GenericFilterBean {
             if (authentication!=null && authentication.getDetails() instanceof KeycloakTokenDetails){
                 KeycloakTokenDetails details=(KeycloakTokenDetails) authentication.getDetails();
                 if (details.getExpiration().before(new Date())){
-                    tryRefresh(details.getRefreshToken(),details.getAccessToken());
-                    authentication=cache.get(token);
+                    LOGGER.warn("Token has expired and the refresh token endpoint has not been called. The request will not be authorized by the keycloak filter");
+                    cache.removeEntry(details.getAccessToken());
+                    authentication=null;
                 }
             }
 
@@ -159,22 +160,6 @@ public class KeyCloakFilter extends GenericFilterBean {
             authentication=authenticateAndUpdateCache(request,response);
         }
         return authentication;
-    }
-
-    /**
-     * Perform the refresh token operation if the refresh token is not null.
-     * @param refreshToken the refresh token.
-     * @param oldAccessToken the expired access_token.
-     */
-    private void tryRefresh(String refreshToken, String oldAccessToken){
-        if (refreshToken!=null) {
-            AdapterConfig adapterConfig = configuration.readAdapterConfig();
-            AccessTokenResponse response = helper.refreshToken(adapterConfig, refreshToken);
-            String newAccessToken = response.getToken();
-            long exp = response.getExpiresIn();
-            String newRefreshToken = response.getRefreshToken();
-            helper.updateAuthentication(cache, oldAccessToken, newAccessToken, newRefreshToken, exp);
-        }
     }
 
 }
