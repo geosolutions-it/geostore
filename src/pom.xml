@@ -1014,11 +1014,18 @@
             <url>https://maven.geo-solutions.it</url>
         </repository>
 
+        <repository>
+            <id>maven2-repository.maven</id>
+            <name> Repository for Maven2</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+        </repository>
+
         <!-- Apache -->
         <repository>
             <id>maven2-repository.dev.java.net</id>
             <name>Java.net Repository for Maven</name>
-            <url>https://download.java.net/maven/2/</url>
+            <url>http://download.java.net/maven/2/</url>
             <layout>default</layout>
             <snapshots>
                 <enabled>false</enabled>
