@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -27,6 +28,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getParameterValue;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRequest;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getResponse;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.tokenFromParamsOrBearer;
 
 /**

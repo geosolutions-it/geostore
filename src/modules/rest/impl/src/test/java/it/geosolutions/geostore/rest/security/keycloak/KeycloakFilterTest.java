@@ -1,9 +1,6 @@
 package it.geosolutions.geostore.rest.security.keycloak;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.keycloak.GeoStoreKeycloakAuthProvider;
@@ -14,9 +11,7 @@ import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakHelper;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakRequestWrapper;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeycloakTokenDetails;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.keycloak.adapters.AdapterDeploymentContext;
 import org.keycloak.adapters.AdapterTokenStore;
@@ -34,7 +29,6 @@ import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -51,9 +45,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;

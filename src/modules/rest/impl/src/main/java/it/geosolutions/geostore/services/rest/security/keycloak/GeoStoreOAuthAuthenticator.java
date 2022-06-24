@@ -51,7 +51,7 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
     protected String getRequestUrl() {
         KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
         String redirectUri=configuration.getRedirectUri();
-        if (redirectUri!=null) return redirectUri;
+        if (redirectUri!=null && !"".equals(redirectUri)) return redirectUri;
         return super.getRequestUrl();
     }
 }
