@@ -87,8 +87,8 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         User user= retrieveUser(username,"");
         if (grantedAuthoritiesMapper!=null) user.getGroups().addAll(grantedAuthoritiesMapper.getGroups());
         if (grantedAuthoritiesMapper!=null) user.setRole(grantedAuthoritiesMapper.getRole());
-        if (user.getRole()==null)
-            user.setRole(Role.USER);
+        if (user.getRole()==null) user.setRole(configuration.getAuthenticatedDefaultRole());
+        if (user.getRole()==null) user.setRole(Role.USER);
         PreAuthenticatedAuthenticationToken result= new PreAuthenticatedAuthenticationToken(user,"",mapped);
         result.setDetails(details);
         return result;
@@ -129,7 +129,8 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
             user.setName(userName);
             user.setNewPassword(credentials);
             user.setEnabled(true);
-            user.setRole(Role.USER);
+            user.setRole(configuration.getAuthenticatedDefaultRole());
+            if (user.getRole()==null) user.setRole(Role.USER);
             Set<UserGroup> groups = new HashSet<UserGroup>();
             user.setGroups(groups);
             if (userService != null && configuration.isAutoCreateUser()) {
@@ -150,8 +151,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         if (authentication !=null && authentication.getDetails() instanceof SimpleKeycloakAccount) {
             SimpleKeycloakAccount account = (SimpleKeycloakAccount) authentication.getDetails();
             AccessToken token = account.getKeycloakSecurityContext().getToken();
-            if (token!=null) username=token.getEmail();
-            if (username==null) username=token.getPreferredUsername();
+            if (token !=null) username=token.getPreferredUsername();
         }
         if(username==null) username=SecurityUtils.getUsername(authentication);
         return username;

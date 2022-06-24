@@ -24,6 +24,11 @@ public class KeyCloakSecurityConfiguration {
     }
 
     @Bean
+    public KeycloakAdminClientConfiguration keycloakRESTClient(){
+        return new KeycloakAdminClientConfiguration();
+    }
+
+    @Bean
     public KeyCloakFilter keycloakFilter(){
         return new KeyCloakFilter(keyCloakHelper(),keycloakCache(), keycloakConfiguration(),keycloakAuthenticationProvider());
     }

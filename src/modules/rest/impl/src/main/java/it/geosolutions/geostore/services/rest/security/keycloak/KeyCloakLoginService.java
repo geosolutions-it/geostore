@@ -8,16 +8,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.context.request.RequestContextHolder;
 
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.Date;
 
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getAccessToken;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRefreshAccessToken;
 
@@ -39,7 +35,8 @@ public class KeyCloakLoginService extends Oauth2LoginService {
 
     @Override
     public void doLogin(HttpServletRequest request, HttpServletResponse response, String provider) {
-        AuthenticationEntryPoint challenge = (AuthenticationEntryPoint) RequestContextHolder.getRequestAttributes().getAttribute(KEYCLOAK_REDIRECT, 0);
+        AuthenticationEntryPoint challenge = (AuthenticationEntryPoint) RequestContextHolder.getRequestAttributes()
+                .getAttribute(KEYCLOAK_REDIRECT, 0);
         if (challenge != null) {
             try {
                 challenge.commence(request, response, null);
@@ -58,8 +55,8 @@ public class KeyCloakLoginService extends Oauth2LoginService {
 
     @Override
     public Response doInternalRedirect(HttpServletRequest request, HttpServletResponse response, String provider) {
-        String token = null;
-        String refreshToken = null;
+        String token;
+        String refreshToken;
         KeycloakTokenDetails details = getDetails();
         if (details != null) {
             token = details.getAccessToken();

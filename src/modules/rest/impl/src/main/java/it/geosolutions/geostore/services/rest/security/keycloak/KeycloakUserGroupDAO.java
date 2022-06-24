@@ -1,0 +1,238 @@
+package it.geosolutions.geostore.services.rest.security.keycloak;
+
+import com.googlecode.genericdao.search.ISearch;
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
+import it.geosolutions.geostore.core.model.UserGroup;
+import org.apache.log4j.Logger;
+import org.keycloak.admin.client.Keycloak;
+import org.keycloak.admin.client.resource.RolesResource;
+import org.keycloak.representations.idm.RoleRepresentation;
+
+import javax.ws.rs.NotFoundException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
+
+/**
+ * Keycloak implementation for a {@link UserGroupDAO}.
+ * Supports basic search operations. Currently it doesn't support querying and updating by id.
+ */
+public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDAO {
+
+
+    private final static Logger LOGGER = Logger.getLogger(KeycloakUserGroupDAO.class);
+
+    private boolean addEveryOneGroup = false;
+
+
+    public KeycloakUserGroupDAO(KeycloakAdminClientConfiguration clientConfiguration){
+        super(clientConfiguration);
+    }
+
+    @Override
+    public List<UserGroup> findAll() {
+        Keycloak keycloak=keycloak();
+        try {
+            List<RoleRepresentation> roleRepresentations = getRolesResource(keycloak).list();
+            return addEveryOne(toUserGroups(roleRepresentations));
+        }  catch (NotFoundException e){
+            LOGGER.warn("No users were found", e);
+            return null;
+        } finally {
+            close(keycloak);
+        }
+    }
+
+    @Override
+    public UserGroup find(Long id) {
+        return null;
+    }
+
+    @Override
+    public void persist(UserGroup... userGroups) {
+        Keycloak keycloak=keycloak();
+        try {
+            for (UserGroup group : userGroups) {
+                RoleRepresentation roleRepresentation=toRoleRepresentation(group);
+                getRolesResource(keycloak).create(roleRepresentation);
+                group.setId(-1L);
+            }
+        } finally {
+            close(keycloak);
+        }
+
+    }
+
+    @Override
+    public UserGroup[] save(UserGroup... userGroups) {
+        Keycloak keycloak=keycloak();
+        try {
+            for (UserGroup group : userGroups) {
+                RoleRepresentation roleRepresentation=toRoleRepresentation(group);
+                getRolesResource(keycloak).create(roleRepresentation);
+                group.setId(-1L);
+            }
+            return userGroups;
+        } finally {
+            close(keycloak);
+        }
+    }
+
+    @Override
+    public UserGroup merge(UserGroup userGroup) {
+        Keycloak keycloak=keycloak();
+        try {
+            RoleRepresentation roleRepresentation = new RoleRepresentation();
+            roleRepresentation.setName(userGroup.getGroupName());
+            roleRepresentation.setDescription(userGroup.getDescription());
+            getRolesResource(keycloak).get(userGroup.getGroupName()).update(roleRepresentation);
+            userGroup.setId(-1L);
+            return userGroup;
+        } finally {
+            close(keycloak);
+        }
+    }
+
+    @Override
+    public boolean remove(UserGroup userGroup) {
+        Keycloak keycloak=keycloak();
+        try {
+            getRolesResource(keycloak).get(userGroup.getGroupName()).remove();
+            return true;
+        }  catch (NotFoundException e){
+            LOGGER.warn("No user found with name " + userGroup.getGroupName(), e);
+            return false;
+        } finally {
+            close(keycloak);
+        }
+    }
+
+    @Override
+    public boolean removeById(Long id) {
+        return false;
+    }
+
+    @Override
+    public List<UserGroup> search(ISearch search) {
+        Keycloak keycloak=keycloak();
+        try {
+            KeycloakQuery query = toKeycloakQuery(search);
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Executing the following Keycloak query "+query.toString());
+            RolesResource rr = getRolesResource(keycloak);
+            List<RoleRepresentation> roles;
+            String groupName = query.getGroupName();
+            if (groupName != null && !query.isExact())
+                roles = rr.list(groupName, query.getStartIndex(), query.getMaxResults());
+            else if (groupName != null && query.isExact()) {
+                if (LOGGER.isDebugEnabled()) LOGGER.debug("Executing exact query");
+                RoleRepresentation representation;
+                if (EVERYONE.groupName().equals(groupName))
+                    representation=everyoneRoleRep();
+                else representation=rr.get(groupName).toRepresentation();
+                roles = Arrays.asList(representation);
+            } else
+                roles = rr.list(query.getStartIndex(), query.getMaxResults());
+            return addEveryOne(toUserGroups(roles));
+        } catch (NotFoundException e){
+            LOGGER.warn("No groups were found", e);
+            return null;
+        } finally {
+            close(keycloak);
+        }
+    }
+
+    @Override
+    public int count(ISearch search) {
+        Keycloak keycloak=keycloak();
+        try {
+            KeycloakQuery query = toKeycloakQuery(search);
+            int count;
+            RolesResource rr=getRolesResource(keycloak);
+            if (query.getUserName()!=null && query.isExact())
+                count=1;
+            else if (query.getUserName()!=null)
+                count=rr.list(query.getUserName(),true).size();
+            else
+                count=rr.list().size();
+            if (isAddEveryOneGroup()) count ++;
+            return count;
+        }  catch (NotFoundException e){
+            LOGGER.warn("No groups were found", e);
+            return 0;
+        } finally {
+            close(keycloak);
+        }
+    }
+
+    private List<UserGroup> toUserGroups(List<RoleRepresentation> roleRepresentations){
+        List<UserGroup> groups=new ArrayList<>(roleRepresentations.size());
+        Map<String,String> roleMapper=getRoleMappings();
+        for (RoleRepresentation role:roleRepresentations){
+            GeoStoreKeycloakAuthoritiesMapper mapper=new GeoStoreKeycloakAuthoritiesMapper(roleMapper);
+            mapper.mapAuthorities(Arrays.asList(role.getName()));
+            if (mapper.getGroups()!=null && !mapper.getGroups().isEmpty()) {
+                UserGroup group = new UserGroup();
+                group.setGroupName(role.getName());
+                group.setDescription(role.getDescription());
+                group.setEnabled(true);
+                group.setId(-1L);
+                groups.add(group);
+            }
+        }
+        return groups;
+    }
+
+    private RoleRepresentation toRoleRepresentation(UserGroup group){
+        RoleRepresentation roleRepresentation = new RoleRepresentation();
+        roleRepresentation.setName(group.getGroupName());
+        roleRepresentation.setDescription(group.getDescription());
+        return roleRepresentation;
+    }
+
+    /**
+     * @return True if  everyone group should be added, false otherwise.
+     */
+    public boolean isAddEveryOneGroup() {
+        return addEveryOneGroup;
+    }
+
+    /**
+     * Sets the addEveryoneGroup flag.
+     * @param addEveryOneGroup
+     */
+    public void setAddEveryOneGroup(boolean addEveryOneGroup) {
+        this.addEveryOneGroup = addEveryOneGroup;
+    }
+
+    /**
+     * Add the everyOne group to the LDAP returned list.
+     *
+     * @param groups
+     * @return
+     */
+    private List<UserGroup> addEveryOne(List<UserGroup> groups) {
+        boolean found=groups.stream().anyMatch(g->g.getGroupName().equals(EVERYONE.groupName()));
+        if (!found && isAddEveryOneGroup()){
+            UserGroup everyoneGroup = everyoneGroup();
+            groups.add(everyoneGroup);
+        }
+        return groups;
+    }
+
+    private UserGroup everyoneGroup(){
+        UserGroup everyoneGroup = new UserGroup();
+        everyoneGroup.setGroupName(EVERYONE.groupName());
+        everyoneGroup.setId(-1L);
+        everyoneGroup.setEnabled(true);
+        return everyoneGroup;
+    }
+
+    private RoleRepresentation everyoneRoleRep(){
+        RoleRepresentation roleRepresentation=new RoleRepresentation();
+        roleRepresentation.setName(EVERYONE.groupName());
+        return roleRepresentation;
+    }
+}

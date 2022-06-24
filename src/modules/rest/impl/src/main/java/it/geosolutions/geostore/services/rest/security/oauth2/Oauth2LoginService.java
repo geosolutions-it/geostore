@@ -46,8 +46,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
        return buildCallbackResponse(token,refreshToken,provider);
     }
 
-
-    protected Response buildCallbackResponse(String token, String refreshToken, String provider){
+    protected Response.ResponseBuilder getCallbackResponseBuilder(String token, String refreshToken, String provider){
         Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
         if (token != null) {
@@ -74,6 +73,12 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             result = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("No access token found.");
         }
+        return result;
+    }
+
+
+    protected Response buildCallbackResponse(String token, String refreshToken, String provider){
+        Response.ResponseBuilder result =getCallbackResponseBuilder(token,refreshToken,provider);
         return result.build();
     }
 
@@ -85,6 +90,10 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     }
 
     private NewCookie cookie(String name, String value) {
+        return cookie(name, value, DateUtils.addMinutes(new Date(), 2));
+    }
+
+    protected NewCookie cookie(String name, String value, Date expires) {
         Cookie cookie = new Cookie(name, value, "/", null);
         return new AccessCookie(cookie, "", 120, DateUtils.addMinutes(new Date(), 2), false, false, "lax");
     }

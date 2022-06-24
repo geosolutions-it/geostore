@@ -169,6 +169,23 @@
 			</bean>
 		</constructor-arg>
 	</bean>
+
+
+	<!-- Uncomment the following to use Keycloak as a User and Group persistence layer.
+
+	<bean id="keycloakUserDAO" class="it.geosolutions.geostore.services.rest.security.keycloak.KeycloakUserDAO">
+		<constructor-arg ref="keycloakRESTClient"/>
+	</bean>
+	<alias name="keycloakUserDAO" alias="userDAO"/>
+
+	<bean id="keycloakUserGroupDAO" class="it.geosolutions.geostore.services.rest.security.keycloak.KeycloakUserGroupDAO">
+		<constructor-arg ref="keycloakRESTClient"/>
+	</bean>
+	<alias name="keycloakUserGroupDAO" alias="userGroupDAO"/>
+
+	-->
+
+
 	<!-- Enable LDAP readonly User and UserGroup fetching -->
 	<!--
     <bean id="ldapUserDAO" class="it.geosolutions.geostore.core.dao.ldap.impl.UserDAOImpl">

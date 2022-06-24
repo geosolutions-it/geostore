@@ -64,7 +64,7 @@ public class KeyCloakFilter extends GenericFilterBean {
     public KeyCloakFilter (KeyCloakHelper helper, TokenAuthenticationCache cache, KeyCloakConfiguration configuration, GeoStoreKeycloakAuthProvider authenticationProvider){
         this.helper=helper;
         this.authenticationProvider = authenticationProvider;
-        GeoStoreKeycloakAuthoritiesMapper mapper = new GeoStoreKeycloakAuthoritiesMapper();
+        GeoStoreKeycloakAuthoritiesMapper mapper = new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings());
         authenticationProvider.setGrantedAuthoritiesMapper(mapper);
         this.cache=cache;
         this.configuration=configuration;
