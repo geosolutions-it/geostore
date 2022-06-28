@@ -48,8 +48,7 @@ public class KeyCloakLoginService extends Oauth2LoginService {
                 throw new RuntimeException(e);
             }
         } else {
-            response.setStatus(302);
-            response.setHeader("Location",configuration(provider).getInternalRedirectUri());
+            response.sendRedirect(configuration(provider).getInternalRedirectUri());
         }
     }
 
