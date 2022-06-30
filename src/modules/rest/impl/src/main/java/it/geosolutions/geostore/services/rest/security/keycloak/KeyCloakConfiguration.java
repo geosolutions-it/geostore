@@ -17,6 +17,8 @@ public class KeyCloakConfiguration extends IdPConfiguration {
 
     private AdapterConfig config;
 
+    private Boolean forceConfiguredRedirectURI;
+
     /**
      * @return the JSON config, obtained at client configuration time from Keycloak.
      */
@@ -48,5 +50,14 @@ public class KeyCloakConfiguration extends IdPConfiguration {
             config.setTokenStore(TokenStore.COOKIE.name());
         }
         return config;
+    }
+
+    public Boolean getForceConfiguredRedirectURI() {
+        if (forceConfiguredRedirectURI==null) return false;
+        return forceConfiguredRedirectURI;
+    }
+
+    public void setForceConfiguredRedirectURI(Boolean forceConfiguredRedirectURI) {
+        this.forceConfiguredRedirectURI = forceConfiguredRedirectURI;
     }
 }
