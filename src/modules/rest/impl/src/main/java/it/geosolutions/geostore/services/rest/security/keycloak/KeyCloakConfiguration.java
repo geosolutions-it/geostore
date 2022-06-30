@@ -3,9 +3,8 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
-import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
+import org.keycloak.enums.TokenStore;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 
 /**
@@ -17,6 +16,8 @@ public class KeyCloakConfiguration extends IdPConfiguration {
     private String jsonConfig;
 
     private AdapterConfig config;
+
+    private Boolean forceConfiguredRedirectURI;
 
     /**
      * @return the JSON config, obtained at client configuration time from Keycloak.
@@ -46,7 +47,17 @@ public class KeyCloakConfiguration extends IdPConfiguration {
         if (config==null && StringUtils.isNotBlank(jsonConfig)) {
             config = KeycloakDeploymentBuilder.loadAdapterConfig(
                     IOUtils.toInputStream(jsonConfig));
+            config.setTokenStore(TokenStore.COOKIE.name());
         }
         return config;
+    }
+
+    public Boolean getForceConfiguredRedirectURI() {
+        if (forceConfiguredRedirectURI==null) return false;
+        return forceConfiguredRedirectURI;
+    }
+
+    public void setForceConfiguredRedirectURI(Boolean forceConfiguredRedirectURI) {
+        this.forceConfiguredRedirectURI = forceConfiguredRedirectURI;
     }
 }

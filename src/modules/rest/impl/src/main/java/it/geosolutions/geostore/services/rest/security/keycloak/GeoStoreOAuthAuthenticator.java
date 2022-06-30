@@ -10,6 +10,9 @@ import org.keycloak.adapters.spi.AuthChallenge;
 import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
 
+import java.net.URI;
+import java.net.URL;
+
 /**
  * Custom OAuthAuthenticator.
  */
@@ -48,10 +51,20 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
     }
 
     @Override
+    protected String stripOauthParametersFromRedirect() {
+        String redirectUrl= super.stripOauthParametersFromRedirect();
+        KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
+        Boolean forceRedirectURI=configuration.getForceConfiguredRedirectURI();
+        if (forceRedirectURI)
+            return configuration.getRedirectUri();
+        return redirectUrl;
+    }
+
+    @Override
     protected String getRequestUrl() {
         KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
         String redirectUri=configuration.getRedirectUri();
-        if (redirectUri!=null) return redirectUri;
+        if (redirectUri!=null && !"".equals(redirectUri)) return redirectUri;
         return super.getRequestUrl();
     }
 }

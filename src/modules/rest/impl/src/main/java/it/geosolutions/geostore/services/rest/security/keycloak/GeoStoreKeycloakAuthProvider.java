@@ -22,11 +22,16 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRequest;
 
 /**
  * GeoStore custom Authentication  provider. It is used to map a Keycloak Authentication to a GeoStore Authentication where
@@ -68,10 +73,15 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         String accessTokenStr=context.getTokenString();
         String refreshToken=null;
         Long  expiration=null;
-        if (accessToken!=null)
-            expiration=accessToken.getExp();
-        if (context instanceof RefreshableKeycloakSecurityContext)
-            refreshToken=((RefreshableKeycloakSecurityContext)context).getRefreshToken();
+        HttpServletRequest request=getRequest();
+        if (accessToken!=null) {
+            expiration = accessToken.getExp();
+            if (request!=null) request.setAttribute(ACCESS_TOKEN_PARAM,accessToken);
+        }
+        if (context instanceof RefreshableKeycloakSecurityContext) {
+            refreshToken = ((RefreshableKeycloakSecurityContext) context).getRefreshToken();
+            if (request!=null) request.setAttribute(REFRESH_TOKEN_PARAM,refreshToken);
+        }
         KeycloakTokenDetails details=new KeycloakTokenDetails(accessTokenStr,refreshToken,expiration);
         String username= getUsername(authentication);
         User user= retrieveUser(username,"");
