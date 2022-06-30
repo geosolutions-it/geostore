@@ -4,6 +4,7 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.keycloak.adapters.AdapterDeploymentContext;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
+import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -39,9 +40,16 @@ public class KeyCloakSecurityConfiguration {
 
     @Bean
     public AdapterDeploymentContext keycloackContext(){
-        KeycloakDeployment deployment =
-                KeycloakDeploymentBuilder.build(keycloakConfiguration().readAdapterConfig());
-        return new AdapterDeploymentContext(deployment);
+        AdapterConfig config=keycloakConfiguration().readAdapterConfig();
+        AdapterDeploymentContext context;
+        if (config!=null) {
+            KeycloakDeployment deployment =
+                    KeycloakDeploymentBuilder.build(config);
+            context=new AdapterDeploymentContext(deployment);
+        } else {
+            context=new AdapterDeploymentContext();
+        }
+        return context;
     }
 
     @Bean
