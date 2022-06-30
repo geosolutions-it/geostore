@@ -29,6 +29,8 @@ import java.util.Date;
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
 import static it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService.KEYCLOAK_REDIRECT;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getAccessToken;
 
 /**
  * Keycloak Authentication Filter. Manage the logic to authenticate a user against a keycloak server.
@@ -76,6 +78,11 @@ public class KeyCloakFilter extends GenericFilterBean {
             if (authentication != null){
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY,"keycloak",0);
+                if (authentication.getDetails() instanceof KeycloakTokenDetails){
+                    KeycloakTokenDetails details=(KeycloakTokenDetails) authentication.getDetails();
+                    if (details.getAccessToken()!=null) RequestContextHolder.getRequestAttributes().setAttribute(ACCESS_TOKEN_PARAM,details.getAccessToken(),0);
+                    if (details.getRefreshToken()!=null) RequestContextHolder.getRequestAttributes().setAttribute(REFRESH_TOKEN_PARAM,details.getRefreshToken(),0);
+                }
             }
         }
         chain.doFilter(request,response);
