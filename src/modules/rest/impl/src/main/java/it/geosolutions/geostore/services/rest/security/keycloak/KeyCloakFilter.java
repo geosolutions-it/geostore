@@ -77,13 +77,13 @@ public class KeyCloakFilter extends GenericFilterBean {
             Authentication authentication = authenticate((HttpServletRequest) request, (HttpServletResponse) response);
             if (authentication != null){
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY,"keycloak",0);
                 if (authentication.getDetails() instanceof KeycloakTokenDetails){
                     KeycloakTokenDetails details=(KeycloakTokenDetails) authentication.getDetails();
                     if (details.getAccessToken()!=null) RequestContextHolder.getRequestAttributes().setAttribute(ACCESS_TOKEN_PARAM,details.getAccessToken(),0);
                     if (details.getRefreshToken()!=null) RequestContextHolder.getRequestAttributes().setAttribute(REFRESH_TOKEN_PARAM,details.getRefreshToken(),0);
                 }
             }
+            RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY,"keycloak",0);
         }
         chain.doFilter(request,response);
     }
