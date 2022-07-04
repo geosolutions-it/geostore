@@ -140,7 +140,7 @@ public interface RESTSessionService {
     @Path("/refreshToken")
     @Produces({MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_JSON})
-    @Secured({ "ROLE_ADMIN", "ROLE_USER" })
+    @Secured({ "ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     public SessionToken refresh(SessionToken token)  throws ParseException;
     /**
      * Removes the given session.
