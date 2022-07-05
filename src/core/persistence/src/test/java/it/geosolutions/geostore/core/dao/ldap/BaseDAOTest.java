@@ -210,6 +210,14 @@ public abstract class BaseDAOTest {
                                 }
                                 return "";
                             }
+
+                            @Override
+                            public String [] getStringAttributes(String name){
+                                if ("member".equals(name)){
+                                    return new String [] {"username"};
+                                }
+                                return super.getStringAttributes(name);
+                            }
                             
                         }, new BasicAttributes());
                         return new IterableNamingEnumeration(Collections.singletonList(sr));
@@ -227,6 +235,14 @@ public abstract class BaseDAOTest {
                                     return "group";
                                 }
                                 return "";
+                            }
+
+                            @Override
+                            public String [] getStringAttributes(String name){
+                                if ("member".equals(name)){
+                                    return new String [] {"username"};
+                                }
+                                return super.getStringAttributes(name);
                             }
                             
                         }, new BasicAttributes());

@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.naming.directory.SearchControls;
+
+import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
 import org.springframework.expression.Expression;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
@@ -107,7 +110,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
     @Override
     public List<UserGroup> findAll() {
         return addEveryOne(
-            ldapSearch(baseFilter, new NullDirContextProcessor()),
+            ldapSearch(baseFilter, new NullDirContextProcessor(),null),
             null
         );
     }
@@ -141,7 +144,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
             filter = getLdapFilter(search, getPropertyMapper());
         }
         return addEveryOne(
-            ldapSearch(combineFilters(baseFilter, filter), getProcessorForSearch(search)),
+            ldapSearch(combineFilters(baseFilter, filter), getProcessorForSearch(search),search),
             search
         );
     }
@@ -157,7 +160,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
         return mapper;
     }
 
-    protected List<UserGroup> ldapSearch(String filter, DirContextProcessor processor) {
+    protected List<UserGroup> ldapSearch(String filter, DirContextProcessor processor, ISearch search) {
         SearchControls controls = new SearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         return template.search(searchBase, filter, controls, new AbstractContextMapper() {
@@ -170,9 +173,12 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
                 group.setGroupName(ctx.getStringAttribute(nameAttribute));
                 group.setDescription(ctx.getStringAttribute(descriptionAttribute));
                 // if we bind users to groups through member attribute on groups, we fill the users list here
-                if (!"".equals(memberAttribute) && userDAO != null && ctx.getStringAttributes(memberAttribute) != null) {
-                    for(String member : ctx.getStringAttributes(memberAttribute)) {
-                        group.getUsers().add(userDAO.createMemberUser(member));
+                if (!"".equals(memberAttribute) && userDAO != null && loadUsers(search)) {
+                    String [] memberAttrs=ctx.getStringAttributes(memberAttribute);
+                    if (memberAttrs!=null && memberAttrs.length > 0) {
+                        for (String member : memberAttrs) {
+                            group.getUsers().add(userDAO.createMemberUser(member));
+                        }
                     }
                 }
                 return group;
@@ -185,7 +191,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      * Add the everyOne group to the LDAP returned list.
      * 
      * @param groups
-     * @param filters
+     * @param search
      * @return
      */
     private List<UserGroup> addEveryOne(List<UserGroup> groups, ISearch search) {
@@ -211,7 +217,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
      * Returns true if the group matches the given filters.
      * 
      * @param group
-     * @param filters
+     * @param search
      * @return
      */
     protected boolean matchFilters(UserGroup group, ISearch search) {
@@ -258,6 +264,15 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
     public int count(ISearch search) {
         // TODO: optimize
         return search(search).size();
+    }
+
+    protected boolean loadUsers(ISearch search){
+        if (search instanceof GeoStoreISearchWrapper){
+            GeoStoreISearchWrapper wrapper=(GeoStoreISearchWrapper) search;
+            Class<?> clazz=wrapper.getCallerContext();
+            if (clazz !=null && UserDAO.class.isAssignableFrom(clazz)) return false;
+        }
+        return true;
     }
 
 }
