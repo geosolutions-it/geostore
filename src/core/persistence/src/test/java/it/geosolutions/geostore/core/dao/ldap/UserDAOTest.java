@@ -20,6 +20,8 @@
 package it.geosolutions.geostore.core.dao.ldap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,6 +33,8 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
+
+import it.geosolutions.geostore.core.model.UserGroup;
 import org.junit.Test;
 import org.springframework.ldap.core.DirContextAdapter;
 import com.googlecode.genericdao.search.Filter;
@@ -147,5 +151,33 @@ public class UserDAOTest extends BaseDAOTest {
         assertEquals(1, users.size());
         User user = users.get(0);
         assertEquals("username", user.getName());
+    }
+
+    @Test
+    public void testGroupsAreFetchedWithoutNestedUsers() {
+        UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
+        userDAO.setSearchBase("ou=users");
+        UserGroupDAOImpl userGroupDAO = new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+        userGroupDAO.setSearchBase("ou=groups");
+        userDAO.setUserGroupDAO(userGroupDAO);
+
+        Search search = new Search(User.class);
+        List<User> users = userDAO.search(search.addFilter(Filter.equal("name", "username")));
+
+        User user = users.get(0);
+        assertEquals(2, user.getGroups().size());
+        assertTrue(user.getGroups().stream().anyMatch(g->g.getGroupName().equals("group")));
+        // nested users not available when requesting them through UserDAO
+        for (UserGroup group:user.getGroups()){
+            assertTrue(group.getUsers().isEmpty());
+        }
+
+        // but yes the group with groupName group actually jas user assigned to it.
+        Search search1=new Search();
+        Filter filter=Filter.equal("groupName","group");
+        search1.addFilter(filter);
+        List<UserGroup> groups=userGroupDAO.search(search1);
+        assertTrue(groups.get(0).getUsers().size()>0);
+
     }
 }
