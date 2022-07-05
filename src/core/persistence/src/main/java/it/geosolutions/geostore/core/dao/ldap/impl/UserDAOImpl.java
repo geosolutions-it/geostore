@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import javax.naming.directory.SearchControls;
 
+import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.DirContextProcessor;
@@ -221,7 +222,8 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
             Search searchCriteria = new Search(UserGroup.class);
             searchCriteria.addFilterSome("user",
                     new Filter("name", ctx.getNameInNamespace(), Filter.OP_EQUAL));
-            for (UserGroup ug : userGroupDAO.search(searchCriteria)) {
+            GeoStoreISearchWrapper searchWrapper=new GeoStoreISearchWrapper(searchCriteria,this.getClass());
+            for (UserGroup ug : userGroupDAO.search(searchWrapper)) {
                 if (isAdminGroup(ug)) {
                     user.setRole(Role.ADMIN);
                 }
