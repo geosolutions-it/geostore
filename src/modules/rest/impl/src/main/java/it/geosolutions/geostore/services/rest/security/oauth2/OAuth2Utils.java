@@ -52,6 +52,10 @@ public class OAuth2Utils {
 
     public static final String REFRESH_TOKEN_PARAM = "refresh_token";
 
+    public static final String TOKENS_KEY = "tokens_key";
+
+    public static final String AUTH_PROVIDER = "authProvider";
+
 
     /**
      * Retrieve a token either from a request param or from the Bearer.

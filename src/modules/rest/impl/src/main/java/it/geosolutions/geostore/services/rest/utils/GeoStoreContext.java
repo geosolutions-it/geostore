@@ -3,6 +3,7 @@ package it.geosolutions.geostore.services.rest.utils;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakFilter;
 import org.apache.log4j.Logger;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.Ordered;
@@ -30,7 +31,7 @@ public class GeoStoreContext implements ApplicationContextAware {
         T result=null;
         try {
             if (context!=null) result= context.getBean(clazz);
-        }catch (BeansException e){
+        } catch (Exception e){
             LOGGER.error("Error while retrieving the bean of type " + clazz.getSimpleName(),e);
         }
         return result;

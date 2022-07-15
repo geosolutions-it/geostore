@@ -1,6 +1,7 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.enums.Role;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
 /**
@@ -107,10 +108,12 @@ public abstract class IdPConfiguration implements BeanNameAware {
     }
 
     public Role getAuthenticatedDefaultRole() {
+        if (authenticatedDefaultRole==null) return Role.USER;
         return authenticatedDefaultRole;
     }
 
     public void setAuthenticatedDefaultRole(String authenticatedDefaultRole) {
-        this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
+        if (StringUtils.isNotBlank(authenticatedDefaultRole))
+            this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
     }
 }

@@ -1,3 +1,30 @@
+/* ====================================================================
+ *
+ * Copyright (C) 2022 GeoSolutions S.A.S.
+ * http://www.geo-solutions.it
+ *
+ * GPLv3 + Classpath exception
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by developers
+ * of GeoSolutions.  For more information on GeoSolutions, please see
+ * <http://www.geo-solutions.it/>.
+ *
+ */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.RESTSessionService;
@@ -8,7 +35,11 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.apache.log4j.Logger;
+import org.keycloak.adapters.AdapterTokenStore;
 import org.keycloak.adapters.KeycloakDeployment;
+import org.keycloak.adapters.spi.HttpFacade;
+import org.keycloak.adapters.springsecurity.facade.SimpleHttpFacade;
+import org.keycloak.adapters.springsecurity.token.SpringSecurityAdapterTokenStoreFactory;
 import org.keycloak.authorization.client.Configuration;
 import org.keycloak.authorization.client.util.Http;
 import org.keycloak.representations.AccessTokenResponse;
@@ -17,7 +48,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -54,11 +84,11 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
         SessionToken sessionToken;
         if (refreshToken!=null && (tokenExpiration==null || fiveMinutesFromNow.after(tokenExpiration)))
             sessionToken=doRefresh(accessToken,refreshToken,cache);
-        else sessionToken=sessionToken(accessToken,refreshToken);
+        else sessionToken=sessionToken(accessToken,refreshToken,null);
         return sessionToken;
     }
 
-    private SessionToken doRefresh(String accessToken,String refreshToken,TokenAuthenticationCache cache){
+    private SessionToken doRefresh(String accessToken, String refreshToken, TokenAuthenticationCache cache){
         KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
         AdapterConfig adapter = configuration.readAdapterConfig();
         KeyCloakHelper helper=GeoStoreContext.bean(KeyCloakHelper.class);
@@ -66,7 +96,10 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
         String newAccessToken = response.getToken();
         long exp = response.getExpiresIn();
         String newRefreshToken = response.getRefreshToken();
-        helper.updateAuthentication(cache, accessToken, newAccessToken, newRefreshToken, exp);
+        Authentication updated=helper.updateAuthentication(cache, accessToken, newAccessToken, newRefreshToken, exp);
+        HttpFacade facade=new SimpleHttpFacade(getRequest(),getResponse());
+        KeycloakDeployment deployment=helper.getDeployment(facade);
+        KeycloakCookieUtils.setTokenCookie(deployment,facade,(KeycloakTokenDetails) updated.getDetails());
         return sessionToken(newAccessToken,newRefreshToken);
     }
 
@@ -81,9 +114,15 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
     }
 
     private SessionToken sessionToken(String accessToken, String refreshToken) {
+        return sessionToken(accessToken,refreshToken,null);
+
+    }
+
+    private SessionToken sessionToken(String accessToken, String refreshToken,Date expires) {
         SessionToken sessionToken = new SessionToken();
         sessionToken.setAccessToken(accessToken);
         sessionToken.setRefreshToken(refreshToken);
+        if (expires!=null) sessionToken.setExpires(expires.getTime());
         sessionToken.setTokenType("bearer");
         return sessionToken;
     }
@@ -114,10 +153,14 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
                     .param("client_id", clientId)
                     .param("client_secret", secret)
                     .param("refresh_token",refreshToken)
+                    .param("post_logout_redirect_uri","http://localhost:9191/geostore/openid/keycloak/login")
                     .execute();
         } catch (Exception e){
             LOGGER.error("Error while performing global logout.",e);
         }
+        SpringSecurityAdapterTokenStoreFactory factory=new SpringSecurityAdapterTokenStoreFactory();
+        AdapterTokenStore tokenStore=factory.createAdapterTokenStore(deployment,getRequest(),getResponse());
+        if (tokenStore!=null) tokenStore.logout();
         internalLogout(accessToken,request);
     }
 

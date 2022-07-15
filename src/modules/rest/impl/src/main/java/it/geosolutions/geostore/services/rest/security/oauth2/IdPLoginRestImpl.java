@@ -31,6 +31,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.SessionToken;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -58,6 +59,11 @@ public class IdPLoginRestImpl implements IdPLoginRest {
     public Response callback(String provider) throws NotFoundWebEx {
         IdPLoginService service= services.get(provider);
         return service.doInternalRedirect(OAuth2Utils.getRequest(),OAuth2Utils.getResponse(),provider);
+    }
+
+    @Override
+    public SessionToken getTokensByTokenIdentifier(String provider, String tokenIdentifier) throws NotFoundWebEx {
+        return services.get(provider).getTokenByIdentifier(provider,tokenIdentifier);
     }
 
     @Override

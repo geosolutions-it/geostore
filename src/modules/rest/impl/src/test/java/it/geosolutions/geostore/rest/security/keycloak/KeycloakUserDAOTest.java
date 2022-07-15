@@ -91,7 +91,7 @@ public class KeycloakUserDAOTest {
         assertEquals(3,userList.size());
         for (User u: userList){
             assertNotNull(u.getRole());
-            assertEquals(4,u.getGroups().size());
+            assertEquals(5,u.getGroups().size());
         }
     }
 
@@ -104,7 +104,7 @@ public class KeycloakUserDAOTest {
         List<String> validNames=Arrays.asList("test-user","test-user-2");
         for (User u: userList){
             assertNotNull(u.getRole());
-            assertEquals(4,u.getGroups().size());
+            assertEquals(5,u.getGroups().size());
             assertTrue(validNames.contains(u.getName()));
         }
     }
@@ -118,7 +118,7 @@ public class KeycloakUserDAOTest {
         assertEquals(1,userList.size());
         for (User u: userList){
             assertNotNull(u.getRole());
-            assertEquals(4,u.getGroups().size());
+            assertEquals(5,u.getGroups().size());
             assertEquals("admin",u.getName());
         }
     }

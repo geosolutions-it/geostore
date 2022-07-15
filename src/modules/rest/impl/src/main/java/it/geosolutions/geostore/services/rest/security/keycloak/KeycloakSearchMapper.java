@@ -1,20 +1,47 @@
+/* ====================================================================
+ *
+ * Copyright (C) 2022 GeoSolutions S.A.S.
+ * http://www.geo-solutions.it
+ *
+ * GPLv3 + Classpath exception
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.
+ *
+ * ====================================================================
+ *
+ * This software consists of voluntary contributions made by developers
+ * of GeoSolutions.  For more information on GeoSolutions, please see
+ * <http://www.geo-solutions.it/>.
+ *
+ */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
-import org.keycloak.admin.client.resource.RealmResource;
 
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
 
 /**
  * Class responsible to map a Search to a KeycloakQuery.
  */
 class KeycloakSearchMapper {
 
-    private static final List<Integer> SUPPORTED_OPERATORS= Arrays.asList(Filter.OP_AND,Filter.OP_EQUAL,Filter.OP_ILIKE);
+    private static final List<Integer> SUPPORTED_OPERATORS= Arrays.asList(Filter.OP_AND,Filter.OP_EQUAL,Filter.OP_ILIKE,Filter.OP_NOT_EQUAL);
 
 
 
@@ -60,28 +87,32 @@ class KeycloakSearchMapper {
         if (filter.getOperator()==Filter.OP_AND) return;
         else if (filter.getOperator()==Filter.OP_EQUAL)
             query.setExact(true);
-        else if (filter.getOperator()!=Filter.OP_ILIKE)
+        else if (filter.getOperator()!=Filter.OP_ILIKE && filter.getOperator() != Filter.OP_NOT_EQUAL)
             throw new UnsupportedOperationException("Keycloak DAO supports only EQUAL and LIKE operators");
 
-        String property=filter.getProperty().toUpperCase();
-        FilterType type;
-        try {
-            type=FilterType.valueOf(property);
-        } catch (UnsupportedOperationException e){
-            type=FilterType.NOT_FOUND;
-        }
-        switch (type){
-            case NAME:
-                query.setUserName(filter.getValue().toString());
-                break;
-            case GROUPNAME:
-                query.setGroupName(filter.getValue().toString());
-                break;
-            case ENABLED:
-                query.setEnabled(Boolean.valueOf(filter.getValue().toString()));
-                break;
-            default:
-                break;
+        if (filter.getOperator()==Filter.OP_NOT_EQUAL && filter.getValue().toString().equalsIgnoreCase(EVERYONE.groupName()))
+            query.setSkipEveryBodyGroup(true);
+        else {
+            String property = filter.getProperty().toUpperCase();
+            FilterType type;
+            try {
+                type = FilterType.valueOf(property);
+            } catch (UnsupportedOperationException e) {
+                type = FilterType.NOT_FOUND;
+            }
+            switch (type) {
+                case NAME:
+                    query.setUserName(filter.getValue().toString());
+                    break;
+                case GROUPNAME:
+                    query.setGroupName(filter.getValue().toString());
+                    break;
+                case ENABLED:
+                    query.setEnabled(Boolean.valueOf(filter.getValue().toString()));
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
