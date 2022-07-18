@@ -1,5 +1,7 @@
 package it.geosolutions.geostore.services.rest;
 
+import it.geosolutions.geostore.services.rest.model.SessionToken;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
@@ -18,11 +20,19 @@ public interface IdPLoginService {
     void doLogin(HttpServletRequest request, HttpServletResponse response, String provider);
 
     /**
-     * Perform a redirect to an application url. Usefull if the external IdP redirect to an app url when login is successfull.
+     * Perform a redirect to an application url. Useful if the external IdP redirect to an app url when login is successful.
      * @param request the request.
      * @param response the response.
      * @param provider the provider name.
      * @return a {@link Response instance}.
      */
     Response doInternalRedirect(HttpServletRequest request, HttpServletResponse response, String provider);
+
+    /**
+     * Return the SessionToken if any exists for the provided key.
+     * @param provider the auth provider
+     * @param tokenIdentifier the token identifier to use to retrieve stored tokens.
+     * @return the {@link SessionToken} if found, null otherwise.
+     */
+    SessionToken getTokenByIdentifier(String provider, String tokenIdentifier);
 }

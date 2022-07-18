@@ -1,5 +1,7 @@
 package it.geosolutions.geostore.services.rest.security;
 
+import it.geosolutions.geostore.core.model.enums.Role;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
 /**
@@ -16,6 +18,8 @@ public abstract class IdPConfiguration implements BeanNameAware {
     protected String internalRedirectUri;
 
     protected String redirectUri;
+
+    protected Role authenticatedDefaultRole;
 
 
 
@@ -97,5 +101,19 @@ public abstract class IdPConfiguration implements BeanNameAware {
      */
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
+    }
+
+    public void setAutoCreateUser(boolean autoCreateUser) {
+        this.autoCreateUser = autoCreateUser;
+    }
+
+    public Role getAuthenticatedDefaultRole() {
+        if (authenticatedDefaultRole==null) return Role.USER;
+        return authenticatedDefaultRole;
+    }
+
+    public void setAuthenticatedDefaultRole(String authenticatedDefaultRole) {
+        if (StringUtils.isNotBlank(authenticatedDefaultRole))
+            this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
     }
 }

@@ -4,8 +4,10 @@ import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.AccessCookie;
 import it.geosolutions.geostore.services.rest.security.oauth2.IdPLoginRestImpl;
+import it.geosolutions.geostore.services.rest.security.oauth2.InMemoryTokenStorage;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.Oauth2LoginService;
+import it.geosolutions.geostore.services.rest.security.oauth2.TokenStorage;
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -16,7 +18,9 @@ import javax.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.AUTH_PROVIDER;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.TOKENS_KEY;
 import static org.junit.Assert.assertEquals;
 
 public class OAuth2LoginTest {
@@ -52,11 +56,12 @@ public class OAuth2LoginTest {
         configuration.setInternalRedirectUri("http://localhost:8080/geostore/redirect");
         SetConfOAuthLoginService setConfiguration=new SetConfOAuthLoginService(idPLoginRest);
         setConfiguration.setConfiguration(configuration);
+        setConfiguration.setTokenStorage(new InMemoryTokenStorage());
         Response result= idPLoginRest.callback("mock");
         assertEquals(302,result.getStatus());
         List<Object> cookies=result.getMetadata().get("Set-Cookie");
-        cookies=cookies.stream().filter(o->((AccessCookie)o).getName().equals(ACCESS_TOKEN_PARAM)|| ((AccessCookie)o).getName().equals(REFRESH_TOKEN_PARAM)).collect(Collectors.toList());
-        assertEquals(2,cookies.size());
+        List<Object> tokenCookies=cookies.stream().filter(c->((String)c).contains(AUTH_PROVIDER) || ((String)c).contains(TOKENS_KEY)).collect(Collectors.toList());
+        assertEquals(2,tokenCookies.size());
         assertEquals("http://localhost:8080/geostore/redirect",result.getHeaderString("Location"));
     }
 
@@ -68,6 +73,8 @@ public class OAuth2LoginTest {
     private class SetConfOAuthLoginService extends Oauth2LoginService {
 
         private OAuth2Configuration configuration;
+
+        private TokenStorage tokenStorage;
 
         public SetConfOAuthLoginService(IdPLoginRest loginRest){
             loginRest.registerService("mock",this);
@@ -85,6 +92,15 @@ public class OAuth2LoginTest {
         @Override
         protected IdPConfiguration configuration(String provider) {
             return configuration;
+        }
+
+        @Override
+        protected TokenStorage tokenStorage() {
+            return tokenStorage;
+        }
+
+        public void setTokenStorage(TokenStorage tokenStorage) {
+            this.tokenStorage = tokenStorage;
         }
     }
 }

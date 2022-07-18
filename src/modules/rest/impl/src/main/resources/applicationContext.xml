@@ -93,6 +93,10 @@
 		  class="it.geosolutions.geostore.services.rest.security.oauth2.IdPLoginRestImpl">
 	</bean>
 
+	<bean id="tokenStorage"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.InMemoryTokenStorage">
+	</bean>
+
 	<bean id="googleLoginService"
 		  class="it.geosolutions.geostore.services.rest.security.oauth2.GoogleLoginService">
 		<constructor-arg ref="idpLoginRest"/>

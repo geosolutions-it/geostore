@@ -169,6 +169,10 @@
 			</bean>
 		</constructor-arg>
 	</bean>
+
+	<import resource="classpath*:security-integration-${security.integration:default}.xml"/>
+
+
 	<!-- Enable LDAP readonly User and UserGroup fetching -->
 	<!--
     <bean id="ldapUserDAO" class="it.geosolutions.geostore.core.dao.ldap.impl.UserDAOImpl">

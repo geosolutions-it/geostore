@@ -154,24 +154,24 @@ public class UserGroupServiceImpl implements UserGroupService {
     @Override
     public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx{
         UserGroup groupToAssign = userGroupDAO.find(groupId);
-        // Check if the group user want to assign is an allowed one
-        if(!GroupReservedNames.isAllowedName(groupToAssign.getGroupName())){
-            throw new NotFoundServiceEx("You can't re-assign the group EVERYONE or any other reserved groups...");
-        }
+
         User targetUser = userDAO.find(userId);
         if(groupToAssign == null || targetUser == null){
             throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");
+        }
+        // Check if the group user want to assign is an allowed one
+        if(!GroupReservedNames.isAllowedName(groupToAssign.getGroupName())){
+            throw new NotFoundServiceEx("You can't re-assign the group EVERYONE or any other reserved groups...");
         }
         if(targetUser.getGroups() == null){
             Set<UserGroup> groups = new HashSet<UserGroup>();
             groups.add(groupToAssign);
             targetUser.setGroups(groups);
-            userDAO.merge(targetUser);
         }
         else{
             targetUser.getGroups().add(groupToAssign);
-            userDAO.merge(targetUser);
         }
+        userDAO.merge(targetUser);
     }
     
     /* (non-Javadoc)

@@ -143,7 +143,7 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
 
         Filter userFiltering = Filter.equal("username", user.getName());
 
-        if(! user.getGroups().isEmpty()) {
+        if(user.getGroups()!=null && !user.getGroups().isEmpty()) {
             List<String> groupsName = new ArrayList<>();
             for (UserGroup group : user.getGroups()) {
                 groupsName.add(group.getGroupName());

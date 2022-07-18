@@ -2,15 +2,17 @@ package it.geosolutions.geostore.rest.security.keycloak;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
+import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakConfiguration;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeycloakTokenDetails;
 import it.geosolutions.geostore.services.rest.security.oauth2.IdPLoginRestImpl;
+import it.geosolutions.geostore.services.rest.security.oauth2.InMemoryTokenStorage;
+import it.geosolutions.geostore.services.rest.security.oauth2.TokenStorage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.keycloak.adapters.AdapterDeploymentContext;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -34,7 +36,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.AUTH_PROVIDER;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.TOKENS_KEY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -42,16 +46,28 @@ public class KeycloakLoginTest extends KeycloakTestSupport {
 
     private IdPLoginRest loginRest;
 
+    private Object key;
+
     @Before
     public void setUp() throws JsonProcessingException {
         setUpAdapter(AUTH_URL);
         KeycloakDeployment deployment =
                 KeycloakDeploymentBuilder.build(adapterConfig);
-        AdapterDeploymentContext context= new AdapterDeploymentContext(deployment);
         KeyCloakConfiguration configuration=createConfiguration();
         loginRest=new IdPLoginRestImpl();
         // autoregister to the loginRest object
+        TokenStorage storage=new InMemoryTokenStorage();
+        key=storage.buildTokenKey();
+        SessionToken token=new SessionToken();
+        token.setAccessToken(ACCESS_TOKEN_PARAM);
+        token.setRefreshToken(REFRESH_TOKEN_PARAM);
+        storage.saveToken(key,token);
         new KeyCloakLoginService(loginRest){
+            @Override
+            protected TokenStorage tokenStorage() {
+                return storage;
+            }
+
             @Override
             protected IdPConfiguration configuration(String provider) {
                 return configuration;
@@ -92,8 +108,24 @@ public class KeycloakLoginTest extends KeycloakTestSupport {
         assertEquals("../../../",response.getHeaderString("Location"));
         MultivaluedMap<String,Object> meta=response.getMetadata();
         List<Object> cookies=meta.get("Set-Cookie");
-        List<Object> tokenCookies=cookies.stream().filter(c->((NewCookie)c).getName().equals(ACCESS_TOKEN_PARAM) || ((NewCookie)c).getName().equals(REFRESH_TOKEN_PARAM)).collect(Collectors.toList());
+        List<Object> tokenCookies=cookies.stream().filter(c->((String)c).contains(AUTH_PROVIDER) || ((String)c).contains(TOKENS_KEY)).collect(Collectors.toList());
         assertEquals(2,tokenCookies.size());
+    }
+
+
+    @Test
+    public void testGetTokenByIdentifier(){
+        MockHttpServletRequest request=new MockHttpServletRequest();
+        MockHttpServletResponse httpResponse=new MockHttpServletResponse();
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request,httpResponse);
+        RequestContextHolder.setRequestAttributes(attributes);
+        PreAuthenticatedAuthenticationToken authentication=new PreAuthenticatedAuthenticationToken("username","", new ArrayList<>());
+        KeycloakTokenDetails details=new KeycloakTokenDetails("accessToken","refreshToken",10202l);
+        authentication.setDetails(details);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        SessionToken sessionToken=loginRest.getTokensByTokenIdentifier("keycloak",key.toString());
+        assertEquals(ACCESS_TOKEN_PARAM,sessionToken.getAccessToken());
+        assertEquals(REFRESH_TOKEN_PARAM,sessionToken.getRefreshToken());
     }
 
     @After

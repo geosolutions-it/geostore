@@ -27,31 +27,33 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import java.util.HashMap;
 
 /**
- * A request wrapper to fix the url when using nginx.
+ * Case insensitive map for RoleMappings used by Keycloak classes.
  */
-public class KeyCloakRequestWrapper extends HttpServletRequestWrapper {
-    /**
-     * Constructs a request object wrapping the given request.
-     *
-     * @param request
-     * @throws IllegalArgumentException if the request is null
-     */
-    public KeyCloakRequestWrapper(HttpServletRequest request) {
-        super(request);
+class RoleMappings extends HashMap<String,String> {
+
+    RoleMappings(int initialCapacity) {
+        super(initialCapacity);
+    }
+
+    RoleMappings() {}
+
+    @Override
+    public String get(Object key) {
+        if (!(key instanceof String)) return null;
+        return super.get(key.toString().toUpperCase());
     }
 
     @Override
-    public StringBuffer getRequestURL() {
-        String url = super.getRequestURL().toString();
-        String proto = super.getHeader("x-forwarded-proto");
+    public boolean containsKey(Object key) {
+        if (!(key instanceof String)) return false;
+        return super.containsKey(key.toString().toUpperCase());
+    }
 
-        if (proto != null && url.startsWith("http://") && proto.equals("https")) {
-            url = url.replaceAll("^http", "https");
-        }
-        return new StringBuffer(url);
+    @Override
+    public String put(String key, String value) {
+        return super.put(key.toUpperCase(), value);
     }
 }
