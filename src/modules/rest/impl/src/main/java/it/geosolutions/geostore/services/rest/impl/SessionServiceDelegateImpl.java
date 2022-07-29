@@ -4,8 +4,11 @@ import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import static it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl.BEARER_TYPE;
 
@@ -28,7 +31,7 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
     public SessionToken refresh(String refreshToken, String accessToken) {
         UserSession sessionToken=userSessionService.refreshSession(accessToken, refreshToken);
         if(sessionToken == null) {
-            return null;
+            throw new ForbiddenErrorWebEx("Refresh token was not provided or session is already expired.");
         }
         SessionToken token = new SessionToken();
         token.setAccessToken(accessToken);
@@ -41,5 +44,13 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
     @Override
     public void doLogout(String accessToken) {
             userSessionService.removeSession(accessToken);
+    }
+
+    /**
+     * Set the user session service.
+     * @param userSessionService the user session service.
+     */
+    public void setUserSessionService(UserSessionService userSessionService) {
+        this.userSessionService = userSessionService;
     }
 }
