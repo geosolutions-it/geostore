@@ -153,7 +153,6 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
                     .param("client_id", clientId)
                     .param("client_secret", secret)
                     .param("refresh_token",refreshToken)
-                    .param("post_logout_redirect_uri","http://localhost:9191/geostore/openid/keycloak/login")
                     .execute();
         } catch (Exception e){
             LOGGER.error("Error while performing global logout.",e);
