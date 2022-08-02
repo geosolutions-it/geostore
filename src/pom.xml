@@ -1049,9 +1049,7 @@
         </repository-->
 
         <!-- Spring -->
-
-        <!--- This repositories seem no more used
-        <repository>
+        <!--repository>
             <id>spring-release</id>
             <name>Spring Portfolio Release Repository</name>
             <url>https://maven.springframework.org/release</url>
@@ -1066,9 +1064,7 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
-        </repository>
-
-        -->
+        </repository-->
 
         <repository>
             <id>osgeo</id>
