@@ -58,6 +58,7 @@ import org.springframework.web.client.HttpMessageConverterExtractor;
 import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -222,7 +223,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (token != null) {
             OAuth2Configuration configuration = configuration();
             doLogoutInternal(token, configuration);
-            clearSession(restTemplate);
+            clearSession(restTemplate,request);
         } else {
             if (LOGGER.isDebugEnabled())
                 LOGGER.info("Unable to retrieve access token. Remote logout was not executed.");
@@ -232,7 +233,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     // clears any state Spring OAuth2 object might preserve.
-    private void clearSession(OAuth2RestTemplate restTemplate) {
+    private void clearSession(OAuth2RestTemplate restTemplate,HttpServletRequest request) {
         final AccessTokenRequest accessTokenRequest =
                 restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
         if (accessTokenRequest != null && accessTokenRequest.getStateKey() != null) {
@@ -243,7 +244,11 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         try {
             accessTokenRequest.remove("access_token");
             accessTokenRequest.remove("refresh_token");
-        } finally {
+            request.logout();
+        } catch (ServletException e){
+            LOGGER.error("Error happened while doing request logout: ",e);
+        }
+        finally {
             SecurityContextHolder.clearContext();
         }
     }
@@ -308,7 +313,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     private TokenAuthenticationCache cache() {
-        return GeoStoreContext.bean(TokenAuthenticationCache.class);
+        return GeoStoreContext.bean("oAuth2Cache",TokenAuthenticationCache.class);
     }
 
     /**
