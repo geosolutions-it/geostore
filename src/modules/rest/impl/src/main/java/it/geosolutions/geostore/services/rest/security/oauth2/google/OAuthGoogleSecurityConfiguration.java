@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
+import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreSecurityConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
@@ -82,6 +83,11 @@ public class OAuthGoogleSecurityConfiguration extends OAuth2GeoStoreSecurityConf
     @Bean
     public GoogleTokenServices googleTokenServices(){
         return new GoogleTokenServices(configuration().getPrincipalKey());
+    }
+
+    @Bean
+    public TokenAuthenticationCache oAuth2Cache(){
+        return new TokenAuthenticationCache();
     }
 
 }
