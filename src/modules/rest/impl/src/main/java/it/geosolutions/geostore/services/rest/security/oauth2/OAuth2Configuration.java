@@ -137,6 +137,8 @@ public class OAuth2Configuration extends IdPConfiguration {
         return finalUrl;
     }
 
+
+
     /**
      * Builds the refresh token URI.
      * @return the complete refresh token uri.

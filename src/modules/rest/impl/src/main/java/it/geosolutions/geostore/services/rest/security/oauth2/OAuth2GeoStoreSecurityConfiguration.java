@@ -140,10 +140,5 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
         this.context = applicationContext;
     }
 
-    @Bean
-    public TokenAuthenticationCache oAuth2Cache(){
-        return new TokenAuthenticationCache();
-    }
-
     public abstract OAuth2Configuration configuration();
 }

@@ -82,11 +82,13 @@
 
 	<bean id="keycloakServiceDelegate" class="it.geosolutions.geostore.services.rest.security.keycloak.KeycloakSessionServiceDelegate">
 		<constructor-arg ref="restSessionService"/>
+		<constructor-arg ref="userService"/>
 	</bean>
 
 	<bean id="googleSessionServiceDelegate"
 		  class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate">
 		<constructor-arg ref="restSessionService"/>
+		<constructor-arg ref="userService"/>
 	</bean>
 
 	<bean id="idpLoginRest"
