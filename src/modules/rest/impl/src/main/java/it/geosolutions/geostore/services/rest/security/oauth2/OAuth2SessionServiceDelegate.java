@@ -27,14 +27,20 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.security.password.SecurityUtils;
+import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
+import it.geosolutions.geostore.services.rest.security.keycloak.KeycloakTokenDetails;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.apache.log4j.Logger;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpHeaders;
@@ -63,7 +69,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
@@ -81,13 +86,15 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     private final static Logger LOGGER = Logger.getLogger(OAuth2SessionServiceDelegate.class);
 
+    protected UserService userService;
 
     /**
      * @param restSessionService the session service to which register this delegate.
      * @param delegateName       this delegate name eg. google or github etc...
      */
-    public OAuth2SessionServiceDelegate(RESTSessionService restSessionService, String delegateName) {
+    public OAuth2SessionServiceDelegate(RESTSessionService restSessionService, String delegateName,UserService userService) {
         restSessionService.registerDelegate(delegateName, this);
+        this.userService=userService;
     }
 
 
@@ -361,4 +368,35 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
 
     protected abstract OAuth2RestTemplate restTemplate();
+
+    @Override
+    public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
+        String username=getUserName(sessionId,refresh,autorefresh);
+        if (username!=null) {
+            User user;
+            try {
+                user=userService.get(username);
+            } catch (Exception e){
+                LOGGER.warn("Issue while retrieving user. Will return just the username.", e);
+                user=new User();
+                user.setName(username);
+            }
+            return user;
+        }
+        return null;
+    }
+
+    @Override
+    public String getUserName(String sessionId, boolean refresh, boolean autorefresh) {
+        TokenAuthenticationCache cache=cache();
+        Authentication authentication=cache.get(sessionId);
+        if (refresh) LOGGER.warn("Refresh was set to true but this delegate is " +
+                "not supporting refreshing token when retrieving the user...");
+        if (authentication!=null){
+            Object o=authentication.getPrincipal();
+            if (o !=null) return SecurityUtils.getUsername(o);
+        }
+        return null;
+    }
+
 }

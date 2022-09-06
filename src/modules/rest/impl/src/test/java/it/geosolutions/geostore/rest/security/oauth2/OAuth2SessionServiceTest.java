@@ -96,7 +96,7 @@ public class OAuth2SessionServiceTest {
             attributes.setAttribute(PROVIDER_KEY,"google",0);
             RequestContextHolder.setRequestAttributes(attributes);
             RESTSessionService sessionService=new RESTSessionServiceImpl();
-            new GoogleSessionServiceDelegate(sessionService);
+            new GoogleSessionServiceDelegate(sessionService,null);
 
             // start the test
             sessionService.removeSession();
