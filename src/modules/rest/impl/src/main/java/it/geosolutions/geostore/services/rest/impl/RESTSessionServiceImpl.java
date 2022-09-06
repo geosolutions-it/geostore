@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Map;
@@ -97,11 +98,13 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 	 * @return
 	 */
 	public User getUser(String sessionId, boolean refresh) {
-		User details = userSessionService.getUserData(sessionId);
-		if (details != null && refresh && autorefresh) {
-			userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
+		User user=null;
+		Collection<SessionServiceDelegate> list=delegates.values();
+		for (SessionServiceDelegate del:list){
+			user=del.getUser(sessionId,refresh,autorefresh);
+			if (user!=null) break;
 		}
-		return details;
+		return user;
 	}
 
 	/**
@@ -111,14 +114,13 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 	 * @return
 	 */
 	public String getUserName(String sessionId, boolean refresh) {
-		User userData = userSessionService.getUserData(sessionId);
-		if (userData != null) {
-			if (refresh  && autorefresh) {
-				userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
-			}
-			return userData.getName();
+		String userName=null;
+		Collection<SessionServiceDelegate> list=delegates.values();
+		for (SessionServiceDelegate del:list){
+			userName=del.getUserName(sessionId,refresh,autorefresh);
+			if (userName!=null) break;
 		}
-		return null;
+		return userName;
 	}
 
 	private Calendar getExpiration(String expires) throws ParseException {

@@ -1,5 +1,6 @@
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
@@ -52,5 +53,22 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
      */
     public void setUserSessionService(UserSessionService userSessionService) {
         this.userSessionService = userSessionService;
+    }
+
+    public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
+        User details = null;
+        if (userSessionService!=null) {
+            details=userSessionService.getUserData(sessionId);
+            if (details != null && refresh && autorefresh) {
+                userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
+            }
+        }
+        return details;
+    }
+
+    public String getUserName(String sessionId, boolean refresh, boolean autorefresh) {
+        User userData=getUser(sessionId,refresh,autorefresh);
+        if(userData!=null) return userData.getName();
+        return null;
     }
 }
