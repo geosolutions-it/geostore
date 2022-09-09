@@ -34,13 +34,12 @@ import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.constants.AdapterConstants;
 
 
+/**
+ * Utility class that provides method to update the Keycloak Adapter cookie.
+ */
 class KeycloakCookieUtils {
     
     private static final String SEPARATOR="___";
-    
-
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreKeycloakAuthProvider.class);
-
 
     static void setTokenCookie(KeycloakDeployment deployment, HttpFacade facade, KeycloakTokenDetails tokenDetails) {
         String accessToken = tokenDetails.getAccessToken();
@@ -51,7 +50,8 @@ class KeycloakCookieUtils {
                 .append(refreshToken).toString();
 
         String cookiePath = getCookiePath(deployment, facade);
-        facade.getResponse().setCookie(AdapterConstants.KEYCLOAK_ADAPTER_STATE_COOKIE, cookie, cookiePath, null, -1, deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
+        // forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do it for us.
+        facade.getResponse().setCookie(AdapterConstants.KEYCLOAK_ADAPTER_STATE_COOKIE, cookie, cookiePath, null, 0, deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
     }
 
     static String getCookiePath(KeycloakDeployment deployment, HttpFacade facade) {
