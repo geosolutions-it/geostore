@@ -121,12 +121,14 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         String username = getUsername(authentication);
         Set<UserGroup> keycloakGroups = grantedAuthoritiesMapper != null ? grantedAuthoritiesMapper.getGroups() : new HashSet<>();
 
+        // if the auto creation of user is set to true from keycloak properties we add the groups as well.
         if (configuration.isAutoCreateUser())
-            keycloakGroups = synchronizeGroups(keycloakGroups, grantedAuthorities);
+            keycloakGroups = importGroups(keycloakGroups, grantedAuthorities);
 
         User user = retrieveUser(username, "", grantedAuthoritiesMapper,keycloakGroups);
         addEveryOne(user.getGroups());
         if (user.getRole() == null) {
+            // no role get the one configured to be default for authenticated users.
             Role defRole = configuration.getAuthenticatedDefaultRole();
             user.setRole(defRole);
         }
@@ -176,6 +178,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
             user.setRole(role);
             if (groups==null) groups=new HashSet<>();
             user.setGroups(groups);
+            // user not found in db, if configured to insert will insert it.
             if (userService != null && configuration.isAutoCreateUser()) {
                 try {
                     long id = userService.insert(user);
@@ -196,6 +199,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         return user;
     }
 
+    // update user groups adding the one not already present and added on keycloak side
     private User updateRoleAndGroups(Role role,Set<UserGroup> groups, User user){
             user.setRole(role);
             try {
@@ -216,6 +220,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         return user;
     }
 
+    // we only update if new roles were added on keycloak or the role changed
     private boolean isUpdateUser(User user, Set<UserGroup> groups, Role mappedRole){
         Set<UserGroup> incoming=new HashSet<>(groups);
         incoming.removeAll(user.getGroups());
@@ -249,17 +254,17 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         return username;
     }
 
-    private Set<UserGroup> synchronizeGroups(Set<UserGroup> mappedGroups, Collection<GrantedAuthority> authorities) {
+    private Set<UserGroup> importGroups(Set<UserGroup> mappedGroups, Collection<GrantedAuthority> authorities) {
         Set<UserGroup> returnSet = new HashSet<>(mappedGroups.size());
         try {
             if (mappedGroups == null || mappedGroups.isEmpty()) {
                 for (GrantedAuthority auth : authorities) {
-                    UserGroup res = synchronizeGroup(auth);
+                    UserGroup res = importGroup(auth);
                     returnSet.add(res);
                 }
             } else {
                 for (UserGroup g : mappedGroups) {
-                    UserGroup res = synchronizeGroup(g.getGroupName());
+                    UserGroup res = importGroup(g.getGroupName());
                     returnSet.add(res);
                 }
             }
@@ -269,12 +274,12 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         return returnSet;
     }
 
-    private UserGroup synchronizeGroup(GrantedAuthority a)
+    private UserGroup importGroup(GrantedAuthority a)
             throws BadRequestServiceEx {
-        return synchronizeGroup(a.getAuthority());
+        return importGroup(a.getAuthority());
     }
 
-    private UserGroup synchronizeGroup(String groupName) throws BadRequestServiceEx {
+    private UserGroup importGroup(String groupName) throws BadRequestServiceEx {
         UserGroup group;
         if (groupService != null) {
             group = groupService.get(groupName);
