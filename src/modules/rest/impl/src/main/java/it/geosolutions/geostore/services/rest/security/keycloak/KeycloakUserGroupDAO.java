@@ -39,7 +39,6 @@ import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
 
@@ -196,10 +195,9 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
 
     private List<UserGroup> toUserGroups(List<RoleRepresentation> roleRepresentations, boolean isEveryoneRequested) {
         List<UserGroup> groups = new ArrayList<>(roleRepresentations.size());
-        Map<String, String> roleMapper = getRoleMappings();
         int counter = 1;
         for (RoleRepresentation role : roleRepresentations) {
-            GeoStoreKeycloakAuthoritiesMapper mapper = new GeoStoreKeycloakAuthoritiesMapper(roleMapper);
+            GeoStoreKeycloakAuthoritiesMapper mapper = getAuthoritiesMapper();
             mapper.mapAuthorities(Arrays.asList(role.getName()));
             if (mapper.getGroups() != null && !mapper.getGroups().isEmpty()) {
                 UserGroup group = new UserGroup();

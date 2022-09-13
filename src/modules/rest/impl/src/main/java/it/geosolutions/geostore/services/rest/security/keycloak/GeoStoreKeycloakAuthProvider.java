@@ -30,11 +30,14 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.password.SecurityUtils;
+import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.adapters.OidcKeycloakAccount;
@@ -73,6 +76,9 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserGroupService groupService;
+
     private KeyCloakConfiguration configuration;
 
     public GeoStoreKeycloakAuthProvider(KeyCloakConfiguration configuration) {
@@ -81,20 +87,16 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+
         KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) authentication;
         OidcKeycloakAccount account = token.getAccount();
         KeycloakSecurityContext context = account.getKeycloakSecurityContext();
-        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
-        GeoStoreKeycloakAuthoritiesMapper grantedAuthoritiesMapper = new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings());
-        for (String role : token.getAccount().getRoles()) {
-            grantedAuthorities.add(new KeycloakRole(role));
-        }
-        Collection<? extends GrantedAuthority> mapped = mapAuthorities(grantedAuthoritiesMapper, grantedAuthorities);
         AccessToken accessToken = context.getToken();
         String accessTokenStr = context.getTokenString();
         String refreshToken = null;
         Long expiration = null;
         HttpServletRequest request = getRequest();
+        // set tokens as request attributes so that can made available in a cookie for the frontend on the callback url.
         if (accessToken != null) {
             expiration = accessToken.getExp();
             if (request != null) request.setAttribute(ACCESS_TOKEN_PARAM, accessToken);
@@ -103,13 +105,30 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
             refreshToken = ((RefreshableKeycloakSecurityContext) context).getRefreshToken();
             if (request != null) request.setAttribute(REFRESH_TOKEN_PARAM, refreshToken);
         }
+
+
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
+        GeoStoreKeycloakAuthoritiesMapper grantedAuthoritiesMapper = new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings(), configuration.getGroupMappings(), configuration.isDropUnmapped());
+        for (String role : token.getAccount().getRoles()) {
+            grantedAuthorities.add(new KeycloakRole(role));
+        }
+
+        // maps authorities to GeoStore Role and UserGroup
+        Collection<? extends GrantedAuthority> mapped = mapAuthorities(grantedAuthoritiesMapper, grantedAuthorities);
+
         KeycloakTokenDetails details = new KeycloakTokenDetails(accessTokenStr, refreshToken, expiration);
         details.setIdToken(context.getIdTokenString());
         String username = getUsername(authentication);
-        User user = retrieveUser(username, "", grantedAuthoritiesMapper);
-        if (grantedAuthoritiesMapper != null) user.getGroups().addAll(grantedAuthoritiesMapper.getGroups());
-        if (grantedAuthoritiesMapper != null) user.setRole(grantedAuthoritiesMapper.getRole());
+        Set<UserGroup> keycloakGroups = grantedAuthoritiesMapper != null ? grantedAuthoritiesMapper.getGroups() : new HashSet<>();
+
+        // if the auto creation of user is set to true from keycloak properties we add the groups as well.
+        if (configuration.isAutoCreateUser())
+            keycloakGroups = importGroups(keycloakGroups, grantedAuthorities);
+
+        User user = retrieveUser(username, "", grantedAuthoritiesMapper,keycloakGroups);
+        addEveryOne(user.getGroups());
         if (user.getRole() == null) {
+            // no role get the one configured to be default for authenticated users.
             Role defRole = configuration.getAuthenticatedDefaultRole();
             user.setRole(defRole);
         }
@@ -139,7 +158,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
      * @param credentials
      * @return
      */
-    protected User retrieveUser(String userName, String credentials, GeoStoreKeycloakAuthoritiesMapper mapper) {
+    protected User retrieveUser(String userName, String credentials, GeoStoreKeycloakAuthoritiesMapper mapper,Set<UserGroup>groups) {
         User user = null;
         if (userService != null) {
             try {
@@ -155,25 +174,73 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
             user.setName(userName);
             user.setNewPassword(credentials);
             user.setEnabled(true);
-            Role role = null;
-            if (mapper != null && mapper.getRole() != null)
-                role = mapper.getRole();
-            if (role == null) role = configuration.getAuthenticatedDefaultRole();
+            Role role = mappedRole(mapper);
             user.setRole(role);
-            if (user.getRole() == null) user.setRole(Role.USER);
-            Set<UserGroup> groups = new HashSet<UserGroup>();
+            if (groups==null) groups=new HashSet<>();
             user.setGroups(groups);
+            // user not found in db, if configured to insert will insert it.
             if (userService != null && configuration.isAutoCreateUser()) {
                 try {
                     long id = userService.insert(user);
-                    user = new User(user);
-                    user.setId(id);
+                    user = userService.get(id);
                 } catch (NotFoundServiceEx | BadRequestServiceEx e) {
                     LOGGER.error("Exception while inserting the user.", e);
                 }
+            } else {
+                user.setTrusted(true);
+            }
+        } else {
+            Role role = mappedRole(mapper);
+            // might need to update the role / groups if on keycloak side roles changed.
+            if (isUpdateUser(user,groups,role)) {
+               updateRoleAndGroups(role,groups,user);
             }
         }
         return user;
+    }
+
+    // update user groups adding the one not already present and added on keycloak side
+    private User updateRoleAndGroups(Role role,Set<UserGroup> groups, User user){
+            user.setRole(role);
+            try {
+                for (UserGroup g:user.getGroups()){
+                    if (!groups.stream().anyMatch(group->group.getGroupName().equals(g.getGroupName()))) {
+                        UserGroup newGroup = new UserGroup();
+                        newGroup.setGroupName(g.getGroupName());
+                        newGroup.setId(g.getId());
+                        groups.add(g);
+                    }
+                }
+                user.setGroups(groups);
+                userService.update(new User(user));
+                user = userService.get(user.getName());
+            } catch (NotFoundServiceEx | BadRequestServiceEx ex) {
+                LOGGER.error("Error while updating user role...", ex);
+            }
+        return user;
+    }
+
+    // we only update if new roles were added on keycloak or the role changed
+    private boolean isUpdateUser(User user, Set<UserGroup> groups, Role mappedRole){
+        Set<UserGroup> incoming=new HashSet<>(groups);
+        incoming.removeAll(user.getGroups());
+        if (!incoming.stream().allMatch(g->g.getGroupName().equals(GroupReservedNames.EVERYONE.groupName())))
+            return true;
+
+        if (configuration.isAutoCreateUser() && (user.getRole() == null || !user.getRole().equals(mappedRole)))
+            return true;
+
+        return false;
+
+    }
+
+    private Role mappedRole(GeoStoreKeycloakAuthoritiesMapper mapper) {
+        Role role = null;
+        if (mapper != null && mapper.getRole() != null)
+            role = mapper.getRole();
+        if (role == null) role = configuration.getAuthenticatedDefaultRole();
+        if (role == null) role = Role.USER;
+        return role;
     }
 
     private String getUsername(Authentication authentication) {
@@ -185,5 +252,68 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         }
         if (username == null) username = SecurityUtils.getUsername(authentication);
         return username;
+    }
+
+    private Set<UserGroup> importGroups(Set<UserGroup> mappedGroups, Collection<GrantedAuthority> authorities) {
+        Set<UserGroup> returnSet = new HashSet<>(mappedGroups.size());
+        try {
+            if (mappedGroups == null || mappedGroups.isEmpty()) {
+                for (GrantedAuthority auth : authorities) {
+                    UserGroup res = importGroup(auth);
+                    returnSet.add(res);
+                }
+            } else {
+                for (UserGroup g : mappedGroups) {
+                    UserGroup res = importGroup(g.getGroupName());
+                    returnSet.add(res);
+                }
+            }
+        } catch (BadRequestServiceEx e) {
+            LOGGER.error("Error while synchronizing groups.... Error is: ", e);
+        }
+        return returnSet;
+    }
+
+    private UserGroup importGroup(GrantedAuthority a)
+            throws BadRequestServiceEx {
+        return importGroup(a.getAuthority());
+    }
+
+    private UserGroup importGroup(String groupName) throws BadRequestServiceEx {
+        UserGroup group;
+        if (groupService != null) {
+            group = groupService.get(groupName);
+
+            if (group == null) {
+                LOGGER.log(Level.INFO, "Creating new group from Keycloak: " + groupName);
+                group = new UserGroup();
+                group.setGroupName(groupName);
+                long id = groupService.insert(group);
+                group = groupService.get(id);
+            }
+        } else {
+            group = new UserGroup();
+            group.setGroupName(groupName);
+        }
+        return group;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setGroupService(UserGroupService groupService) {
+        this.groupService = groupService;
+    }
+
+    private void addEveryOne(Set<UserGroup> groups){
+        String everyone=GroupReservedNames.EVERYONE.groupName();
+        if (!groups.stream().anyMatch(g->g.getGroupName().equals(everyone))) {
+            UserGroup everyoneGroup = new UserGroup();
+            everyoneGroup.setEnabled(true);
+            everyoneGroup.setId(-1L);
+            everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
+            groups.add(everyoneGroup);
+        }
     }
 }

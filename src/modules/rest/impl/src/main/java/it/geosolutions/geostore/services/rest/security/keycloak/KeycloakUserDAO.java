@@ -34,6 +34,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import org.apache.log4j.Logger;
+import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -261,7 +262,6 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
             LOGGER.debug("Converting UserRepresentation to User");
         }
         List<User> users = new ArrayList<>();
-        Map<String, String> roleMappings = getRoleMappings();
         int id = 1;
         for (UserRepresentation representation : userRepresentations) {
             User user = new User();
@@ -270,7 +270,7 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
             user.setName(representation.getUsername());
             user.setEnabled(representation.isEnabled());
             user.setTrusted(true);
-            GeoStoreKeycloakAuthoritiesMapper mapper = new GeoStoreKeycloakAuthoritiesMapper(roleMappings);
+            GeoStoreKeycloakAuthoritiesMapper mapper = getAuthoritiesMapper();
             List<String> roles = ur.get(representation.getId()).roles().realmLevel().listEffective().stream().map(m -> m.getName()).collect(Collectors.toList());
             mapper.mapAuthorities(roles);
             user.setRole(mapper.getRole());

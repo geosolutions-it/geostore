@@ -2,6 +2,8 @@ package it.geosolutions.geostore.rest.security.keycloak;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.keycloak.GeoStoreKeycloakAuthProvider;
 import it.geosolutions.geostore.services.rest.security.keycloak.GeoStoreOAuthAuthenticator;
@@ -44,7 +46,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -55,6 +60,9 @@ public class KeycloakFilterTest extends KeycloakTestSupport{
 
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
+
+    private MockUserGroupService groupService=new MockUserGroupService();
+    private MockUserService userService=new MockUserService();
 
     private FilterChain chain;
 
@@ -98,6 +106,12 @@ public class KeycloakFilterTest extends KeycloakTestSupport{
             filter.doFilter(request, response, chain);
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             assertTrue(authentication.getPrincipal() instanceof User);
+            User user =(User) authentication.getPrincipal();
+            Set<UserGroup> groupSet=user.getGroups();
+            groupSet=groupSet.stream().filter(g->!g.getGroupName().equals("everyone")).collect(Collectors.toSet());
+            for (UserGroup group: groupSet){
+                assertNotNull(groupService.get(group.getGroupName()));
+            }
             assertTrue(authentication.getDetails() instanceof KeycloakTokenDetails);
                 KeycloakTokenDetails tokenDetails = (KeycloakTokenDetails) authentication.getDetails();
                 assertNotNull(cache.get(tokenDetails.getAccessToken()));
@@ -142,13 +156,46 @@ public class KeycloakFilterTest extends KeycloakTestSupport{
                 return new TestAuthenticator(simpleHttpFacade,request,deployment,tokenStore,-1);
             }
         };
-        return new KeyCloakFilter(helper,cache,configuration, new GeoStoreKeycloakAuthProvider(configuration));
+        GeoStoreKeycloakAuthProvider authProvider=new GeoStoreKeycloakAuthProvider(configuration);
+        authProvider.setUserService(userService);
+        authProvider.setGroupService(groupService);
+        return new KeyCloakFilter(helper,cache,configuration, authProvider);
     }
 
     @After
     public void cleanUp(){
         RequestContextHolder.resetRequestAttributes();
         SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    public void testDropUnMappedGroups() throws IOException, ServletException {
+        KeyCloakConfiguration configuration = createConfiguration();
+        configuration.setDropUnmapped(true);
+        configuration.setGroupMappings("uma_authorization:TEST_GROUP");
+        AdapterConfig config = configuration.readAdapterConfig();
+        config.setRealmKey(PUBLIC_KEY);
+        ObjectMapper om = new ObjectMapper();
+        String stringConfig = om.writeValueAsString(config);
+        configuration.setJsonConfig(stringConfig);
+        try(MockedStatic<AdapterTokenVerifier> utilities = Mockito.mockStatic(AdapterTokenVerifier.class)) {
+            utilities.when(()->AdapterTokenVerifier.verifyToken(eq(JWT_2018_2037), any(KeycloakDeployment.class))).thenReturn(verifyToken());
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+            KeyCloakFilter filter = createFilter(configuration, cache);
+            String auth_header = "bearer " + JWT_2018_2037;
+            request.addHeader("AUTHORIZATION", auth_header);
+            filter.doFilter(request, response, chain);
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            assertTrue(authentication.getPrincipal() instanceof User);
+            User user =(User) authentication.getPrincipal();
+            Set<UserGroup> groupSet=user.getGroups();
+            assertEquals(2,groupSet.size());
+            groupSet.stream().anyMatch(g->g.getGroupName().equals("TEST_GROUP"));
+            groupSet.stream().anyMatch(g->g.getGroupName().equals("everyone"));
+            assertTrue(authentication.getDetails() instanceof KeycloakTokenDetails);
+            KeycloakTokenDetails tokenDetails = (KeycloakTokenDetails) authentication.getDetails();
+            assertNotNull(cache.get(tokenDetails.getAccessToken()));
+        }
     }
 
     private static org.keycloak.representations.AccessToken verifyToken() {
