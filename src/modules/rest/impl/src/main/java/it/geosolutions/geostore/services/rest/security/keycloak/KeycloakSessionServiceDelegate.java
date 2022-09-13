@@ -54,6 +54,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -170,10 +171,10 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
         SpringSecurityAdapterTokenStoreFactory factory=new SpringSecurityAdapterTokenStoreFactory();
         AdapterTokenStore tokenStore=factory.createAdapterTokenStore(deployment,getRequest(),getResponse());
         if (tokenStore!=null) tokenStore.logout();
-        internalLogout(accessToken,request);
+        internalLogout(accessToken,request,response);
     }
 
-    private void internalLogout(String accessToken, HttpServletRequest request){
+    private void internalLogout(String accessToken, HttpServletRequest request,HttpServletResponse response){
         TokenAuthenticationCache cache=GeoStoreContext.bean(CACHE_BEAN_NAME,TokenAuthenticationCache.class);
         if (cache.get(accessToken)!=null) cache.removeEntry(accessToken);
         SecurityContextHolder.clearContext();

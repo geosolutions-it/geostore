@@ -63,7 +63,6 @@ public class KeyCloakFilter extends GenericFilterBean {
 
 
     // used to map keycloak roles to spring-security roles
-
     private final GeoStoreKeycloakAuthProvider authenticationProvider;
     // creates token stores capable of generating spring-security tokens from keycloak auth
     // the context of the keycloak environment (realm, URL, client-secrets etc.)
@@ -181,7 +180,6 @@ public class KeyCloakFilter extends GenericFilterBean {
                     authentication=null;
                 }
             }
-
             if (authentication == null) {
                 authentication = authenticateAndUpdateCache(request, response);
             }

@@ -33,8 +33,6 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UsersResource;
 
-import java.util.Map;
-
 /**
  * Base DAO class for keycloak based repository.
  */
@@ -91,12 +89,12 @@ public abstract class BaseKeycloakDAO {
     }
 
     /**
-     * Get the RoleMappings if any has been configured.
-     * @return the role mappings or null if none was configured.
+     * Get an authorities mapper instance.
+     * @return the authorities mapper.
      */
-    protected Map<String,String> getRoleMappings(){
+    protected GeoStoreKeycloakAuthoritiesMapper getAuthoritiesMapper(){
         KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
-        if (configuration==null) return null;
-        return configuration.getRoleMappings();
+        if (configuration!=null) return new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings(),configuration.getGroupMappings(),configuration.isDropUnmapped());
+        else return new GeoStoreKeycloakAuthoritiesMapper(null,null,false);
     }
 }
