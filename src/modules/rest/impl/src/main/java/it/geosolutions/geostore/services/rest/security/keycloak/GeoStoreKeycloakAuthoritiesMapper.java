@@ -54,16 +54,23 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
 
     private Map<String, String> roleMappings;
 
+    private Map<String, String> groupMappings;
+
+    private boolean dropUnmapped=false;
+
+
     private int idCounter;
 
     private final static Logger LOGGER = Logger.getLogger(GeoStoreKeycloakAuthoritiesMapper.class);
 
 
-    public GeoStoreKeycloakAuthoritiesMapper(Map<String, String> roleMappings) {
+    GeoStoreKeycloakAuthoritiesMapper(Map<String, String> roleMappings,Map<String,String> groupMappings, boolean dropUnmapped) {
         this.roleMappings = roleMappings;
+        this.groupMappings = groupMappings;
         if (LOGGER.isDebugEnabled() && roleMappings != null)
             LOGGER.debug("Role mappings have been configured....");
         this.idCounter = 1;
+        this.dropUnmapped=dropUnmapped;
     }
 
     @Override
@@ -71,7 +78,8 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         HashSet<GrantedAuthority> mapped = new HashSet<>(
                 authorities.size());
         for (GrantedAuthority authority : authorities) {
-            mapped.add(mapAuthority(authority.getAuthority()));
+            GrantedAuthority newAuthority=mapAuthority(authority.getAuthority());
+            if (newAuthority!=null) mapped.add(newAuthority);
         }
         KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
         String defRoleStr = null;
@@ -89,8 +97,8 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         return mapped;
     }
 
-    void mapAuthorities(List<String> roles) {
-        if (roles != null) roles.forEach(r -> mapStringAuthority(r));
+    void mapAuthorities(List<String> authorities) {
+        if (authorities != null) authorities.forEach(r -> mapStringAuthority(r));
         if (getRole() == null) setDefaultRole();
     }
 
@@ -102,6 +110,7 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
 
     private GrantedAuthority mapAuthority(String name) {
         String authName = mapStringAuthority(name);
+        if (authName==null) return null;
         return new SimpleGrantedAuthority(authName);
     }
 
@@ -113,7 +122,12 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         if (authName == null) {
             // if not a role then is a group.
             authName = name;
-            addGroup(authName);
+            if (groupMappings!= null)
+                authName=groupMappings.get(authName);
+            if (authName==null && !dropUnmapped)
+                authName=name;
+            if (authName != null)
+                addGroup(authName);
         }
         return authName;
     }
@@ -166,7 +180,7 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
     /**
      * @return the found role.
      */
-    public Role getRole() {
+    Role getRole() {
         return role;
     }
 
@@ -185,7 +199,7 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         this.groups.add(userGroup);
     }
 
-    public int getIdCounter() {
+    int getIdCounter() {
         return idCounter;
     }
 }

@@ -71,9 +71,4 @@ public abstract class KeycloakTestSupport {
         configuration.setInternalRedirectUri("../../../");
         return configuration;
     }
-
-    protected KeycloakDeployment getKeycloakDeployment(KeyCloakConfiguration configuration){
-        return
-                KeycloakDeploymentBuilder.build(configuration.readAdapterConfig());
-    }
 }

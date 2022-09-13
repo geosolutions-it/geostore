@@ -50,6 +50,10 @@ public class KeyCloakConfiguration extends IdPConfiguration {
 
     private Map<String,String> roleMappings;
 
+    private Map<String,String> groupMappings;
+
+    private boolean dropUnmapped=false;
+
     /**
      * @return the JSON config, obtained at client configuration time from Keycloak.
      */
@@ -70,19 +74,40 @@ public class KeyCloakConfiguration extends IdPConfiguration {
     }
 
     public void setRoleMappings(String roleMappings) {
-        if (roleMappings!=null) {
-            String[] keyValues = roleMappings.split(",");
-            Map<String, String> mappings = new RoleMappings(keyValues.length);
+        this.roleMappings=toMap(roleMappings);
+    }
+
+    public void setGroupMappings(String groupMappings) {
+        this.groupMappings=toMap(groupMappings);
+    }
+
+    private Map<String,String> toMap(String mappings){
+        if (mappings!=null) {
+            String[] keyValues = mappings.split(",");
+            Map<String, String> map = new AuthoritiesMappings(keyValues.length);
             for (String keyValue : keyValues) {
                 String[] keyValueAr = keyValue.split(":");
-                mappings.put(keyValueAr[0], keyValueAr[1]);
+                map.put(keyValueAr[0], keyValueAr[1]);
             }
-            this.roleMappings = mappings;
+            return map;
         }
+        return null;
     }
 
     public Map<String, String> getRoleMappings(){
         return roleMappings;
+    }
+
+    public Map<String, String> getGroupMappings(){
+        return groupMappings;
+    }
+
+    public boolean isDropUnmapped() {
+        return dropUnmapped;
+    }
+
+    public void setDropUnmapped(boolean dropUnmapped) {
+        this.dropUnmapped = dropUnmapped;
     }
 
     /**
