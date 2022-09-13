@@ -39,7 +39,7 @@ import org.keycloak.adapters.spi.HttpFacade;
 
 
 /**
- * Custom OAuthAuthenticator.
+ * Custom OAuthRequestAuthenticator. Used to force the redirect URI to the configured one.
  */
 public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
 
