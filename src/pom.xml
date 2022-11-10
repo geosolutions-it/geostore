@@ -104,8 +104,7 @@
         <jaxb-api-version>2.1</jaxb-api-version>
         <jaxb-impl-version>2.1.2</jaxb-impl-version>
 
-        <log4j-version>1.2.17.norce</log4j-version>
-        <slf4japi-version>1.7.2</slf4japi-version>
+        <log4j-version>2.19.0</log4j-version>
         <dom4j-version>1.6.1</dom4j-version>
 
         <maven-assembly-plugin-version>2.2-beta-5</maven-assembly-plugin-version>
@@ -311,19 +310,19 @@
 		    <!--     4J                                                      -->
 		    <!-- =========================================================== -->
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4japi-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>log4j</groupId>
-                <artifactId>log4j</artifactId>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
                 <version>${log4j-version}</version>
             </dependency>
             <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-log4j12</artifactId>
-                <version>${slf4japi-version}</version>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j-version}</version>
             </dependency>
             <dependency>
                 <groupId>dom4j</groupId>
