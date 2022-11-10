@@ -54,7 +54,9 @@ import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
@@ -68,7 +70,7 @@ import org.springframework.context.ApplicationContextAware;
  */
 public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService, ApplicationContextAware {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTMiscServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTMiscServiceImpl.class);
 
     private CategoryService categoryService;
 

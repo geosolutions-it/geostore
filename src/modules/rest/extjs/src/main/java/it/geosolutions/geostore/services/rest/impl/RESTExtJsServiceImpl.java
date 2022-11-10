@@ -68,7 +68,9 @@ import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTExtJsServiceImpl.
@@ -78,7 +80,7 @@ import org.apache.log4j.Logger;
  */
 public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTExtJsServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTExtJsServiceImpl.class);
 
     private ResourceService resourceService;
 

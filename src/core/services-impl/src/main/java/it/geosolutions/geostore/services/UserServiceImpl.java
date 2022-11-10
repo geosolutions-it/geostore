@@ -38,7 +38,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.cxf.common.util.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
@@ -51,7 +52,7 @@ import com.googlecode.genericdao.search.Search;
  */
 public class UserServiceImpl implements UserService {
 
-    private static final Logger LOGGER = Logger.getLogger(UserServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
 
     private UserDAO userDAO;
 

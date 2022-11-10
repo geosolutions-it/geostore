@@ -46,7 +46,9 @@ import it.geosolutions.geostore.services.rest.model.CategoryList;
 
 import javax.ws.rs.core.SecurityContext;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTCategoryServiceImpl.
@@ -56,7 +58,7 @@ import org.apache.log4j.Logger;
  */
 public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCategoryService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTCategoryServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTCategoryServiceImpl.class);
 
     private CategoryService categoryService;
 

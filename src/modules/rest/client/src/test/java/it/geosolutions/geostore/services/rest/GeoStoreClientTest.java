@@ -49,7 +49,8 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.cxf.helpers.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -61,7 +62,7 @@ import java.util.Collections;
  * @author ETj (etj at geo-solutions.it)
  */
 public class GeoStoreClientTest extends BaseGeoStoreClientTest {
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreClientTest.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreClientTest.class);
 
     final String DEFAULTCATEGORYNAME = "TestCategory1";
 

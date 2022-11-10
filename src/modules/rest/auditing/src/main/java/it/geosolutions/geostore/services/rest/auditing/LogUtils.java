@@ -27,7 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 final class LogUtils {
 

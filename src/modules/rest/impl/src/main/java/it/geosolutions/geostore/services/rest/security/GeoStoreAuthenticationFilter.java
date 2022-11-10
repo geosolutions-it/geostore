@@ -45,7 +45,9 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -66,7 +68,7 @@ import org.springframework.web.filter.GenericFilterBean;
  */
 public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreAuthenticationFilter.class);
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
     
     @Autowired

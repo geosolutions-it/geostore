@@ -6,7 +6,9 @@ import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Cookie;
@@ -26,7 +28,7 @@ import static org.springframework.security.oauth2.common.OAuth2AccessToken.BEARE
 
 public abstract class Oauth2LoginService implements IdPLoginService {
 
-    private final static Logger LOGGER = Logger.getLogger(Oauth2LoginService.class);
+    private final static Logger LOGGER = LogManager.getLogger(Oauth2LoginService.class);
 
 
     @Override

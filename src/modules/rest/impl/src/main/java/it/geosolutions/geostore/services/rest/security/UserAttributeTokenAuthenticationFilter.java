@@ -32,7 +32,9 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 
 import java.util.Collection;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 
 /**
@@ -45,7 +47,7 @@ import org.springframework.security.core.Authentication;
  */
 public class UserAttributeTokenAuthenticationFilter extends TokenAuthenticationFilter {
     
-    private final static Logger LOGGER = Logger.getLogger(UserAttributeTokenAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(UserAttributeTokenAuthenticationFilter.class);
     
     private String attributeName = "UUID";
     

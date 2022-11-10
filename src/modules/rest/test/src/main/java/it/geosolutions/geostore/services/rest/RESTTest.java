@@ -24,7 +24,9 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserService;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
@@ -33,7 +35,7 @@ import org.springframework.beans.factory.InitializingBean;
  */
 public class RESTTest implements InitializingBean {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTTest.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTTest.class);
 
     protected UserService userService;
 

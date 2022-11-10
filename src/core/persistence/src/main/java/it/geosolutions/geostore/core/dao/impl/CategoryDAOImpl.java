@@ -29,7 +29,9 @@ import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -41,7 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(value = "geostoreTransactionManager")
 public class CategoryDAOImpl extends BaseDAO<Category, Long> implements CategoryDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(CategoryDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(CategoryDAOImpl.class);
 
     /*
      * (non-Javadoc)

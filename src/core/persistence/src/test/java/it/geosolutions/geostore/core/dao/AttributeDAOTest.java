@@ -32,7 +32,9 @@ import it.geosolutions.geostore.core.model.enums.DataType;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
@@ -43,7 +45,7 @@ import org.junit.Test;
  */
 public class AttributeDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(AttributeDAOTest.class);
+    final private static Logger LOGGER = LogManager.getLogger(AttributeDAOTest.class);
 
     /**
      * @throws Exception

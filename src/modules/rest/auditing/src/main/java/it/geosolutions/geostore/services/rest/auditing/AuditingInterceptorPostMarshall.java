@@ -31,11 +31,13 @@ import org.apache.cxf.interceptor.Fault;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public final class AuditingInterceptorPostMarshall extends AbstractPhaseInterceptor<Message> {
 
-    private static final Logger LOGGER = Logger.getLogger(AuditingInterceptorPostMarshall.class);
+    private static final Logger LOGGER = LogManager.getLogger(AuditingInterceptorPostMarshall.class);
 
     public AuditingInterceptorPostMarshall() {
         super(Phase.POST_MARSHAL);

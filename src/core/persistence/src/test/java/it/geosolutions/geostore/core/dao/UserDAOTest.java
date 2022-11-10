@@ -31,7 +31,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
@@ -42,7 +43,7 @@ import org.junit.Test;
  */
 public class UserDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(UserDAOTest.class);
+    final private static Logger LOGGER = LogManager.getLogger(UserDAOTest.class);
 
     /**
      * @throws Exception

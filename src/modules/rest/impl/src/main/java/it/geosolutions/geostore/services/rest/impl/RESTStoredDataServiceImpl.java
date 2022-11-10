@@ -50,7 +50,9 @@ import net.sf.json.JSONSerializer;
 import net.sf.json.xml.XMLSerializer;
 import org.apache.commons.codec.binary.Base64;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
@@ -65,7 +67,7 @@ import org.jdom.output.XMLOutputter;
  */
 public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTStoredDataService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTStoredDataServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTStoredDataServiceImpl.class);
 
     private StoredDataService storedDataService;
 

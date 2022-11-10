@@ -32,7 +32,9 @@ import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -62,7 +64,7 @@ import com.google.common.cache.LoadingCache;
  */
 public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFilter {
 
-    private final static Logger LOGGER = Logger.getLogger(TokenAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(TokenAuthenticationFilter.class);
     
     protected LoadingCache<String, Optional<Authentication>> cache;
     

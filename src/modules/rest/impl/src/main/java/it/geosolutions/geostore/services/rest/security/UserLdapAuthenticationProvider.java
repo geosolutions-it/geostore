@@ -19,8 +19,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -41,7 +43,7 @@ import org.springframework.security.ldap.userdetails.LdapUserDetails;
  */
 public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
-private final static Logger LOGGER = Logger.getLogger(UserLdapAuthenticationProvider.class);
+private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
     
     @Autowired
     UserService userService;

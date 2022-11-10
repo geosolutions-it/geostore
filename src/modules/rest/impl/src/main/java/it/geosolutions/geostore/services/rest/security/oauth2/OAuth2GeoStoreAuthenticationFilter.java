@@ -38,7 +38,9 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
@@ -88,7 +90,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
  */
 public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAuthenticationProcessingFilter {
 
-    private final static Logger LOGGER = Logger.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
 
 
     @Autowired

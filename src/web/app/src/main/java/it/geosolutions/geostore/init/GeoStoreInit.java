@@ -43,7 +43,9 @@ import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 /**
@@ -52,7 +54,7 @@ import org.springframework.beans.factory.InitializingBean;
  */
 public class GeoStoreInit implements InitializingBean {
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreInit.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreInit.class);
 
     protected UserService userService;
 

@@ -38,7 +38,9 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeycloakTokenDetails;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -84,7 +86,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
  */
 public abstract class OAuth2SessionServiceDelegate implements SessionServiceDelegate {
 
-    private final static Logger LOGGER = Logger.getLogger(OAuth2SessionServiceDelegate.class);
+    private final static Logger LOGGER = LogManager.getLogger(OAuth2SessionServiceDelegate.class);
 
     protected UserService userService;
 

@@ -27,8 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -57,7 +58,7 @@ import java.util.Map;
 public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
 
     protected static Logger LOGGER =
-            LoggerFactory.getLogger(GeoStoreRemoteTokenServices.class);
+            LogManager.getLogger(GeoStoreRemoteTokenServices.class);
 
     protected RestOperations restTemplate;
 

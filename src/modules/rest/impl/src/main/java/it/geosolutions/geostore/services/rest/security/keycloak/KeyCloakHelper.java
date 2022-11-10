@@ -28,7 +28,9 @@
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.AdapterDeploymentContext;
 import org.keycloak.adapters.AdapterTokenStore;
 import org.keycloak.adapters.KeycloakDeployment;
@@ -54,7 +56,7 @@ import java.util.Map;
  */
 public class KeyCloakHelper {
 
-    private final static Logger LOGGER = Logger.getLogger(KeycloakSessionServiceDelegate.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeycloakSessionServiceDelegate.class);
 
 
     protected final SpringSecurityAdapterTokenStoreFactory adapterTokenStoreFactory;

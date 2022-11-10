@@ -32,7 +32,8 @@ import javax.xml.bind.JAXBException;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
@@ -43,7 +44,7 @@ import org.junit.Test;
  */
 public class SearchFilterTest extends TestCase {
 
-    protected final Logger LOGGER = Logger.getLogger(this.getClass());
+    protected final Logger LOGGER = LogManager.getLogger(this.getClass());
 
     public SearchFilterTest() {
     }

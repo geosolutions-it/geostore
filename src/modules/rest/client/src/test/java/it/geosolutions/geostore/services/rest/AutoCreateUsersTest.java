@@ -27,7 +27,9 @@ import it.geosolutions.geostore.core.model.User;
 
 import java.net.ConnectException;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -45,7 +47,7 @@ import org.junit.Test;
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
 public class AutoCreateUsersTest {
-    private final static Logger LOGGER = Logger.getLogger(AutoCreateUsersTest.class);
+    private final static Logger LOGGER = LogManager.getLogger(AutoCreateUsersTest.class);
 
     AdministratorGeoStoreClient geoStoreClient;
 

@@ -24,7 +24,8 @@ import it.geosolutions.geostore.core.model.Resource;
 
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
@@ -35,7 +36,7 @@ import org.junit.Test;
  */
 public class CategoryDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(CategoryDAOTest.class);
+    final private static Logger LOGGER = LogManager.getLogger(CategoryDAOTest.class);
 
     /**
      * @throws Exception

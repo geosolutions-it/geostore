@@ -31,7 +31,9 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -61,7 +63,7 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
 
     private int idCounter;
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreKeycloakAuthoritiesMapper.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreKeycloakAuthoritiesMapper.class);
 
 
     GeoStoreKeycloakAuthoritiesMapper(Map<String, String> roleMappings,Map<String,String> groupMappings, boolean dropUnmapped) {

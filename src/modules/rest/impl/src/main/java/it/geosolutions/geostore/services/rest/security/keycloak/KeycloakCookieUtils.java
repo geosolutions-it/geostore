@@ -27,7 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.common.util.KeycloakUriBuilder;

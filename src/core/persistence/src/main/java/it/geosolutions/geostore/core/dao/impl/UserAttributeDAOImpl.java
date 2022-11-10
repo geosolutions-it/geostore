@@ -26,7 +26,9 @@ import java.util.List;
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.model.UserAttribute;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -38,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(value = "geostoreTransactionManager")
 public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implements UserAttributeDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(UserAttributeDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserAttributeDAOImpl.class);
 
     /*
      * (non-Javadoc)

@@ -32,7 +32,8 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.transport.http.AbstractHTTPDestination;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,7 +48,7 @@ import java.util.regex.Pattern;
 
 final class AuditInfoExtractor {
 
-    private static final Logger LOGGER = Logger.getLogger(AuditInfoExtractor.class);
+    private static final Logger LOGGER = LogManager.getLogger(AuditInfoExtractor.class);
 
     private static final Pattern geoStorePath = Pattern.compile("/geostore/(.*)");
 

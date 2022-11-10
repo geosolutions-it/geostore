@@ -28,7 +28,8 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.googlecode.genericdao.search.Search;
 
@@ -40,7 +41,7 @@ import com.googlecode.genericdao.search.Search;
  */
 public class CategoryServiceImpl implements CategoryService {
 
-    private static final Logger LOGGER = Logger.getLogger(CategoryServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(CategoryServiceImpl.class);
 
     private CategoryDAO categoryDAO;
 
