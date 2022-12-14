@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.UserGroup;
 import org.apache.log4j.Logger;
@@ -263,5 +264,17 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         RoleRepresentation roleRepresentation = new RoleRepresentation();
         roleRepresentation.setName(EVERYONE.groupName());
         return roleRepresentation;
+    }
+
+    @Override
+    public UserGroup findByName(String name) {
+        Search searchCriteria = new Search(UserGroup.class);
+        searchCriteria.addFilterEqual("groupName", name);
+        UserGroup result=null;
+        List<UserGroup> existingGroups = search(searchCriteria);
+        if (existingGroups.size() > 0) {
+            result = existingGroups.get(0);
+        }
+        return result;
     }
 }
