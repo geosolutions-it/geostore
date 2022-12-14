@@ -29,11 +29,13 @@ package it.geosolutions.geostore.rest.security.keycloak;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,5 +115,20 @@ class MockUserGroupService implements UserGroupService {
     @Override
     public long getCount(User authUser, String nameLike, boolean all) throws BadRequestServiceEx {
         return 0;
+    }
+
+    @Override
+    public void updateAttributes(long id, List<UserGroupAttribute> attributes) throws NotFoundServiceEx {
+
+    }
+
+    @Override
+    public long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx {
+        return 0;
+    }
+
+    @Override
+    public Collection<UserGroup> findByAttribute(String name, List<String> values, boolean ignoreCase) {
+        return null;
     }
 }

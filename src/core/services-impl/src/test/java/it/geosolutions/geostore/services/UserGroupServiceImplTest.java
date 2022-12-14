@@ -25,6 +25,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -33,17 +34,21 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.junit.Test;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @author DamianoG
  *
  */
+
 public class UserGroupServiceImplTest extends ServiceTestBase{
 
     @Test
@@ -153,5 +158,136 @@ public class UserGroupServiceImplTest extends ServiceTestBase{
         assertEquals(1, listsr.size());
         assertTrue("Expected FALSE", !listsr.get(0).isCanDelete());
         assertTrue("Expected FALSE", !listsr.get(0).isCanEdit());
+    }
+
+    /**
+     * Test the insertion of a UserGroup with UserGroupAttributes.
+     * @throws BadRequestServiceEx
+     */
+    @Test
+    public void testInsertGroupWithAttributes() throws BadRequestServiceEx {
+        UserGroup group=new UserGroup();
+        group.setGroupName("GroupWithAttrs");
+        UserGroupAttribute attribute=new UserGroupAttribute();
+        attribute.setName("attr1");
+        attribute.setValue("value,value2,value3");
+
+        UserGroupAttribute attribute2=new UserGroupAttribute();
+        attribute2.setName("attr2");
+        attribute2.setValue("value4,value5,value6");
+
+        group.setAttributes(Arrays.asList(attribute,attribute2));
+
+        long id=userGroupService.insert(group);
+
+        UserGroup ug=userGroupService.get(id);
+        List<UserGroupAttribute> attributes=ug.getAttributes();
+        assertEquals(2,attributes.size());
+        assertEquals("attr1",attributes.get(0).getName());
+        assertEquals("attr2",attributes.get(1).getName());
+
+    }
+
+    /**
+     * Test the updating of UserGroupAttributes.
+     * @throws BadRequestServiceEx
+     * @throws NotFoundServiceEx
+     */
+    @Test
+    public void testUpdateGroup() throws BadRequestServiceEx, NotFoundServiceEx {
+            UserGroup group=new UserGroup();
+            group.setGroupName("GroupWithAttrs2");
+            UserGroupAttribute attribute=new UserGroupAttribute();
+            attribute.setName("attr1");
+            attribute.setValue("value,value2,value3");
+
+            UserGroupAttribute attribute2=new UserGroupAttribute();
+            attribute2.setName("attr2");
+            attribute2.setValue("value4,value5,value6");
+
+            group.setAttributes(Arrays.asList(attribute,attribute2));
+
+            long id=userGroupService.insert(group);
+
+            UserGroup toUpdate=userGroupService.get(id);
+            toUpdate.setDescription("Updated Description");
+
+            long idUpdated=userGroupService.update(toUpdate);
+
+            UserGroup updated=userGroupService.get(idUpdated);
+
+            assertEquals(id,idUpdated);
+            assertEquals("Updated Description",updated.getDescription());
+    }
+
+    @Test
+    public void testUpdateUserGroupAttributes() throws BadRequestServiceEx, NotFoundServiceEx {
+        UserGroup group=new UserGroup();
+        group.setGroupName("GroupWithAttrs2");
+        UserGroupAttribute attribute=new UserGroupAttribute();
+        attribute.setName("attr1");
+        attribute.setValue("value,value2,value3");
+
+        UserGroupAttribute attribute2=new UserGroupAttribute();
+        attribute2.setName("attr2");
+        attribute2.setValue("value4,value5,value6");
+
+        group.setAttributes(Arrays.asList(attribute,attribute2));
+
+        long id=userGroupService.insert(group);
+
+        UserGroupAttribute attributeToUpdate1=new UserGroupAttribute();
+        attributeToUpdate1.setName(attribute.getName());
+        attributeToUpdate1.setValue(attribute.getValue());
+        UserGroupAttribute attributeToUpdate2=new UserGroupAttribute();
+        attributeToUpdate2.setName("updated");
+        attributeToUpdate2.setValue("updatedValue");
+        List<UserGroupAttribute> attributes=Arrays.asList(attributeToUpdate1,attributeToUpdate2);
+
+        userGroupService.updateAttributes(id,attributes);
+        UserGroup groupUpdated=userGroupService.get(id);
+        List<UserGroupAttribute> updatedList=groupUpdated.getAttributes();
+        assertTrue(updatedList.stream().anyMatch(g->g.getName().equals(attribute.getName())));
+        assertTrue(updatedList.stream().anyMatch(g->g.getName().equals(attributeToUpdate2.getName())));
+        assertFalse(updatedList.stream().anyMatch(g->g.getName().equals(attribute2.getName())));
+    }
+
+    @Test
+    public void testgetByAttributes() throws BadRequestServiceEx {
+        UserGroup group=new UserGroup();
+        group.setGroupName("GroupWithAttrs");
+        UserGroupAttribute attribute=new UserGroupAttribute();
+        attribute.setName("organization");
+        attribute.setValue("value");
+
+        UserGroupAttribute attribute2=new UserGroupAttribute();
+        attribute2.setName("attr2");
+        attribute2.setValue("value4,value5,value6");
+
+        group.setAttributes(Arrays.asList(attribute,attribute2));
+
+        long id=userGroupService.insert(group);
+
+        UserGroup group2=new UserGroup();
+        group2.setGroupName("GroupWithAttrs2");
+        UserGroupAttribute attribute21=new UserGroupAttribute();
+        attribute21.setName("Organization");
+        attribute21.setValue("value");
+
+        UserGroupAttribute attribute22=new UserGroupAttribute();
+        attribute22.setName("attr2");
+        attribute22.setValue("value4,value5,value6");
+
+        group2.setAttributes(Arrays.asList(attribute21,attribute22));
+
+        userGroupService.insert(group2);
+        UserGroupAttribute groupAttribute=new UserGroupAttribute();
+        groupAttribute.setName("organization");
+        groupAttribute.setValue("value");
+        Collection<UserGroup> groups=userGroupService.findByAttribute("organization",Arrays.asList("value"),true);
+        assertEquals(2,groups.size());
+
+        groups=userGroupService.findByAttribute("organization",Arrays.asList("value"),false);
+        assertEquals(1,groups.size());
     }
 }

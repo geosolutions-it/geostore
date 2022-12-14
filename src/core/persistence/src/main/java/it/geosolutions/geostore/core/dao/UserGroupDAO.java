@@ -29,4 +29,5 @@ import it.geosolutions.geostore.core.model.UserGroup;
  */
 public interface UserGroupDAO extends RestrictedGenericDAO<UserGroup> {
 
+    UserGroup findByName(String name);
 }

@@ -115,4 +115,11 @@ public class KeycloakUserGroupDAOTest {
 
     }
 
+    @Test
+    public void testGetOneByName2(){
+        UserGroup group=userGroupDAO.findByName("test-create-group");
+        assertEquals("test-create-group",group.getGroupName());
+
+    }
+
 }

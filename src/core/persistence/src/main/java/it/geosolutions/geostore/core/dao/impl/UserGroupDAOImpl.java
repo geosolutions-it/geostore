@@ -19,15 +19,24 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 
 import java.util.List;
+import java.util.Set;
 
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import org.apache.log4j.Logger;
+import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.googlecode.genericdao.search.ISearch;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 /**
  * Class UserGroupDAOImpl.
@@ -71,7 +80,33 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
      */
     @Override
     public UserGroup find(Long id) {
-        return super.find(id);
+        UserGroup group= super.find(id);
+        if (group != null) {
+            initializeLazyMembers(group);
+        }
+        return group;
+    }
+
+    private void initializeLazyMembers(UserGroup group){
+        if (Hibernate.isInitialized(group)) {
+            List<UserGroupAttribute> attributes = group.getAttributes();
+            Hibernate.initialize(attributes);
+            List<SecurityRule> secRules = group.getSecurity();
+            Hibernate.initialize(secRules);
+        }
+    }
+
+    @Override
+    public UserGroup findByName(String name){
+        Search searchCriteria = new Search(UserGroup.class);
+        searchCriteria.addFilterEqual("groupName", name);
+        UserGroup result=null;
+        List<UserGroup> existingGroups = search(searchCriteria);
+        if (existingGroups.size() > 0) {
+            result = existingGroups.get(0);
+            initializeLazyMembers(result);
+        }
+        return result;
     }
 
     /*

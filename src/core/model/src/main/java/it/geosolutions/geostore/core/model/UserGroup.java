@@ -35,18 +35,17 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
 
 /**
@@ -80,7 +79,8 @@ public class UserGroup implements Serializable {
     /*
      * Only To allow the CASCADING operation
      */
-    @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "group",
+            cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
     @Type(type="yes_no")
@@ -88,6 +88,9 @@ public class UserGroup implements Serializable {
     private boolean enabled=true;
     
     private transient List<User> users = new ArrayList<User>();
+
+    @OneToMany(mappedBy = "userGroup", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    private List<UserGroupAttribute> attributes;
     
     @XmlTransient
     public List<User> getUsers() {
@@ -177,6 +180,21 @@ public class UserGroup implements Serializable {
         this.description = description;
     }
 
+    /**
+     * @return the attribute
+     */
+    @XmlTransient
+    public List<UserGroupAttribute> getAttributes() {
+        return attributes;
+    }
+
+    /**
+     * @param attributes the attribute to set
+     */
+    public void setAttributes(List<UserGroupAttribute> attributes) {
+        this.attributes = attributes;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -213,6 +231,7 @@ public class UserGroup implements Serializable {
         result = (prime * result) + ((groupName == null) ? 0 : groupName.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((security == null) ? 0 : security.hashCode());
+        result = (prime * result) + ((attributes == null) ? 0 : attributes.hashCode());
 
         return result;
     }
@@ -254,6 +273,14 @@ public class UserGroup implements Serializable {
                 return false;
             }
         } else if (!security.equals(other.security)) {
+            return false;
+        }
+
+        if (attributes == null) {
+            if (other.attributes != null) {
+                return false;
+            }
+        } else if (!attributes.equals(other.attributes)) {
             return false;
         }
 

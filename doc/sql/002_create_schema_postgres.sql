@@ -95,6 +95,14 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
         primary key (id),
         unique (groupName)
     );
+
+     create table gs_user_group_attribute (
+          id bigint not null,
+          name varchar(255) not null,
+          string varchar(255),
+          userGroup_id bigint not null,
+          primary key (id)
+      );
 	
 	create table gs_usergroup_members (
 		user_id int8 not null, 
@@ -128,6 +136,14 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
         add constraint fk_attribute_resource 
         foreign key (resource_id) 
         references gs_resource;
+
+    create index idx_user_group_attr_name on gs_user_group_attribute (name);
+
+    create index idx_user_group_attr_text on gs_user_group_attribute (string);
+
+    create index idx_attr_user_group on gs_user_group_attribute (userGroup_id);
+
+    alter table gs_user_group_attribute add constraint fk_ugattrib_user_group foreign key (userGroup_id) references gs_usergroup;
 
     create index idx_category_type on gs_category (name);
 

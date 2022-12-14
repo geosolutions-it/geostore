@@ -20,11 +20,14 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -148,4 +151,21 @@ public interface UserGroupService {
      * @throws BadRequestServiceEx
      */
     long getCount(User authUser, String nameLike, boolean all) throws BadRequestServiceEx;
+
+    /**
+     * @param id
+     * @param attributes
+     * @throws NotFoundServiceEx
+     */
+    void updateAttributes(long id, List<UserGroupAttribute> attributes) throws NotFoundServiceEx;
+
+    /**
+     * @param group
+     * @return long
+     * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx
+     */
+    long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx;
+
+    Collection<UserGroup> findByAttribute(String name, List<String> values,boolean ignoreCase);
 }

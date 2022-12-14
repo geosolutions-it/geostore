@@ -22,11 +22,14 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.UserGroupAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
@@ -39,6 +42,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -61,7 +65,10 @@ public class UserGroupServiceImpl implements UserGroupService {
     private ResourceDAO resourceDAO;
     
     private SecurityDAO securityDAO;
-    
+
+    private UserGroupAttributeDAO userGroupAttributeDAO;
+
+
     /**
      * @param userGroupDAO the userGroupDAO to set
      */
@@ -92,6 +99,10 @@ public class UserGroupServiceImpl implements UserGroupService {
         this.securityDAO = securityDAO;
     }
 
+    public void setUserGroupAttributeDAO(UserGroupAttributeDAO userGroupAttributeDAO) {
+        this.userGroupAttributeDAO = userGroupAttributeDAO;
+    }
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.UserGroupService#insert(it.geosolutions.geostore.core.model.UserGroup)
      */
@@ -114,6 +125,14 @@ public class UserGroupServiceImpl implements UserGroupService {
         userGroupDAO.persist(userGroup);
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("UserGroup '" + userGroup.getGroupName() + "' persisted!");
+        }
+
+        List<UserGroupAttribute> attributes=userGroup.getAttributes();
+        if (attributes!=null && !attributes.isEmpty()){
+            for (UserGroupAttribute attr:attributes){
+                attr.setUserGroup(userGroup);
+                userGroupAttributeDAO.persist(attr);
+            }
         }
         
         return userGroup.getId();
@@ -209,8 +228,10 @@ public class UserGroupServiceImpl implements UserGroupService {
         }
         searchCriteria.addSortAsc("groupName");
         List<UserGroup> found = userGroupDAO.search(searchCriteria);
-        return found;
+        return remapWithoutAttributes(found);
     }
+
+
 
     @Override
     public List<UserGroup> getAllAllowed(User user, Integer page, Integer entries, String nameLike, boolean all) throws BadRequestServiceEx {
@@ -245,7 +266,7 @@ public class UserGroupServiceImpl implements UserGroupService {
 
         List<UserGroup> found = userGroupDAO.search(searchCriteria);
 
-        return found;
+        return remapWithoutAttributes(found);
     }
 
     /* (non-Javadoc)
@@ -359,14 +380,7 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     @Override
     public UserGroup get(String name) {
-        Search searchCriteria = new Search(UserGroup.class);
-        searchCriteria.addFilterEqual("groupName", name);
-
-        List<UserGroup> existingGroups = userGroupDAO.search(searchCriteria);
-        if (existingGroups.size() > 0) {
-            return existingGroups.get(0);
-        }
-        return null;
+        return userGroupDAO.findByName(name);
     }
 
     @Override
@@ -401,5 +415,73 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     public long getCount(User user, String nameLike) throws BadRequestServiceEx {
         return getCount(user, nameLike, false);
+    }
+
+    @Override
+    public void updateAttributes(long id, List<UserGroupAttribute> attributes) throws NotFoundServiceEx {
+        UserGroup group = userGroupDAO.find(id);
+        if (group == null) {
+            throw new NotFoundServiceEx("User not found " + id);
+        }
+
+        //
+        // Removing old attributes
+        //
+        List<UserGroupAttribute> oldList = group.getAttributes();
+        // Iterator<UserAttribute> iterator;
+
+        if (oldList != null) {
+            for (UserGroupAttribute a : oldList) {
+                userGroupAttributeDAO.removeById(a.getId());
+            }
+        }
+        //
+        // Saving old attributes
+        //
+        for (UserGroupAttribute a : attributes) {
+            a.setUserGroup(group);
+            userGroupAttributeDAO.persist(a);
+        }
+    }
+
+    @Override
+    public long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx {
+        UserGroup old=get(group.getId());
+        if (old==null)
+            old=get(group.getGroupName());
+        group.setId(old.getId());
+        userGroupDAO.merge(group);
+        return old.getId();
+    }
+
+    @Override
+    public Collection<UserGroup> findByAttribute(String name, List<String> values,boolean ignoreCase) {
+        Search searchCriteria = new Search(UserGroupAttribute.class);
+        if (!ignoreCase) {
+            searchCriteria.addFilterEqual("name", name);
+        } else {
+            searchCriteria.addFilterILike("name",name);
+        }
+        if (values.size()> 1)
+            searchCriteria.addFilterIn("value",values);
+        else
+            searchCriteria.addFilterEqual("value", values.get(0));
+        searchCriteria.addFetch("userGroup");
+        List<UserGroupAttribute> attributes=userGroupAttributeDAO.search(searchCriteria);
+        return attributes.stream().map(a->a.getUserGroup()).filter(u-> u !=null).collect(Collectors.toSet());
+    }
+
+    private List<UserGroup> remapWithoutAttributes(Collection<UserGroup> groups){
+        List<UserGroup> newList=new ArrayList<>(groups.size());
+        for (UserGroup old:groups){
+            UserGroup newGroup=new UserGroup();
+            newGroup.setId(old.getId());
+            newGroup.setGroupName(old.getGroupName());
+            newGroup.setDescription(old.getDescription());
+            newGroup.setEnabled(old.isEnabled());
+            newList.add(newGroup);
+        }
+        return newList;
+
     }
 }
