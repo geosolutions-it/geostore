@@ -53,7 +53,10 @@ import java.util.stream.Stream;
 import javax.ws.rs.core.SecurityContext;
 
 import it.geosolutions.geostore.services.rest.model.UserList;
-import org.apache.log4j.Logger;
+
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author DamianoG
@@ -61,7 +64,7 @@ import org.apache.log4j.Logger;
  */
 public class RESTUserGroupServiceImpl implements RESTUserGroupService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTUserGroupServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTUserGroupServiceImpl.class);
 
     private UserGroupService userGroupService;
     private UserService userService;

@@ -25,7 +25,8 @@ import java.util.Set;
 
 import javax.persistence.PersistenceException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import com.googlecode.genericdao.search.Filter;
@@ -46,7 +47,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
  */
 public class UserGroupDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(UserGroupDAOTest.class);
+    final private static Logger LOGGER = LogManager.getLogger(UserGroupDAOTest.class);
 
     /**
      * @throws Exception

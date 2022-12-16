@@ -45,7 +45,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
@@ -56,7 +57,7 @@ import com.googlecode.genericdao.search.Search;
  */
 public class UserGroupServiceImpl implements UserGroupService {
 
-    private static final Logger LOGGER = Logger.getLogger(UserGroupServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserGroupServiceImpl.class);
 
     private UserGroupDAO userGroupDAO;
     

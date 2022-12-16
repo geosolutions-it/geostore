@@ -1,7 +1,9 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakFilter;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -19,7 +21,7 @@ public class GeoStoreContext implements ApplicationContextAware {
      */
     static ApplicationContext context;
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreContext.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreContext.class);
 
 
     @Override

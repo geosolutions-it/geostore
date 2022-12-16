@@ -30,7 +30,9 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.RequestAuthenticator;
 import org.keycloak.adapters.spi.AuthOutcome;
@@ -75,7 +77,7 @@ public class KeyCloakFilter extends GenericFilterBean {
 
     private TokenAuthenticationCache cache;
 
-    private final static Logger LOGGER = Logger.getLogger(KeyCloakFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeyCloakFilter.class);
 
 
     /**

@@ -60,7 +60,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.googlecode.genericdao.search.Search;
@@ -77,7 +78,7 @@ import java.util.LinkedList;
 public class ResourceServiceImpl implements ResourceService
 {
 
-    private static final Logger LOGGER = Logger.getLogger(ResourceServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(ResourceServiceImpl.class);
 
     private UserGroupDAO userGroupDAO;
 

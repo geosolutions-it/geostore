@@ -27,7 +27,8 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
@@ -38,7 +39,7 @@ import org.junit.Test;
  */
 public class ExternalSecurityDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(ExternalSecurityDAOTest.class);
+    final private static Logger LOGGER = LogManager.getLogger(ExternalSecurityDAOTest.class);
 
     /**
      * @throws Exception

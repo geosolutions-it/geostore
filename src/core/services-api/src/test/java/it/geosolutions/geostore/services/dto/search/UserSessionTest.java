@@ -23,7 +23,8 @@ import java.util.GregorianCalendar;
 
 import javax.xml.bind.JAXBException;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 import it.geosolutions.geostore.core.model.User;
@@ -39,7 +40,7 @@ import junit.framework.TestCase;
  */
 public class UserSessionTest extends TestCase {
 
-    protected final Logger LOGGER = Logger.getLogger(this.getClass());
+    protected final Logger LOGGER = LogManager.getLogger(this.getClass());
 
     public UserSessionTest() {
     }

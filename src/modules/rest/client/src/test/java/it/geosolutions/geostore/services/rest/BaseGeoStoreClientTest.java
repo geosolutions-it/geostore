@@ -42,7 +42,9 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,7 +57,7 @@ import static org.junit.Assert.*;
  */
 abstract public class BaseGeoStoreClientTest {
 
-    private final static Logger LOGGER = Logger.getLogger(BaseGeoStoreClientTest.class);
+    private final static Logger LOGGER = LogManager.getLogger(BaseGeoStoreClientTest.class);
 
     protected static final String GEOSTORE_REST_URL = "http://localhost:9191/geostore/rest";
 

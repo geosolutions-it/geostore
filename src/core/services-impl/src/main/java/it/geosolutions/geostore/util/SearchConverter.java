@@ -42,7 +42,8 @@ import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class SearchConverter.
@@ -54,7 +55,7 @@ public class SearchConverter implements FilterVisitor {
 
     private static final Map<SearchOperator, Integer> ops_rest_trg;
 
-    private static final Logger LOGGER = Logger.getLogger(SearchConverter.class);
+    private static final Logger LOGGER = LogManager.getLogger(SearchConverter.class);
 
     static {
         Map<SearchOperator, Integer> ops = new EnumMap<SearchOperator, Integer>(

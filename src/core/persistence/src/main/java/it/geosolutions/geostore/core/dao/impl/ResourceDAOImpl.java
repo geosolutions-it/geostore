@@ -41,7 +41,9 @@ import java.util.List;
 
 import javax.persistence.NoResultException;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,7 +61,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
 @Transactional(value = "geostoreTransactionManager")
 public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements ResourceDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(ResourceDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(ResourceDAOImpl.class);
 
     /*
      * (non-Javadoc)

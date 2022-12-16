@@ -27,7 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 
@@ -46,7 +48,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
  */
 public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter {
     
-    private final static Logger LOGGER = Logger.getLogger(SessionTokenAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(SessionTokenAuthenticationFilter.class);
     
     private boolean validateUserFromService = true; 
     

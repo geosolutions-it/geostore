@@ -60,7 +60,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +73,7 @@ public class AdministratorGeostoreClientTest {
     AdministratorGeoStoreClient geoStoreClient;
     GeoStoreClient geoStoreUserClient;
 
-    private final static Logger LOGGER = Logger.getLogger(AdministratorGeostoreClientTest.class);
+    private final static Logger LOGGER = LogManager.getLogger(AdministratorGeostoreClientTest.class);
 
     final String DEFAULTCATEGORYNAME = "TestCategory1";
     final String KEY_STRING = "stringAtt";

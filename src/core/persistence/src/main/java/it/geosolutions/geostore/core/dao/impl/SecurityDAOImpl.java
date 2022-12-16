@@ -21,7 +21,10 @@ package it.geosolutions.geostore.core.dao.impl;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.log4j.Logger;
+
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
@@ -42,7 +45,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
 @Transactional(value = "geostoreTransactionManager")
 public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements SecurityDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(SecurityDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(SecurityDAOImpl.class);
 
     private UserGroupDAO userGroupDAO;
     /*

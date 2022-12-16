@@ -21,7 +21,8 @@
 package it.geosolutions.geostore.core.dao;
 
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import it.geosolutions.geostore.core.dao.impl.ExternalSecurityDAOImpl;
@@ -65,7 +66,7 @@ public abstract class BaseDAOTest extends TestCase {
     protected static ClassPathXmlApplicationContext ctx = null;
 
     public BaseDAOTest() {
-        LOGGER = Logger.getLogger(getClass());
+        LOGGER = LogManager.getLogger(getClass());
 
         synchronized (BaseDAOTest.class) {
             if (ctx == null) {

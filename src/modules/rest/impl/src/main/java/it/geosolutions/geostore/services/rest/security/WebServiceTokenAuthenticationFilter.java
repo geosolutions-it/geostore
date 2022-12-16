@@ -40,7 +40,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 
 /**
@@ -58,7 +60,7 @@ import org.springframework.security.core.Authentication;
  */
 public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilter {
 
-    private final static Logger LOGGER = Logger.getLogger(WebServiceTokenAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(WebServiceTokenAuthenticationFilter.class);
 
     private String url;
 

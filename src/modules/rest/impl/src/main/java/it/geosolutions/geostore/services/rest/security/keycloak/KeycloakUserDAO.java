@@ -33,7 +33,9 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
@@ -61,7 +63,7 @@ import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERY
  */
 public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
 
-    private final static Logger LOGGER = Logger.getLogger(KeycloakUserDAO.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeycloakUserDAO.class);
 
     public KeycloakUserDAO(KeycloakAdminClientConfiguration adminClientConfiguration) {
         super(adminClientConfiguration);

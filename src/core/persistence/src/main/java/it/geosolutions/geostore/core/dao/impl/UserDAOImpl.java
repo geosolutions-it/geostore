@@ -30,7 +30,9 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(value = "geostoreTransactionManager")
 public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(UserDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserDAOImpl.class);
 
     /*
      * (non-Javadoc)

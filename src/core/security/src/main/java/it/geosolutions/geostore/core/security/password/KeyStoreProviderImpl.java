@@ -17,7 +17,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.BeanNameAware;
 
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
@@ -35,7 +36,7 @@ import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBy
  *
  */
 public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider{
-	 private static final Logger LOGGER = Logger.getLogger(KeyStoreProviderImpl.class);
+	 private static final Logger LOGGER = LogManager.getLogger(KeyStoreProviderImpl.class);
     
     public final static String DEFAULT_BEAN_NAME="DefaultKeyStoreProvider";
     public final static String DEFAULT_FILE_NAME="geostore.jceks";

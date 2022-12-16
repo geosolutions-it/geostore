@@ -28,7 +28,8 @@
 package it.geosolutions.geostore.services.rest.auditing;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +37,7 @@ import java.util.Properties;
 
 final class AuditingConfiguration {
 
-    private static final Logger LOGGER = Logger.getLogger(AuditingConfiguration.class);
+    private static final Logger LOGGER = LogManager.getLogger(AuditingConfiguration.class);
 
     static final String CONFIGURATION_PATH = "GEOSTORE_AUDITING_CONF";
 

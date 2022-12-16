@@ -31,7 +31,9 @@ import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.UserGroup;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -50,7 +52,7 @@ import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERY
 public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDAO {
 
 
-    private final static Logger LOGGER = Logger.getLogger(KeycloakUserGroupDAO.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeycloakUserGroupDAO.class);
 
     private boolean addEveryOneGroup = false;
 

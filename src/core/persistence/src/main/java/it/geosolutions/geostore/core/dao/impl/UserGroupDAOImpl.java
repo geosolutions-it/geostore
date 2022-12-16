@@ -26,11 +26,12 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 
 import java.util.List;
-import java.util.Set;
 
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
-import org.apache.log4j.Logger;
 import org.hibernate.Hibernate;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.googlecode.genericdao.search.ISearch;
@@ -47,7 +48,7 @@ import javax.persistence.PersistenceContext;
 @Transactional(value = "geostoreTransactionManager")
 public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGroupDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(UserGroupDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserGroupDAOImpl.class);
 
     /*
      * (non-Javadoc)

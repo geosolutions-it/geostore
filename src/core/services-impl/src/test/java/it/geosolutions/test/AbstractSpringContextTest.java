@@ -22,7 +22,8 @@ package it.geosolutions.test;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
@@ -32,7 +33,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  */
 public abstract class AbstractSpringContextTest extends TestCase {
 
-    protected Logger logger = Logger.getLogger(getClass());
+    protected Logger logger = LogManager.getLogger(getClass());
 
     protected ClassPathXmlApplicationContext context = null;
 

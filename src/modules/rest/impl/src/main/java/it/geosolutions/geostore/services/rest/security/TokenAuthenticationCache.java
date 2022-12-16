@@ -33,7 +33,9 @@ import com.google.common.cache.RemovalCause;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -61,7 +63,7 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
     private int cacheSize = 1000;
     private int cacheExpirationMinutes = 8;
 
-    private final static Logger LOGGER = Logger.getLogger(TokenAuthenticationCache.class);
+    private final static Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
 
 
     public TokenAuthenticationCache() {

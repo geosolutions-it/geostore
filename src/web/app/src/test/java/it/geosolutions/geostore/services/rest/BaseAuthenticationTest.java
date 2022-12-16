@@ -33,7 +33,9 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.cxf.common.util.Base64Utility;
 import org.apache.cxf.io.CachedOutputStream;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,7 +50,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
  */
 public abstract class BaseAuthenticationTest extends TestCase {
 
-    protected final Logger LOGGER = Logger.getLogger(getClass());
+    protected final Logger LOGGER = LogManager.getLogger(getClass());
 
     protected UserService userService;
 

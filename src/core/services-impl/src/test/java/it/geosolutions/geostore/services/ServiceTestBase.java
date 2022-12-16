@@ -22,7 +22,8 @@ package it.geosolutions.geostore.services;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
@@ -63,7 +64,7 @@ public class ServiceTestBase extends TestCase {
 
     protected static ClassPathXmlApplicationContext ctx = null;
 
-    protected final Logger LOGGER = Logger.getLogger(getClass());
+    protected final Logger LOGGER = LogManager.getLogger(getClass());
 
     /**
      *

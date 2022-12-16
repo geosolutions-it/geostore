@@ -39,7 +39,9 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.AdapterTokenStore;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.spi.HttpFacade;
@@ -74,7 +76,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
  */
 public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
 
-    private final static Logger LOGGER = Logger.getLogger(KeycloakSessionServiceDelegate.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeycloakSessionServiceDelegate.class);
 
     private UserService userService;
 

@@ -21,7 +21,8 @@ package it.geosolutions.geostore.services;
 
 import java.util.Date;
 import java.util.List;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
@@ -39,7 +40,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
  */
 public class StoredDataServiceImpl implements StoredDataService {
 
-    private static final Logger LOGGER = Logger.getLogger(StoredDataServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(StoredDataServiceImpl.class);
 
     private StoredDataDAO storedDataDAO;
 

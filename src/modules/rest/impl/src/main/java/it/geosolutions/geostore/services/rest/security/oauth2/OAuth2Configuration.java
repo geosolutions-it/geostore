@@ -29,7 +29,9 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -48,7 +50,7 @@ public class OAuth2Configuration extends IdPConfiguration {
 
     public static final String CONFIG_NAME_SUFFIX = "OAuth2Config";
 
-    private final static Logger LOGGER = Logger.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+    private final static Logger LOGGER = LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
 
 
     protected String clientId;

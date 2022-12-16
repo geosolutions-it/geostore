@@ -28,7 +28,8 @@
 package it.geosolutions.geostore.services.rest.auditing;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -41,7 +42,7 @@ import java.util.regex.Pattern;
 
 final class AuditingFilesManager {
 
-    private static final Logger logger = Logger.getLogger(AuditingFilesManager.class);
+    private static final Logger logger = LogManager.getLogger(AuditingFilesManager.class);
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 

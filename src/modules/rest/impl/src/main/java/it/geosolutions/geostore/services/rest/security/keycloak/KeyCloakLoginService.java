@@ -29,7 +29,9 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.oauth2.Oauth2LoginService;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -51,7 +53,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
  */
 public class KeyCloakLoginService extends Oauth2LoginService {
 
-    private final static Logger LOGGER = Logger.getLogger(KeyCloakLoginService.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeyCloakLoginService.class);
 
     static String KEYCLOAK_REDIRECT = "KEYCLOAK_REDIRECT";
 

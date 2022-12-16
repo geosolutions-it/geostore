@@ -55,14 +55,16 @@ import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /** 
  *
  */
 public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackupService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTBackupServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTBackupServiceImpl.class);
 
     private CategoryService categoryService;
 

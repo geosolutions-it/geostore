@@ -24,7 +24,9 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import java.security.Principal;
 
 import org.apache.cxf.security.SecurityContext;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class GeoStoreSecurityContext.
@@ -34,7 +36,7 @@ import org.apache.log4j.Logger;
  */
 public class GeoStoreSecurityContext implements SecurityContext {
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreSecurityContext.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreSecurityContext.class);
 
     private GeoStorePrincipal principal;
 

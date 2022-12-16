@@ -31,7 +31,7 @@ import java.util.Map;
  * @author ETj (etj at geo-solutions.it)
  */
 public class CategorizedCircularBuffer<T, K> {
-    // protected final static Logger LOGGER = Logger.getLogger(CategorizedCircularBuffer.class);
+    // protected final static Logger LOGGER = LogManager.getLogger(CategorizedCircularBuffer.class);
 
     private final int maxSize;
 

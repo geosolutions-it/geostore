@@ -66,8 +66,10 @@ import java.util.List;
 
 import javax.ws.rs.core.SecurityContext;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTResourceServiceImpl.
@@ -78,7 +80,7 @@ import org.apache.log4j.Logger;
  */
 public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTResourceService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTResourceServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTResourceServiceImpl.class);
 
     private ResourceService resourceService;
     
@@ -255,11 +257,11 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         try {
             resourceService.deleteResources(filter);
         } catch (BadRequestServiceEx e) {
-            if (LOGGER.isEnabledFor(Level.ERROR))
+            if (LOGGER.isEnabled(Level.ERROR))
                 LOGGER.error(e.getMessage());
             throw new BadRequestWebEx(e.getMessage());
         } catch (InternalErrorServiceEx e) {
-            if (LOGGER.isEnabledFor(Level.ERROR))
+            if (LOGGER.isEnabled(Level.ERROR))
                 LOGGER.error(e.getMessage());
             throw new InternalErrorWebEx(e.getMessage());
         }

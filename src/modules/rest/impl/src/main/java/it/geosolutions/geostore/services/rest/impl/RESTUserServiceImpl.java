@@ -35,7 +35,9 @@ import java.util.Set;
 import javax.ws.rs.core.SecurityContext;
 
 import org.apache.commons.lang.NotImplementedException;
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
@@ -61,7 +63,7 @@ import it.geosolutions.geostore.services.rest.model.UserList;
  */
 public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTUserServiceImpl.class);
+    private final static Logger LOGGER = LogManager.getLogger(RESTUserServiceImpl.class);
 
     private UserService userService;
 

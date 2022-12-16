@@ -28,8 +28,9 @@
 
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter;
@@ -43,7 +44,7 @@ public class GeoStoreAuthenticationConverter extends DefaultUserAuthenticationCo
     private Object usernameKey = USERNAME;
 
     protected static Logger LOGGER =
-            LoggerFactory.getLogger(GeoStoreAuthenticationConverter.class);
+            LogManager.getLogger(GeoStoreAuthenticationConverter.class);
 
     /**
      * Default Constructor.

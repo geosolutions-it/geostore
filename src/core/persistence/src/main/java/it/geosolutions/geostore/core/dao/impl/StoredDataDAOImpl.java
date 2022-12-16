@@ -30,7 +30,9 @@ import it.geosolutions.geostore.core.dao.StoredDataDAO;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -42,7 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(value = "geostoreTransactionManager")
 public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements StoredDataDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(StoredDataDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(StoredDataDAOImpl.class);
 
     @Override
     public void persist(StoredData... entities) {

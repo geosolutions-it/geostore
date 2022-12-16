@@ -31,7 +31,9 @@ import java.util.List;
 
 import javax.xml.bind.JAXBContext;
 
-import org.apache.log4j.Logger;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A JAXBContext of public GeoStore classes. Useful when unmarhasalling geostore classes.
@@ -40,7 +42,7 @@ import org.apache.log4j.Logger;
  */
 public class GeoStoreJAXBContext {
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreJAXBContext.class);
+    private final static Logger LOGGER = LogManager.getLogger(GeoStoreJAXBContext.class);
 
     private final static JAXBContext context;
 
