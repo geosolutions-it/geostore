@@ -30,7 +30,7 @@ jobs:
   ## Only on push event, publish on geosolutions maven repo
   publish:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if:  ${{ github.event_name == 'push' && github.repository == 'geosolutions-it/geostore' }}
     needs: build
     concurrency: ci-${{ github.ref }}
     steps:
