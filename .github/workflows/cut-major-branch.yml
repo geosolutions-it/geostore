@@ -32,7 +32,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAIN_BRANCH: ${{  github.event.inputs.main-branch }}
           RUN_ID: ${{ github.run_id }}
-          PR_OPTIONS: $${{ github.event.inputs.pr-options }}
+          PR_OPTIONS: ${{ github.event.inputs.pr-options }}
         run: |
           # script will go here
           echo "Initializing git"
