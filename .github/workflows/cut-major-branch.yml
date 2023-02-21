@@ -11,6 +11,9 @@ on:
       main-branch: 
         description: main branch
         default: master
+      pr-options:
+        description: Options for Pull request
+        default: --squash --auto --delete-branch
 jobs:
   cut-release:
     name: Create release branch and PRs into main main branch
@@ -29,6 +32,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAIN_BRANCH: ${{  github.event.inputs.main-branch }}
           RUN_ID: ${{ github.run_id }}
+          PR_OPTIONS: $${{ github.event.inputs.pr-options }}
         run: |
           # script will go here
           echo "Initializing git"
@@ -53,7 +57,7 @@ jobs:
           git push origin "${pr_branch_name}"
           pr_url=$(gh pr create -B "${MAIN_BRANCH}" -H "${pr_branch_name}" --title "[github-action] Bump version to ${NEXT}" --body "This automatic pull request bumps version of ${MAIN_BRANCH} branch to ${NEXT}")
           sleep 10
-          gh pr merge "$pr_url" --squash --auto --delete-branch 
+          gh pr merge "$pr_url" ${{PR_OPTIONS}} 
                
 
 
