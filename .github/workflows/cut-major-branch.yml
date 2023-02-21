@@ -23,6 +23,7 @@ jobs:
         env:
           CURR: ${{ github.event.inputs.current-version }}
           NEXT: ${{ github.event.inputs.next-version }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # script will go here
           echo "Initializing git"
@@ -35,10 +36,14 @@ jobs:
           git checkout master
           mvn release:update-versions -DautoVersionSubmodules=true -DdevelopmentVersion=${NEXT}-SNAPSHOT # sets the internal verison
           mvn versions:set-property -Dproperty=geostore-version -DnewVersion=${NEXT}-SNAPSHOT # sets geostore-version property
+          git checkout -b "bump-${NEXT}"
           git add pom.xml
           git add "**/pom.xml"
           git commit -m "Update to ${NEXT}"
-          git push origin master
+          git push origin "bump-${NEXT}"
+          gh pr create -B master -H "bump-${NEXT}" --title "Update ${CUR}" --body 'Bumps version to 1.2'
+          gh pr merge --auto --delete-branch
+               
 
 
           
