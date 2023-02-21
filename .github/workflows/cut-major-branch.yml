@@ -58,7 +58,7 @@ jobs:
           git push origin "${pr_branch_name}"
           pr_url=$(gh pr create -B "${MAIN_BRANCH}" -H "${pr_branch_name}" --title "[github-action] Bump version to ${NEXT}" --body "This automatic pull request bumps version of ${MAIN_BRANCH} branch to ${NEXT}")
           sleep 10
-          gh pr merge "$pr_url" ${{PR_OPTIONS}} 
+          gh pr merge "$pr_url" ${PR_OPTIONS} 
                
 
 
