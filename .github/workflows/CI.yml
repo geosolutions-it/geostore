@@ -17,7 +17,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up JDK 11
@@ -28,3 +27,22 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B clean install -Pextjs,h2_disk,auditing
+  ## Only on push even, publish on geosolutions maven repo
+  publish:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          server-id: geosolutions
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+      - name: Publish package
+        run: mvn clean install deploy -Ppostgres,extjs
+        env:
+          MAVEN_USERNAME: ${{ secrets.GS_MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.GS_MAVEN_PASSWORD }}
