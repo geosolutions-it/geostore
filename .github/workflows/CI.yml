@@ -14,8 +14,8 @@ on:
     - '[0-9]+.[0-9]+*'
 
 jobs:
+  # Run build and test
   build:
-
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -27,10 +27,11 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B clean install -Pextjs,h2_disk,auditing
-  ## Only on push even, publish on geosolutions maven repo
+  ## Only on push event, publish on geosolutions maven repo
   publish:
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    concurrency: ci-${{ github.ref }}
     steps:
       - uses: actions/checkout@v3
       - name: Set up Maven Central Repository
