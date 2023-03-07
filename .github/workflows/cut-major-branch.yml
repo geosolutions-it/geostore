@@ -52,8 +52,7 @@ jobs:
           pr_branch_name="bump-${NEXT}-${RUN_ID}"
           echo "Creating a temp PR on branch: ${pr_branch_name}"
           git checkout -b "${pr_branch_name}"
-          git add pom.xml
-          git add "**/pom.xml"
+          find . -name 'pom.xml' | xargs git add
           git commit -m "Bump version to ${NEXT}"
           git push origin "${pr_branch_name}"
           pr_url=$(gh pr create -B "${MAIN_BRANCH}" -H "${pr_branch_name}" --title "[github-action] Bump version to ${NEXT}" --body "This automatic pull request bumps version of ${MAIN_BRANCH} branch to ${NEXT}")
