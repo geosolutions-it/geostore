@@ -22,7 +22,7 @@ After this on the main (master) branch the `-SNAPSHOT` version of the modules is
 
 When the validation process is completed and all the fixes have been applied to the *release branch*, the version of the java modules is fixed, commit is tagged with the number of the release and the Github *release* is published. See [Release](#release).
 
-After this on the *release brach* the `-SNAPSHOT` version of the modules is restored. Then continuing applying fixes and minor improvements, creating more releases on with the same procedure, until end of maintainance.
+After this on the *release brach* the `-SNAPSHOT` version of the modules is restored so that it is possible to continue applying fixes and minor improvements, creating more releases on it with the same procedure, until end of maintainance.
 
 Here the steps to follow for executing the 2 procedures :
 
