@@ -36,10 +36,10 @@ import java.util.Date;
  */
 public class KeycloakTokenDetails {
 
+    private final Date expiration;
     private String accessToken;
     private String idToken;
     private String refreshToken;
-    private final Date expiration;
 
     public KeycloakTokenDetails(String accessToken, String refreshToken, Long exp) {
         this.accessToken = accessToken;

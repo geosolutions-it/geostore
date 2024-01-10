@@ -66,15 +66,11 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
 
     private final static Logger LOGGER = LogManager.getLogger(GeoStoreKeycloakAuthProvider.class);
-
-
+    private final KeyCloakConfiguration configuration;
     @Autowired
     private UserService userService;
-
     @Autowired
     private UserGroupService groupService;
-
-    private final KeyCloakConfiguration configuration;
 
     public GeoStoreKeycloakAuthProvider(KeyCloakConfiguration configuration) {
         this.configuration = configuration;

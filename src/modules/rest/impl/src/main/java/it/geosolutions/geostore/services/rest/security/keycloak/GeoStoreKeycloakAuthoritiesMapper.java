@@ -45,10 +45,10 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
 
     private static final String ROLE_PREFIX = "ROLE_";
     private final static Logger LOGGER = LogManager.getLogger(GeoStoreKeycloakAuthoritiesMapper.class);
-    private Set<UserGroup> groups;
-    private Role role;
     private final Map<String, String> roleMappings;
     private final Map<String, String> groupMappings;
+    private Set<UserGroup> groups;
+    private Role role;
     private boolean dropUnmapped = false;
     private int idCounter;
 

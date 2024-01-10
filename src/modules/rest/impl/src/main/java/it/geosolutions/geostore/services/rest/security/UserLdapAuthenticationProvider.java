@@ -33,7 +33,6 @@ import java.util.*;
 
 /**
  * @author alessio.fabiani
- *
  */
 public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 

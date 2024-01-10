@@ -62,21 +62,21 @@ public class GeoStoreLdapAuthoritiesPopulator extends
      */
     private final SearchControls searchControls = new SearchControls();
     /**
-     * The ID of the attribute which contains the role name for a group
-     */
-    private String groupRoleAttribute = "cn";
-    /**
      * The base DN from which the search for group membership should be performed
      */
     private final String groupSearchBase;
     private final String roleSearchBase;
+    private final String allGroupsSearchFilter = "(objectClass=group)";
+    private final String allRolesSearchFilter = "(objectClass=group)";
+    /**
+     * The ID of the attribute which contains the role name for a group
+     */
+    private String groupRoleAttribute = "cn";
     /**
      * The pattern to be used for the user search. {0} is the user's DN
      */
     private String groupSearchFilter = "(member={0})";
     private String roleSearchFilter = "(member={0})";
-    private final String allGroupsSearchFilter = "(objectClass=group)";
-    private final String allRolesSearchFilter = "(objectClass=group)";
     /**
      * The role prefix that will be prepended to each role name
      */
@@ -91,6 +91,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends
     private boolean convertToUpperCase = true;
     private GrantedAuthoritiesMapper roleMapper = null;
     private GrantedAuthoritiesMapper groupMapper = null;
+
     /**
      * @param contextSource
      * @param groupSearchBase

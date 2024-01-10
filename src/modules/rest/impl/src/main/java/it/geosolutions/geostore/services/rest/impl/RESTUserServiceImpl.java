@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -26,18 +26,6 @@
  *
  */
 package it.geosolutions.geostore.services.rest.impl;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
-import javax.ws.rs.core.SecurityContext;
-
-import org.apache.commons.lang.NotImplementedException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
@@ -53,13 +41,21 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.ws.rs.core.SecurityContext;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class RESTUserServiceImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
- * 
  */
 public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserService {
 
@@ -92,17 +88,17 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             // Parsing UserAttributes list
             //
             List<UserAttribute> usAttribute = user.getAttribute();
-        	//persist the user first
+            //persist the user first
             if (usAttribute != null) {
-            	user.setAttribute(null);
+                user.setAttribute(null);
             }
             id = userService.insert(user);
             //insert attributes after user creation
             if (usAttribute != null) {
-            	userService.updateAttributes(id, usAttribute);
+                userService.updateAttributes(id, usAttribute);
             }
-            
-            
+
+
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         } catch (BadRequestServiceEx e) {
@@ -140,9 +136,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     old.setRole(nr);
                     userUpdated = true;
                 }
-                if(old.isEnabled() != user.isEnabled()){
-                	old.setEnabled(user.isEnabled());
-                	userUpdated = true;
+                if (old.isEnabled() != user.isEnabled()) {
+                    old.setEnabled(user.isEnabled());
+                    userUpdated = true;
                 }
                 Set<UserGroup> groups = user.getGroups();
                 if (groups != null) {
@@ -181,8 +177,8 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 }
             }
             if (userUpdated) {
-            	//attributes where updated before
-            	old.setAttribute(null);
+                //attributes where updated before
+                old.setAttribute(null);
                 id = userService.update(old);
                 return id;
             } else {
@@ -307,7 +303,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTUserService#getAuthUserDetails (javax.ws.rs.core.SecurityContext)
      */
     @Override
@@ -321,9 +317,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             }
 
             if (authUser != null) {
-        		if(authUser.getRole().equals(Role.GUEST)){
-        			throw new NotFoundWebEx("User not found");
-        		}
+                if (authUser.getRole().equals(Role.GUEST)) {
+                    throw new NotFoundWebEx("User not found");
+                }
                 ret = new User();
                 ret.setId(authUser.getId());
                 ret.setName(authUser.getName());
@@ -344,7 +340,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
 
     @Override
     public UserList getUserList(SecurityContext sc, String nameLike, Integer page, Integer entries,
-            boolean includeAttributes) throws BadRequestWebEx {
+                                boolean includeAttributes) throws BadRequestWebEx {
 
         nameLike = nameLike.replaceAll("[*]", "%");
 
@@ -368,23 +364,23 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
 
     /**
      * Utility method to remove Reserved group (for example EVERYONE) from a group list
-     * 
+     *
      * @param groups
      * @return
      */
-    private Set<UserGroup> removeReservedGroups(Set<UserGroup> groups){
+    private Set<UserGroup> removeReservedGroups(Set<UserGroup> groups) {
         List<UserGroup> reserved = new ArrayList<UserGroup>();
-        for(UserGroup ug : groups){
-            if(!GroupReservedNames.isAllowedName(ug.getGroupName())){
+        for (UserGroup ug : groups) {
+            if (!GroupReservedNames.isAllowedName(ug.getGroupName())) {
                 reserved.add(ug);
             }
         }
-        for(UserGroup ug : reserved){
+        for (UserGroup ug : reserved) {
             groups.remove(ug);
         }
         return groups;
     }
-    
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
      */

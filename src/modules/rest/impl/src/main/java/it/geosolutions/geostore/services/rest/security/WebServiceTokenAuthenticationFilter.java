@@ -59,6 +59,7 @@ import java.util.regex.Pattern;
 public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilter {
 
     private final static Logger LOGGER = LogManager.getLogger(WebServiceTokenAuthenticationFilter.class);
+    private final String url;
     // compiled user search regex
     Pattern searchUserRegex = null;
     // connection timeout to the mapper web service (in seconds)
@@ -66,7 +67,6 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
     // read timeout to the mapper web service (in seconds)
     int readTimeout = 10;
     HttpClientBuilder clientBuilder = HttpClientBuilder.create();
-    private final String url;
     // optional external httpClient for web service connection (used mainly for tests)
     private HttpClient httpClient = null;
     private RequestConfig connectionConfig;

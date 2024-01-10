@@ -56,10 +56,10 @@ import java.util.concurrent.TimeUnit;
 public class TokenAuthenticationCache implements ApplicationContextAware {
 
     private final static Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
-    private ApplicationContext context;
     private final Cache<String, Authentication> cache;
     private final int cacheSize = 1000;
     private final int cacheExpirationMinutes = 8;
+    private ApplicationContext context;
 
 
     public TokenAuthenticationCache() {

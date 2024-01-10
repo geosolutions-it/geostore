@@ -39,7 +39,6 @@ import org.keycloak.representations.idm.RoleRepresentation;
 
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 

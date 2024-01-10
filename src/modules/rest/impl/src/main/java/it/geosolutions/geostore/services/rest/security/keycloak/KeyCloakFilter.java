@@ -65,13 +65,13 @@ public class KeyCloakFilter extends GenericFilterBean {
     private final static Logger LOGGER = LogManager.getLogger(KeyCloakFilter.class);
     // used to map keycloak roles to spring-security roles
     private final GeoStoreKeycloakAuthProvider authenticationProvider;
-    @Autowired
-    protected UserService userService;
     // creates token stores capable of generating spring-security tokens from keycloak auth
     // the context of the keycloak environment (realm, URL, client-secrets etc.)
     private final KeyCloakHelper helper;
     private final KeyCloakConfiguration configuration;
     private final TokenAuthenticationCache cache;
+    @Autowired
+    protected UserService userService;
 
 
     /**

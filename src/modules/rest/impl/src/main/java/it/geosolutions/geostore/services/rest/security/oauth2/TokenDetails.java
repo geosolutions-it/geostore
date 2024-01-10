@@ -40,9 +40,9 @@ import java.io.Serializable;
 public class TokenDetails implements Serializable {
 
     private final String idToken;
+    private final String provider;
     private OAuth2AccessToken accessToken;
     private DecodedJWT decodedJWT;
-    private final String provider;
 
     /**
      * @param accessToken the accessToken instance.

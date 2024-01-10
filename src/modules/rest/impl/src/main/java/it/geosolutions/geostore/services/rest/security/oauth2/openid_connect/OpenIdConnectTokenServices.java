@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2022 GeoSolutions S.A.S.
+ * Copyright (C) 2024 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -25,7 +25,7 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-package it.geosolutions.geostore.services.rest.security.oauth2.google;
+package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
 import org.springframework.http.HttpHeaders;
@@ -33,17 +33,15 @@ import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.Map;
 
 /**
  * RemoteTokenServices that handles specifically the GoogleResponse.
  */
-public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
+public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
-    public GoogleTokenServices(String principalKey) {
-        super(new GoogleAccessTokenConverter(principalKey));
+    public OpenIdConnectTokenServices(String principalKey) {
+        super(new OpenIdConnectAccessTokenConverter(principalKey));
     }
 
     @Override
@@ -56,20 +54,6 @@ public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
                 checkTokenEndpointUrl +
                         "?access_token=" +
                         accessToken;
-        return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.POST);
-    }
-
-    @Override
-    protected void transformNonStandardValuesToStandardValues(Map<String, Object> map) {
-        LOGGER.debug("Original map = " + map);
-        map.put("client_id", map.get("issued_to")); // Google sends 'client_id' as 'issued_to'
-        map.put("user_name", map.get("user_id")); // Google sends 'user_name' as 'user_id'
-        LOGGER.debug("Transformed = " + map);
-    }
-
-    @Override
-    protected String getAuthorizationHeader(String accessToken) {
-        String creds = String.format("%s:%s", clientId, clientSecret);
-        return "Basic " + new String(Base64.getEncoder().encode(creds.getBytes(StandardCharsets.UTF_8)));
+        return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.GET);
     }
 }

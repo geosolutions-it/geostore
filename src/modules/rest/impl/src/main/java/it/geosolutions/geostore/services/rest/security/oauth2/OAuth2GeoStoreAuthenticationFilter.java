@@ -70,7 +70,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -86,21 +89,14 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAuthenticationProcessingFilter {
 
     private final static Logger LOGGER = LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
-
-
+    private final AuthenticationEntryPoint authEntryPoint;
+    private final TokenAuthenticationCache cache;
     @Autowired
     protected UserService userService;
-
     @Autowired
     protected UserGroupService userGroupService;
-
     protected RemoteTokenServices tokenServices;
-
     protected OAuth2Configuration configuration;
-
-    private final AuthenticationEntryPoint authEntryPoint;
-
-    private final TokenAuthenticationCache cache;
 
 
     /**

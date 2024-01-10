@@ -24,17 +24,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
-public class DataURIDecoder
-{
-    final String DATA_URI_REGEX = "data:((?<mediatype>(?<mime>\\w+)/(?<extension>\\w+));)?(charset=(?<charset>[\\w\\s]+);)?(?<encoding>\\w+)?";
-
+public class DataURIDecoder {
     public final static String DEFAULT_MEDIA_TYPE = "text/plain";
     public final static String DEFAULT_CHARSET = "US-ASCII";
-
-    private boolean valid;
+    final String DATA_URI_REGEX = "data:((?<mediatype>(?<mime>\\w+)/(?<extension>\\w+));)?(charset=(?<charset>[\\w\\s]+);)?(?<encoding>\\w+)?";
+    private final boolean valid;
 
     private String mediatype;
     private String charset;
@@ -45,7 +41,7 @@ public class DataURIDecoder
     public DataURIDecoder(String header) {
         Matcher matcher = Pattern.compile(DATA_URI_REGEX).matcher(header);
 
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             valid = true;
 
             mediatype = matcher.group("mediatype");
@@ -53,8 +49,7 @@ public class DataURIDecoder
             encoding = matcher.group("encoding");
 
             base64Encoded = "base64".equals(encoding);
-        } else
-        {
+        } else {
             valid = false;
         }
     }
@@ -80,6 +75,6 @@ public class DataURIDecoder
     }
 
     public String getNormalizedMediatype() {
-        return mediatype != null? mediatype : DEFAULT_MEDIA_TYPE;
+        return mediatype != null ? mediatype : DEFAULT_MEDIA_TYPE;
     }
 }
