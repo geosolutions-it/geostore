@@ -153,10 +153,9 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
         String accessTokenUrl =
-                new StringBuilder(checkTokenEndpointUrl)
-                        .append("?access_token=")
-                        .append(accessToken)
-                        .toString();
+                checkTokenEndpointUrl +
+                        "?access_token=" +
+                        accessToken;
         return postForMap(accessTokenUrl, formData, headers);
     }
 
@@ -173,7 +172,7 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
                 new ParameterizedTypeReference<Map<String, Object>>() {
                 };
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Executing request " + path+" form data are "+formData);
+            LOGGER.info("Executing request " + path + " form data are " + formData);
         }
         return restTemplate
                 .exchange(path, HttpMethod.POST, new HttpEntity<>(formData, headers), map)

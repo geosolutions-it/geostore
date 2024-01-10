@@ -30,21 +30,14 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.security.password.SecurityUtils;
 import it.geosolutions.geostore.services.UserService;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
-import it.geosolutions.geostore.services.rest.security.keycloak.KeycloakTokenDetails;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -73,13 +66,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Date;
 
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.fiveMinutesFromNow;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getParameterValue;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRequest;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getResponse;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getTokenDetails;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 
 /**
  * Abstract implementation of an OAuth2 SessionServiceDelegate.
@@ -94,9 +81,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * @param restSessionService the session service to which register this delegate.
      * @param delegateName       this delegate name eg. google or github etc...
      */
-    public OAuth2SessionServiceDelegate(RESTSessionService restSessionService, String delegateName,UserService userService) {
+    public OAuth2SessionServiceDelegate(RESTSessionService restSessionService, String delegateName, UserService userService) {
         restSessionService.registerDelegate(delegateName, this);
-        this.userService=userService;
+        this.userService = userService;
     }
 
 
@@ -232,7 +219,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (token != null) {
             OAuth2Configuration configuration = configuration();
             doLogoutInternal(token, configuration);
-            clearSession(restTemplate,request);
+            clearSession(restTemplate, request);
         } else {
             if (LOGGER.isDebugEnabled())
                 LOGGER.info("Unable to retrieve access token. Remote logout was not executed.");
@@ -242,7 +229,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     // clears any state Spring OAuth2 object might preserve.
-    private void clearSession(OAuth2RestTemplate restTemplate,HttpServletRequest request) {
+    private void clearSession(OAuth2RestTemplate restTemplate, HttpServletRequest request) {
         final AccessTokenRequest accessTokenRequest =
                 restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
         if (accessTokenRequest != null && accessTokenRequest.getStateKey() != null) {
@@ -254,10 +241,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             accessTokenRequest.remove("access_token");
             accessTokenRequest.remove("refresh_token");
             request.logout();
-        } catch (ServletException e){
-            LOGGER.error("Error happened while doing request logout: ",e);
-        }
-        finally {
+        } catch (ServletException e) {
+            LOGGER.error("Error happened while doing request logout: ", e);
+        } finally {
             SecurityContextHolder.clearContext();
         }
     }
@@ -274,14 +260,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (LOGGER.isDebugEnabled())
                 LOGGER.info("Performing remote logout");
             callRevokeEndpoint(tokenValue, configuration.getRevokeEndpoint());
-            callRemoteLogout(token.getValue(),configuration.getLogoutUri());
+            callRemoteLogout(token.getValue(), configuration.getLogoutUri());
         }
     }
 
     protected void callRevokeEndpoint(String token, String url) {
         OAuth2Configuration configuration = configuration();
         OAuth2Configuration.Endpoint revokeEndpoint = configuration.buildRevokeEndpoint(token);
-        if (revokeEndpoint!=null) {
+        if (revokeEndpoint != null) {
             RestTemplate template = new RestTemplate();
             ResponseEntity<String> responseEntity = template.exchange(revokeEndpoint.getUrl(), revokeEndpoint.getMethod(), null, String.class);
             if (responseEntity.getStatusCode().value() != 200) {
@@ -293,7 +279,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     protected void callRemoteLogout(String token, String url) {
         OAuth2Configuration configuration = configuration();
         OAuth2Configuration.Endpoint logoutEndpoint = configuration.buildLogoutEndpoint(token);
-        if (logoutEndpoint!=null) {
+        if (logoutEndpoint != null) {
             RestTemplate template = new RestTemplate();
             ResponseEntity<String> responseEntity = template.exchange(logoutEndpoint.getUrl(), logoutEndpoint.getMethod(), null, String.class);
             if (responseEntity.getStatusCode().value() != 200) {
@@ -322,7 +308,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     private TokenAuthenticationCache cache() {
-        return GeoStoreContext.bean("oAuth2Cache",TokenAuthenticationCache.class);
+        return GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class);
     }
 
     /**
@@ -339,7 +325,43 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * @return the config bean.
      */
     protected OAuth2Configuration configuration(String configBeanName) {
-        return GeoStoreContext.bean(configBeanName,OAuth2Configuration.class);
+        return GeoStoreContext.bean(configBeanName, OAuth2Configuration.class);
+    }
+
+    protected HttpMessageConverterExtractor<OAuth2AccessToken> tokenExtractor() {
+        return new HttpMessageConverterExtractor<>(OAuth2AccessToken.class, restTemplate().getMessageConverters());
+    }
+
+    protected abstract OAuth2RestTemplate restTemplate();
+
+    @Override
+    public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
+        String username = getUserName(sessionId, refresh, autorefresh);
+        if (username != null) {
+            User user;
+            try {
+                user = userService.get(username);
+            } catch (Exception e) {
+                LOGGER.warn("Issue while retrieving user. Will return just the username.", e);
+                user = new User();
+                user.setName(username);
+            }
+            return user;
+        }
+        return null;
+    }
+
+    @Override
+    public String getUserName(String sessionId, boolean refresh, boolean autorefresh) {
+        TokenAuthenticationCache cache = cache();
+        Authentication authentication = cache.get(sessionId);
+        if (refresh) LOGGER.warn("Refresh was set to true but this delegate is " +
+                "not supporting refreshing token when retrieving the user...");
+        if (authentication != null) {
+            Object o = authentication.getPrincipal();
+            if (o != null) return SecurityUtils.getUsername(o);
+        }
+        return null;
     }
 
     /**
@@ -362,43 +384,6 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     Arrays.asList(MediaType.APPLICATION_JSON, MediaType.TEXT_XML, MediaType.TEXT_PLAIN, MediaType.APPLICATION_FORM_URLENCODED));
             new FormHttpMessageConverter().write(this.form, MediaType.APPLICATION_FORM_URLENCODED, request);
         }
-    }
-
-    protected HttpMessageConverterExtractor<OAuth2AccessToken> tokenExtractor() {
-        return new HttpMessageConverterExtractor<>(OAuth2AccessToken.class, restTemplate().getMessageConverters());
-    }
-
-
-    protected abstract OAuth2RestTemplate restTemplate();
-
-    @Override
-    public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
-        String username=getUserName(sessionId,refresh,autorefresh);
-        if (username!=null) {
-            User user;
-            try {
-                user=userService.get(username);
-            } catch (Exception e){
-                LOGGER.warn("Issue while retrieving user. Will return just the username.", e);
-                user=new User();
-                user.setName(username);
-            }
-            return user;
-        }
-        return null;
-    }
-
-    @Override
-    public String getUserName(String sessionId, boolean refresh, boolean autorefresh) {
-        TokenAuthenticationCache cache=cache();
-        Authentication authentication=cache.get(sessionId);
-        if (refresh) LOGGER.warn("Refresh was set to true but this delegate is " +
-                "not supporting refreshing token when retrieving the user...");
-        if (authentication!=null){
-            Object o=authentication.getPrincipal();
-            if (o !=null) return SecurityUtils.getUsername(o);
-        }
-        return null;
     }
 
 }

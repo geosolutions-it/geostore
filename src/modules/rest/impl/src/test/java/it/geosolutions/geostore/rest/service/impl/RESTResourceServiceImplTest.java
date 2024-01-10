@@ -19,14 +19,8 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
-import javax.ws.rs.core.SecurityContext;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
@@ -35,22 +29,25 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.impl.RESTResourceServiceImpl;
 import it.geosolutions.geostore.services.rest.model.RESTAttribute;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
+import org.junit.Before;
+import org.junit.Test;
+
+import javax.ws.rs.core.SecurityContext;
 
 /**
  * Class ResourceServiceImplTest.
  *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
  */
 public class RESTResourceServiceImplTest extends ServiceTestBase {
 
-	RESTResourceServiceImpl restService;
-	long adminID;
+    RESTResourceServiceImpl restService;
+    long adminID;
 
-	 @Before
+    @Before
     public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {
-       restService = new RESTResourceServiceImpl();
-       restService.setResourceService(resourceService);
+        restService = new RESTResourceServiceImpl();
+        restService.setResourceService(resourceService);
     }
 
     @Test
@@ -62,7 +59,7 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         long adminID = createUser("admin", Role.ADMIN, "admin");
 
         // create security context for the request
-         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
+        SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 
         // prepare request content
         RESTAttribute attribute = new RESTAttribute();

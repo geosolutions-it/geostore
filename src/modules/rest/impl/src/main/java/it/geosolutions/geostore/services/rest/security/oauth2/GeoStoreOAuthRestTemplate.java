@@ -36,6 +36,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStore;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.util.Optional;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ID_TOKEN_PARAM;
@@ -45,12 +46,9 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
  */
 public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
 
-    private JwkTokenStore store;
-
-
     public static final String ID_TOKEN_VALUE = "OpenIdConnect-IdTokenValue";
-
-    private String idTokenParam;
+    private final JwkTokenStore store;
+    private final String idTokenParam;
 
 
     public GeoStoreOAuthRestTemplate(
@@ -74,6 +72,7 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
 
     /**
      * Extract the id token from the additional information store inside the {@link OAuth2AccessToken} instance.
+     *
      * @param token
      */
     protected void extractIDToken(OAuth2AccessToken token) {

@@ -39,22 +39,22 @@ import java.io.Serializable;
  */
 public class TokenDetails implements Serializable {
 
-    private String idToken;
+    private final String idToken;
     private OAuth2AccessToken accessToken;
     private DecodedJWT decodedJWT;
-    private String provider;
+    private final String provider;
 
     /**
      * @param accessToken the accessToken instance.
      * @param idToken     the JWT idToken
      */
-    public TokenDetails(OAuth2AccessToken accessToken, String idToken,String provider) {
+    public TokenDetails(OAuth2AccessToken accessToken, String idToken, String provider) {
         this.idToken = idToken;
         this.accessToken = accessToken;
         if (idToken != null) {
             decodedJWT = JWT.decode(idToken);
         }
-        this.provider=provider;
+        this.provider = provider;
     }
 
     /**

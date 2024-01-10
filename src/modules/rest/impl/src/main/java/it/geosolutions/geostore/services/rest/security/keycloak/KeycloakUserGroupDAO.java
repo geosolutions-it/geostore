@@ -31,7 +31,6 @@ import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.UserGroup;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.admin.client.Keycloak;
@@ -41,6 +40,7 @@ import org.keycloak.representations.idm.RoleRepresentation;
 import javax.ws.rs.NotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
@@ -59,6 +59,14 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
 
     public KeycloakUserGroupDAO(KeycloakAdminClientConfiguration clientConfiguration) {
         super(clientConfiguration);
+    }
+
+    static UserGroup everyoneGroup(int id) {
+        UserGroup everyoneGroup = new UserGroup();
+        everyoneGroup.setGroupName(EVERYONE.groupName());
+        everyoneGroup.setEnabled(true);
+        everyoneGroup.setId(Long.valueOf(id));
+        return everyoneGroup;
     }
 
     @Override
@@ -161,7 +169,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
                 if (EVERYONE.groupName().equals(groupName) && !query.getSkipEveryBodyGroup().booleanValue())
                     representation = everyoneRoleRep();
                 else representation = rr.get(groupName).toRepresentation();
-                roles = Arrays.asList(representation);
+                roles = Collections.singletonList(representation);
             } else
                 roles = rr.list(query.getStartIndex(), query.getMaxResults());
             return toUserGroups(roles, !query.getSkipEveryBodyGroup().booleanValue());
@@ -201,7 +209,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         int counter = 1;
         for (RoleRepresentation role : roleRepresentations) {
             GeoStoreKeycloakAuthoritiesMapper mapper = getAuthoritiesMapper();
-            mapper.mapAuthorities(Arrays.asList(role.getName()));
+            mapper.mapAuthorities(Collections.singletonList(role.getName()));
             if (mapper.getGroups() != null && !mapper.getGroups().isEmpty()) {
                 UserGroup group = new UserGroup();
                 group.setGroupName(role.getName());
@@ -254,14 +262,6 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         return groups;
     }
 
-    static UserGroup everyoneGroup(int id) {
-        UserGroup everyoneGroup = new UserGroup();
-        everyoneGroup.setGroupName(EVERYONE.groupName());
-        everyoneGroup.setEnabled(true);
-        everyoneGroup.setId(Long.valueOf(id));
-        return everyoneGroup;
-    }
-
     private RoleRepresentation everyoneRoleRep() {
         RoleRepresentation roleRepresentation = new RoleRepresentation();
         roleRepresentation.setName(EVERYONE.groupName());
@@ -272,7 +272,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
     public UserGroup findByName(String name) {
         Search searchCriteria = new Search(UserGroup.class);
         searchCriteria.addFilterEqual("groupName", name);
-        UserGroup result=null;
+        UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
         if (existingGroups.size() > 0) {
             result = existingGroups.get(0);

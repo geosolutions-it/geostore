@@ -40,9 +40,10 @@ import java.util.List;
  */
 public class JWTHelper {
 
-    private DecodedJWT decodedJWT;
-    public JWTHelper(String jwtToken){
-        this.decodedJWT= JWT.decode(jwtToken);
+    private final DecodedJWT decodedJWT;
+
+    public JWTHelper(String jwtToken) {
+        this.decodedJWT = JWT.decode(jwtToken);
     }
 
     /**
@@ -55,7 +56,7 @@ public class JWTHelper {
      */
     public <T> T getClaim(String claimName, Class<T> binding) {
         T result = null;
-        if (decodedJWT != null && claimName!=null) {
+        if (decodedJWT != null && claimName != null) {
             Claim claim = decodedJWT.getClaim(claimName);
             if (nonNullClaim(claim))
                 result = claim.as(binding);
@@ -74,14 +75,14 @@ public class JWTHelper {
      */
     public <T> List<T> getClaimAsList(String claimName, Class<T> binding) {
         List<T> result = null;
-        if (decodedJWT != null && claimName!=null) {
+        if (decodedJWT != null && claimName != null) {
             Claim claim = decodedJWT.getClaim(claimName);
             if (nonNullClaim(claim)) {
                 result = claim.asList(binding);
-                if (result==null){
-                    result=new ArrayList<>();
-                    T singleValue=claim.as(binding);
-                    if (singleValue!=null) result.add(singleValue);
+                if (result == null) {
+                    result = new ArrayList<>();
+                    T singleValue = claim.as(binding);
+                    if (singleValue != null) result.add(singleValue);
                 }
             }
 
@@ -89,7 +90,7 @@ public class JWTHelper {
         return result;
     }
 
-    private boolean nonNullClaim(Claim claim){
+    private boolean nonNullClaim(Claim claim) {
         return claim != null && !(claim instanceof NullClaim);
     }
 }

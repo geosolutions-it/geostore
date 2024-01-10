@@ -19,14 +19,6 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
-import java.util.List;
-
-import javax.ws.rs.core.SecurityContext;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -35,38 +27,43 @@ import it.geosolutions.geostore.services.rest.impl.RESTUserGroupServiceImpl;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+import javax.ws.rs.core.SecurityContext;
+import java.util.List;
 
 /**
  * Class ResourceServiceImplTest.
  *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
  */
 public class RESTUserGroupServiceImplTest extends ServiceTestBase {
 
-	RESTUserGroupServiceImpl restService;
-	long adminID;
+    RESTUserGroupServiceImpl restService;
+    long adminID;
 
-	@Before
+    @Before
     public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {
-       restService = new RESTUserGroupServiceImpl();
-       restService.setUserGroupService(userGroupService);
-       restService.setUserService(userService);
+        restService = new RESTUserGroupServiceImpl();
+        restService.setUserGroupService(userGroupService);
+        restService.setUserService(userService);
     }
-	
-	@After
-	public void tearDown() throws Exception {
-		removeAll();
-	}
+
+    @After
+    public void tearDown() throws Exception {
+        removeAll();
+    }
 
     @Test
     public void testGetAllWithUsers() throws Exception {
         // create some sample users 
-    	long adminID = createUser("admin", Role.ADMIN, "admin");
-    	long userID = createUser("user", Role.USER, "user");
+        long adminID = createUser("admin", Role.ADMIN, "admin");
+        long userID = createUser("user", Role.USER, "user");
 
-    	// create a some sample usergroup
-    	createUserGroup("group", new long[] {adminID, userID});
+        // create a some sample usergroup
+        createUserGroup("group", new long[]{adminID, userID});
         // create security context for the request
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 
@@ -77,15 +74,15 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         RESTUserGroup group = groups.get(0);
         assertEquals(2, group.getRestUsers().getList().size());
     }
-    
+
     @Test
     public void testGetAllWithoutUsers() throws Exception {
         // create some sample users 
-    	long adminID = createUser("admin", Role.ADMIN, "admin");
-    	long userID = createUser("user", Role.USER, "user");
+        long adminID = createUser("admin", Role.ADMIN, "admin");
+        long userID = createUser("user", Role.USER, "user");
 
-    	// create a some sample usergroup
-    	createUserGroup("group", new long[] {adminID, userID});
+        // create a some sample usergroup
+        createUserGroup("group", new long[]{adminID, userID});
         // create security context for the request
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 

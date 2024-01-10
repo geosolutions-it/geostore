@@ -100,7 +100,7 @@
 	</bean>
 
 	<bean id="googleLoginService"
-		  class="it.geosolutions.geostore.services.rest.security.oauth2.GoogleLoginService">
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleLoginService">
 		<constructor-arg ref="idpLoginRest"/>
 	</bean>
 
@@ -108,7 +108,6 @@
 		  class="it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService">
 		<constructor-arg ref="idpLoginRest"/>
 	</bean>
-
 
 	<!-- ==================================================================== -->
 	<!-- === REST Services ================================================== -->

@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2015 GeoSolutions S.A.S.
+ * Copyright (C) 2022 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -25,32 +25,14 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-package it.geosolutions.geostore.services.rest.security;
+package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
-import org.springframework.security.core.GrantedAuthority;
+import it.geosolutions.geostore.services.rest.IdPLoginRest;
+import it.geosolutions.geostore.services.rest.security.oauth2.Oauth2LoginService;
 
-import java.util.Set;
+public class GoogleLoginService extends Oauth2LoginService {
 
-/**
- * Service to extract groups and/or roles list from an external service.
- *
- * @author mauro.bartolomeoli@geo-solutions.it
- */
-public interface GroupsRolesService {
-    /**
-     * Get all groups from the external service.
-     *
-     * @return
-     */
-    Set<GrantedAuthority> getAllGroups();
-
-    /**
-     * Get all roles from the external service.
-     * <p>
-     * (currently not used, it will be useful when roles will not be
-     * fixed, finally).
-     *
-     * @return
-     */
-    Set<GrantedAuthority> getAllRoles();
+    public GoogleLoginService(IdPLoginRest loginRest) {
+        loginRest.registerService("google", this);
+    }
 }

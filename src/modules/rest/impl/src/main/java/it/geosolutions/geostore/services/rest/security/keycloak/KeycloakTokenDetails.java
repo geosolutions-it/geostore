@@ -39,23 +39,23 @@ public class KeycloakTokenDetails {
     private String accessToken;
     private String idToken;
     private String refreshToken;
-    private Date expiration;
+    private final Date expiration;
 
-    public KeycloakTokenDetails(String accessToken, String refreshToken,Long exp){
-        this.accessToken=accessToken;
-        this.refreshToken=refreshToken;
-        Date epoch=new Date(0);
-        this.expiration=expirationDate(epoch,exp.intValue());
+    public KeycloakTokenDetails(String accessToken, String refreshToken, Long exp) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        Date epoch = new Date(0);
+        this.expiration = expirationDate(epoch, exp.intValue());
     }
 
-    public KeycloakTokenDetails(String accessToken, String refreshToken,long expIn){
-        this.accessToken=accessToken;
-        this.refreshToken=refreshToken;
-        Date start=new Date();
-        this.expiration=expirationDate(start,Long.valueOf(expIn).intValue());
+    public KeycloakTokenDetails(String accessToken, String refreshToken, long expIn) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        Date start = new Date();
+        this.expiration = expirationDate(start, Long.valueOf(expIn).intValue());
     }
 
-    private Date expirationDate(Date start, int toAdd){
+    private Date expirationDate(Date start, int toAdd) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(start);
         calendar.add(Calendar.SECOND, toAdd);
@@ -63,7 +63,6 @@ public class KeycloakTokenDetails {
     }
 
     /**
-     *
      * @return the access_token.
      */
     public String getAccessToken() {
@@ -72,6 +71,7 @@ public class KeycloakTokenDetails {
 
     /**
      * Set the access_token.
+     *
      * @param accessToken the access_token.
      */
     public void setAccessToken(String accessToken) {
@@ -87,14 +87,11 @@ public class KeycloakTokenDetails {
 
     /**
      * Set the refresh_token.
+     *
      * @param refreshToken the refresh_token.
      */
     public void setRefreshToken(String refreshToken) {
         this.refreshToken = refreshToken;
-    }
-
-    public void setIdToken(String idToken) {
-        this.idToken = idToken;
     }
 
     /**
@@ -106,5 +103,9 @@ public class KeycloakTokenDetails {
 
     public String getIdToken() {
         return idToken;
+    }
+
+    public void setIdToken(String idToken) {
+        this.idToken = idToken;
     }
 }

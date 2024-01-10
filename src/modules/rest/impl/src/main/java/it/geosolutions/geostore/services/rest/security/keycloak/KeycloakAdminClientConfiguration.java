@@ -58,7 +58,7 @@ public class KeycloakAdminClientConfiguration {
     }
 
     /**
-     * @param  serverUrl the keycloak server url.
+     * @param serverUrl the keycloak server url.
      */
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
@@ -72,7 +72,6 @@ public class KeycloakAdminClientConfiguration {
     }
 
     /**
-     *
      * @param realm the realm from which retrieve users and groups.
      */
     public void setRealm(String realm) {
@@ -87,7 +86,6 @@ public class KeycloakAdminClientConfiguration {
     }
 
     /**
-     *
      * @param username the username of a keycloak admin.
      */
     public void setUsername(String username) {
@@ -102,7 +100,6 @@ public class KeycloakAdminClientConfiguration {
     }
 
     /**
-     *
      * @param password the pwd of a keycloak admin.
      */
     public void setPassword(String password) {
@@ -117,7 +114,6 @@ public class KeycloakAdminClientConfiguration {
     }
 
     /**
-     *
      * @param clientId The client id of the client web app configured.
      */
     public void setClientId(String clientId) {
@@ -127,13 +123,13 @@ public class KeycloakAdminClientConfiguration {
     /**
      * @return the {@link Keycloak} REST client.
      */
-    public Keycloak getKeycloak(){
-        if (keycloak==null) this.keycloak=buildKeycloak();
+    public Keycloak getKeycloak() {
+        if (keycloak == null) this.keycloak = buildKeycloak();
         return keycloak;
     }
 
-    private Keycloak buildKeycloak(){
-        KeycloakBuilder keycloakBuilder=KeycloakBuilder.builder();
+    private Keycloak buildKeycloak() {
+        KeycloakBuilder keycloakBuilder = KeycloakBuilder.builder();
         return keycloakBuilder.serverUrl(getServerUrl())
                 .realm(getRealm())
                 .clientId(getClientId())

@@ -27,44 +27,44 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 import it.geosolutions.geostore.services.rest.utils.GroupMapper;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashSet;
+import java.util.Set;
 
 public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public static final String DEFAULT_USERNAME_HEADER = "x-geostore-user";
     public static final String DEFAULT_GROUPS_HEADER = "x-geostore-groups";
     public static final String DEFAULT_ROLE_HEADER = "x-geostore-role";
-    
+
     private String usernameHeader = DEFAULT_USERNAME_HEADER;
     private String groupsHeader = DEFAULT_GROUPS_HEADER;
     private String roleHeader = DEFAULT_ROLE_HEADER;
-    private String listDelimiter=",";
+    private String listDelimiter = ",";
     private String defaultRole = "USER";
     private boolean addEveryOneGroup = false;
-    
+
     private GrantedAuthoritiesMapper authoritiesMapper;
     /**
      * remove this prefix from groups header
      */
     private GroupMapper groupMapper = null;
 
-	@Override
+    @Override
     protected void authenticate(HttpServletRequest req) {
         String username = req.getHeader(usernameHeader);
-        
+
         if (username != null) {
             User user = new User();
             user.setId(-1L);
@@ -78,13 +78,13 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
             long groupCounter = 1;
             if (groups != null) {
                 String[] groupsList = groups.split(listDelimiter);
-                
+
                 for (String groupName : groupsList) {
                     if (groupName.equals(GroupReservedNames.EVERYONE.groupName())) {
                         everyoneFound = true;
                     }
-                    if(groupMapper != null) {
-                    	groupName = groupMapper.transform(groupName);
+                    if (groupMapper != null) {
+                        groupName = groupMapper.transform(groupName);
                     }
                     UserGroup group = new UserGroup();
                     group.setGroupName(groupName);
@@ -93,7 +93,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
                     user.getGroups().add(group);
                     groupAuthorities.add(new SimpleGrantedAuthority(groupName));
                 }
-                
+
             }
             if (!everyoneFound && addEveryOneGroup) {
                 UserGroup group = new UserGroup();
@@ -120,10 +120,10 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
             } else {
                 authorities.add(createRole(user.getRole().name()));
             }
-            Authentication auth =  new PreAuthenticatedAuthenticationToken(user, "", authorities);
+            Authentication auth = new PreAuthenticatedAuthenticationToken(user, "", authorities);
             SecurityContextHolder.getContext().setAuthentication(auth);
         }
-        
+
     }
 
     private Role morePrivileged(Role role1, Role role2) {
@@ -209,12 +209,12 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
         this.addEveryOneGroup = addEveryOneGroup;
     }
 
-	public GroupMapper getGroupMapper() {
-		return groupMapper;
-	}
+    public GroupMapper getGroupMapper() {
+        return groupMapper;
+    }
 
-	public void setGroupMapper(GroupMapper groupMapper) {
-		this.groupMapper = groupMapper;
-	}
-    
+    public void setGroupMapper(GroupMapper groupMapper) {
+        this.groupMapper = groupMapper;
+    }
+
 }

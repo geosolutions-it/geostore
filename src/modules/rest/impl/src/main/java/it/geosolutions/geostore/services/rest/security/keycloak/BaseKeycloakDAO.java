@@ -40,61 +40,68 @@ public abstract class BaseKeycloakDAO {
 
     protected KeycloakAdminClientConfiguration adminClientConfiguration;
 
-    public BaseKeycloakDAO(KeycloakAdminClientConfiguration adminClientConfiguration){
-        this.adminClientConfiguration=adminClientConfiguration;
+    public BaseKeycloakDAO(KeycloakAdminClientConfiguration adminClientConfiguration) {
+        this.adminClientConfiguration = adminClientConfiguration;
     }
 
     /**
      * Converts the ISearch to a {@link KeycloakQuery}.
+     *
      * @param search the search with filters to convert.
      * @return a {@link KeycloakQuery} representation of the search.
      */
-    protected KeycloakQuery toKeycloakQuery(ISearch search){
+    protected KeycloakQuery toKeycloakQuery(ISearch search) {
         return new KeycloakSearchMapper().keycloackQuery(search);
     }
 
     /**
      * Get the Keycloak client instance.
+     *
      * @return the {@link Keycloak} REST client.
      */
-    protected Keycloak keycloak(){
+    protected Keycloak keycloak() {
         return adminClientConfiguration.getKeycloak();
     }
 
     /**
      * Get the UsersResource client instance.
+     *
      * @param keycloak REST client instance.
      * @return the {@link UsersResource} REST client.
      */
-    protected UsersResource getUsersResource(Keycloak keycloak){
+    protected UsersResource getUsersResource(Keycloak keycloak) {
         return keycloak.realm(adminClientConfiguration.getRealm()).users();
     }
 
     /**
      * Get the RolesResource client instance.
+     *
      * @param keycloak the {@link Keycloak} REST client instance.
      * @return the {@link RolesResource} REST client instance.
      */
-    protected RolesResource getRolesResource(Keycloak keycloak){
+    protected RolesResource getRolesResource(Keycloak keycloak) {
         return keycloak.realm(adminClientConfiguration.getRealm()).roles();
     }
 
     /**
      * Close the REST client.
+     *
      * @param keycloak the {@link Keycloak} REST client instance.
      */
-    protected void close(Keycloak keycloak){
-        if(keycloak.isClosed())
+    protected void close(Keycloak keycloak) {
+        if (keycloak.isClosed())
             keycloak.close();
     }
 
     /**
      * Get an authorities mapper instance.
+     *
      * @return the authorities mapper.
      */
-    protected GeoStoreKeycloakAuthoritiesMapper getAuthoritiesMapper(){
-        KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
-        if (configuration!=null) return new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings(),configuration.getGroupMappings(),configuration.isDropUnmapped());
-        else return new GeoStoreKeycloakAuthoritiesMapper(null,null,false);
+    protected GeoStoreKeycloakAuthoritiesMapper getAuthoritiesMapper() {
+        KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
+        if (configuration != null)
+            return new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings(), configuration.getGroupMappings(), configuration.isDropUnmapped());
+        else return new GeoStoreKeycloakAuthoritiesMapper(null, null, false);
     }
 }

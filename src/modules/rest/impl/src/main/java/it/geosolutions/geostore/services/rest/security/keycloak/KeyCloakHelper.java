@@ -28,7 +28,6 @@
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.AdapterDeploymentContext;

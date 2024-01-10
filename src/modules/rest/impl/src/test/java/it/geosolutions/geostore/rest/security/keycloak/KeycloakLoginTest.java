@@ -28,17 +28,13 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.AUTH_PROVIDER;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.TOKENS_KEY;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -53,16 +49,16 @@ public class KeycloakLoginTest extends KeycloakTestSupport {
         setUpAdapter(AUTH_URL);
         KeycloakDeployment deployment =
                 KeycloakDeploymentBuilder.build(adapterConfig);
-        KeyCloakConfiguration configuration=createConfiguration();
-        loginRest=new IdPLoginRestImpl();
+        KeyCloakConfiguration configuration = createConfiguration();
+        loginRest = new IdPLoginRestImpl();
         // autoregister to the loginRest object
-        TokenStorage storage=new InMemoryTokenStorage();
-        key=storage.buildTokenKey();
-        SessionToken token=new SessionToken();
+        TokenStorage storage = new InMemoryTokenStorage();
+        key = storage.buildTokenKey();
+        SessionToken token = new SessionToken();
         token.setAccessToken(ACCESS_TOKEN_PARAM);
         token.setRefreshToken(REFRESH_TOKEN_PARAM);
-        storage.saveToken(key,token);
-        new KeyCloakLoginService(loginRest){
+        storage.saveToken(key, token);
+        new KeyCloakLoginService(loginRest) {
             @Override
             protected TokenStorage tokenStorage() {
                 return storage;
@@ -76,60 +72,60 @@ public class KeycloakLoginTest extends KeycloakTestSupport {
     }
 
     @Test
-    public void testLoginEndpoint(){
-        MockHttpServletRequest request=new MockHttpServletRequest();
-        MockHttpServletResponse response=new MockHttpServletResponse();
-        ServletRequestAttributes attributes = new ServletRequestAttributes(request,response);
-        AuthenticationEntryPoint entryPoint=new AuthenticationEntryPoint() {
+    public void testLoginEndpoint() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
+        AuthenticationEntryPoint entryPoint = new AuthenticationEntryPoint() {
             @Override
             public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
                 response.sendRedirect("/");
             }
         };
-        attributes.setAttribute("KEYCLOAK_REDIRECT",entryPoint,0);
+        attributes.setAttribute("KEYCLOAK_REDIRECT", entryPoint, 0);
         RequestContextHolder.setRequestAttributes(attributes);
         loginRest.login("keycloak");
-        assertEquals(302,response.getStatus());
+        assertEquals(302, response.getStatus());
         assertNotNull(response.getRedirectedUrl());
     }
 
     @Test
-    public void testLoginEndpointInternalRedirect(){
-        MockHttpServletRequest request=new MockHttpServletRequest();
-        MockHttpServletResponse httpResponse=new MockHttpServletResponse();
-        ServletRequestAttributes attributes = new ServletRequestAttributes(request,httpResponse);
+    public void testLoginEndpointInternalRedirect() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse httpResponse = new MockHttpServletResponse();
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request, httpResponse);
         RequestContextHolder.setRequestAttributes(attributes);
-        PreAuthenticatedAuthenticationToken authentication=new PreAuthenticatedAuthenticationToken("username","", new ArrayList<>());
-        KeycloakTokenDetails details=new KeycloakTokenDetails("accessToken","refreshToken",10202l);
+        PreAuthenticatedAuthenticationToken authentication = new PreAuthenticatedAuthenticationToken("username", "", new ArrayList<>());
+        KeycloakTokenDetails details = new KeycloakTokenDetails("accessToken", "refreshToken", 10202L);
         authentication.setDetails(details);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        Response response=loginRest.callback("keycloak");
-        assertEquals(302,response.getStatus());
-        assertEquals("../../../",response.getHeaderString("Location"));
-        MultivaluedMap<String,Object> meta=response.getMetadata();
-        List<Object> cookies=meta.get("Set-Cookie");
-        List<Object> tokenCookies=cookies.stream().filter(c->((String)c).contains(AUTH_PROVIDER) || ((String)c).contains(TOKENS_KEY)).collect(Collectors.toList());
-        assertEquals(2,tokenCookies.size());
+        Response response = loginRest.callback("keycloak");
+        assertEquals(302, response.getStatus());
+        assertEquals("../../../", response.getHeaderString("Location"));
+        MultivaluedMap<String, Object> meta = response.getMetadata();
+        List<Object> cookies = meta.get("Set-Cookie");
+        List<Object> tokenCookies = cookies.stream().filter(c -> ((String) c).contains(AUTH_PROVIDER) || ((String) c).contains(TOKENS_KEY)).collect(Collectors.toList());
+        assertEquals(2, tokenCookies.size());
     }
 
 
     @Test
-    public void testGetTokenByIdentifier(){
-        MockHttpServletRequest request=new MockHttpServletRequest();
-        MockHttpServletResponse httpResponse=new MockHttpServletResponse();
-        ServletRequestAttributes attributes = new ServletRequestAttributes(request,httpResponse);
+    public void testGetTokenByIdentifier() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse httpResponse = new MockHttpServletResponse();
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request, httpResponse);
         RequestContextHolder.setRequestAttributes(attributes);
-        PreAuthenticatedAuthenticationToken authentication=new PreAuthenticatedAuthenticationToken("username","", new ArrayList<>());
-        KeycloakTokenDetails details=new KeycloakTokenDetails("accessToken","refreshToken",10202l);
+        PreAuthenticatedAuthenticationToken authentication = new PreAuthenticatedAuthenticationToken("username", "", new ArrayList<>());
+        KeycloakTokenDetails details = new KeycloakTokenDetails("accessToken", "refreshToken", 10202L);
         authentication.setDetails(details);
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        SessionToken sessionToken=loginRest.getTokensByTokenIdentifier("keycloak",key.toString());
-        assertEquals(ACCESS_TOKEN_PARAM,sessionToken.getAccessToken());
-        assertEquals(REFRESH_TOKEN_PARAM,sessionToken.getRefreshToken());
+        SessionToken sessionToken = loginRest.getTokensByTokenIdentifier("keycloak", key.toString());
+        assertEquals(ACCESS_TOKEN_PARAM, sessionToken.getAccessToken());
+        assertEquals(REFRESH_TOKEN_PARAM, sessionToken.getRefreshToken());
     }
 
     @After
-    public void afterTest(){
+    public void afterTest() {
         RequestContextHolder.resetRequestAttributes();
         SecurityContextHolder.clearContext();
     }

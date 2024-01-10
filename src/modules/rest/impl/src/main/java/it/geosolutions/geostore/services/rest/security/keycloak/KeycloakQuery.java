@@ -47,7 +47,6 @@ public class KeycloakQuery {
     private Boolean skipEveryBodyGroup;
 
     /**
-     *
      * @return the group name if any, null otherwise.
      */
     public String getGroupName() {
@@ -55,7 +54,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @param groupName the group name value to filter by.
      */
     public void setGroupName(String groupName) {
@@ -63,7 +61,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @return the user name if any, null otherwise.
      */
     public String getUserName() {
@@ -71,7 +68,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @param userName the user name value to filter by.
      */
     public void setUserName(String userName) {
@@ -79,7 +75,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @return the enabled flag of a user if any, null otherwise.
      */
     public Boolean getEnabled() {
@@ -87,7 +82,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @param enabled the enabled value to filter by.
      */
     public void setEnabled(Boolean enabled) {
@@ -95,7 +89,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @return true if the query is an = query false or null if it is a LIKE one.
      */
     public Boolean getExact() {
@@ -103,15 +96,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
-     * @param exact the exact flag.
-     */
-    public void setExact(Boolean exact) {
-        this.exact = exact;
-    }
-
-    /**
-     *
      * @return the start index if any, null otherwise.
      */
     public Integer getStartIndex() {
@@ -119,7 +103,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @param startIndex the start index of a page.
      */
     public void setStartIndex(Integer startIndex) {
@@ -127,7 +110,6 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @return the max result per page value if any, null otherwise.
      */
     public Integer getMaxResults() {
@@ -135,23 +117,28 @@ public class KeycloakQuery {
     }
 
     /**
-     *
      * @param maxResults the max result number per page.
      */
     public void setMaxResults(Integer maxResults) {
         this.maxResults = maxResults;
     }
 
-
     /**
      * @return true if the query is a = query, false if it is a LIKE one.
      */
-    public boolean isExact(){
-        return exact!=null && exact.booleanValue();
+    public boolean isExact() {
+        return exact != null && exact.booleanValue();
+    }
+
+    /**
+     * @param exact the exact flag.
+     */
+    public void setExact(Boolean exact) {
+        this.exact = exact;
     }
 
     public Boolean getSkipEveryBodyGroup() {
-        return skipEveryBodyGroup !=null && skipEveryBodyGroup.booleanValue();
+        return skipEveryBodyGroup != null && skipEveryBodyGroup.booleanValue();
     }
 
     public void setSkipEveryBodyGroup(Boolean skipEveryBodyGroup) {
