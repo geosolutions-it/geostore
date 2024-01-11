@@ -32,9 +32,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MockedUserGroupService implements UserGroupService {
 
-    private static Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
-    private Map<Long, UserGroup> GROUPS = new ConcurrentHashMap<Long, UserGroup>();
+    private final Map<Long, UserGroup> GROUPS = new ConcurrentHashMap<Long, UserGroup>();
 
     @Override
     public long insert(UserGroup userGroup) throws BadRequestServiceEx {
@@ -47,7 +47,7 @@ public class MockedUserGroupService implements UserGroupService {
 
     @Override
     public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
-        return GROUPS.containsKey(new Long(id)) && GROUPS.remove(new Long(id)) != null;
+        return GROUPS.containsKey(Long.valueOf(id)) && GROUPS.remove(Long.valueOf(id)) != null;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class MockedUserGroupService implements UserGroupService {
 
     @Override
     public UserGroup get(long id) throws BadRequestServiceEx {
-        return GROUPS.get(new Long(id));
+        return GROUPS.get(Long.valueOf(id));
     }
 
     @Override

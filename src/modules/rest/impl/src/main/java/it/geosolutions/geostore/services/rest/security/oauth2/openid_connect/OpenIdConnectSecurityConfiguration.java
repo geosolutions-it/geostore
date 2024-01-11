@@ -107,7 +107,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
 
     @Bean
     public OpenIdConnectFilter oidcOpenIdFilter() {
-        return new OpenIdConnectFilter(oidcTokenServices(), oauth2RestTemplate(), configuration(), oidcCache());
+        return new OpenIdConnectFilter(oidcTokenServices(), oauth2RestTemplate(), authorizationAccessTokenProvider(), configuration(), oidcCache());
     }
 
     @Bean

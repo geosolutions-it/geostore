@@ -126,7 +126,7 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         transformNonStandardValuesToStandardValues(checkTokenResponse);
 
         Assert.state(
-                checkTokenResponse.containsKey("client_id"),
+                checkTokenResponse.containsKey("client_id") || checkTokenResponse.containsKey("clientID"),
                 "Client id must be present in response from auth server");
         return tokenConverter.extractAuthentication(checkTokenResponse);
     }

@@ -59,7 +59,7 @@ public abstract class BaseAuthenticationInterceptorTest {
      * @return Message to be handled
      */
     protected Message getMockedMessage(String username, String password, Map<String, String> headers) {
-        MessageImpl messageImpl = (MessageImpl) new MessageImpl();
+        MessageImpl messageImpl = new MessageImpl();
         AuthorizationPolicy policy = new AuthorizationPolicy();
         policy.setUserName(username);
         policy.setPassword(password);

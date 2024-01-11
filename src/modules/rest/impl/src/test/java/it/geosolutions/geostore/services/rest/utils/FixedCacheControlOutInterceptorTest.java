@@ -23,7 +23,6 @@ import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,8 +41,8 @@ public class FixedCacheControlOutInterceptorTest {
         interceptor.handleMessage(message);
         @SuppressWarnings("unchecked")
         MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
-        assertEquals(((List) headers.get("Expires")).get(0), "-1");
-        assertEquals(((List) headers.get("Cache-Control")).get(0), "no-cache");
+        assertEquals(headers.get("Expires").get(0), "-1");
+        assertEquals(headers.get("Cache-Control").get(0), "no-cache");
     }
 
     @SuppressWarnings("unchecked")
@@ -56,17 +55,17 @@ public class FixedCacheControlOutInterceptorTest {
         if (headers == null) {
             headers = new MetadataMap<String, Object>();
         }
-        headers.add("Test", new String("Test"));
+        headers.add("Test", "Test");
         message.put(Message.PROTOCOL_HEADERS, headers);
         FixedCacheControlOutInterceptor interceptor = new FixedCacheControlOutInterceptor();
 
         interceptor.handleMessage(message);
 
         headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
-        ((List) headers.get("Cache-Control")).get(0);
-        assertEquals(((List) headers.get("Cache-Control")).get(0), "no-cache");
-        assertEquals(((List) headers.get("Expires")).get(0), "-1");
-        assertEquals(((List) headers.get("Test")).get(0), new String("Test"));
+        headers.get("Cache-Control").get(0);
+        assertEquals(headers.get("Cache-Control").get(0), "no-cache");
+        assertEquals(headers.get("Expires").get(0), "-1");
+        assertEquals(headers.get("Test").get(0), "Test");
     }
 
 

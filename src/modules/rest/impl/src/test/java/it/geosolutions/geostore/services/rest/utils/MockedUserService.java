@@ -37,9 +37,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MockedUserService implements UserService {
 
-    private static Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
-    private Map<Long, User> USERS = new ConcurrentHashMap<Long, User>();
+    private final Map<Long, User> USERS = new ConcurrentHashMap<Long, User>();
 
     /*
      * (non-Javadoc)
@@ -79,7 +79,7 @@ public class MockedUserService implements UserService {
      */
     @Override
     public boolean delete(long id) {
-        return USERS.containsKey(new Long(id)) && USERS.remove(new Long(id)) != null;
+        return USERS.containsKey(Long.valueOf(id)) && USERS.remove(Long.valueOf(id)) != null;
     }
 
     /*
@@ -89,7 +89,7 @@ public class MockedUserService implements UserService {
      */
     @Override
     public User get(long id) {
-        return USERS.get(new Long(id));
+        return USERS.get(Long.valueOf(id));
     }
 
     /*
