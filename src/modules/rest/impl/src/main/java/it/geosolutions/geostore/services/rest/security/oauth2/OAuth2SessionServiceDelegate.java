@@ -264,7 +264,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
     }
 
-    protected void callRevokeEndpoint(String token, String url) {
+    protected void callRevokeEndpoint(String token, String revokeEndpointUrl) {
         OAuth2Configuration configuration = configuration();
         OAuth2Configuration.Endpoint revokeEndpoint = configuration.buildRevokeEndpoint(token);
         if (revokeEndpoint != null) {
@@ -276,7 +276,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
     }
 
-    protected void callRemoteLogout(String token, String url) {
+    protected void callRemoteLogout(String token, String logoutUri) {
         OAuth2Configuration configuration = configuration();
         OAuth2Configuration.Endpoint logoutEndpoint = configuration.buildLogoutEndpoint(token);
         if (logoutEndpoint != null) {

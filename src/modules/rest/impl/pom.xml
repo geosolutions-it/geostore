@@ -18,7 +18,8 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses />.
  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -63,17 +64,17 @@
         </dependency>
 
         <dependency>
-             <groupId>org.apache.httpcomponents</groupId>
-             <artifactId>httpclient</artifactId>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
         </dependency>
 
 
         <dependency>
-          <groupId>it.geosolutions.geostore</groupId>
-          <artifactId>geostore-security</artifactId>
-          <version>${geostore-version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-security</artifactId>
+            <version>${geostore-version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
         </dependency>
 
         <!-- ================================================================-->
@@ -86,9 +87,14 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-core</artifactId>
+            <version>${spring-security-version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.security.oauth</groupId>
             <artifactId>spring-security-oauth2</artifactId>
-            <version>2.0.16.RELEASE</version>
+            <version>${spring-security-oauth2-version}</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework</groupId>
@@ -169,10 +175,10 @@
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
         </dependency>
-		<!-- dependency>
-			<groupId>com.google.code.cxf-spring-security</groupId>
-			<artifactId>cxf-spring-security</artifactId>
-		</dependency -->
+        <!-- dependency>
+            <groupId>com.google.code.cxf-spring-security</groupId>
+            <artifactId>cxf-spring-security</artifactId>
+        </dependency -->
 
         <dependency>
             <groupId>javax.annotation</groupId>
@@ -259,17 +265,17 @@
     </dependencies>
 
     <build>
-	    <resources>
-	      <resource>
-	        <directory>src/main/resources</directory>
-	        <includes>
-	          <include>**/*.xml</include>
-	          <include>**/*.ldif</include>
-	        </includes>
-	      </resource>
-	    </resources>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.ldif</include>
+                </includes>
+            </resource>
+        </resources>
 
-	    <plugins>
+        <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -281,24 +287,24 @@
             </plugin>
 
             <!-- Attach sources ============================================ -->
-<!--
-            <plugin>
-                <inherited>true</inherited>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <configuration>
-                    <attach>true</attach>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
--->
+            <!--
+                        <plugin>
+                            <inherited>true</inherited>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-source-plugin</artifactId>
+                            <configuration>
+                                <attach>true</attach>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <id>attach-sources</id>
+                                    <goals>
+                                        <goal>jar</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin>
+            -->
         </plugins>
     </build>
 

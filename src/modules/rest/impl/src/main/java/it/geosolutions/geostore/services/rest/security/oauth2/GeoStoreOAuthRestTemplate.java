@@ -42,13 +42,13 @@ import java.util.Optional;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ID_TOKEN_PARAM;
 
 /**
- * Custom OAuthRestTemplate. Allows the extraction of the id token from the response.
+ * Custom OAuth2RestTemplate. Allows the extraction of the id token from the response.
  */
 public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
 
     public static final String ID_TOKEN_VALUE = "OpenIdConnect-IdTokenValue";
-    private final JwkTokenStore store;
     private final String idTokenParam;
+    private JwkTokenStore store;
 
 
     public GeoStoreOAuthRestTemplate(
@@ -95,5 +95,9 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
 
     public OAuth2Authentication readAuthentication(String idToken) {
         return store.readAuthentication(idToken);
+    }
+
+    public void setTokenStore(JwkTokenStore jwkTokenStore) {
+        this.store = jwkTokenStore;
     }
 }

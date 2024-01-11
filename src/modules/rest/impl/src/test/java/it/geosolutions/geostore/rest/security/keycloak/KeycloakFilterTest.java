@@ -43,12 +43,10 @@ import static org.mockito.ArgumentMatchers.eq;
 
 public class KeycloakFilterTest extends KeycloakTestSupport {
 
-    private MockHttpServletRequest request;
-    private MockHttpServletResponse response;
-
     private final MockUserGroupService groupService = new MockUserGroupService();
     private final MockUserService userService = new MockUserService();
-
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
     private FilterChain chain;
 
     private static org.keycloak.representations.AccessToken verifyToken() {

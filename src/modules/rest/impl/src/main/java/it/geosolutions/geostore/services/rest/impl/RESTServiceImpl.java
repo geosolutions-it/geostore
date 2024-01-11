@@ -316,6 +316,7 @@ public abstract class RESTServiceImpl {
         public ResourceAuth() {
             this(false, false);
         }
+
         public ResourceAuth(boolean canRead, boolean canWrite) {
             this.canRead = canRead;
             this.canWrite = canWrite;

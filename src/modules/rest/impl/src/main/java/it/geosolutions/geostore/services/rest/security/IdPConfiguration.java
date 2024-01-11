@@ -116,4 +116,5 @@ public abstract class IdPConfiguration implements BeanNameAware {
         if (StringUtils.isNotBlank(authenticatedDefaultRole))
             this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
     }
+
 }

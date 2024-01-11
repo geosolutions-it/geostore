@@ -118,7 +118,7 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
         return oAuth2RestTemplate;
     }
 
-    private void setJacksonConverter(OAuth2RestTemplate oAuth2RestTemplate) {
+    protected void setJacksonConverter(OAuth2RestTemplate oAuth2RestTemplate) {
         List<HttpMessageConverter<?>> converterList = oAuth2RestTemplate.getMessageConverters();
         MappingJackson2HttpMessageConverter jacksonConverter = null;
         for (HttpMessageConverter<?> converter : converterList) {

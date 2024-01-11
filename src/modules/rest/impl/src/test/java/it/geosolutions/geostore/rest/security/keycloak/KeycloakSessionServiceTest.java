@@ -46,12 +46,9 @@ import static org.junit.Assert.assertNull;
 
 public class KeycloakSessionServiceTest extends KeycloakTestSupport {
 
-    private static WireMockServer keycloakService;
-
     private static final String REFRESH_TOKEN = "refresh_token";
-
     private static final String ACCESS_TOKEN = "access_token";
-
+    private static WireMockServer keycloakService;
     private KeyCloakHelper helper;
 
     @BeforeClass
