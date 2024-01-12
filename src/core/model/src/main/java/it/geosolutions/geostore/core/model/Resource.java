@@ -68,6 +68,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
         @Index(name = "idx_resource_creation", columnList = "creation"),
         @Index(name = "idx_resource_update", columnList = "lastUpdate"),
         @Index(name = "idx_resource_metadata", columnList = "metadata"),
+        @Index(name = "idx_resource_metadata", columnList = "advertised"),
         @Index(name = "idx_resource_category", columnList = "category_id")
 })
 // @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
@@ -93,6 +94,9 @@ public class Resource implements Serializable, CycleRecoverable {
     @Column(nullable = true, updatable = true)
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastUpdate;
+
+    @Column(nullable = true, updatable = true)
+    private Boolean advertised = true;
 
     @Column(nullable = true, updatable = true, length = 30000)
     private String metadata;
@@ -181,6 +185,20 @@ public class Resource implements Serializable, CycleRecoverable {
      */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    /**
+     * @return the advertised
+     */
+    public Boolean getAdvertised() {
+        return advertised;
+    }
+
+    /**
+     * @param advertised the advertised to set
+     */
+    public void setAdvertised(Boolean advertised) {
+        this.advertised = advertised;
     }
 
     /**
@@ -303,6 +321,11 @@ public class Resource implements Serializable, CycleRecoverable {
             builder.append("category=").append(category.toString());
         }
 
+        if (advertised != null) {
+            builder.append(", ");
+            builder.append("advertised=").append(advertised);
+        }
+
         builder.append(']');
 
         return builder.toString();
@@ -325,6 +348,7 @@ public class Resource implements Serializable, CycleRecoverable {
         result = (prime * result) + ((metadata == null) ? 0 : metadata.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result) + ((security == null) ? 0 : security.hashCode());
+        result = (prime * result) + ((advertised == null) ? 0 : advertised.hashCode());
 
         return result;
     }
@@ -394,6 +418,13 @@ public class Resource implements Serializable, CycleRecoverable {
         } else if (!lastUpdate.equals(other.lastUpdate)) {
             return false;
         }
+        if (advertised == null) {
+            if (other.advertised != null) {
+                return false;
+            }
+        } else if (!advertised.equals(other.advertised)) {
+            return false;
+        }
         if (metadata == null) {
             if (other.metadata != null) {
                 return false;
@@ -428,6 +459,7 @@ public class Resource implements Serializable, CycleRecoverable {
         r.setCreation(this.creation);
         r.setDescription(this.description);
         r.setLastUpdate(this.lastUpdate);
+        r.setAdvertised(this.advertised);
         r.setMetadata(this.metadata);
         r.setName(this.name);
         r.setAttribute(null);

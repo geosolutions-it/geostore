@@ -291,20 +291,20 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     @Test
     public void testUpdateSecurityRules() throws Exception {
     	long resourceId = createResource("name1", "description1", "MAP");
-    	
+
     	List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
     	assertEquals(0, writtenRules.size());
-    	
+
     	List<SecurityRule> rules = new ArrayList<SecurityRule>();
-    	
+
 		long userId = createUser("user1", Role.USER, "password");
 		User user = new User();
 		user.setId(userId);
-		
+
 		long groupId = createGroup("group1");
 		UserGroup group = new UserGroup();
 		group.setId(groupId);
-		
+
 		long otherGroupId = createGroup("group2");
 		UserGroup othergroup = new UserGroup();
 		othergroup.setId(otherGroupId);
@@ -451,5 +451,54 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         
         assertEquals(0, resourceService.getCount(null));    	
     }
-    
+
+    @Test
+    public void testUnadvertisedResources() throws Exception {
+        long user1Id = createUser("user1", Role.USER, "password");
+        User user1 = new User();
+        user1.setId(user1Id);
+        user1.setName("user1");
+        user1.setRole(Role.USER);
+
+        long user2Id = createUser("user2", Role.USER, "password");
+        User user2 = new User();
+        user2.setId(user2Id);
+        user2.setName("user2");
+        user2.setRole(Role.USER);
+
+        long groupId = createGroup("group1");
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
+
+        long otherGroupId = createGroup("group2");
+        UserGroup otherGroup = new UserGroup();
+        otherGroup.setId(otherGroupId);
+
+        List<SecurityRule> rules = new ArrayList<>();
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(user1);
+        rule.setCanRead(true);
+        rule.setGroup(group);
+        rules.add(rule);
+
+        rule = new SecurityRule();
+        rule.setUser(user2);
+        rule.setCanRead(false);
+        rule.setGroup(otherGroup);
+        rules.add(rule);
+
+        long resourceId = createResource("name1", "description1", "MAP", false, rules);
+
+        List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
+
+        assertEquals(2, writtenRules.size());
+
+        // name like
+        SearchFilter nameContains1Filter = new FieldFilter(BaseField.NAME, "%name1%", SearchOperator.LIKE);
+        assertEquals(
+                resourceService.getResources(nameContains1Filter,null, null, user1).size(),
+                resourceService.getResources(nameContains1Filter,null, null, user2).size()
+        );
+    }
 }

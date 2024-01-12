@@ -135,22 +135,29 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
             return;
         }
 
+        // Add a condition to check if the resource is advertised
+        Filter advertisedFilter = Filter.equal("resource.advertised", true);
+
+        // User filtering based on user and groups
         Filter userFiltering = Filter.equal("user.name", user.getName());
 
-        if(! user.getGroups().isEmpty()) {
+        if(user.getGroups() != null && !user.getGroups().isEmpty()) {
             List<Long> groupsId = new ArrayList<>();
             for (UserGroup group : user.getGroups()) {
                 groupsId.add(group.getId());
             }
             
-            userFiltering = Filter.or( userFiltering, Filter.in("group.id", groupsId));
+            userFiltering = Filter.or(userFiltering, Filter.in("group.id", groupsId));
         }
+
+        // Combine userFiltering and advertisedFilter using OR
+        Filter combinedFilterUserFiltering = Filter.or(userFiltering, advertisedFilter);
 
         Filter securityFilter = Filter.some(
                 "security",
                 Filter.and(
                         Filter.equal("canRead", true),
-                        userFiltering
+                        combinedFilterUserFiltering
                         )
                 );
 
@@ -172,7 +179,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         searchCriteria.addFilter(securityFilter);
         // now rules are not properly filtered. 
         // so no user rules have to be removed externally (see RESTServiceImpl > ResourceServiceImpl)
-        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
+        // TODO: apply same workaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
         return super.search(searchCriteria);
     }
 
@@ -214,6 +221,5 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }
-    
-    
+
 }
