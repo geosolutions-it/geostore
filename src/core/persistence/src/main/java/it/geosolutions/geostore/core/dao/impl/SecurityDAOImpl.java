@@ -150,8 +150,8 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
             userFiltering = Filter.or(userFiltering, Filter.in("group.id", groupsId));
         }
 
-        // Combine userFiltering and advertisedFilter using OR
-        Filter combinedFilterUserFiltering = Filter.or(userFiltering, advertisedFilter);
+        // Combine userFiltering and advertisedFilter using AND
+        Filter combinedFilterUserFiltering = Filter.and(userFiltering, advertisedFilter);
 
         Filter securityFilter = Filter.some(
                 "security",

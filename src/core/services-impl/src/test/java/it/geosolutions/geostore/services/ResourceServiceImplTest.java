@@ -496,9 +496,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
         // name like
         SearchFilter nameContains1Filter = new FieldFilter(BaseField.NAME, "%name1%", SearchOperator.LIKE);
-        assertEquals(
-                resourceService.getResources(nameContains1Filter,null, null, user1).size(),
-                resourceService.getResources(nameContains1Filter,null, null, user2).size()
-        );
+        assertEquals(1, resourceService.getResources(nameContains1Filter,null, null, user1).size());
+        assertEquals(0, resourceService.getResources(nameContains1Filter,null, null, user2).size());
     }
 }
