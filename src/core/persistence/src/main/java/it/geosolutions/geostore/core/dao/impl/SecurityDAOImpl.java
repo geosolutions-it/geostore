@@ -135,11 +135,16 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
             return;
         }
 
-        // Add a condition to check if the resource is advertised
-        Filter advertisedFilter = Filter.equal("resource.advertised", true);
-
         // User filtering based on user and groups
         Filter userFiltering = Filter.equal("user.name", user.getName());
+
+        // Combine owner and advertisedFilter using OR
+        /**
+         * The user is the owner of the resource or the resource is advertised.
+         */
+        Filter advertisedFiltering = Filter.or(
+                Filter.equal("user.name", user.getName()),
+                Filter.equal("resource.advertised", true));
 
         if(user.getGroups() != null && !user.getGroups().isEmpty()) {
             List<Long> groupsId = new ArrayList<>();
@@ -147,19 +152,20 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
                 groupsId.add(group.getId());
             }
             
+            /* userFiltering = Filter.and(
+                    advertisedFiltering,
+                    Filter.or(userFiltering, Filter.in("group.id", groupsId))
+            ); */
             userFiltering = Filter.or(userFiltering, Filter.in("group.id", groupsId));
         }
 
-        // Combine userFiltering and advertisedFilter using AND
-        Filter combinedFilterUserFiltering = Filter.and(userFiltering, advertisedFilter);
-
         Filter securityFilter = Filter.some(
-                "security",
-                Filter.and(
-                        Filter.equal("canRead", true),
-                        combinedFilterUserFiltering
-                        )
-                );
+            "security",
+            Filter.and(
+                    Filter.equal("canRead", true),
+                    userFiltering
+            )
+        );
 
         searchCriteria.addFilter(securityFilter);
     }

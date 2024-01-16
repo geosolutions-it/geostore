@@ -189,6 +189,7 @@ public class ResourceServiceImpl implements ResourceService
         r.setMetadata(resource.getMetadata());
         r.setName(resource.getName());
         r.setCategory(loadedCategory);
+        r.setAdvertised(resource.isAdvertised());
 
         try {
             resourceDAO.persist(r);
@@ -511,16 +512,19 @@ public class ResourceServiceImpl implements ResourceService
             // the loaded resource (and associated attributes and stored data).
             // This to inform the client in HTTP response result.
             // ///////////////////////////////////////////////////////////////////////
+            boolean resourceCanBeListed = true;
             if (authUser != null) {
                 if (authUser.getRole().equals(Role.ADMIN)) {
                     shortResource.setCanEdit(true);
                     shortResource.setCanDelete(true);
                 } else {
+                    boolean authUserIsOwner = false;
                     for (SecurityRule rule : resource.getSecurity()) {
                         User owner = rule.getUser();
                         UserGroup userGroup = rule.getGroup();
                         if (owner != null) {
                             if (owner.getId().equals(authUser.getId())) {
+                                authUserIsOwner = true;
                                 if (rule.isCanWrite()) {
                                     shortResource.setCanEdit(true);
                                     shortResource.setCanDelete(true);
@@ -540,10 +544,15 @@ public class ResourceServiceImpl implements ResourceService
                             }
                         }
                     }
+                    if (!authUserIsOwner)
+                        resourceCanBeListed = resource.isAdvertised();
                 }
+            } else {
+                resourceCanBeListed = resource.isAdvertised();
             }
 
-            swList.add(shortResource);
+            if (resourceCanBeListed)
+                swList.add(shortResource);
         }
 
         return swList;

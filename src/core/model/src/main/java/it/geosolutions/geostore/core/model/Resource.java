@@ -190,7 +190,7 @@ public class Resource implements Serializable, CycleRecoverable {
     /**
      * @return the advertised
      */
-    public Boolean getAdvertised() {
+    public Boolean isAdvertised() {
         return advertised;
     }
 

@@ -404,4 +404,32 @@ public class ServiceTestBase extends TestCase {
         user.setName("ThisIsNotARealUser");
         return user;
     }
+
+    // SecurityRuleBuilder class
+    protected class SecurityRuleBuilder {
+        private SecurityRule rule;
+
+        public SecurityRuleBuilder() {
+            rule = new SecurityRule();
+        }
+
+        public SecurityRuleBuilder user(User user) {
+            rule.setUser(user);
+            return this;
+        }
+
+        public SecurityRuleBuilder canRead(boolean canRead) {
+            rule.setCanRead(canRead);
+            return this;
+        }
+
+        public SecurityRuleBuilder group(UserGroup group) {
+            rule.setGroup(group);
+            return this;
+        }
+
+        public SecurityRule build() {
+            return rule;
+        }
+    }
 }
