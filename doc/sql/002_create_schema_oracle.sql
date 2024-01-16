@@ -26,6 +26,7 @@
         metadata varchar2(4000 char),
         name varchar2(255 char) not null,
         category_id number(19,0) not null,
+        advertised bool not null,
         primary key (id),
         unique (name)
     );
