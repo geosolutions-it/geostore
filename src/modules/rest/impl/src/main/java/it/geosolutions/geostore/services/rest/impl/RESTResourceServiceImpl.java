@@ -132,8 +132,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         r.setSecurity(securities);
 
         try {
-            long id = resourceService.insert(r);
-            return id;
+            return resourceService.insert(r);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (NotFoundServiceEx e) {
@@ -190,6 +189,10 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
                     old.setName(resource.getName());
                 if (resource.getMetadata() != null)
                     old.setMetadata(resource.getMetadata());
+                if (resource.getCreator() != null)
+                    old.setCreator(resource.getCreator());
+                if (resource.getEditor() != null)
+                    old.setEditor(resource.getEditor());
 
                 try {
                     resourceService.update(old);
@@ -613,10 +616,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             throw new ForbiddenErrorWebEx(
                     "This user cannot read this resource so neither its permissions!");
         } 
-		
-		
-	}
 
-	
+	}
 	
 }

@@ -102,6 +102,8 @@ public class FilterUnmarshalTest extends TestCase {
         rr.setCategory(new RESTCategory("TestCategory"));
         rr.setData("Sample data content");
         rr.setMetadata("Sample metadata content");
+        rr.setCreator("User1");
+        rr.setEditor("User2");
 
         List<ShortAttribute> attr = new ArrayList<ShortAttribute>();
         attr.add(new ShortAttribute("attname1", "attvalue1", DataType.STRING));

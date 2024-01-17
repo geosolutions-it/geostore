@@ -102,23 +102,14 @@ public class SearchConverterTest extends ServiceTestBase {
             assertEquals(3, sAttributes.size());
 
             assertNotNull(resourceService.get(resourceId));
-            assertTrue(resourceService.getAttributes(resourceId).size() == 3);
+            assertEquals(3, resourceService.getAttributes(resourceId).size());
         }
 
         //
         // Complex filter with AND
         //
         {
-            String xmlFilter = "<AND>" + "<FIELD>" + "<field>NAME</field>"
-                    + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                    + "<AND>" + "<ATTRIBUTE>" + "<name>attr1</name>"
-                    + "<operator>EQUAL_TO</operator>" + "<type>STRING</type>"
-                    + "<value>value2</value>" + "</ATTRIBUTE>" + "<ATTRIBUTE>"
-                    + "<name>attr2</name>" + "<operator>GREATER_THAN</operator>"
-                    + "<type>NUMBER</type>" + "<value>1.0</value>" + "</ATTRIBUTE>" + "</AND>"
-                    + "</AND>";
-
-            StringReader reader = new StringReader(xmlFilter);
+            StringReader reader = getFilterConverterFilterAND();
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
@@ -130,24 +121,41 @@ public class SearchConverterTest extends ServiceTestBase {
         // Complex filter with AND OR
         //
         {
-            String xmlFilter = "<AND>" + "<FIELD>" + "<field>NAME</field>"
-                    + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                    + "<AND>" + "<ATTRIBUTE>" + "<name>attr2</name>"
-                    + "<operator>GREATER_THAN</operator>" + "<type>NUMBER</type>"
-                    + "<value>1.0</value>" + "</ATTRIBUTE>" + "<OR>" + "<ATTRIBUTE>"
-                    + "<name>attr1</name>" + "<operator>EQUAL_TO</operator>"
-                    + "<type>STRING</type>" + "<value>value2</value>" + "</ATTRIBUTE>"
-                    + "<ATTRIBUTE>" + "<name>attr1</name>" + "<operator>EQUAL_TO</operator>"
-                    + "<type>STRING</type>" + "<value>value3</value>" + "</ATTRIBUTE>" + "</OR>"
-                    + "</AND>" + "</AND>";
-
-            StringReader reader = new StringReader(xmlFilter);
+            StringReader reader = getFilterConverterFilterANDOR();
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
             List<ShortResource> resources = resourceService.getResources(searchFilter, buildFakeAdminUser());
             assertEquals(2, resources.size());
         }
+    }
+
+    private static StringReader getFilterConverterFilterAND() {
+        String xmlFilter = "<AND>" + "<FIELD>" + "<field>NAME</field>"
+                + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
+                + "<AND>" + "<ATTRIBUTE>" + "<name>attr1</name>"
+                + "<operator>EQUAL_TO</operator>" + "<type>STRING</type>"
+                + "<value>value2</value>" + "</ATTRIBUTE>" + "<ATTRIBUTE>"
+                + "<name>attr2</name>" + "<operator>GREATER_THAN</operator>"
+                + "<type>NUMBER</type>" + "<value>1.0</value>" + "</ATTRIBUTE>" + "</AND>"
+                + "</AND>";
+
+        return new StringReader(xmlFilter);
+    }
+
+    private static StringReader getFilterConverterFilterANDOR() {
+        String xmlFilter = "<AND>" + "<FIELD>" + "<field>NAME</field>"
+                + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
+                + "<AND>" + "<ATTRIBUTE>" + "<name>attr2</name>"
+                + "<operator>GREATER_THAN</operator>" + "<type>NUMBER</type>"
+                + "<value>1.0</value>" + "</ATTRIBUTE>" + "<OR>" + "<ATTRIBUTE>"
+                + "<name>attr1</name>" + "<operator>EQUAL_TO</operator>"
+                + "<type>STRING</type>" + "<value>value2</value>" + "</ATTRIBUTE>"
+                + "<ATTRIBUTE>" + "<name>attr1</name>" + "<operator>EQUAL_TO</operator>"
+                + "<type>STRING</type>" + "<value>value3</value>" + "</ATTRIBUTE>" + "</OR>"
+                + "</AND>" + "</AND>";
+
+        return new StringReader(xmlFilter);
     }
 
     @Test
@@ -177,7 +185,7 @@ public class SearchConverterTest extends ServiceTestBase {
 
             Attribute attr2 = new Attribute();
             attr2.setName("attr2");
-            attr2.setNumberValue(Double.valueOf(i));
+            attr2.setNumberValue((double) i);
             attr2.setType(DataType.NUMBER);
             attributes.add(attr2);
 
@@ -193,10 +201,10 @@ public class SearchConverterTest extends ServiceTestBase {
 
             List<ShortAttribute> sAttributes = resourceService.getAttributes(resourceId);
             assertNotNull(sAttributes);
-            assertTrue(sAttributes.size() == 3);
+            assertEquals(3, sAttributes.size());
 
             assertNotNull(resourceService.get(resourceId));
-            assertTrue(resourceService.getAttributes(resourceId).size() == 3);
+            assertEquals(3, resourceService.getAttributes(resourceId).size());
 
             long id = createData("data" + i, resourceService.get(resourceId));
 
@@ -224,7 +232,7 @@ public class SearchConverterTest extends ServiceTestBase {
             Resource res = resources.get(0);
 
             assertNotNull(res.getAttribute());
-            assertTrue(res.getAttribute().size() == 3);
+            assertEquals(3, res.getAttribute().size());
 
             assertNull(res.getData());
         }
@@ -272,7 +280,7 @@ public class SearchConverterTest extends ServiceTestBase {
             assertNotNull(res.getData());
 
             assertNotNull(res.getAttribute());
-            assertTrue(res.getAttribute().size() == 3);
+            assertEquals(3, res.getAttribute().size());
         }
     }
 }

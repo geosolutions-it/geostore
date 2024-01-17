@@ -189,6 +189,8 @@ public class ResourceServiceImpl implements ResourceService
         r.setMetadata(resource.getMetadata());
         r.setName(resource.getName());
         r.setCategory(loadedCategory);
+        r.setCreator(resource.getCreator());
+        r.setEditor(resource.getEditor());
 
         try {
             resourceDAO.persist(r);
@@ -529,7 +531,7 @@ public class ResourceServiceImpl implements ResourceService
                                 }
                             }
                         } else if (userGroup != null) {
-                            List<String> groups = extratcGroupNames(authUser.getGroups());
+                            List<String> groups = extractGroupNames(authUser.getGroups());
                             if (groups.contains(userGroup.getGroupName())) {
                                 if (rule.isCanWrite()) {
                                     shortResource.setCanEdit(true);
@@ -549,7 +551,7 @@ public class ResourceServiceImpl implements ResourceService
         return swList;
     }
 
-    public static List<String> extratcGroupNames(Set<UserGroup> groups)
+    public static List<String> extractGroupNames(Set<UserGroup> groups)
     {
         List<String> groupNames = new ArrayList<String>();
         if (groups == null) {
@@ -787,6 +789,8 @@ public class ResourceServiceImpl implements ResourceService
             res.setId(resource.getId());
             res.setLastUpdate(resource.getLastUpdate());
             res.setName(resource.getName());
+            res.setCreator(resource.getCreator());
+            res.setEditor(resource.getEditor());
 
             if (includeData) {
                 res.setData(resource.getData());

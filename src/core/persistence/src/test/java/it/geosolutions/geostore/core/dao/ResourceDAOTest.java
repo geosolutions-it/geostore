@@ -63,6 +63,8 @@ public class ResourceDAOTest extends BaseDAOTest {
             resource.setName(NAME1);
             resource.setCreation(new Date());
             resource.setCategory(category);
+            resource.setCreator("USER1");
+            resource.setEditor("USER2");
 
             resourceDAO.persist(resource);
             resourceId = resource.getId();
@@ -103,7 +105,11 @@ public class ResourceDAOTest extends BaseDAOTest {
             assertNotNull("Can't retrieve resource", loaded);
 
             assertEquals(NAME1, loaded.getName());
+            assertEquals("USER1", loaded.getCreator());
+            assertEquals("USER2", loaded.getEditor());
             loaded.setName(NAME2);
+            loaded.setCreator("USER1Updated");
+            loaded.setEditor("USER2Updated");
             resourceDAO.merge(loaded);
         }
 
@@ -111,6 +117,8 @@ public class ResourceDAOTest extends BaseDAOTest {
             Resource loaded = resourceDAO.find(resourceId);
             assertNotNull("Can't retrieve resource", loaded);
             assertEquals(NAME2, loaded.getName());
+            assertEquals("USER1Updated", loaded.getCreator());
+            assertEquals("USER2Updated", loaded.getEditor());
         }
 
         //

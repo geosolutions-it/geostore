@@ -233,7 +233,6 @@ public class ServiceTestBase  {
     }
 
     /**
-     * @param name
      * @param data
      * @return long
      * @throws Exception
@@ -244,14 +243,12 @@ public class ServiceTestBase  {
 
     /**
      * @param name
-     * @param creation
      * @param description
-     * @param storedData
+     * @param catName
      * @return long
      * @throws Exception
      */
     protected long createResource(String name, String description, String catName) throws Exception {
-
         Category category = new Category();
         category.setName(catName);
 
@@ -261,12 +258,13 @@ public class ServiceTestBase  {
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
 
     protected long restCreateResource(String name, String description, String catName, long userId) throws Exception {
-
         RESTResource resource = new RESTResource();
         resource.setName(name);
         resource.setDescription(description);
@@ -278,20 +276,21 @@ public class ServiceTestBase  {
     }
 
     protected long createResource(String name, String description, Category category) throws Exception {
-
         Resource resource = new Resource();
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
 
     /**
      * @param name
-     * @param creation
      * @param description
-     * @param storedData
+     * @param catName
+     * @param rules
      * @return long
      * @throws Exception
      */
@@ -307,6 +306,8 @@ public class ServiceTestBase  {
         resource.setDescription(description);
         resource.setCategory(category);
         resource.setSecurity(rules);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }

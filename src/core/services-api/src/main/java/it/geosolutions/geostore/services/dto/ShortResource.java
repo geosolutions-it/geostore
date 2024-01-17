@@ -60,6 +60,10 @@ public class ShortResource implements Serializable {
 
     private boolean canDelete = false;
 
+    private String creator;
+
+    private String editor;
+
     public ShortResource() {
 
     }
@@ -73,6 +77,8 @@ public class ShortResource implements Serializable {
         this.creation = resource.getCreation();
         this.description = resource.getDescription();
         this.lastUpdate = resource.getLastUpdate();
+        this.creator = resource.getCreator();
+        this.editor = resource.getEditor();
     }
 
     /**
@@ -111,7 +117,7 @@ public class ShortResource implements Serializable {
     }
 
     /**
-     * @param descrition the description to set
+     * @param description the description to set
      */
     public void setDescription(String description) {
         this.description = description;
@@ -173,6 +179,34 @@ public class ShortResource implements Serializable {
         this.canDelete = canDelete;
     }
 
+    /**
+     * @return
+     */
+    public String getCreator() {
+        return creator;
+    }
+
+    /**
+     * @param creator
+     */
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    /**
+     * @return
+     */
+    public String getEditor() {
+        return editor;
+    }
+
+    /**
+     * @param editor
+     */
+    public void setEditor(String editor) {
+        this.editor = editor;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -196,10 +230,16 @@ public class ShortResource implements Serializable {
             builder.append("lastUpdate=").append(lastUpdate).append(", ");
 
         if (canEdit)
-            builder.append("canEdit=").append(canEdit).append(", ");
+            builder.append("canEdit=").append(true).append(", ");
 
         if (canDelete)
-            builder.append("canDelete=").append(canDelete);
+            builder.append("canDelete=").append(true);
+
+        if (creator != null)
+            builder.append("creator=").append(creator).append(", ");
+
+        if (editor != null)
+            builder.append("editor=").append(editor).append(", ");
 
         builder.append(']');
         return builder.toString();

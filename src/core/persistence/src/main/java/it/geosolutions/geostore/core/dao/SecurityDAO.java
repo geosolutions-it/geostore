@@ -45,7 +45,7 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
 
     /**
      *
-     * @param userName
+     * @param groupNames
      * @param resourceId
      * @return
      */

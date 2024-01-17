@@ -163,6 +163,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         origResource.setName("rest_test_resource_" + timeid);
         origResource.setStore(storedData);
         origResource.setAttribute(attrList);
+        origResource.setCreator("USER1");
+        origResource.setEditor("USER2");
 
         Long rid = client.insert(origResource);
         System.out.println("RESOURCE has ID " + rid);
@@ -233,6 +235,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             origResource.setName("rest_test_resource_" + timeid);
             origResource.setStore(storedData);
             origResource.setAttribute(attrList);
+            origResource.setCreator("USER1");
+            origResource.setEditor("USER2");
 
             rid = client.insert(origResource);
         }
@@ -251,6 +255,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             attrList.add(new ShortAttribute("string4", "value4", DataType.STRING)); // added
 
             updResource.setAttribute(attrList);
+            updResource.setCreator("USER1Updated");
+            updResource.setEditor("USER2Updated");
             client.updateResource(rid, updResource);
         }
 
@@ -270,6 +276,9 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertEquals("value1", attMap.get("string1"));
             assertEquals("value2.2", attMap.get("string2"));
             assertEquals("value4", attMap.get("string4"));
+
+            assertEquals("USER1Updated", loaded.getCreator());
+            assertEquals("USER2Updated", loaded.getEditor());
         }
 
         // try bad update
@@ -289,7 +298,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
                 LOGGER.info("Error condition successfully detected: " + response);
             } catch (Exception e) {
                 LOGGER.info("Error condition successfully detected:" + e.getMessage(), e);
-
             }
         }
 
@@ -360,6 +368,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
         origResource.setName("rest_test_resource_getFull");
         origResource.setStore(storedData);
+        origResource.setCreator("USER1");
+        origResource.setEditor("USER2");
 
         Long rid = client.insert(origResource);
         System.out.println("RESOURCE has ID " + rid);

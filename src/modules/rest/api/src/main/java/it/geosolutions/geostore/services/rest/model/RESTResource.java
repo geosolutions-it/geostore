@@ -62,6 +62,10 @@ public class RESTResource implements Serializable {
 
     private String metadata;
 
+    private String creator;
+
+    private String editor;
+
     private List<ShortAttribute> attribute;
 
     private RESTStoredData store;
@@ -210,6 +214,34 @@ public class RESTResource implements Serializable {
         this.category = category;
     }
 
+    /**
+     * @return the creator username
+     */
+    public String getCreator() {
+        return creator;
+    }
+
+    /**
+     * @param creator the creator username
+     */
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    /**
+     * @return the editor username
+     */
+    public String getEditor() {
+        return editor;
+    }
+
+    /**
+     * @param editor the creator username
+     */
+    public void setEditor(String editor) {
+        this.editor = editor;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -241,10 +273,16 @@ public class RESTResource implements Serializable {
             builder.append(", attr=").append(attribute);
 
         if (store != null)
-            builder.append(", store=").append(store.toString());
+            builder.append(", store=").append(store);
 
         if (category != null)
-            builder.append(", cat=").append(category.toString());
+            builder.append(", cat=").append(category);
+
+        if (creator != null)
+            builder.append(", creator=").append(creator);
+
+        if (editor != null)
+            builder.append(", editor=").append(editor);
 
         builder.append(']');
         return builder.toString();
