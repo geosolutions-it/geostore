@@ -57,6 +57,7 @@ public class Convert {
         r.setMetadata(resource.getMetadata());
         r.setName(resource.getName());
         r.setCategory(category);
+        r.setAdvertised(resource.isAdvertised());
 
         // Parsing Attributes list
         if (CollectionUtils.isNotEmpty(resource.getAttribute())) {

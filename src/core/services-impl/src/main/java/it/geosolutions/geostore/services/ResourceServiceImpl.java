@@ -793,6 +793,7 @@ public class ResourceServiceImpl implements ResourceService
             res.setCategory(resource.getCategory());
             res.setCreation(resource.getCreation());
             res.setDescription(resource.getDescription());
+            res.setAdvertised(resource.isAdvertised());
             res.setId(resource.getId());
             res.setLastUpdate(resource.getLastUpdate());
             res.setName(resource.getName());
@@ -863,9 +864,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("data");
 
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-        List<Resource> resources = this.search(searchCriteria);
-
-        return resources;
+        return this.search(searchCriteria);
     }
 
     /**
@@ -953,7 +952,7 @@ public class ResourceServiceImpl implements ResourceService
     public long getCountByFilterAndUser(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx
     {
         Search searchCriteria = SearchConverter.convert(filter);
-        securityDAO.addReadSecurityConstraints(searchCriteria, user);
+        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
         return resourceDAO.count(searchCriteria);
     }
 
@@ -975,7 +974,7 @@ public class ResourceServiceImpl implements ResourceService
             searchCriteria.addFilterILike("name", nameLike);
         }
 
-        securityDAO.addReadSecurityConstraints(searchCriteria, user);
+        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
 
         return resourceDAO.count(searchCriteria);
     }

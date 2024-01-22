@@ -68,7 +68,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
         @Index(name = "idx_resource_creation", columnList = "creation"),
         @Index(name = "idx_resource_update", columnList = "lastUpdate"),
         @Index(name = "idx_resource_metadata", columnList = "metadata"),
-        @Index(name = "idx_resource_metadata", columnList = "advertised"),
+        @Index(name = "idx_resource_advertised", columnList = "advertised"),
         @Index(name = "idx_resource_category", columnList = "category_id")
 })
 // @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
@@ -95,7 +95,7 @@ public class Resource implements Serializable, CycleRecoverable {
     @Temporal(TemporalType.TIMESTAMP)
     private Date lastUpdate;
 
-    @Column(nullable = true, updatable = true)
+    @Column(nullable = true, updatable = true, columnDefinition = "bool default true")
     private Boolean advertised = true;
 
     @Column(nullable = true, updatable = true, length = 30000)

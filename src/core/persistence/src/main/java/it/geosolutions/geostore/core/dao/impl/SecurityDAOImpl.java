@@ -171,6 +171,50 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     }
 
     /**
+     * Add security filtering in order to filter out resources hidden the user
+     */
+    public void addAdvertisedSecurityConstraints(Search searchCriteria, User user)
+    {
+        // no further constraints for admin user
+        if(user.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        // User filtering based on user and groups
+        Filter userFiltering = Filter.equal("user.name", user.getName());
+
+        // Combine owner and advertisedFilter using OR
+        /**
+         * The user is the owner of the resource or the resource is advertised.
+         */
+        Filter advertisedFiltering = Filter.or(
+                Filter.equal("user.name", user.getName()),
+                Filter.equal("resource.advertised", true));
+
+        if(user.getGroups() != null && !user.getGroups().isEmpty()) {
+            List<Long> groupsId = new ArrayList<>();
+            for (UserGroup group : user.getGroups()) {
+                groupsId.add(group.getId());
+            }
+
+            userFiltering = Filter.and(
+                    advertisedFiltering,
+                    Filter.or(userFiltering, Filter.in("group.id", groupsId))
+            );
+        }
+
+        Filter securityFilter = Filter.some(
+                "security",
+                Filter.and(
+                        Filter.equal("canRead", true),
+                        userFiltering
+                )
+        );
+
+        searchCriteria.addFilter(securityFilter);
+    }
+
+    /**
      * @param userName
      * @param resourceId
      * @return List<SecurityRule>

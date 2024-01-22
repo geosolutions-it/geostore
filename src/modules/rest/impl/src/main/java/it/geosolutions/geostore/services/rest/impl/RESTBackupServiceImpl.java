@@ -198,6 +198,7 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
         ret.setName(resource.getName());
         ret.setDescription(resource.getDescription());
         ret.setMetadata(resource.getMetadata());
+        ret.setAdvertised(resource.isAdvertised());
         if (resource.getData() != null)
             ret.setData(resource.getData().getData());
         if (CollectionUtils.isNotEmpty(resource.getAttribute()))
