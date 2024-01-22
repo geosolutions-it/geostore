@@ -191,8 +191,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
                     old.setMetadata(resource.getMetadata());
                 if (resource.getCreator() != null)
                     old.setCreator(resource.getCreator());
-                if (resource.getEditor() != null)
-                    old.setEditor(resource.getEditor());
+                old.setEditor(authUser.getName());
 
                 try {
                     resourceService.update(old);
@@ -453,34 +452,36 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         //
         // Authorization check.
         //
+        long attributeId;
         boolean canUpdate = false;
         try {
             User authUser = extractAuthUser(sc);
             canUpdate = resourceAccessWrite(authUser, resource.getId());
 
-            if (canUpdate){
-            	
+            if(canUpdate){
             	ShortAttribute a  = resourceService.getAttribute(id, name);
             	//if the attribute exists, will be updated
             	if(a!=null){
-            		return resourceService.updateAttribute(id, name, value);
+                    attributeId = resourceService.updateAttribute(id, name, value);
             	}else{
             		//create the attribute if missing
             		if(type != null){
-            			return resourceService.insertAttribute(id, name, value, type);
+                        attributeId = resourceService.insertAttribute(id, name, value, type);
             		}else{
-            			return resourceService.insertAttribute(id, name, value, DataType.STRING);
+                        attributeId = resourceService.insertAttribute(id, name, value, DataType.STRING);
             		}
-            		
             	}
-                
             } else {
                 throw new InternalErrorServiceEx("This user cannot access this resource !");
             }
-            } catch (InternalErrorServiceEx ex) {
-            	
+            resource.setEditor(authUser.getName());
+            resourceService.update(resource);
+        } catch (InternalErrorServiceEx ex) {
             throw new InternalErrorWebEx(ex.getMessage());
+        } catch (DuplicatedResourceNameServiceEx | NotFoundServiceEx e) {
+            throw new RuntimeException(e);
         }
+        return attributeId;
     }
     
     /*

@@ -89,7 +89,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
                         rule.getUser() != null ? rule.getUser().getName() : rule.getUsername());
                 updated = true;
             }
-            if (resource.getEditor() == null) {
+            if (rule.getUser() != null || !rule.getUsername().isEmpty()) {
                 resource.setEditor(
                         rule.getUser() != null ? rule.getUser().getName() : rule.getUsername());
                 updated = true;
