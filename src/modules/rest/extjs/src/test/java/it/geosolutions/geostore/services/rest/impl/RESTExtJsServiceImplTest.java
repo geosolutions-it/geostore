@@ -25,6 +25,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import javax.ws.rs.core.SecurityContext;
+
+import it.geosolutions.geostore.services.dto.ShortResource;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -219,6 +221,48 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
         }
     }
 
+    @Test
+    public void testGetAllResources_editorUpdate() throws Exception
+    {
+        final String CAT0_NAME = "CAT000";
+        final String RES_NAME = "a MiXeD cAsE sTrInG";
+
+        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+
+        long a0 = restCreateUser("a0", Role.ADMIN, "p0");
+        long u0 = restCreateUser("u0", Role.USER, "p0");
+
+        createCategory(CAT0_NAME);
+        long r0Id = restCreateResource(RES_NAME, "x", CAT0_NAME, u0);
+
+        {
+            SecurityContext sc = new SimpleSecurityContext(u0);
+            String response = restExtJsService.getAllResources(sc, "*mIxEd*", 0, 1000);
+
+            System.out.println("JSON " + response);
+
+            JSONResult result = parse(response);
+            assertEquals(1, result.total);
+            assertEquals(1, result.returnedCount);
+
+            ShortResource resource = restExtJsService.getResource(sc, r0Id);
+            assertEquals(RES_NAME, resource.getName());
+            assertEquals("u0", resource.getCreator());
+            assertEquals("u0", resource.getEditor());
+        }
+
+        {
+            SecurityContext sc = new SimpleSecurityContext(a0);
+            Resource realResource = resourceService.get(r0Id);
+            realResource.setName("new name");
+            restResourceService.update(sc, r0Id, createRESTResource(realResource));
+
+            ShortResource resource = restExtJsService.getResource(sc, r0Id);
+            assertEquals(realResource.getName(), resource.getName());
+            assertEquals("u0", resource.getCreator());
+            assertEquals("a0", resource.getEditor());
+        }
+    }
 
     private JSONResult parse(String jsonString)
     {
@@ -270,6 +314,4 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
         int returnedCount;
         Set<String> names;
     }
-
-    
 }

@@ -48,6 +48,8 @@ import java.util.List;
 import javax.ws.rs.core.SecurityContext;
 
 
+import it.geosolutions.geostore.services.rest.utils.Convert;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -395,6 +397,21 @@ public class ServiceTestBase  {
         group.setGroupName(name);
 
         return userGroupService.insert(group);
+    }
+
+    protected RESTResource createRESTResource(Resource resource) {
+        RESTResource ret = new RESTResource();
+        ret.setCategory(new RESTCategory(resource.getCategory().getName()));
+        ret.setName(resource.getName());
+        ret.setDescription(resource.getDescription());
+        ret.setMetadata(resource.getMetadata());
+        ret.setCreator(resource.getCreator());
+        ret.setEditor(resource.getEditor());
+        if (resource.getData() != null)
+            ret.setData(resource.getData().getData());
+        if (CollectionUtils.isNotEmpty(resource.getAttribute()))
+            ret.setAttribute(Convert.convertToShortAttributeList(resource.getAttribute()));
+        return ret;
     }
 
     class SimpleSecurityContext implements SecurityContext {
