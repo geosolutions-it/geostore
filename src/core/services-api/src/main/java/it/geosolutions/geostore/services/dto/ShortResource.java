@@ -60,6 +60,8 @@ public class ShortResource implements Serializable {
 
     private boolean canDelete = false;
 
+    private boolean advertised = true;
+
     public ShortResource() {
 
     }
@@ -73,6 +75,7 @@ public class ShortResource implements Serializable {
         this.creation = resource.getCreation();
         this.description = resource.getDescription();
         this.lastUpdate = resource.getLastUpdate();
+        this.advertised = resource.isAdvertised();
     }
 
     /**
@@ -173,6 +176,20 @@ public class ShortResource implements Serializable {
         this.canDelete = canDelete;
     }
 
+    /**
+     * @return the advertised
+     */
+    public Boolean isAdvertised() {
+        return advertised;
+    }
+
+    /**
+     * @param advertised the advertised to set
+     */
+    public void setAdvertised(Boolean advertised) {
+        this.advertised = advertised;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -200,6 +217,9 @@ public class ShortResource implements Serializable {
 
         if (canDelete)
             builder.append("canDelete=").append(canDelete);
+
+        if (advertised)
+            builder.append("advertised=").append(advertised);
 
         builder.append(']');
         return builder.toString();

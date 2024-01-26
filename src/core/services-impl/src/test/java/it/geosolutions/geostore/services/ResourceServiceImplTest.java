@@ -19,9 +19,7 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -291,20 +289,20 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     @Test
     public void testUpdateSecurityRules() throws Exception {
     	long resourceId = createResource("name1", "description1", "MAP");
-    	
+
     	List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
     	assertEquals(0, writtenRules.size());
-    	
+
     	List<SecurityRule> rules = new ArrayList<SecurityRule>();
-    	
+
 		long userId = createUser("user1", Role.USER, "password");
 		User user = new User();
 		user.setId(userId);
-		
+
 		long groupId = createGroup("group1");
 		UserGroup group = new UserGroup();
 		group.setId(groupId);
-		
+
 		long otherGroupId = createGroup("group2");
 		UserGroup othergroup = new UserGroup();
 		othergroup.setId(otherGroupId);
@@ -451,5 +449,66 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         
         assertEquals(0, resourceService.getCount(null));    	
     }
-    
+
+    @Test
+    public void testUnadvertisedResources() throws Exception {
+        long groupId = createGroup("group1");
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
+
+        long otherGroupId = createGroup("group2");
+        UserGroup otherGroup = new UserGroup();
+        otherGroup.setId(otherGroupId);
+
+        long user1Id = createUser("user1", Role.USER, "password", groupId);
+        User user1 = new User();
+        user1.setId(user1Id);
+        user1.setName("user1");
+        user1.setRole(Role.USER);
+        user1.setGroups(new HashSet<>(Collections.singletonList(group)));
+
+        long user2Id = createUser("user2", Role.USER, "password", otherGroupId);
+        User user2 = new User();
+        user2.setId(user2Id);
+        user2.setName("user2");
+        user2.setRole(Role.USER);
+        user2.setGroups(new HashSet<>(Collections.singletonList(otherGroup)));
+
+        List<SecurityRule> rules1 = new ArrayList<>(Arrays.asList(
+            new SecurityRuleBuilder().user(user1).canRead(true).build(),
+            new SecurityRuleBuilder().group(group).canRead(true).build(),
+            new SecurityRuleBuilder().group(otherGroup).canRead(true).build()
+        ));
+
+        long resourceId = createResource("name1", "description1", "MAP1", false, rules1);
+
+        List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
+
+        assertEquals(3, writtenRules.size());
+
+        // name like
+        SearchFilter nameContains1Filter = new FieldFilter(BaseField.NAME, "%name1%", SearchOperator.LIKE);
+        resourceService.getResources(nameContains1Filter,null, null, user2);
+        assertEquals(1, resourceService.getResources(nameContains1Filter,null, null, buildFakeAdminUser()).size());
+        assertEquals(1, resourceService.getResources(nameContains1Filter,null, null, user1).size());
+        assertEquals(0, resourceService.getResources(nameContains1Filter,null, null, user2).size());
+
+        List<SecurityRule> rules2 = new ArrayList<>(Arrays.asList(
+                new SecurityRuleBuilder().user(user1).canRead(true).build(),
+                new SecurityRuleBuilder().group(group).canRead(true).build(),
+                new SecurityRuleBuilder().group(otherGroup).canRead(true).build()
+        ));
+
+        resourceId = createResource("name2", "description2", "MAP2", true, rules2);
+
+        writtenRules = resourceService.getSecurityRules(resourceId);
+
+        assertEquals(3, writtenRules.size());
+
+        // name like
+        SearchFilter nameContains2Filter = new FieldFilter(BaseField.NAME, "%name2%", SearchOperator.LIKE);
+        assertEquals(1, resourceService.getResources(nameContains2Filter,null, null, buildFakeAdminUser()).size());
+        assertEquals(1, resourceService.getResources(nameContains2Filter,null, null, user1).size());
+        assertEquals(1, resourceService.getResources(nameContains2Filter,null, null, user2).size());
+    }
 }

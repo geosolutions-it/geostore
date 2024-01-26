@@ -321,7 +321,7 @@ public class UserGroupServiceImpl implements UserGroupService {
                 
                 ShortResource out = new ShortResource(resource);
                 // In this case the short resource to return is not related to the permission available by the user
-                // who call the sevrice (like in other service) but can Delete/Edit are set as the rule updated.
+                // who call the service (like in other service) but can Delete/Edit are set as the rule updated.
                 out.setCanDelete(canWrite);
                 out.setCanEdit(canWrite);
                 updated.add(out);
