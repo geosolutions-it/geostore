@@ -232,11 +232,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
 
         assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
 
-        long a0 = restCreateUser("a0", Role.ADMIN, "p0");
-        long u0 = restCreateUser("u0", Role.USER, "p0");
+        long a0 = restCreateUser("a0", Role.ADMIN, new HashSet<>(), "p0");
+        long u0 = restCreateUser("u0", Role.USER, new HashSet<>(), "p0");
 
         createCategory(CAT0_NAME);
-        long r0Id = restCreateResource(RES_NAME, "x", CAT0_NAME, u0);
+        long r0Id = restCreateResource(RES_NAME, "x", CAT0_NAME, u0, true);
 
         {
             SecurityContext sc = new SimpleSecurityContext(u0);
