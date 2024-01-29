@@ -226,11 +226,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 filter = new AndFilter(filter, new FieldFilter(BaseField.NAME, resourceNameLike, SearchOperator.ILIKE));
             }
 
-            List<Resource> resources = resourceService.getResources(filter,
+            List<Resource> resources = filterOutUnadvertisedResources(
+                    resourceService.getResources(filter,
                             page, limit,
                             includeAttributes || (extraAttributes != null && !extraAttributes.isEmpty()),
                             includeData,
-                            authUser);
+                            authUser),
+                    authUser);
 
             long count = 0;
             if (resources != null && resources.size() > 0) {
@@ -241,7 +243,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     authUser, extraAttributesList, includeAttributes,
                     includeData);
             return result.toString();
-
         } catch (InternalErrorServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
@@ -278,7 +279,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         try {
             authUser = extractAuthUser(sc);
         } catch (InternalErrorWebEx ie) {
-            // serch without user information
+            // search without user information
             LOGGER.warn("Error in validating user (this action should probably be aborted)", ie); // why is this exception caught?
         }
 
@@ -288,8 +289,11 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            List<Resource> resources = resourceService.getResources(filter, page, limit,
-                    includeAttributes, includeData, authUser);
+            List<Resource> resources = filterOutUnadvertisedResources(
+                    resourceService.getResources(
+                            filter, page, limit,
+                            includeAttributes, includeData, authUser),
+                    authUser);
 
             // Here the Read permission on each resource must be checked due to will be returned the full Resource not just a ShortResource
             // N.B. This is a bad method to check the permissions on each requested resource, it can perform 2 database access for each resource.
@@ -299,18 +303,38 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 count = resourceService.getCountByFilterAndUser(filter, authUser);
             }
 
-            ExtResourceList list = new ExtResourceList(count, resources);
-            return list;
+            return new ExtResourceList(count, resources);
 
-        } catch (InternalErrorServiceEx e) {
-            LOGGER.warn(e.getMessage(), e);
-
-            return null;
-        } catch (BadRequestServiceEx e) {
+        } catch (InternalErrorServiceEx | BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
             return null;
         }
+    }
+
+    /**
+     * This internal method allows us to filter out "unadvertised" resources for non-admin/non-owners
+     *
+     * @param resources
+     * @param authUser
+     * @return
+     */
+    private List<Resource> filterOutUnadvertisedResources(List<Resource> resources, User authUser) {
+        List<Resource> filteredList = new ArrayList<>();
+        for(Resource r : resources) {
+            //get security rules for user
+            User owner = null;
+            for (SecurityRule rule : resourceService
+                    .getUserSecurityRule(authUser.getName(),
+                            r.getId())) {
+                owner = rule.getUser();
+            }
+            if (r.isAdvertised() ||
+                    (authUser.getRole().equals(Role.ADMIN) || (owner != null && owner.getId().equals(authUser.getId())))) {
+                filteredList.add(r);
+            }
+        }
+        return filteredList;
     }
 
     /**
@@ -362,8 +386,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 count = userService.getCount(nameLike);
             }
 
-            ExtUserList list = new ExtUserList(count, users);
-            return list;
+            return new ExtUserList(count, users);
 
         } catch (BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
@@ -393,7 +416,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         try {
             authUser = extractAuthUser(sc);
         } catch (InternalErrorWebEx ie) {
-            // serch without user information
+            // search without user information
             LOGGER.warn("Error in validating user (this action should probably be aborted)", ie); // why is this exception caught?
             return null;
         }
@@ -407,8 +430,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 count = groupService.getCount(authUser, nameLike, all);
             }
 
-            ExtGroupList list = new ExtGroupList(count, groups);
-            return list;
+            return new ExtGroupList(count, groups);
 
         } catch (BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
@@ -531,7 +553,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         User authUser = extractAuthUser(sc);
         ResourceAuth auth = getResourceAuth(authUser, id);
         
-        if(! auth.canRead ){
+        if(!auth.canRead ){
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
 
@@ -651,7 +673,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                             }
                         }
                     }
-
                 }
             }
         }
@@ -713,7 +734,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         /**
-         * @return true if there are an user logged
+         * @return true if there are a user logged
          */
         public Boolean isCanCopy() {
             return authUser != null;

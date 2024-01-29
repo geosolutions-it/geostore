@@ -106,7 +106,6 @@
         <jaxb-impl-version>2.1.2</jaxb-impl-version>
 
         <log4j-version>2.19.0</log4j-version>
-        <dom4j-version>1.6.1</dom4j-version>
 
         <maven-assembly-plugin-version>2.2-beta-5</maven-assembly-plugin-version>
 
@@ -329,11 +328,6 @@
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-1.2-api</artifactId>
                 <version>${log4j-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>dom4j</groupId>
-                <artifactId>dom4j</artifactId>
-                <version>${dom4j-version}</version>
             </dependency>
 
 		    <!-- =========================================================== -->

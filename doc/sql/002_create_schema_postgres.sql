@@ -41,6 +41,7 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
         metadata varchar(30000),
         name varchar(255) not null,
         category_id int8 not null,
+        advertised bool not null default true,
         primary key (id),
         unique (name)
     );

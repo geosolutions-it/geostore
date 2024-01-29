@@ -135,15 +135,72 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
             return;
         }
 
+        // User filtering based on user and groups
         Filter userFiltering = Filter.equal("user.name", user.getName());
 
-        if(! user.getGroups().isEmpty()) {
+        // Combine owner and advertisedFilter using OR
+        /**
+         * The user is the owner of the resource or the resource is advertised.
+         */
+        Filter advertisedFiltering = Filter.or(
+                Filter.equal("user.name", user.getName()),
+                Filter.equal("resource.advertised", true));
+
+        if(user.getGroups() != null && !user.getGroups().isEmpty()) {
             List<Long> groupsId = new ArrayList<>();
             for (UserGroup group : user.getGroups()) {
                 groupsId.add(group.getId());
             }
             
-            userFiltering = Filter.or( userFiltering, Filter.in("group.id", groupsId));
+            /* userFiltering = Filter.and(
+                    advertisedFiltering,
+                    Filter.or(userFiltering, Filter.in("group.id", groupsId))
+            ); */
+            userFiltering = Filter.or(userFiltering, Filter.in("group.id", groupsId));
+        }
+
+        Filter securityFilter = Filter.some(
+            "security",
+            Filter.and(
+                    Filter.equal("canRead", true),
+                    userFiltering
+            )
+        );
+
+        searchCriteria.addFilter(securityFilter);
+    }
+
+    /**
+     * Add security filtering in order to filter out resources hidden the user
+     */
+    public void addAdvertisedSecurityConstraints(Search searchCriteria, User user)
+    {
+        // no further constraints for admin user
+        if(user.getRole() == Role.ADMIN) {
+            return;
+        }
+
+        // User filtering based on user and groups
+        Filter userFiltering = Filter.equal("user.name", user.getName());
+
+        // Combine owner and advertisedFilter using OR
+        /**
+         * The user is the owner of the resource or the resource is advertised.
+         */
+        Filter advertisedFiltering = Filter.or(
+                Filter.equal("user.name", user.getName()),
+                Filter.equal("resource.advertised", true));
+
+        if(user.getGroups() != null && !user.getGroups().isEmpty()) {
+            List<Long> groupsId = new ArrayList<>();
+            for (UserGroup group : user.getGroups()) {
+                groupsId.add(group.getId());
+            }
+
+            userFiltering = Filter.and(
+                    advertisedFiltering,
+                    Filter.or(userFiltering, Filter.in("group.id", groupsId))
+            );
         }
 
         Filter securityFilter = Filter.some(
@@ -151,8 +208,8 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
                 Filter.and(
                         Filter.equal("canRead", true),
                         userFiltering
-                        )
-                );
+                )
+        );
 
         searchCriteria.addFilter(securityFilter);
     }
@@ -172,7 +229,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         searchCriteria.addFilter(securityFilter);
         // now rules are not properly filtered. 
         // so no user rules have to be removed externally (see RESTServiceImpl > ResourceServiceImpl)
-        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
+        // TODO: apply same workaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
         return super.search(searchCriteria);
     }
 
@@ -214,6 +271,5 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }
-    
-    
+
 }

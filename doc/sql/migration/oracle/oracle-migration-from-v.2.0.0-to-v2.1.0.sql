@@ -1,0 +1,1 @@
+alter table gs_resource add column advertised bool not null default true;
