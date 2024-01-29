@@ -64,6 +64,8 @@ public class ShortResource implements Serializable {
 
     private String editor;
 
+    private boolean advertised = true;
+
     public ShortResource() {
 
     }
@@ -79,6 +81,7 @@ public class ShortResource implements Serializable {
         this.lastUpdate = resource.getLastUpdate();
         this.creator = resource.getCreator();
         this.editor = resource.getEditor();
+        this.advertised = resource.isAdvertised();
     }
 
     /**
@@ -207,6 +210,20 @@ public class ShortResource implements Serializable {
         this.editor = editor;
     }
 
+    /**
+     * @return the advertised
+     */
+    public Boolean isAdvertised() {
+        return advertised;
+    }
+
+    /**
+     * @param advertised the advertised to set
+     */
+    public void setAdvertised(Boolean advertised) {
+        this.advertised = advertised;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -240,6 +257,9 @@ public class ShortResource implements Serializable {
 
         if (editor != null)
             builder.append("editor=").append(editor).append(", ");
+
+        if (advertised)
+            builder.append("advertised=").append(advertised);
 
         builder.append(']');
         return builder.toString();

@@ -191,6 +191,7 @@ public class ResourceServiceImpl implements ResourceService
         r.setCategory(loadedCategory);
         r.setCreator(resource.getCreator());
         r.setEditor(resource.getEditor());
+        r.setAdvertised(resource.isAdvertised());
 
         try {
             resourceDAO.persist(r);
@@ -513,16 +514,19 @@ public class ResourceServiceImpl implements ResourceService
             // the loaded resource (and associated attributes and stored data).
             // This to inform the client in HTTP response result.
             // ///////////////////////////////////////////////////////////////////////
+            boolean resourceCanBeListed = true;
             if (authUser != null) {
                 if (authUser.getRole().equals(Role.ADMIN)) {
                     shortResource.setCanEdit(true);
                     shortResource.setCanDelete(true);
                 } else {
+                    boolean authUserIsOwner = false;
                     for (SecurityRule rule : resource.getSecurity()) {
                         User owner = rule.getUser();
                         UserGroup userGroup = rule.getGroup();
                         if (owner != null) {
                             if (owner.getId().equals(authUser.getId())) {
+                                authUserIsOwner = true;
                                 if (rule.isCanWrite()) {
                                     shortResource.setCanEdit(true);
                                     shortResource.setCanDelete(true);
@@ -542,10 +546,15 @@ public class ResourceServiceImpl implements ResourceService
                             }
                         }
                     }
+                    if (!authUserIsOwner)
+                        resourceCanBeListed = resource.isAdvertised();
                 }
+            } else {
+                resourceCanBeListed = resource.isAdvertised();
             }
 
-            swList.add(shortResource);
+            if (resourceCanBeListed)
+                swList.add(shortResource);
         }
 
         return swList;
@@ -786,6 +795,7 @@ public class ResourceServiceImpl implements ResourceService
             res.setCategory(resource.getCategory());
             res.setCreation(resource.getCreation());
             res.setDescription(resource.getDescription());
+            res.setAdvertised(resource.isAdvertised());
             res.setId(resource.getId());
             res.setLastUpdate(resource.getLastUpdate());
             res.setName(resource.getName());
@@ -858,9 +868,7 @@ public class ResourceServiceImpl implements ResourceService
         searchCriteria.addFetch("data");
 
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-        List<Resource> resources = this.search(searchCriteria);
-
-        return resources;
+        return this.search(searchCriteria);
     }
 
     /**
@@ -948,12 +956,12 @@ public class ResourceServiceImpl implements ResourceService
     public long getCountByFilterAndUser(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx
     {
         Search searchCriteria = SearchConverter.convert(filter);
-        securityDAO.addReadSecurityConstraints(searchCriteria, user);
+        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
         return resourceDAO.count(searchCriteria);
     }
 
     /**
-     * Get filter count by namerLike and user
+     * Get filter count by nameLike and user
      *
      * @param nameLike
      * @param user
@@ -970,7 +978,7 @@ public class ResourceServiceImpl implements ResourceService
             searchCriteria.addFilterILike("name", nameLike);
         }
 
-        securityDAO.addReadSecurityConstraints(searchCriteria, user);
+        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
 
         return resourceDAO.count(searchCriteria);
     }

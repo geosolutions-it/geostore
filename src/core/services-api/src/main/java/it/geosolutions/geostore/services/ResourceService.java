@@ -208,8 +208,7 @@ public interface ResourceService extends SecurityService{
 
     /**
      * Returns the list of security rules for the resource.
-     * 
-     * @param resources
+     * @param id
      * @return
      */
     public List<SecurityRule> getSecurityRules(long id)
@@ -243,7 +242,7 @@ public interface ResourceService extends SecurityService{
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
-     * Get filter count by namerLike and user
+     * Get filter count by nameLike and user
      * @param nameLike
      * @param user
      * @return resources' count that the user has access
@@ -256,6 +255,4 @@ public interface ResourceService extends SecurityService{
 
     long insertAttribute(long id, String name, String value, DataType type)
         throws InternalErrorServiceEx;
-
-
 }

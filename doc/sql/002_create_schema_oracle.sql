@@ -28,6 +28,7 @@
         category_id number(19,0) not null,
         creator varchar2(255 char),
         editor varchar2(255 char),
+        advertised bool not null default true,
         primary key (id),
         unique (name)
     );

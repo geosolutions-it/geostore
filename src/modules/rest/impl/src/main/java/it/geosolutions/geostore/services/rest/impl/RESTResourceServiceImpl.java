@@ -192,6 +192,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
                 if (resource.getCreator() != null)
                     old.setCreator(resource.getCreator());
                 old.setEditor(authUser.getName());
+                old.setAdvertised(resource.isAdvertised());
 
                 try {
                     resourceService.update(old);
@@ -588,7 +589,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
 	@Override
 	public SecurityRuleList getSecurityRules(SecurityContext sc, long id) {
-		//
+		    //
         // Authorization check.
         //
         boolean canRead = false;
@@ -616,8 +617,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         } else {
             throw new ForbiddenErrorWebEx(
                     "This user cannot read this resource so neither its permissions!");
-        } 
-
+        }
 	}
-	
+
 }

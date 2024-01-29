@@ -72,6 +72,8 @@ public class RESTResource implements Serializable {
 
     private RESTCategory category;
 
+    private boolean advertised = true;
+
     /**
      * @return the id
      */
@@ -242,6 +244,20 @@ public class RESTResource implements Serializable {
         this.editor = editor;
     }
 
+    /**
+     * @param advertised weather the resource is advertised or not
+     */
+    public void setAdvertised(boolean advertised) {
+        this.advertised = advertised;
+    }
+
+    /**
+     * @return advertised weather the resource is advertised or not
+     */
+    public boolean isAdvertised() {
+        return this.advertised;
+    }
+
     /*
      * (non-Javadoc)
      * 
@@ -284,6 +300,7 @@ public class RESTResource implements Serializable {
         if (editor != null)
             builder.append(", editor=").append(editor);
 
+        builder.append(", advertised=").append(advertised);
         builder.append(']');
         return builder.toString();
     }

@@ -97,6 +97,7 @@ public class FilterUnmarshalTest extends TestCase {
         rr.setId(42L);
         rr.setName("TestResource");
         rr.setDescription("This is a sample RESTResource");
+        rr.setAdvertised(true);
         rr.setCreation(new Date());
         rr.setLastUpdate(new Date());
         rr.setCategory(new RESTCategory("TestCategory"));

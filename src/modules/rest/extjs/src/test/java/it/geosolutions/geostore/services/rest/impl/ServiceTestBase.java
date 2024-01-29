@@ -45,11 +45,12 @@ import java.security.Principal;
 import java.util.Collections;
 
 import java.util.List;
+import java.util.Set;
 import javax.ws.rs.core.SecurityContext;
-
 
 import it.geosolutions.geostore.services.rest.utils.Convert;
 import org.apache.commons.collections.CollectionUtils;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -130,10 +131,8 @@ public class ServiceTestBase  {
      *
      */
     public void testCheckServices() {
-
         assertNotNull(restResourceService);
         assertNotNull(restUserService);
-
 
         assertNotNull(storedDataService);
         assertNotNull(resourceService);
@@ -236,6 +235,7 @@ public class ServiceTestBase  {
 
     /**
      * @param data
+     * @param resource
      * @return long
      * @throws Exception
      */
@@ -249,8 +249,11 @@ public class ServiceTestBase  {
      * @param catName
      * @return long
      * @throws Exception
+     * @param advertised
+     * @return long
+     * @throws Exception
      */
-    protected long createResource(String name, String description, String catName) throws Exception {
+    protected long createResource(String name, String description, String catName, boolean advertised) throws Exception {
         Category category = new Category();
         category.setName(catName);
 
@@ -262,28 +265,40 @@ public class ServiceTestBase  {
         resource.setCategory(category);
         resource.setCreator("USER1");
         resource.setEditor("USER2");
+        resource.setAdvertised(advertised);
 
         return resourceService.insert(resource);
     }
 
-    protected long restCreateResource(String name, String description, String catName, long userId) throws Exception {
+    protected long restCreateResource(String name, String description, String catName, long userId, boolean advertised) throws Exception {
         RESTResource resource = new RESTResource();
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(new RESTCategory(catName));
+        resource.setAdvertised(advertised);
 
         SecurityContext sc = new SimpleSecurityContext(userId);
 
         return restResourceService.insert(sc, resource);
     }
 
-    protected long createResource(String name, String description, Category category) throws Exception {
+    protected long restCreateResource(String name, String description, String catName, long userId, SecurityRuleList rules, boolean advertised) throws Exception {
+        long resId = restCreateResource(name, description, catName, userId, advertised);
+
+        SecurityContext sc = new SimpleSecurityContext(userId);
+
+        restResourceService.updateSecurityRules(sc, resId, rules);
+        return resId;
+    }
+
+    protected long createResource(String name, String description, Category category, boolean advertised) throws Exception {
         Resource resource = new Resource();
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
         resource.setCreator("USER1");
         resource.setEditor("USER2");
+        resource.setAdvertised(advertised);
 
         return resourceService.insert(resource);
     }
@@ -293,10 +308,11 @@ public class ServiceTestBase  {
      * @param description
      * @param catName
      * @param rules
+     * @param advertised
      * @return long
      * @throws Exception
      */
-    protected long createResource(String name, String description, String catName, List<SecurityRule> rules) throws Exception {
+    protected long createResource(String name, String description, String catName, List<SecurityRule> rules, boolean advertised) throws Exception {
 
         Category category = new Category();
         category.setName(catName);
@@ -310,6 +326,7 @@ public class ServiceTestBase  {
         resource.setSecurity(rules);
         resource.setCreator("USER1");
         resource.setEditor("USER2");
+        resource.setAdvertised(advertised);
 
         return resourceService.insert(resource);
     }
@@ -348,10 +365,12 @@ public class ServiceTestBase  {
         return userService.insert(user);
     }
 
-    protected long restCreateUser(String name, Role role, String password) throws Exception {
+    protected long restCreateUser(String name, Role role, Set<UserGroup> groups, String password) throws Exception {
         User user = new User();
         user.setName(name);
         user.setRole(role);
+        if (groups != null && !groups.isEmpty())
+            user.setGroups(groups);
         user.setNewPassword(password);
 
         UserAttribute attr = new UserAttribute();
@@ -359,12 +378,7 @@ public class ServiceTestBase  {
         attr.setValue("RESTattvalue");
         user.setAttribute(Collections.singletonList(attr));
 
-        long id = restUserService.insert(null, user);
-
-//        UserDAOImpl impl = getTargetObject(userDAO, UserDAOImpl.class);
-//        impl.flush();
-
-        return id;
+        return restUserService.insert(null, user);
     }
 
     protected <T> T getTargetObject(Object proxy, Class<T> targetClass) throws Exception

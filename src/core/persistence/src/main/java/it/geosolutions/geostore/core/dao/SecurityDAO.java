@@ -35,7 +35,12 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
      * Add security filtering in order to filter out resources the user has not read access to
      */
     void addReadSecurityConstraints(Search searchCriteria, User user);
-    
+
+    /**
+     * Add security filtering in order to filter out resources hidden the user
+     */
+    void addAdvertisedSecurityConstraints(Search searchCriteria, User user);
+
     /**
      * @param userName
      * @param resourceId

@@ -199,8 +199,8 @@ public class ServiceTestBase extends TestCase {
     }
 
     /**
-     * @param name
      * @param data
+     * @param resource
      * @return long
      * @throws Exception
      */
@@ -236,7 +236,6 @@ public class ServiceTestBase extends TestCase {
      * @param description
      * @param catName
      * @param data
-     *
      * @return long
      * @throws Exception
      */
@@ -264,7 +263,6 @@ public class ServiceTestBase extends TestCase {
      * @param description
      * @param catName
      * @param rules
-     *
      * @return long
      * @throws Exception
      */
@@ -279,12 +277,46 @@ public class ServiceTestBase extends TestCase {
         resource.setDescription(description);
         resource.setCategory(category);
         resource.setSecurity(rules);
+
+        return resourceService.insert(resource);
+    }
+
+    /**
+     *
+     * @param name
+     * @param description
+     * @param catName
+     * @param advertised
+     * @param rules
+     * @return long
+     * @throws Exception
+     */
+    protected long createResource(String name, String description, String catName, boolean advertised, List<SecurityRule> rules) throws Exception {
+        Category category = new Category();
+        category.setName(catName);
+
+        categoryService.insert(category);
+
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setDescription(description);
+        resource.setCategory(category);
+        resource.setAdvertised(advertised);
+        resource.setSecurity(rules);
         resource.setCreator("USER1");
         resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
 
+    /**
+     *
+     * @param name
+     * @param description
+     * @param category
+     * @return
+     * @throws Exception
+     */
     protected long createResource(String name, String description, Category category)
             throws Exception {
         Resource resource = new Resource();
@@ -376,5 +408,33 @@ public class ServiceTestBase extends TestCase {
         user.setRole(Role.ADMIN);
         user.setName("ThisIsNotARealUser");
         return user;
+    }
+
+    // SecurityRuleBuilder class
+    protected class SecurityRuleBuilder {
+        private SecurityRule rule;
+
+        public SecurityRuleBuilder() {
+            rule = new SecurityRule();
+        }
+
+        public SecurityRuleBuilder user(User user) {
+            rule.setUser(user);
+            return this;
+        }
+
+        public SecurityRuleBuilder canRead(boolean canRead) {
+            rule.setCanRead(canRead);
+            return this;
+        }
+
+        public SecurityRuleBuilder group(UserGroup group) {
+            rule.setGroup(group);
+            return this;
+        }
+
+        public SecurityRule build() {
+            return rule;
+        }
     }
 }
