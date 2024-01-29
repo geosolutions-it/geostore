@@ -28,11 +28,7 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.Attribute;
-import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
@@ -47,33 +43,20 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTResourceService;
-import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
-import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
-import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
-import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
-import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import it.geosolutions.geostore.services.rest.model.RESTAttribute;
-import it.geosolutions.geostore.services.rest.model.RESTCategory;
-import it.geosolutions.geostore.services.rest.model.RESTResource;
-import it.geosolutions.geostore.services.rest.model.ResourceList;
-import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
-import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
-import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+import it.geosolutions.geostore.services.rest.exception.*;
+import it.geosolutions.geostore.services.rest.model.*;
 import it.geosolutions.geostore.services.rest.utils.Convert;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.ws.rs.core.SecurityContext;
-
 import org.apache.logging.log4j.Level;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.ws.rs.core.SecurityContext;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Class RESTResourceServiceImpl.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author DamianoG
@@ -83,7 +66,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     private final static Logger LOGGER = LogManager.getLogger(RESTResourceServiceImpl.class);
 
     private ResourceService resourceService;
-    
+
     /**
      * @param resourceService
      */
@@ -101,7 +84,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#insert(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
@@ -146,9 +129,9 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      * Updates a resource. Name, Description and Metadata will be replaced if not null.<br/>
      * Category can not be changed; category element may exist in the input resource provided it is the same as in the original resource.<br/>
      * Attribute list will be updated only if it exists in the input resource.<br/>
-     * <P/>
+     * <p/>
      * TODO: attribute list behaviour should be checked: read comments in source.
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#update(long, it.geosolutions.geostore.core.model.Resource)
      */
     @Override
@@ -229,7 +212,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#delete(long)
      */
     @Override
@@ -251,7 +234,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#delete(long)
      */
     @Override
@@ -279,10 +262,10 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         boolean canRead = false;
         User authUser = extractAuthUser(sc);
         canRead = resourceAccessRead(authUser, id);
-        if(!canRead){
+        if (!canRead) {
             throw new ForbiddenErrorWebEx("This user cannot read this resource !");
         }
-        
+
         if (fullResource) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Retrieving a full resource");
@@ -321,12 +304,12 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getList(java.lang.String, java.lang.Integer, java.lang.Integer)
      */
     @Override
     public ShortResourceList getList(SecurityContext sc, String nameLike, Integer page,
-            Integer entries) throws BadRequestWebEx {
+                                     Integer entries) throws BadRequestWebEx {
         User authUser = extractAuthUser(sc);
         nameLike = nameLike.replaceAll("[*]", "%");
 
@@ -339,7 +322,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getList(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -356,7 +339,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getCount(java.lang.String)
      */
     @Override
@@ -382,7 +365,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getAttributes(long)
      */
     @Override
@@ -409,7 +392,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getAttribute(long, java.lang.String)
      */
     @Override
@@ -427,20 +410,20 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         if (canRead) {
             ShortAttribute shAttribute = resourceService.getAttribute(id, name);
-    
+
             if (shAttribute == null)
                 throw new NotFoundWebEx("Resource attribute not found");
-    
+
             return shAttribute.getValue();
         } else {
             throw new ForbiddenErrorWebEx(
                     "This user cannot read this resource so neither its attributes!");
-        } 
+        }
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String,it.geosolutions.geostore.core.model.enums.DataType)
      */
     @Override
@@ -459,19 +442,19 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             User authUser = extractAuthUser(sc);
             canUpdate = resourceAccessWrite(authUser, resource.getId());
 
-            if(canUpdate){
-            	ShortAttribute a  = resourceService.getAttribute(id, name);
-            	//if the attribute exists, will be updated
-            	if(a!=null){
+            if (canUpdate) {
+                ShortAttribute a = resourceService.getAttribute(id, name);
+                //if the attribute exists, will be updated
+                if (a != null) {
                     attributeId = resourceService.updateAttribute(id, name, value);
-            	}else{
-            		//create the attribute if missing
-            		if(type != null){
+                } else {
+                    //create the attribute if missing
+                    if (type != null) {
                         attributeId = resourceService.insertAttribute(id, name, value, type);
-            		}else{
+                    } else {
                         attributeId = resourceService.insertAttribute(id, name, value, DataType.STRING);
-            		}
-            	}
+                    }
+                }
             } else {
                 throw new InternalErrorServiceEx("This user cannot access this resource !");
             }
@@ -484,28 +467,28 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         }
         return attributeId;
     }
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String)
      */
-    public long updateAttribute(SecurityContext sc,  long id,String name, String value) {
-		return updateAttribute(sc, id, name, value, null);
-	}
+    public long updateAttribute(SecurityContext sc, long id, String name, String value) {
+        return updateAttribute(sc, id, name, value, null);
+    }
 
     @Override
-	public long updateAttribute(SecurityContext sc, long id, RESTAttribute content) {
-		if (content != null && content.getName() != null) {
-			// TODO: type
-			return updateAttribute(sc, id, content.getName(), content.getValue(), content.getType());
-		}
-		throw new BadRequestWebEx("missing attribute content or attribute name in request");
-	}
+    public long updateAttribute(SecurityContext sc, long id, RESTAttribute content) {
+        if (content != null && content.getName() != null) {
+            // TODO: type
+            return updateAttribute(sc, id, content.getName(), content.getValue(), content.getType());
+        }
+        throw new BadRequestWebEx("missing attribute content or attribute name in request");
+    }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getResourceByFilter(it.geosolutions.geostore.services.dto.SearchFilter)
      */
     @Override
@@ -527,13 +510,13 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getResourcesList(javax.ws.rs.core.SecurityContext,
      * it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, boolean, boolean)
      */
     @Override
     public ResourceList getResourcesList(SecurityContext sc, Integer page, Integer entries,
-            boolean includeAttributes, boolean includeData, SearchFilter filter) {
+                                         boolean includeAttributes, boolean includeData, SearchFilter filter) {
         User authUser = extractAuthUser(sc);
         try {
             return new ResourceList(resourceService.getResources(filter, page, entries, includeAttributes, includeData, authUser));
@@ -548,10 +531,10 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         }
     }
 
-	@Override
-	public void updateSecurityRules(SecurityContext sc, long id,
-			SecurityRuleList securityRules) {
-		//
+    @Override
+    public void updateSecurityRules(SecurityContext sc, long id,
+                                    SecurityRuleList securityRules) {
+        //
         // Authorization check.
         //
         boolean canWrite = false;
@@ -559,37 +542,37 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         canWrite = resourceAccessWrite(authUser, id);
 
         if (canWrite) {
-        	ShortAttribute owner = resourceService.getAttribute(id, "owner");
-        	if((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
-	        	try {
-					resourceService.updateSecurityRules(id, Convert
-							.convertSecurityRuleList(securityRules.getList(), id));
-	        	} catch (BadRequestServiceEx e) {
-	                if (LOGGER.isInfoEnabled())
-	                    LOGGER.info(e.getMessage());
-	                throw new BadRequestWebEx(e.getMessage());
-	            } catch (InternalErrorServiceEx e) {
-	                if (LOGGER.isInfoEnabled())
-	                    LOGGER.info(e.getMessage());
-	                throw new InternalErrorWebEx(e.getMessage());
-	            } catch (NotFoundServiceEx e) {
-	            	if (LOGGER.isInfoEnabled())
-	                    LOGGER.info(e.getMessage());
-	                throw new NotFoundWebEx(e.getMessage());
-				}
-        	} else {
-        		throw new ForbiddenErrorWebEx(
+            ShortAttribute owner = resourceService.getAttribute(id, "owner");
+            if ((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
+                try {
+                    resourceService.updateSecurityRules(id, Convert
+                            .convertSecurityRuleList(securityRules.getList(), id));
+                } catch (BadRequestServiceEx e) {
+                    if (LOGGER.isInfoEnabled())
+                        LOGGER.info(e.getMessage());
+                    throw new BadRequestWebEx(e.getMessage());
+                } catch (InternalErrorServiceEx e) {
+                    if (LOGGER.isInfoEnabled())
+                        LOGGER.info(e.getMessage());
+                    throw new InternalErrorWebEx(e.getMessage());
+                } catch (NotFoundServiceEx e) {
+                    if (LOGGER.isInfoEnabled())
+                        LOGGER.info(e.getMessage());
+                    throw new NotFoundWebEx(e.getMessage());
+                }
+            } else {
+                throw new ForbiddenErrorWebEx(
                         "This user cannot update this resource permissions!");
-        	}
+            }
         } else {
             throw new ForbiddenErrorWebEx(
                     "This user cannot write this resource so neither its permissions!");
-        } 
-	}
+        }
+    }
 
-	@Override
-	public SecurityRuleList getSecurityRules(SecurityContext sc, long id) {
-		    //
+    @Override
+    public SecurityRuleList getSecurityRules(SecurityContext sc, long id) {
+        //
         // Authorization check.
         //
         boolean canRead = false;
@@ -597,27 +580,27 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         canRead = resourceAccessRead(authUser, id);
 
         if (canRead) {
-        	ShortAttribute owner = resourceService.getAttribute(id, "owner");
-        	if((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
-	        	try {
-	        		return new SecurityRuleList(resourceService.getSecurityRules(id));    
-	        	} catch (BadRequestServiceEx e) {
-	                if (LOGGER.isInfoEnabled())
-	                    LOGGER.info(e.getMessage());
-	                throw new BadRequestWebEx(e.getMessage());
-	            } catch (InternalErrorServiceEx e) {
-	                if (LOGGER.isInfoEnabled())
-	                    LOGGER.info(e.getMessage());
-	                throw new InternalErrorWebEx(e.getMessage());
-	            }
-        	} else {
-        		throw new ForbiddenErrorWebEx(
+            ShortAttribute owner = resourceService.getAttribute(id, "owner");
+            if ((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
+                try {
+                    return new SecurityRuleList(resourceService.getSecurityRules(id));
+                } catch (BadRequestServiceEx e) {
+                    if (LOGGER.isInfoEnabled())
+                        LOGGER.info(e.getMessage());
+                    throw new BadRequestWebEx(e.getMessage());
+                } catch (InternalErrorServiceEx e) {
+                    if (LOGGER.isInfoEnabled())
+                        LOGGER.info(e.getMessage());
+                    throw new InternalErrorWebEx(e.getMessage());
+                }
+            } else {
+                throw new ForbiddenErrorWebEx(
                         "This user cannot read this resource permissions!");
-        	}
+            }
         } else {
             throw new ForbiddenErrorWebEx(
                     "This user cannot read this resource so neither its permissions!");
         }
-	}
+    }
 
 }
