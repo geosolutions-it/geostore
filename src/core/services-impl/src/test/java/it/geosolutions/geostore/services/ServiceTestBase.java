@@ -216,7 +216,6 @@ public class ServiceTestBase extends TestCase {
      * @throws Exception
      */
     protected long createResource(String name, String description, String catName) throws Exception {
-
         Category category = new Category();
         category.setName(catName);
 
@@ -226,6 +225,8 @@ public class ServiceTestBase extends TestCase {
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
@@ -239,7 +240,6 @@ public class ServiceTestBase extends TestCase {
      * @throws Exception
      */
     protected long createResource(String name, String description, String catName, String data) throws Exception {
-
         Category category = new Category();
         category.setName(catName);
 
@@ -252,6 +252,8 @@ public class ServiceTestBase extends TestCase {
         StoredData storedData = new StoredData();
         storedData.setData(data);
         resource.setData(storedData);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
@@ -286,7 +288,7 @@ public class ServiceTestBase extends TestCase {
      * @param catName
      * @param advertised
      * @param rules
-     * @return
+     * @return long
      * @throws Exception
      */
     protected long createResource(String name, String description, String catName, boolean advertised, List<SecurityRule> rules) throws Exception {
@@ -301,6 +303,8 @@ public class ServiceTestBase extends TestCase {
         resource.setCategory(category);
         resource.setAdvertised(advertised);
         resource.setSecurity(rules);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
@@ -315,11 +319,12 @@ public class ServiceTestBase extends TestCase {
      */
     protected long createResource(String name, String description, Category category)
             throws Exception {
-
         Resource resource = new Resource();
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }

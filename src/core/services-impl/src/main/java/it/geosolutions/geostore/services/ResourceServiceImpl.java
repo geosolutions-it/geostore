@@ -189,6 +189,8 @@ public class ResourceServiceImpl implements ResourceService
         r.setMetadata(resource.getMetadata());
         r.setName(resource.getName());
         r.setCategory(loadedCategory);
+        r.setCreator(resource.getCreator());
+        r.setEditor(resource.getEditor());
         r.setAdvertised(resource.isAdvertised());
 
         try {
@@ -797,6 +799,8 @@ public class ResourceServiceImpl implements ResourceService
             res.setId(resource.getId());
             res.setLastUpdate(resource.getLastUpdate());
             res.setName(resource.getName());
+            res.setCreator(resource.getCreator());
+            res.setEditor(resource.getEditor());
 
             if (includeData) {
                 res.setData(resource.getData());

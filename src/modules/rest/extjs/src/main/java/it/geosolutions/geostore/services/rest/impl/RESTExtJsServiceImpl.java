@@ -530,6 +530,16 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     if (owner != null) {
                         jobj.element("owner", owner);
                     }
+                    if(sr.getCreator() != null) {
+                        jobj.element("creator", sr.getCreator());
+                    } else if(owner != null) {
+                        jobj.element("creator", owner);
+                    }
+                    if(sr.getEditor() != null) {
+                        jobj.element("editor", sr.getEditor());
+                    } else if(owner != null) {
+                        jobj.element("editor", owner);
+                    }
 
                     if (result instanceof JSONArray) {
                         ((JSONArray) result).add(jobj);
@@ -581,6 +591,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         ShortResource sr;
         Resource r;
         String owner;
+        String creator;
+        String editor;
         User authUser;
         boolean canEdit = false;
         boolean canDelete = false;
@@ -745,6 +757,22 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
          */
         public String getOwner() {
             return owner;
+        }
+
+        public String getCreator() {
+            String creator = this.creator;
+            if (this.creator == null) {
+                creator = sr != null ? sr.getCreator() : r.getCreator();
+            }
+            return creator != null ? creator : getOwner();
+        }
+
+        public String getEditor() {
+            String editor = this.editor;
+            if (this.editor == null) {
+                editor = sr != null ? sr.getEditor() : r.getEditor();
+            }
+            return editor != null ? editor : getOwner();
         }
     }
 }

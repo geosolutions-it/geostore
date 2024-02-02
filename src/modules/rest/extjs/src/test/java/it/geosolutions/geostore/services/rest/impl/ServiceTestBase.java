@@ -48,7 +48,8 @@ import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.SecurityContext;
 
-
+import it.geosolutions.geostore.services.rest.utils.Convert;
+import org.apache.commons.collections.CollectionUtils;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -246,13 +247,13 @@ public class ServiceTestBase  {
      * @param name
      * @param description
      * @param catName
+     * @return long
+     * @throws Exception
      * @param advertised
-     *
      * @return long
      * @throws Exception
      */
     protected long createResource(String name, String description, String catName, boolean advertised) throws Exception {
-
         Category category = new Category();
         category.setName(catName);
 
@@ -262,13 +263,14 @@ public class ServiceTestBase  {
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
         resource.setAdvertised(advertised);
 
         return resourceService.insert(resource);
     }
 
     protected long restCreateResource(String name, String description, String catName, long userId, boolean advertised) throws Exception {
-
         RESTResource resource = new RESTResource();
         resource.setName(name);
         resource.setDescription(description);
@@ -290,11 +292,12 @@ public class ServiceTestBase  {
     }
 
     protected long createResource(String name, String description, Category category, boolean advertised) throws Exception {
-
         Resource resource = new Resource();
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
         resource.setAdvertised(advertised);
 
         return resourceService.insert(resource);
@@ -306,7 +309,6 @@ public class ServiceTestBase  {
      * @param catName
      * @param rules
      * @param advertised
-     *
      * @return long
      * @throws Exception
      */
@@ -322,6 +324,8 @@ public class ServiceTestBase  {
         resource.setDescription(description);
         resource.setCategory(category);
         resource.setSecurity(rules);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
         resource.setAdvertised(advertised);
 
         return resourceService.insert(resource);
@@ -407,6 +411,21 @@ public class ServiceTestBase  {
         group.setGroupName(name);
 
         return userGroupService.insert(group);
+    }
+
+    protected RESTResource createRESTResource(Resource resource) {
+        RESTResource ret = new RESTResource();
+        ret.setCategory(new RESTCategory(resource.getCategory().getName()));
+        ret.setName(resource.getName());
+        ret.setDescription(resource.getDescription());
+        ret.setMetadata(resource.getMetadata());
+        ret.setCreator(resource.getCreator());
+        ret.setEditor(resource.getEditor());
+        if (resource.getData() != null)
+            ret.setData(resource.getData().getData());
+        if (CollectionUtils.isNotEmpty(resource.getAttribute()))
+            ret.setAttribute(Convert.convertToShortAttributeList(resource.getAttribute()));
+        return ret;
     }
 
     class SimpleSecurityContext implements SecurityContext {
