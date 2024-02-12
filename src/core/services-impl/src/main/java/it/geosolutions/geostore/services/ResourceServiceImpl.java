@@ -189,9 +189,27 @@ public class ResourceServiceImpl implements ResourceService
         r.setMetadata(resource.getMetadata());
         r.setName(resource.getName());
         r.setCategory(loadedCategory);
-        r.setCreator(resource.getCreator());
-        r.setEditor(resource.getEditor());
         r.setAdvertised(resource.isAdvertised());
+
+        // Extract "owner"/"creator" and "editor" values
+        List<SecurityRule> rules = resource.getSecurity();
+
+        if (rules != null) {
+            for (SecurityRule securityRule : rules) {
+                if ((securityRule.getUser() != null || securityRule.getUsername() != null) && securityRule.isCanWrite()) {
+                    final String owner = securityRule.getUser() != null ? securityRule.getUser().getName() : securityRule.getUsername();
+                    r.setCreator(owner);
+                    if (resource.getEditor() != null) {
+                        r.setEditor(owner);
+                    } else {
+                        r.setEditor(resource.getEditor());
+                    }
+                }
+            }
+        } else {
+            r.setCreator(resource.getCreator());
+            r.setEditor(resource.getEditor());
+        }
 
         try {
             resourceDAO.persist(r);
@@ -223,8 +241,6 @@ public class ResourceServiceImpl implements ResourceService
             //
             // Persisting SecurityRule
             //
-            List<SecurityRule> rules = resource.getSecurity();
-
             if (rules != null) {
                 for (SecurityRule rule : rules) {
                     rule.setResource(r);

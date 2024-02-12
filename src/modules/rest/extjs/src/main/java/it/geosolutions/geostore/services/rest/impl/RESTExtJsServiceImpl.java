@@ -129,7 +129,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         try {
             authUser = extractAuthUser(sc);
         } catch (InternalErrorWebEx ie) {
-            // serch without user information
+            // search without user information
             LOGGER.warn("Error in validating user (this action should probably be aborted)", ie); // why is this exception caught?
         }
 
@@ -137,7 +137,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             nameLike = nameLike.replaceAll("[*]", "%");
-            // TOOD: implement includeAttributes and includeData
+            // TODO: implement includeAttributes and includeData
 
             List<ShortResource> resources = resourceService.getList(nameLike, page, limit, authUser);
 
@@ -235,7 +235,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     authUser);
 
             long count = 0;
-            if (resources != null && resources.size() > 0) {
+            if (!resources.isEmpty()) {
                 count = resourceService.getCountByFilterAndUser(filter, authUser);
             }
 
@@ -243,12 +243,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     authUser, extraAttributesList, includeAttributes,
                     includeData);
             return result.toString();
-        } catch (InternalErrorServiceEx e) {
-            LOGGER.warn(e.getMessage(), e);
-
-            JSONObject obj = makeJSONResult(false, 0, null, authUser);
-            return obj.toString();
-        } catch (BadRequestServiceEx e) {
+        } catch (InternalErrorServiceEx | BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
             JSONObject obj = makeJSONResult(false, 0, null, authUser);
@@ -591,8 +586,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         ShortResource sr;
         Resource r;
         String owner;
-        String creator;
-        String editor;
         User authUser;
         boolean canEdit = false;
         boolean canDelete = false;
@@ -760,18 +753,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         public String getCreator() {
-            String creator = this.creator;
-            if (this.creator == null) {
-                creator = sr != null ? sr.getCreator() : r.getCreator();
-            }
+            String creator = sr != null ? sr.getCreator() : r.getCreator();
             return creator != null ? creator : getOwner();
         }
 
         public String getEditor() {
-            String editor = this.editor;
-            if (this.editor == null) {
-                editor = sr != null ? sr.getEditor() : r.getEditor();
-            }
+            String editor = sr != null ? sr.getEditor() : r.getEditor();
             return editor != null ? editor : getOwner();
         }
     }
