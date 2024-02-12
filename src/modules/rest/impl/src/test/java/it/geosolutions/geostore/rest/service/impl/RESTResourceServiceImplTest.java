@@ -52,37 +52,6 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testUpdateResourceAttribute() throws Exception {
-        // create a sample resource
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        // insert fake admin user for security context
-        long adminID = createUser("admin", Role.ADMIN, "admin");
-
-        // create security context for the request
-        SecurityContext sc = new MockSecurityContext(userService.get(adminID));
-
-        // prepare request content
-        RESTAttribute attribute = new RESTAttribute();
-        String NAME = "NAME";
-        String VALUE = "VALUE";
-        attribute.setName(NAME);
-        attribute.setValue(VALUE);
-
-        // attempt to update the attribute from rest service
-        restService.updateAttribute(sc, resourceId, attribute);
-
-        // retrieve the modified resource
-        Resource res = resourceService.get(resourceId);
-
-        // verify the attribute has been changed
-        Attribute a = res.getAttribute().get(0);
-        assertEquals(a.getName(), NAME);
-        assertEquals(a.getValue(), VALUE);
-        assertEquals(a.getType(), DataType.STRING);
-    }
-
-    @Test
     public void testUpdateResource_editorUpdate() throws Exception {
         // insert fake user for security context
         long u0ID = createUser("u0", Role.USER, "p0");
@@ -126,6 +95,12 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
 
         Resource sr = restService.get(sc, resourceId, false);
 
+        // verify the attribute has been changed
+        Attribute a = sr.getAttribute().get(0);
+        assertEquals(a.getName(), NAME);
+        assertEquals(a.getValue(), VALUE);
+        assertEquals(a.getType(), DataType.STRING);
+
         assertEquals(sr.getCreator(), "u0");
         assertEquals(sr.getEditor(), "u0");
 
@@ -149,6 +124,12 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         restService.updateAttribute(sc, resourceId, attribute);
 
         sr = restService.get(sc, resourceId, false);
+
+        // verify the attribute has been changed
+        a = sr.getAttribute().get(0);
+        assertEquals(a.getName(), NAME);
+        assertEquals(a.getValue(), VALUE);
+        assertEquals(a.getType(), DataType.STRING);
 
         assertEquals(sr.getCreator(), "u0");
         assertEquals(sr.getEditor(), "u1");
