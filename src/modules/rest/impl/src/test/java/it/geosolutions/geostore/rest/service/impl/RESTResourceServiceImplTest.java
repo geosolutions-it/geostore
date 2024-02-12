@@ -19,14 +19,7 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
-import javax.ws.rs.core.SecurityContext;
-
-import org.junit.Before;
-import org.junit.Test;
-
-import it.geosolutions.geostore.core.model.Attribute;
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
@@ -35,34 +28,60 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.impl.RESTResourceServiceImpl;
 import it.geosolutions.geostore.services.rest.model.RESTAttribute;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
+import org.junit.Before;
+import org.junit.Test;
+
+import javax.ws.rs.core.SecurityContext;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class ResourceServiceImplTest.
  *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- *
  */
 public class RESTResourceServiceImplTest extends ServiceTestBase {
 
-	RESTResourceServiceImpl restService;
-	long adminID;
+    RESTResourceServiceImpl restService;
+    long adminID;
 
-	 @Before
+    @Before
     public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {
-       restService = new RESTResourceServiceImpl();
-       restService.setResourceService(resourceService);
+        restService = new RESTResourceServiceImpl();
+        restService.setResourceService(resourceService);
     }
 
     @Test
-    public void testUpdateResourceAttribute() throws Exception {
-        // create a semple resource
-        long resourceId = createResource("name1", "description1", "MAP");
+    public void testUpdateResource_editorUpdate() throws Exception {
+        // insert fake user for security context
+        long u0ID = createUser("u0", Role.USER, "p0");
+        User user = new User();
+        user.setId(u0ID);
+        user.setName("u0");
 
-        // insert fake admin user for security context
-        long adminID = createUser("admin", Role.ADMIN, "admin");
+        List<SecurityRule> rules = new ArrayList<>();
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(user);
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rules.add(rule);
+
+        long groupId = createGroup("group1");
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
+
+        rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rule.setGroup(group);
+        rules.add(rule);
+
+        // create a sample resource
+        long resourceId = createResource("name1", "description1", "MAP", rules);
 
         // create security context for the request
-         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
+        SecurityContext sc = new MockSecurityContext(userService.get(u0ID));
 
         // prepare request content
         RESTAttribute attribute = new RESTAttribute();
@@ -74,13 +93,45 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         // attempt to update the attribute from rest service
         restService.updateAttribute(sc, resourceId, attribute);
 
-        // retrieve the modified resource
-        Resource res = resourceService.get(resourceId);
+        Resource sr = restService.get(sc, resourceId, false);
 
         // verify the attribute has been changed
-        Attribute a = res.getAttribute().get(0);
+        Attribute a = sr.getAttribute().get(0);
         assertEquals(a.getName(), NAME);
         assertEquals(a.getValue(), VALUE);
         assertEquals(a.getType(), DataType.STRING);
+
+        assertEquals(sr.getCreator(), "u0");
+        assertEquals(sr.getEditor(), "u0");
+
+        // Update rule as "user1"
+        // insert fake user for security context
+        long u1ID = createUser("u1", Role.USER, "p1", groupId);
+        user = new User();
+        user.setId(u1ID);
+        user.setName("u1");
+
+        sc = new MockSecurityContext(userService.get(u1ID));
+
+        // prepare request content
+        attribute = new RESTAttribute();
+        NAME = "NAME";
+        VALUE = "VALUE1";
+        attribute.setName(NAME);
+        attribute.setValue(VALUE);
+
+        // attempt to update the attribute from rest service
+        restService.updateAttribute(sc, resourceId, attribute);
+
+        sr = restService.get(sc, resourceId, false);
+
+        // verify the attribute has been changed
+        a = sr.getAttribute().get(0);
+        assertEquals(a.getName(), NAME);
+        assertEquals(a.getValue(), VALUE);
+        assertEquals(a.getType(), DataType.STRING);
+
+        assertEquals(sr.getCreator(), "u0");
+        assertEquals(sr.getEditor(), "u1");
     }
 }
