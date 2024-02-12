@@ -21,12 +21,12 @@ package it.geosolutions.geostore.core.security.password;
 
 import org.apache.commons.codec.binary.Base64;
 import org.jasypt.digest.StandardByteDigester;
-import org.jasypt.spring.security.PasswordEncoder;
+import org.jasypt.acegisecurity.PasswordEncoder;
 import org.jasypt.util.password.StrongPasswordEncryptor;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
 
 /**
- * This Encoder provide encription and check of password using a digest
+ * This Encoder provide encryption and check of password using a digest
  * @author Lorenzo Natali (lorenzo.natali at geo-solutions.it)
  *
  */
