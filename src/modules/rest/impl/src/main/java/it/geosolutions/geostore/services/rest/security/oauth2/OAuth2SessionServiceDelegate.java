@@ -115,7 +115,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if ((expiresIn == null || fiveMinutesFromNow.after(expiresIn)) && refreshToken != null) {
             if (LOGGER.isDebugEnabled())
                 LOGGER.info("Going to refresh the token.");
-            doRefresh(refreshToken, accessToken, configuration);
+            sessionToken = doRefresh(refreshToken, accessToken, configuration);
         }
         if (sessionToken == null)
             sessionToken = sessionToken(accessToken, refreshToken, currentToken.getExpiration());
