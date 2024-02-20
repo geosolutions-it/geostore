@@ -1,7 +1,6 @@
-alter table gs_resource add column creator varchar(255);
-alter table gs_resource add column editor varchar(255);
-alter table gs_resource add column advertised bool not null default true;
-
+alter table gs_resource add column if not exists creator varchar(255);
+alter table gs_resource add column if not exists editor varchar(255);
+alter table gs_resource add column if not exists advertised bool not null default true;
 -- Set the Resource Creator whether this is NULL
 update gs_resource as gsr
 set creator = subquery.name
