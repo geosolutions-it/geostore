@@ -23,13 +23,10 @@ import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
-import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.impl.RESTResourceServiceImpl;
 import it.geosolutions.geostore.services.rest.model.RESTAttribute;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.Assert;
 
 import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
@@ -43,15 +40,14 @@ import java.util.List;
 public class RESTResourceServiceImplTest extends ServiceTestBase {
 
     RESTResourceServiceImpl restService;
-    long adminID;
 
-    @Before
-    public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
         restService = new RESTResourceServiceImpl();
         restService.setResourceService(resourceService);
     }
 
-    @Test
     public void testUpdateResource_editorUpdate() throws Exception {
         // insert fake user for security context
         long u0ID = createUser("u0", Role.USER, "p0");
@@ -97,12 +93,12 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
 
         // verify the attribute has been changed
         Attribute a = sr.getAttribute().get(0);
-        assertEquals(a.getName(), NAME);
-        assertEquals(a.getValue(), VALUE);
-        assertEquals(a.getType(), DataType.STRING);
+        Assert.assertEquals(a.getName(), NAME);
+        Assert.assertEquals(a.getValue(), VALUE);
+        Assert.assertEquals(a.getType(), DataType.STRING);
 
-        assertEquals(sr.getCreator(), "u0");
-        assertEquals(sr.getEditor(), "u0");
+        Assert.assertEquals(sr.getCreator(), "u0");
+        Assert.assertEquals(sr.getEditor(), "u0");
 
         // Update rule as "user1"
         // insert fake user for security context
@@ -127,11 +123,11 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
 
         // verify the attribute has been changed
         a = sr.getAttribute().get(0);
-        assertEquals(a.getName(), NAME);
-        assertEquals(a.getValue(), VALUE);
-        assertEquals(a.getType(), DataType.STRING);
+        Assert.assertEquals(a.getName(), NAME);
+        Assert.assertEquals(a.getValue(), VALUE);
+        Assert.assertEquals(a.getType(), DataType.STRING);
 
-        assertEquals(sr.getCreator(), "u0");
-        assertEquals(sr.getEditor(), "u1");
+        Assert.assertEquals(sr.getCreator(), "u0");
+        Assert.assertEquals(sr.getEditor(), "u1");
     }
 }

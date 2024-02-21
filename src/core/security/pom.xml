@@ -96,7 +96,7 @@
 		</dependency>
         <dependency>
 	      <groupId>org.jasypt</groupId>
-	      <artifactId>jasypt</artifactId>
+	      <artifactId>jasypt-acegisecurity</artifactId>
 	   </dependency>
        <dependency>
             <groupId>org.acegisecurity</groupId>
