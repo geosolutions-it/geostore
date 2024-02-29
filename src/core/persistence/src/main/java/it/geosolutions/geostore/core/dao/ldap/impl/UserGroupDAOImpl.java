@@ -173,7 +173,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
         return mapper;
     }
 
-    protected List<UserGroup> ldapSearch(String filter, DirContextProcessor processor, ISearch search) {
+    protected List<UserGroup> ldapSearch(String filter, DirContextProcessor processor, final ISearch search) {
         SearchControls controls = new SearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         return template.search(searchBase, filter, controls, new AbstractContextMapper() {

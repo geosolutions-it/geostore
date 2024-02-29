@@ -25,7 +25,7 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>2.1-SNAPSHOT</version>
+        <version>2.1.1-SNAPSHOT</version>
     </parent>
 
     <artifactId>geostore-services-impl</artifactId>
@@ -56,7 +56,6 @@
 
 	    <!-- =========================================================== -->
         <!-- APACHE COMMONS -->
-
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
@@ -98,27 +97,15 @@
 
         <!-- =========================================================== -->
         <!-- MISC -->
-
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
         </dependency>
 
         <!-- =========================================================== -->
-        <!-- PERSISTENCE -->
-
-<!--        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <scope>provided</scope>
-        </dependency>
-
-
-
-		 HIBERNATE-GENERIC-DAO
--->        <dependency>
+        <!-- HIBERNATE-GENERIC-DAO -->
+        <dependency>
             <groupId>com.googlecode.genericdao</groupId>
-<!--            <groupId>com.trg</groupId>-->
             <artifactId>dao-hibernate</artifactId>
             <exclusions>
                 <exclusion>
@@ -126,39 +113,7 @@
                     <artifactId>slf4j-api</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency><!--
-        <dependency>
-            <groupId>com.trg</groupId>
-            <artifactId>trg-search-jpa-hibernate</artifactId>
         </dependency>
-
-		 HIBERNATE-SPATIAL
-        <dependency>
-            <groupId>org.hibernatespatial</groupId>
-            <artifactId>hibernate-spatial-postgis</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>-->
-
-  		<!-- CGLIB -->
-<!--        <dependency>
-            <groupId>asm</groupId>
-            <artifactId>asm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>cglib</groupId>
-            <artifactId>cglib-nodep</artifactId>
-        </dependency>-->
-
-    <!-- HTTP UTILS -->
-<!--        <dependency>
-            <groupId>org.codehaus.jettison</groupId>
-            <artifactId>jettison</artifactId>
-        </dependency>-->
         <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjrt</artifactId>
@@ -173,17 +128,6 @@
             <artifactId>javax.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
-
-        <!-- CXF -->
-<!--        <dependency>
-            <groupId>javax.xml.ws</groupId>
-            <artifactId>jaxws-api</artifactId>
-        </dependency>-->
-      <!-- Velocity (Email templates) -->
-<!--        <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity</artifactId>
-        </dependency>-->
 
 	    <!-- =========================================================== -->
         <!-- TEST -->
@@ -217,7 +161,6 @@
     </dependencies>
 
     <build>
-
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -238,7 +181,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>cobertura-maven-plugin</artifactId>
-                        <version>2.4</version>
+                        <version>2.7</version>
                         <configuration>
                             <instrumentation>
                             </instrumentation>

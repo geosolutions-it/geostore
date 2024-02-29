@@ -26,7 +26,7 @@ import org.jasypt.util.password.StrongPasswordEncryptor;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
 
 /**
- * This Encoder provide encription and check of password using a digest
+ * This Encoder provides encryption and check of password using a digest
  * @author Lorenzo Natali (lorenzo.natali at geo-solutions.it)
  *
  */
