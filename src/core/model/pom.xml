@@ -80,7 +80,6 @@
             <artifactId>jdom</artifactId>
         </dependency>
 
-
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -108,7 +107,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 
