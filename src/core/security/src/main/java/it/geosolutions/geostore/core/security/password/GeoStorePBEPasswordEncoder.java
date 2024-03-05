@@ -28,9 +28,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;
 import org.acegisecurity.providers.encoding.PasswordEncoder;
+import org.jasypt.acegisecurity.PBEPasswordEncoder;
 import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
-import org.jasypt.spring.security.PBEPasswordEncoder;
+
 /**
  * Password Encoder using symmetric encryption
  * 
