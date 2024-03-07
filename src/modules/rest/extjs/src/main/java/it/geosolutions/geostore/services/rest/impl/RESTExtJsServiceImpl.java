@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -27,23 +27,14 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.Attribute;
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortResource;
-import it.geosolutions.geostore.services.dto.search.AndFilter;
-import it.geosolutions.geostore.services.dto.search.BaseField;
-import it.geosolutions.geostore.services.dto.search.CategoryFilter;
-import it.geosolutions.geostore.services.dto.search.FieldFilter;
-import it.geosolutions.geostore.services.dto.search.SearchFilter;
-import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.dto.search.*;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.model.ExtGroupList;
@@ -54,23 +45,14 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.ws.rs.core.SecurityContext;
-
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import javax.ws.rs.core.SecurityContext;
+import java.util.*;
 
 /**
  * Class RESTExtJsServiceImpl.
@@ -108,13 +90,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getAllResources (javax.ws.rs.core.UriInfo, javax.ws.rs.core.SecurityContext,
      * java.lang.String, java.lang.Integer, java.lang.Integer)
      */
     @Override
     public String getAllResources(SecurityContext sc, String nameLike,
-            Integer start, Integer limit)
+                                  Integer start, Integer limit)
             throws BadRequestWebEx {
 
         if (start == null || limit == null) {
@@ -122,7 +104,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("Retrieving paginated resource list (start="+start+" limit="+limit+")");
+            LOGGER.info("Retrieving paginated resource list (start=" + start + " limit=" + limit + ")");
         }
 
         User authUser = null;
@@ -159,35 +141,34 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesByCategory(javax.ws.rs.core.SecurityContext, java.lang.String,
      * java.lang.Integer, java.lang.Integer)
      */
     @Override
     public String getResourcesByCategory(SecurityContext sc, String categoryName, Integer start,
-            Integer limit, boolean includeAttributes,
-            boolean includeData) throws BadRequestWebEx {
+                                         Integer limit, boolean includeAttributes,
+                                         boolean includeData) throws BadRequestWebEx {
         return getResourcesByCategory(sc, categoryName, null, start, limit, includeAttributes, includeData);
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesByCategory(javax.ws.rs.core.SecurityContext, java.lang.String,
      * java.lang.Integer, java.lang.Integer)
      */
     @Override
     public String getResourcesByCategory(SecurityContext sc, String categoryName, String resourceNameLike, Integer start,
-            Integer limit, boolean includeAttributes, boolean includeData) throws BadRequestWebEx {
+                                         Integer limit, boolean includeAttributes, boolean includeData) throws BadRequestWebEx {
         return getResourcesByCategory(sc, categoryName, resourceNameLike, null, start, limit, includeAttributes, includeData);
     }
 
     @Override
     public String getResourcesByCategory(SecurityContext sc,
-            String categoryName, String resourceNameLike, String extraAttributes,
-            Integer start, Integer limit, boolean includeAttributes, boolean includeData)
-            throws BadRequestWebEx, InternalErrorWebEx
-    {
+                                         String categoryName, String resourceNameLike, String extraAttributes,
+                                         Integer start, Integer limit, boolean includeAttributes, boolean includeData)
+            throws BadRequestWebEx, InternalErrorWebEx {
         if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
             throw new BadRequestWebEx("start and limit params should be declared together");
         }
@@ -198,7 +179,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         // read extra attributes
         List<String> extraAttributesList = extraAttributes != null ?
-                Arrays.asList(extraAttributes.split(",")):
+                Arrays.asList(extraAttributes.split(",")) :
                 Collections.EMPTY_LIST;
 
         if (LOGGER.isDebugEnabled()) {
@@ -253,13 +234,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
      * java.lang.Integer, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
      */
     @Override
     public ExtResourceList getExtResourcesList(SecurityContext sc, Integer start, Integer limit,
-            boolean includeAttributes, boolean includeData, SearchFilter filter) throws BadRequestWebEx {
+                                               boolean includeAttributes, boolean includeData, SearchFilter filter) throws BadRequestWebEx {
 
         if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
             throw new BadRequestWebEx("start and limit params should be declared together");
@@ -316,7 +297,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      */
     private List<Resource> filterOutUnadvertisedResources(List<Resource> resources, User authUser) {
         List<Resource> filteredList = new ArrayList<>();
-        for(Resource r : resources) {
+        for (Resource r : resources) {
             //get security rules for user
             User owner = null;
             for (SecurityRule rule : resourceService
@@ -340,7 +321,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return JSONObject
      */
     private JSONObject makeExtendedJSONResult(boolean success, long count, List<Resource> resources,
-            User authUser, List<String> extraAttributes, boolean includeAttributes, boolean includeData) {
+                                              User authUser, List<String> extraAttributes, boolean includeAttributes, boolean includeData) {
         return makeGeneralizedJSONResult(success, count, resources, authUser, extraAttributes, includeAttributes, includeData);
     }
 
@@ -351,13 +332,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return JSONObject
      */
     private JSONObject makeJSONResult(boolean success, long count, List<ShortResource> resources,
-            User authUser) {
+                                      User authUser) {
         return makeGeneralizedJSONResult(success, count, resources, authUser, null, false, false);
     }
 
     @Override
     public ExtUserList getUsersList(SecurityContext sc, String nameLike, Integer start,
-            Integer limit, boolean includeAttributes) throws BadRequestWebEx {
+                                    Integer limit, boolean includeAttributes) throws BadRequestWebEx {
 
         if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
             throw new BadRequestWebEx("start and limit params should be declared together");
@@ -385,14 +366,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         } catch (BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
-            
+
             return null;
         }
     }
 
     @Override
     public ExtGroupList getGroupsList(SecurityContext sc, String nameLike, Integer start,
-            Integer limit, boolean all) throws BadRequestWebEx {
+                                      Integer limit, boolean all) throws BadRequestWebEx {
 
         if (((start != null) && (limit == null)) || ((start == null) && (limit != null))) {
             throw new BadRequestWebEx("start and limit params should be declared together");
@@ -454,7 +435,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return
      */
     private JSONObject makeGeneralizedJSONResult(boolean success, long count, List<?> resources,
-            User authUser, List<String> extraAttributes, boolean includeAttributes, boolean includeData) {
+                                                 User authUser, List<String> extraAttributes, boolean includeAttributes, boolean includeData) {
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("success", success);
         jsonObj.put("totalCount", count);
@@ -525,14 +506,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     if (owner != null) {
                         jobj.element("owner", owner);
                     }
-                    if(sr.getCreator() != null) {
+                    if (sr.getCreator() != null) {
                         jobj.element("creator", sr.getCreator());
-                    } else if(owner != null) {
+                    } else if (owner != null) {
                         jobj.element("creator", owner);
                     }
-                    if(sr.getEditor() != null) {
+                    if (sr.getEditor() != null) {
                         jobj.element("editor", sr.getEditor());
-                    } else if(owner != null) {
+                    } else if (owner != null) {
                         jobj.element("editor", owner);
                     }
 
@@ -557,8 +538,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         User authUser = extractAuthUser(sc);
         ResourceAuth auth = getResourceAuth(authUser, id);
-        
-        if(!auth.canRead ){
+
+        if (!auth.canRead) {
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
 
@@ -579,7 +560,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * Encapsulates resource/short resource and credentials to perform operations with resources
      *
      * @author adiaz
-     *
      */
     private class ResourceEnvelop {
 
@@ -593,7 +573,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         /**
          * Create a resource envelop based on a short resource
          *
-         * @param sr Short resource
+         * @param sr       Short resource
          * @param authUser user logged
          */
         private ResourceEnvelop(ShortResource sr, User authUser) {
@@ -606,7 +586,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         /**
          * Create a resource envelop based on a resource
          *
-         * @param r resource
+         * @param r        resource
          * @param authUser user logged
          */
         private ResourceEnvelop(Resource r, User authUser) {
@@ -624,62 +604,62 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 canDelete = sr.isCanDelete();
                 canEdit = sr.isCanEdit();
             } else
-            // ///////////////////////////////////////////////////////////////////////
-            // This fragment checks if the authenticated user can modify and
-            // delete
-            // the loaded resource (and associated attributes and stored
-            // data).
-            // This to inform the client in HTTP response result.
-            // ///////////////////////////////////////////////////////////////////////
-            if (authUser != null) {
-                if (authUser.getRole().equals(Role.ADMIN)) {
-                    canEdit = true;
-                    canDelete = true;
-                } else {
-                    //get security rules for groups
-                    List<String> groups = new ArrayList<String>();
-                    for (UserGroup g : authUser.getGroups()) {
-                        groups.add(g.getGroupName());
-                    }
-                    for (SecurityRule rule : resourceService
-                            .getGroupSecurityRule(groups,
-                                    r.getId())) {
-                        //GUEST users can not access to the delete and edit(resource,data blob is editable) services
-                        //so only authenticated users with
-                        if (rule.isCanWrite() && !authUser.getRole().equals(Role.GUEST)) {
-                            canEdit = true;
-                            canDelete = true;
-                            break;
+                // ///////////////////////////////////////////////////////////////////////
+                // This fragment checks if the authenticated user can modify and
+                // delete
+                // the loaded resource (and associated attributes and stored
+                // data).
+                // This to inform the client in HTTP response result.
+                // ///////////////////////////////////////////////////////////////////////
+                if (authUser != null) {
+                    if (authUser.getRole().equals(Role.ADMIN)) {
+                        canEdit = true;
+                        canDelete = true;
+                    } else {
+                        //get security rules for groups
+                        List<String> groups = new ArrayList<String>();
+                        for (UserGroup g : authUser.getGroups()) {
+                            groups.add(g.getGroupName());
                         }
-                    }
-                    //get security rules for user
-                    for (SecurityRule rule : resourceService
-                            .getUserSecurityRule(authUser.getName(),
-                                    r.getId())) {
-                        User owner = rule.getUser();
-                        UserGroup userGroup = rule.getGroup();
-                        if (owner != null) {
-                            if (owner.getId().equals(authUser.getId())) {
-                                if (rule.isCanWrite()) {
-                                    canEdit = true;
-                                    canDelete = true;
-                                    break;
-                                }
+                        for (SecurityRule rule : resourceService
+                                .getGroupSecurityRule(groups,
+                                        r.getId())) {
+                            //GUEST users can not access to the delete and edit(resource,data blob is editable) services
+                            //so only authenticated users with
+                            if (rule.isCanWrite() && !authUser.getRole().equals(Role.GUEST)) {
+                                canEdit = true;
+                                canDelete = true;
+                                break;
                             }
-                        } else if (userGroup != null) {
-                            if (authUser.getGroups() != null
-                                    && authUser.getGroups().contains( // FIXME: Given object cannot contain instances of String (expected UserGroup)
-                                            userGroup.getGroupName())) {
-                                if (rule.isCanWrite()) {
-                                    canEdit = true;
-                                    canDelete = true;
-                                    break;
+                        }
+                        //get security rules for user
+                        for (SecurityRule rule : resourceService
+                                .getUserSecurityRule(authUser.getName(),
+                                        r.getId())) {
+                            User owner = rule.getUser();
+                            UserGroup userGroup = rule.getGroup();
+                            if (owner != null) {
+                                if (owner.getId().equals(authUser.getId())) {
+                                    if (rule.isCanWrite()) {
+                                        canEdit = true;
+                                        canDelete = true;
+                                        break;
+                                    }
+                                }
+                            } else if (userGroup != null) {
+                                if (authUser.getGroups() != null
+                                        && authUser.getGroups().contains( // FIXME: Given object cannot contain instances of String (expected UserGroup)
+                                        userGroup.getGroupName())) {
+                                    if (rule.isCanWrite()) {
+                                        canEdit = true;
+                                        canDelete = true;
+                                        break;
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
         }
 
         /**
