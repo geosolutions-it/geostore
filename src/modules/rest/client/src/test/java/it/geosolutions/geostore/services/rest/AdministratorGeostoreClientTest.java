@@ -954,8 +954,6 @@ public class AdministratorGeostoreClientTest {
 
         String timeid = Long.toString(System.currentTimeMillis());
 
-       
-
         RESTResource origResource = new RESTResource();
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
         origResource.setName("rest_test_resource_" + timeid);

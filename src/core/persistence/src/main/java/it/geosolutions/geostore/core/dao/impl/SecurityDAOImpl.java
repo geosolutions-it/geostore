@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.model.Resource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,9 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     private static final Logger LOGGER = LogManager.getLogger(SecurityDAOImpl.class);
 
     private UserGroupDAO userGroupDAO;
+
+    private ResourceDAO resourceDAO;
+
     /*
      * (non-Javadoc)
      * 
@@ -60,10 +65,11 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         }
         for (SecurityRule rule : entities) {
             validateGroup(rule);
+            validateCreatorAndEditor(rule);
         }
         super.persist(entities);
     }
-    
+
     protected void validateGroup(SecurityRule rule) throws InternalError {
         if (rule.getGroup() != null) {
             UserGroup ug = userGroupDAO.find(rule.getGroup().getId());
@@ -71,6 +77,26 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
                 throw new InternalError("The usergroup having the provided Id doesn't exist");
             }
             rule.setGroup(ug);
+        }
+    }
+
+    private void validateCreatorAndEditor(SecurityRule rule) {
+        if (rule.getResource() != null && (rule.getUser() != null || rule.getUsername() != null)) {
+            Resource resource = rule.getResource();
+            boolean updated = false;
+            if (resource.getCreator() == null) {
+                resource.setCreator(
+                        rule.getUser() != null ? rule.getUser().getName() : rule.getUsername());
+                updated = true;
+            }
+            if (rule.getUser() != null || !rule.getUsername().isEmpty()) {
+                resource.setEditor(
+                        rule.getUser() != null ? rule.getUser().getName() : rule.getUsername());
+                updated = true;
+            }
+            if (updated) {
+                resourceDAO.merge(resource);
+            }
         }
     }
 
@@ -272,4 +298,11 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         this.userGroupDAO = userGroupDAO;
     }
 
+    public ResourceDAO getResourceDAO() {
+        return resourceDAO;
+    }
+
+    public void setResourceDAO(ResourceDAO resourceDAO) {
+        this.resourceDAO = resourceDAO;
+    }
 }

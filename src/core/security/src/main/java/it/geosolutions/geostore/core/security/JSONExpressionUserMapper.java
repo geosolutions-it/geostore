@@ -29,13 +29,11 @@ package it.geosolutions.geostore.core.security;
 
 import java.util.Map;
 
+import net.sf.json.JSONObject;
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
-
-import net.sf.json.JSONObject;
-
 
 /**
  * Maps user attributes for a JSON object.
@@ -48,7 +46,7 @@ public class JSONExpressionUserMapper extends ExpressionUserMapper {
     
     public JSONExpressionUserMapper(Map<String, String> attributeMappings) {
         super(attributeMappings);
-        // property accessor for JSONObject attributes (read only)
+        // property accessor for JSONObject attributes (read-only)
         evaluationContext.addPropertyAccessor(new PropertyAccessor() {
 
             @Override
@@ -89,11 +87,9 @@ public class JSONExpressionUserMapper extends ExpressionUserMapper {
     @Override
     protected Object preProcessDetails(Object details) {
         if(details instanceof String) {
-            details = JSONObject.fromObject((String)details);
+            details = JSONObject.fromObject(details);
         }
         return super.preProcessDetails(details);
     }
-
-    
     
 }

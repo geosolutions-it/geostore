@@ -46,7 +46,6 @@ public class SecurityDAOTest extends BaseDAOTest {
      */
     @Test
     public void testPersistSecurity() throws Exception {
-
         final String NAME = "NAME";
 
         if (LOGGER.isDebugEnabled()) {
@@ -81,6 +80,11 @@ public class SecurityDAOTest extends BaseDAOTest {
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());
 
+            Resource loaded = resourceDAO.find(resourceId);
+            assertNotNull(loaded);
+            assertNull(loaded.getCreator());
+            assertNull(loaded.getEditor());
+
             // SecurityRule security = new SecurityRule();
             // security.setCanRead(true);
             // security.setCanWrite(true);
@@ -105,16 +109,21 @@ public class SecurityDAOTest extends BaseDAOTest {
         // PERSIST
         //
         {
+            Resource loaded = resourceDAO.find(resourceId);
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
-            security.setResource(resourceDAO.find(resourceId));
+            security.setResource(loaded);
 
             securityDAO.persist(security);
             securityId = security.getId();
 
             assertEquals(1, securityDAO.count(null));
             assertEquals(1, securityDAO.findAll().size());
+
+            loaded = resourceDAO.find(resourceId);
+            assertNull(loaded.getCreator());
+            assertNull(loaded.getEditor());
         }
 
         //
@@ -146,7 +155,6 @@ public class SecurityDAOTest extends BaseDAOTest {
     
     @Test
     public void testPersistSecurityUsingNames() throws Exception {
-
         final String NAME = "NAME";
         final String USERNAME= "USER";
         final String GROUPNAME= "GROUP";
@@ -200,6 +208,9 @@ public class SecurityDAOTest extends BaseDAOTest {
             assertEquals(1, resourceDAO.count(null));
             assertEquals(1, resourceDAO.findAll().size());
 
+            Resource loaded = resourceDAO.find(resourceId);
+            assertNull(loaded.getCreator());
+            assertNull(loaded.getEditor());
         }
 
         //
@@ -219,6 +230,13 @@ public class SecurityDAOTest extends BaseDAOTest {
             SecurityRule rule = securityDAO.find(securityId);
             assertNotNull(rule);
             assertNotNull(rule.getUsername());
+
+            Resource loaded = resourceDAO.find(resourceId);
+            assertNotNull(loaded.getCreator());
+            assertNotNull(loaded.getEditor());
+            assertEquals("testuser", loaded.getCreator());
+            assertEquals("testuser", loaded.getEditor());
+
             securityDAO.removeById(securityId);
         }
         
@@ -226,11 +244,16 @@ public class SecurityDAOTest extends BaseDAOTest {
         // PERSIST WITH USER
         //
         {
+            Resource loaded = resourceDAO.find(resourceId);
+            loaded.setEditor(null);
+            resourceDAO.merge(loaded);
+
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);
             security.setCanWrite(true);
             security.setResource(resourceDAO.find(resourceId));
             User testUser = new User();
+            testUser.setName("TheTestUser");
             testUser.setId(userId);
             security.setUser(testUser);
             securityDAO.persist(security);
@@ -241,6 +264,13 @@ public class SecurityDAOTest extends BaseDAOTest {
             SecurityRule rule = securityDAO.find(securityId);
             assertNotNull(rule);
             assertNotNull(rule.getUser());
+
+            loaded = resourceDAO.find(resourceId);
+            assertNotNull(loaded.getCreator());
+            assertNotNull(loaded.getEditor());
+            assertEquals("testuser", loaded.getCreator());
+            assertEquals(testUser.getName(), loaded.getEditor());
+
             securityDAO.removeById(securityId);
         }
         

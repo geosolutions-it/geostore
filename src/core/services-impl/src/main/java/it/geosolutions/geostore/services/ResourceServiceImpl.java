@@ -191,6 +191,26 @@ public class ResourceServiceImpl implements ResourceService
         r.setCategory(loadedCategory);
         r.setAdvertised(resource.isAdvertised());
 
+        // Extract "owner"/"creator" and "editor" values
+        List<SecurityRule> rules = resource.getSecurity();
+
+        if (rules != null) {
+            for (SecurityRule securityRule : rules) {
+                if ((securityRule.getUser() != null || securityRule.getUsername() != null) && securityRule.isCanWrite()) {
+                    final String owner = securityRule.getUser() != null ? securityRule.getUser().getName() : securityRule.getUsername();
+                    r.setCreator(owner);
+                    if (resource.getEditor() != null) {
+                        r.setEditor(owner);
+                    } else {
+                        r.setEditor(resource.getEditor());
+                    }
+                }
+            }
+        } else {
+            r.setCreator(resource.getCreator());
+            r.setEditor(resource.getEditor());
+        }
+
         try {
             resourceDAO.persist(r);
         } catch (DataIntegrityViolationException exc) {
@@ -221,8 +241,6 @@ public class ResourceServiceImpl implements ResourceService
             //
             // Persisting SecurityRule
             //
-            List<SecurityRule> rules = resource.getSecurity();
-
             if (rules != null) {
                 for (SecurityRule rule : rules) {
                     rule.setResource(r);
@@ -797,6 +815,8 @@ public class ResourceServiceImpl implements ResourceService
             res.setId(resource.getId());
             res.setLastUpdate(resource.getLastUpdate());
             res.setName(resource.getName());
+            res.setCreator(resource.getCreator());
+            res.setEditor(resource.getEditor());
 
             if (includeData) {
                 res.setData(resource.getData());

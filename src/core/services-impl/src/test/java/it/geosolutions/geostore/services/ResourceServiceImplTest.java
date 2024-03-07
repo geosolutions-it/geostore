@@ -60,7 +60,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
     @Test
     public void testInsertDeleteResource() throws Exception {
-
         long resourceId = createResource("name1", "description1", "MAP");
 
         assertEquals(1, resourceService.getCount(null));
@@ -174,7 +173,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         // 4 resources contain 1 in the name: "FIRST SET - 2" + "FIRST SET - 12" 
         assertEquals(4, nameContain2Result.size());
         assertTrue(isSorted(nameContain2Result));
-        
     }
     
     /**
@@ -283,7 +281,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     	assertNull(groupRule.getUser());
     	assertEquals((Long)groupId, groupRule.getGroup().getId());
     	assertEquals((Long)resourceId, groupRule.getResource().getId());
-    	
     }
     
     @Test
@@ -448,6 +445,31 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         }
         
         assertEquals(0, resourceService.getCount(null));    	
+    }
+
+    @Test
+    public void testInsertUpdateCreatorAndEditor() throws Exception {
+        final String ORIG_RES_NAME = "testRes";
+        final String DESCRIPTION = "description";
+        final String CATEGORY_NAME = "MAP";
+
+        long origResourceId = createResource(ORIG_RES_NAME, DESCRIPTION, CATEGORY_NAME);
+        Category category = categoryService.get(CATEGORY_NAME);
+
+        assertEquals(1, resourceService.getCount(null));
+        assertNotNull(category);
+
+        Resource resource = resourceService.get(origResourceId);
+        assertEquals("USER1", resource.getCreator());
+        assertEquals("USER2", resource.getEditor());
+
+        resource.setCreator("USER1Updated");
+        resource.setEditor("USER1Updated");
+        resourceService.update(resource);
+
+        resource = resourceService.get(origResourceId);
+        assertEquals("USER1Updated", resource.getCreator());
+        assertEquals("USER1Updated", resource.getEditor());
     }
 
     @Test
