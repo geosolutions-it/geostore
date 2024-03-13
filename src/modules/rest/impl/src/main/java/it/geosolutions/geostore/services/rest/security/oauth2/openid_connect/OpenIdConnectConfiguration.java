@@ -58,6 +58,13 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
         this.postLogoutRedirectUri = postLogoutRedirectUri;
     }
 
+    /**
+     * If true, the client secret will be sent to the token endpoint.
+     * This is useful for clients that are not capable of keeping the client secret confidential.
+     * ref.: https://tools.ietf.org/html/rfc6749#section-2.3.1
+     *
+     * @return boolean
+     */
     public boolean isSendClientSecret() {
         return sendClientSecret;
     }
@@ -66,6 +73,13 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
         this.sendClientSecret = sendClientSecret;
     }
 
+    /**
+     * Enables the use of Authorization Code Flow with Proof Key for Code Exchange (PKCE) for the authorization endpoint.
+     * ref.: https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce
+     *
+     * @return the authorization endpoint.
+     * @return boolean
+     */
     public boolean isUsePKCE() {
         return usePKCE;
     }
