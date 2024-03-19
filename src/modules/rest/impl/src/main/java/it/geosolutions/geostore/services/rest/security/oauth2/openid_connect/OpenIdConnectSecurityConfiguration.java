@@ -99,7 +99,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         AccessTokenProvider accessTokenProviderChain =
                 new AccessTokenProviderChain(
                         Arrays.<AccessTokenProvider>asList(
-                                authorizationAccessTokenProvider(),
+                                authorizationAccessTokenProvider,
                                 new ImplicitAccessTokenProvider(),
                                 new ResourceOwnerPasswordAccessTokenProvider(),
                                 new ClientCredentialsAccessTokenProvider()));
