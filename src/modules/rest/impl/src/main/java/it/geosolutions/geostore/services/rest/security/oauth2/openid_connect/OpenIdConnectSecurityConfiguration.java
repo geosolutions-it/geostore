@@ -31,6 +31,8 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreSecurityConfiguration;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -85,6 +87,15 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         GeoStoreOAuthRestTemplate oAuth2RestTemplate = restTemplate();
         setJacksonConverter(oAuth2RestTemplate);
 
+        AuthorizationCodeAccessTokenProvider authorizationAccessTokenProvider = authorizationAccessTokenProvider();
+
+        OpenIdConnectConfiguration idConfig = (OpenIdConnectConfiguration) configuration();
+        if (idConfig.isUsePKCE())
+            authorizationAccessTokenProvider.setTokenRequestEnhancer(new PKCERequestEnhancer(idConfig));
+        else if (idConfig.isSendClientSecret())
+            authorizationAccessTokenProvider.setTokenRequestEnhancer(new ClientSecretRequestEnhancer());
+        else authorizationAccessTokenProvider.setTokenRequestEnhancer(new DefaultRequestEnhancer());
+
         AccessTokenProvider accessTokenProviderChain =
                 new AccessTokenProviderChain(
                         Arrays.<AccessTokenProvider>asList(
@@ -95,7 +106,6 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProviderChain);
 
-        OpenIdConnectConfiguration idConfig = (OpenIdConnectConfiguration) configuration();
         if (idConfig.getJwkURI() != null && !"".equals(idConfig.getJwkURI())) {
             oAuth2RestTemplate.setTokenStore(new JwkTokenStore(idConfig.getJwkURI()));
         }
@@ -115,7 +125,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
 
     @Bean
     public OpenIdConnectFilter oidcOpenIdFilter() {
-        return new OpenIdConnectFilter(oidcTokenServices(), oauth2RestTemplate(), authorizationAccessTokenProvider(), configuration(), oidcCache());
+        return new OpenIdConnectFilter(oidcTokenServices(), oauth2RestTemplate(), configuration(), oidcCache());
     }
 
     @Bean

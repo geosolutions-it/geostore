@@ -50,7 +50,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
-import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeAccessTokenProvider;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -143,8 +142,7 @@ public class OpenIdConnectIntegrationTest {
             }
         };
         GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
-        AuthorizationCodeAccessTokenProvider provider = securityConfiguration.authorizationAccessTokenProvider();
-        this.filter = new OpenIdConnectFilter(securityConfiguration.oidcTokenServices(), restTemplate, provider, configuration, securityConfiguration.oidcCache());
+        this.filter = new OpenIdConnectFilter(securityConfiguration.oidcTokenServices(), restTemplate, configuration, securityConfiguration.oidcCache());
     }
 
     @After
