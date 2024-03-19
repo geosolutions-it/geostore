@@ -95,8 +95,6 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         return oAuth2RestTemplate;
     }
 
-    @Bean(name = "authorizationAccessTokenProvider")
-    @Scope(value = "prototype")
     public AuthorizationCodeAccessTokenProvider authorizationAccessTokenProvider() {
         AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider =
                 new AuthorizationCodeAccessTokenProvider();
