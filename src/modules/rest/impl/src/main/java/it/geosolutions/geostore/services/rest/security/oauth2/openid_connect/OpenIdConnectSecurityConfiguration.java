@@ -45,6 +45,8 @@ import org.springframework.security.oauth2.client.token.grant.code.Authorization
 import org.springframework.security.oauth2.client.token.grant.implicit.ImplicitAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordAccessTokenProvider;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
+import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStore;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.Arrays;
 
@@ -78,7 +80,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
      */
     @Override
     @Bean(value = "oidcOpenIdRestTemplate")
-    @Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
+    @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
     public GeoStoreOAuthRestTemplate oauth2RestTemplate() {
         GeoStoreOAuthRestTemplate oAuth2RestTemplate = restTemplate();
         setJacksonConverter(oAuth2RestTemplate);
@@ -92,9 +94,17 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
                                 new ClientCredentialsAccessTokenProvider()));
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProviderChain);
+
+        OpenIdConnectConfiguration idConfig = (OpenIdConnectConfiguration) configuration();
+        if (idConfig.getJwkURI() != null && !"".equals(idConfig.getJwkURI())) {
+            oAuth2RestTemplate.setTokenStore(new JwkTokenStore(idConfig.getJwkURI()));
+        }
+
         return oAuth2RestTemplate;
     }
 
+    @Bean(name = "authorizationAccessTokenProvider")
+    @Scope(value = "prototype")
     public AuthorizationCodeAccessTokenProvider authorizationAccessTokenProvider() {
         AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider =
                 new AuthorizationCodeAccessTokenProvider();

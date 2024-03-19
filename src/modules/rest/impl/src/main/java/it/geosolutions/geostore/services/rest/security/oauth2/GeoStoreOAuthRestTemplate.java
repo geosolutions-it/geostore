@@ -59,7 +59,8 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
     public GeoStoreOAuthRestTemplate(
             OAuth2ProtectedResourceDetails resource, OAuth2ClientContext context, OAuth2Configuration configuration, String idTokenParam) {
         super(resource, context);
-        this.store = new JwkTokenStore(configuration.getIdTokenUri());
+        if (configuration.getIdTokenUri() != null)
+            this.store = new JwkTokenStore(configuration.getIdTokenUri());
         this.idTokenParam = idTokenParam;
     }
 
