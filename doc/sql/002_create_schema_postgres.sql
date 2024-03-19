@@ -14,6 +14,8 @@ set PGOPTIONS="--search_path=geostore_test"
 psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
 
 */
+SET search_path TO geostore;
+
     create table gs_attribute (
         id int8 not null,
         attribute_date timestamp,
@@ -228,4 +230,3 @@ psql -U geostore_test -d geostore -f 002_create_schema_postgres.sql
     create index idx_usergroup_name on gs_usergroup (groupName);
 
     create sequence hibernate_sequence;
-
