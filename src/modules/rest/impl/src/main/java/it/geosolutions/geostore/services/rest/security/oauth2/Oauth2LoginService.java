@@ -50,19 +50,22 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     protected Response.ResponseBuilder getCallbackResponseBuilder(String token, String refreshToken, String provider) {
         Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
+        LOGGER.info("Callback Provider: " + provider);
+        LOGGER.debug("Token: " + token);
+        LOGGER.debug("Redirect uri: " + configuration.getRedirectUri());
+        LOGGER.debug("Internal redirect uri: " + configuration.getInternalRedirectUri());
         if (token != null) {
+            LOGGER.info("AccessToken found");
             SessionToken sessionToken = new SessionToken();
             try {
                 result = result.status(302)
                         .location(new URI(configuration.getInternalRedirectUri()));
                 if (token != null) {
-                    if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("AccessToken found");
+                    LOGGER.debug("AccessToken: " + token);
                     sessionToken.setAccessToken(token);
                 }
                 if (refreshToken != null) {
-                    if (LOGGER.isDebugEnabled())
-                        LOGGER.debug("RefreshToken found");
+                    LOGGER.debug("RefreshToken: " + refreshToken);
                     sessionToken.setRefreshToken(refreshToken);
                 }
                 sessionToken.setTokenType(BEARER_TYPE);
@@ -80,6 +83,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                         .entity("Exception while parsing the internal redirect url: " + e.getMessage());
             }
         } else {
+            LOGGER.error("No access token found on callback request.");
             result = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                     .entity("No access token found.");
         }

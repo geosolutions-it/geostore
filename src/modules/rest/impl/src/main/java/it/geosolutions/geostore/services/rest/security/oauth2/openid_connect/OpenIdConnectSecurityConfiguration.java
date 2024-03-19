@@ -33,6 +33,8 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreSecurityConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -41,11 +43,8 @@ import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResour
 import org.springframework.security.oauth2.client.token.AccessTokenProvider;
 import org.springframework.security.oauth2.client.token.AccessTokenProviderChain;
 import org.springframework.security.oauth2.client.token.DefaultRequestEnhancer;
-import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
-import org.springframework.security.oauth2.client.token.grant.implicit.ImplicitAccessTokenProvider;
-import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordAccessTokenProvider;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStore;
 import org.springframework.web.context.WebApplicationContext;
@@ -62,6 +61,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Confi
 public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityConfiguration {
 
     static final String CONF_BEAN_NAME = "oidc" + CONFIG_NAME_SUFFIX;
+    private final static Logger LOGGER = LogManager.getLogger(OpenIdConnectSecurityConfiguration.class);
 
     @Override
     public OAuth2ProtectedResourceDetails resourceDetails() {
@@ -90,23 +90,29 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         AuthorizationCodeAccessTokenProvider authorizationAccessTokenProvider = authorizationAccessTokenProvider();
 
         OpenIdConnectConfiguration idConfig = (OpenIdConnectConfiguration) configuration();
-        if (idConfig.isUsePKCE())
+        if (idConfig.isUsePKCE()) {
+            LOGGER.info("Using PKCE for OpenID Connect");
             authorizationAccessTokenProvider.setTokenRequestEnhancer(new PKCERequestEnhancer(idConfig));
-        else if (idConfig.isSendClientSecret())
+        } else if (idConfig.isSendClientSecret()) {
+            LOGGER.info("Using client secret for OpenID Connect");
             authorizationAccessTokenProvider.setTokenRequestEnhancer(new ClientSecretRequestEnhancer());
-        else authorizationAccessTokenProvider.setTokenRequestEnhancer(new DefaultRequestEnhancer());
+        } else {
+            LOGGER.info("Using default request enhancer for OpenID Connect");
+            authorizationAccessTokenProvider.setTokenRequestEnhancer(new DefaultRequestEnhancer());
+        }
 
         AccessTokenProvider accessTokenProviderChain =
                 new AccessTokenProviderChain(
                         Arrays.<AccessTokenProvider>asList(
-                                authorizationAccessTokenProvider,
-                                new ImplicitAccessTokenProvider(),
-                                new ResourceOwnerPasswordAccessTokenProvider(),
-                                new ClientCredentialsAccessTokenProvider()));
+                                authorizationAccessTokenProvider));
+        // new ImplicitAccessTokenProvider(),
+        // new ResourceOwnerPasswordAccessTokenProvider(),
+        //new ClientCredentialsAccessTokenProvider())
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProviderChain);
 
         if (idConfig.getJwkURI() != null && !"".equals(idConfig.getJwkURI())) {
+            LOGGER.info("Using JWK for OpenID Connect");
             oAuth2RestTemplate.setTokenStore(new JwkTokenStore(idConfig.getJwkURI()));
         }
 
