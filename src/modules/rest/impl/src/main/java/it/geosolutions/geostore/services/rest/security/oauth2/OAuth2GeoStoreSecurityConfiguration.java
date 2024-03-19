@@ -64,7 +64,6 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
 
     protected ApplicationContext context;
 
-
     @Resource
     @Qualifier("accessTokenRequest")
     private AccessTokenRequest accessTokenRequest;
@@ -99,7 +98,6 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
     }
 
     public GeoStoreOAuthRestTemplate oauth2RestTemplate() {
-
         GeoStoreOAuthRestTemplate oAuth2RestTemplate = restTemplate();
         setJacksonConverter(oAuth2RestTemplate);
         AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider =

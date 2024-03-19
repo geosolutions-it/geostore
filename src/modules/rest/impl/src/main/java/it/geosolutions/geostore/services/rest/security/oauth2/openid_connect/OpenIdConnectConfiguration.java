@@ -40,6 +40,7 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     String jwkURI;
     String postLogoutRedirectUri;
     boolean sendClientSecret = false;
+    boolean allowBearerTokens = true;
     boolean usePKCE = false;
 
     public String getJwkURI() {
@@ -71,6 +72,14 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setSendClientSecret(boolean sendClientSecret) {
         this.sendClientSecret = sendClientSecret;
+    }
+
+    public boolean isAllowBearerTokens() {
+        return allowBearerTokens;
+    }
+
+    public void setAllowBearerTokens(boolean allowBearerTokens) {
+        this.allowBearerTokens = allowBearerTokens;
     }
 
     /**

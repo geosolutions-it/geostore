@@ -142,7 +142,12 @@ public class OpenIdConnectIntegrationTest {
             }
         };
         GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
-        this.filter = new OpenIdConnectFilter(securityConfiguration.oidcTokenServices(), restTemplate, configuration, securityConfiguration.oidcCache());
+        this.filter = new OpenIdConnectFilter(
+                securityConfiguration.oidcTokenServices(),
+                restTemplate,
+                configuration,
+                securityConfiguration.oidcCache(),
+                securityConfiguration.openIdConnectBearerTokenValidator());
     }
 
     @After

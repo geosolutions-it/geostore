@@ -31,6 +31,10 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreSecurityConfiguration;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.OpenIdTokenValidator;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
 import org.apache.logging.log4j.LogManager;
@@ -134,7 +138,21 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
 
     @Bean
     public OpenIdConnectFilter oidcOpenIdFilter() {
-        return new OpenIdConnectFilter(oidcTokenServices(), oauth2RestTemplate(), configuration(), oidcCache());
+        return new OpenIdConnectFilter(
+                oidcTokenServices(),
+                oauth2RestTemplate(),
+                configuration(),
+                oidcCache(),
+                openIdConnectBearerTokenValidator());
+    }
+
+    @Bean
+    public OpenIdTokenValidator openIdConnectBearerTokenValidator() {
+        return new MultiTokenValidator(
+                Arrays.asList(
+                        new AudienceAccessTokenValidator(),
+                        new SubjectTokenValidator())
+        );
     }
 
     @Bean

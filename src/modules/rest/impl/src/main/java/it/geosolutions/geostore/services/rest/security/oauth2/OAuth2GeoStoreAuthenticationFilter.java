@@ -55,6 +55,7 @@ import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
@@ -70,10 +71,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,6 +86,9 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
  */
 public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAuthenticationProcessingFilter {
 
+    public static final String OAUTH2_AUTHENTICATION_KEY = "oauth2.authentication";
+    public static final String OAUTH2_AUTHENTICATION_TYPE_KEY = "oauth2.authenticationType";
+    public static final String OAUTH2_ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
     private final static Logger LOGGER = LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
     private final AuthenticationEntryPoint authEntryPoint;
     private final TokenAuthenticationCache cache;
@@ -97,7 +98,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     protected UserGroupService userGroupService;
     protected RemoteTokenServices tokenServices;
     protected OAuth2Configuration configuration;
-
 
     /**
      * @param tokenServices            a RemoteTokenServices instance.
@@ -122,8 +122,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null)
             super.doFilter(req, res, chain);
         else if (req instanceof HttpServletRequest)
-            // ok no need to authenticate but in case the security context
-            // holds a Token authentication we set the access token to request's attributes.
+            // ok no need to authenticate, but in case the security context
+            // holds a Token authentication, we set the access token to request's attributes.
             addRequestAttributes((HttpServletRequest) req, authentication);
         if (configuration.isEnabled() && configuration.isInvalid())
             if (LOGGER.isDebugEnabled())
@@ -135,6 +135,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
         Authentication authentication;
         String token = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
+
+        if (token != null) {
+            request.setAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY, OAuth2AuthenticationType.BEARER);
+        } else {
+            request.setAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY, OAuth2AuthenticationType.USER);
+        }
+
         if (token != null) {
             authentication = cache.get(token);
             if (authentication == null) {
@@ -162,7 +169,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         }
         return tokenDetails;
     }
-
 
     private Authentication authenticateAndUpdateCache(HttpServletRequest request, HttpServletResponse response, String token, OAuth2AccessToken accessToken) {
         Authentication authentication = performOAuthAuthentication(request, response, accessToken);
@@ -199,7 +205,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         }
     }
 
-
     /**
      * Perform the authentication.
      *
@@ -209,12 +214,12 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
      * @return the Authentication object. Null if not authenticated.
      */
     protected Authentication performOAuthAuthentication(HttpServletRequest request, HttpServletResponse response, OAuth2AccessToken accessToken) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("About to perform remote authentication.");
-        }
+        LOGGER.debug("About to perform remote authentication.");
+        LOGGER.debug("Access Token: " + accessToken);
         String principal = null;
         PreAuthenticatedAuthenticationToken result = null;
         try {
+            LOGGER.debug("Trying to get the preauthenticated principal.");
             principal = getPreAuthenticatedPrincipal(request, response, accessToken);
         } catch (IOException e1) {
             LOGGER.error(e1.getMessage(), e1);
@@ -247,21 +252,46 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
             throws IOException, ServletException {
 
         // Make sure the REST Resource Template has been correctly configured
+        LOGGER.debug("About to configure the REST Resource Template");
         configureRestTemplate();
+
         if (accessToken != null) {
+            LOGGER.debug("Setting the access token on the OAuth2ClientContext");
             restTemplate
                     .getOAuth2ClientContext()
                     .setAccessToken(accessToken);
         }
 
         // Setting up OAuth2 Filter services and resource template
-        //setRestTemplate(restTemplate);
-        //setTokenServices(tokenServices);
+        LOGGER.debug("Setting up OAuth2 Filter services and resource template");
+        setRestTemplate(restTemplate);
+        setTokenServices(tokenServices);
 
         // Validating the access_token
         Authentication authentication = null;
         try {
             authentication = super.attemptAuthentication(req, resp);
+            LOGGER.debug("Authentication result: " + authentication);
+            req.setAttribute(OAUTH2_AUTHENTICATION_KEY, authentication);
+
+            // The authentication (in the extensions) should contain a Map which is the result of
+            // the Access Token Check Request (which will be the json result from the oidc "userinfo"
+            // endpoint).
+            // We move it from inside the authentication to directly to a request attributes.
+            // This will make it a "peer" with the Access Token (which spring puts on the request as
+            // an attribute).
+            if (authentication instanceof OAuth2Authentication) {
+                OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;
+                Object map =
+                        oAuth2Authentication
+                                .getOAuth2Request()
+                                .getExtensions()
+                                .get(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
+                if (map instanceof Map) {
+                    req.setAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY, map);
+                }
+            }
+
             if (authentication != null && LOGGER.isDebugEnabled())
                 LOGGER.debug(
                         "Authenticated OAuth request for principal " +
@@ -324,7 +354,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
             }
         }
     }
-
 
     protected void configureRestTemplate() {
         AuthorizationCodeResourceDetails details =
@@ -506,5 +535,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
                 LOGGER.debug("Updated SecurityContextHolder to contain null Authentication");
             }
         }
+    }
+
+    public enum OAuth2AuthenticationType {
+        BEARER, // this is a bearer token (meaning existing access token is in the request headers)
+        USER // this is a "normal" oauth2 login (i.e. interactive user login)
     }
 }
