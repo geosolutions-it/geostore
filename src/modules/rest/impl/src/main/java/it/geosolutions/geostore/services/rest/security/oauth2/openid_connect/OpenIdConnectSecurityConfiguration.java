@@ -43,8 +43,11 @@ import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResour
 import org.springframework.security.oauth2.client.token.AccessTokenProvider;
 import org.springframework.security.oauth2.client.token.AccessTokenProviderChain;
 import org.springframework.security.oauth2.client.token.DefaultRequestEnhancer;
+import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeAccessTokenProvider;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
+import org.springframework.security.oauth2.client.token.grant.implicit.ImplicitAccessTokenProvider;
+import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordAccessTokenProvider;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStore;
 import org.springframework.web.context.WebApplicationContext;
@@ -104,10 +107,10 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         AccessTokenProvider accessTokenProviderChain =
                 new AccessTokenProviderChain(
                         Arrays.<AccessTokenProvider>asList(
-                                authorizationAccessTokenProvider));
-        // new ImplicitAccessTokenProvider(),
-        // new ResourceOwnerPasswordAccessTokenProvider(),
-        //new ClientCredentialsAccessTokenProvider())
+                                authorizationAccessTokenProvider,
+                                new ImplicitAccessTokenProvider(),
+                                new ResourceOwnerPasswordAccessTokenProvider(),
+                                new ClientCredentialsAccessTokenProvider()));
 
         oAuth2RestTemplate.setAccessTokenProvider(accessTokenProviderChain);
 
