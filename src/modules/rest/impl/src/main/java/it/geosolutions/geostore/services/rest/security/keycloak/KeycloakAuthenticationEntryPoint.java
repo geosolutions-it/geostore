@@ -42,16 +42,17 @@ import java.io.IOException;
  */
 class KeycloakAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    private AuthChallenge challenge;
+    private final AuthChallenge challenge;
 
-    KeycloakAuthenticationEntryPoint(AuthChallenge challenge){
-        this.challenge=challenge;
+    KeycloakAuthenticationEntryPoint(AuthChallenge challenge) {
+        this.challenge = challenge;
     }
 
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        if (challenge==null) throw new RuntimeException("Keycloak config is bearer only. No redirect to authorization page can be performed.");
+        if (challenge == null)
+            throw new RuntimeException("Keycloak config is bearer only. No redirect to authorization page can be performed.");
         challenge.challenge(new SimpleHttpFacade(request, response));
         response.sendRedirect(response.getHeader("Location"));
     }

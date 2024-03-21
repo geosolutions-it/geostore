@@ -33,12 +33,8 @@ import org.springframework.security.oauth2.provider.OAuth2Request;
 import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter;
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+
+import java.util.*;
 
 /**
  * Extends the spring security DefaultAccessTokenConverter to customize the creation of the Authentication object.
@@ -48,10 +44,11 @@ public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
 
     protected UserAuthenticationConverter userTokenConverter;
 
-    public GeoStoreAccessTokenConverter(){
+    public GeoStoreAccessTokenConverter() {
         this("email");
     }
-    public GeoStoreAccessTokenConverter(String usernameKey){
+
+    public GeoStoreAccessTokenConverter(String usernameKey) {
         final DefaultUserAuthenticationConverter defaultUserAuthConverter =
                 new GeoStoreAuthenticationConverter(usernameKey);
         setUserTokenConverter(defaultUserAuthConverter);

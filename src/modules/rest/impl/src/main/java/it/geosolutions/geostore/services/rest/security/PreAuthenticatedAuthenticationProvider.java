@@ -13,7 +13,7 @@ public class PreAuthenticatedAuthenticationProvider implements AuthenticationPro
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        PreAuthenticatedAuthenticationToken token =(PreAuthenticatedAuthenticationToken) authentication;
+        PreAuthenticatedAuthenticationToken token = (PreAuthenticatedAuthenticationToken) authentication;
         LOGGER.debug("Pre Authentication for " + authentication.getName());
         return token;
     }

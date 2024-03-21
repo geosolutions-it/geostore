@@ -16,57 +16,56 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-import static org.junit.Assert.assertEquals;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.util.List;
-
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+
+import static org.junit.Assert.assertEquals;
+
 /**
- *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public class FixedCacheControlOutInterceptorTest {
 
-    
+
     @Test
     public void testCacheControlHeader() {
-    	Message message = new MessageImpl();
-    	ByteArrayOutputStream sw = new ByteArrayOutputStream();
-    	message.setContent(OutputStream.class , sw);
-    	FixedCacheControlOutInterceptor interceptor = new FixedCacheControlOutInterceptor();
-    	interceptor.handleMessage(message);
-    	@SuppressWarnings("unchecked")
-		MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
-    	assertEquals(((List)headers.get("Expires")).get(0), "-1");
-    	assertEquals(((List)headers.get("Cache-Control")).get(0), "no-cache");
+        Message message = new MessageImpl();
+        ByteArrayOutputStream sw = new ByteArrayOutputStream();
+        message.setContent(OutputStream.class, sw);
+        FixedCacheControlOutInterceptor interceptor = new FixedCacheControlOutInterceptor();
+        interceptor.handleMessage(message);
+        @SuppressWarnings("unchecked")
+        MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
+        assertEquals(headers.get("Expires").get(0), "-1");
+        assertEquals(headers.get("Cache-Control").get(0), "no-cache");
     }
+
     @SuppressWarnings("unchecked")
-	@Test
+    @Test
     public void testCacheControlPreserveExisting() {
-    	Message message = new MessageImpl();
-    	ByteArrayOutputStream sw = new ByteArrayOutputStream();
-    	message.setContent(OutputStream.class , sw);
-    	MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
-    	 if (headers == null) {
-             headers = new MetadataMap<String, Object>();
-         }  
-    	headers.add("Test", new String("Test"));
+        Message message = new MessageImpl();
+        ByteArrayOutputStream sw = new ByteArrayOutputStream();
+        message.setContent(OutputStream.class, sw);
+        MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
+        if (headers == null) {
+            headers = new MetadataMap<String, Object>();
+        }
+        headers.add("Test", "Test");
         message.put(Message.PROTOCOL_HEADERS, headers);
-    	FixedCacheControlOutInterceptor interceptor = new FixedCacheControlOutInterceptor();
-    	
-    	interceptor.handleMessage(message);
-    	
-		headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
-		((List)headers.get("Cache-Control")).get(0);
-    	assertEquals(((List)headers.get("Cache-Control")).get(0), "no-cache");
-    	assertEquals(((List)headers.get("Expires")).get(0), "-1");
-    	assertEquals(((List)headers.get("Test")).get(0), new String("Test"));
+        FixedCacheControlOutInterceptor interceptor = new FixedCacheControlOutInterceptor();
+
+        interceptor.handleMessage(message);
+
+        headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
+        headers.get("Cache-Control").get(0);
+        assertEquals(headers.get("Cache-Control").get(0), "no-cache");
+        assertEquals(headers.get("Expires").get(0), "-1");
+        assertEquals(headers.get("Test").get(0), "Test");
     }
 
 

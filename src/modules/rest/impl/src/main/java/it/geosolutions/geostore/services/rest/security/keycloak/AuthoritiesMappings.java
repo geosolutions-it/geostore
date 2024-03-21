@@ -32,13 +32,14 @@ import java.util.HashMap;
 /**
  * Case insensitive map for RoleMappings used by Keycloak classes.
  */
-class AuthoritiesMappings extends HashMap<String,String> {
+class AuthoritiesMappings extends HashMap<String, String> {
 
     AuthoritiesMappings(int initialCapacity) {
         super(initialCapacity);
     }
 
-    AuthoritiesMappings() {}
+    AuthoritiesMappings() {
+    }
 
     @Override
     public String get(Object key) {

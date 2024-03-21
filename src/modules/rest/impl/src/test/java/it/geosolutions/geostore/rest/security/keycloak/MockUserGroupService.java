@@ -46,14 +46,14 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 class MockUserGroupService implements UserGroupService {
 
-    private Map<String,UserGroup> groups=new ConcurrentHashMap<>();
-    private AtomicLong atomicLong=new AtomicLong();
+    private final Map<String, UserGroup> groups = new ConcurrentHashMap<>();
+    private final AtomicLong atomicLong = new AtomicLong();
 
     @Override
     public long insert(UserGroup userGroup) throws BadRequestServiceEx {
-        Long id=atomicLong.incrementAndGet();
+        Long id = atomicLong.incrementAndGet();
         userGroup.setId(id);
-        groups.put(userGroup.getGroupName(),userGroup);
+        groups.put(userGroup.getGroupName(), userGroup);
         return id;
     }
 
@@ -84,7 +84,7 @@ class MockUserGroupService implements UserGroupService {
 
     @Override
     public UserGroup get(long id) throws BadRequestServiceEx {
-        return groups.values().stream().filter(g->g.getId().equals(id)).findAny().get();
+        return groups.values().stream().filter(g -> g.getId().equals(id)).findAny().get();
     }
 
     @Override

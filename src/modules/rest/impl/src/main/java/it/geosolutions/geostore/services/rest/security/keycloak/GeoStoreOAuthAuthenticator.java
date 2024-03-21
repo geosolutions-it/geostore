@@ -50,7 +50,7 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
     @Override
     protected AuthChallenge loginRedirect() {
         final String state = getStateCode();
-        final String redirect =  getRedirectUri(state);
+        final String redirect = getRedirectUri(state);
         if (redirect == null) {
             return challenge(403, OIDCAuthenticationError.Reason.NO_REDIRECT_URI, null);
         }
@@ -77,9 +77,9 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
 
     @Override
     protected String stripOauthParametersFromRedirect() {
-        String redirectUrl= super.stripOauthParametersFromRedirect();
-        KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
-        Boolean forceRedirectURI=configuration.getForceConfiguredRedirectURI();
+        String redirectUrl = super.stripOauthParametersFromRedirect();
+        KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
+        Boolean forceRedirectURI = configuration.getForceConfiguredRedirectURI();
         if (forceRedirectURI)
             return configuration.getRedirectUri();
         return redirectUrl;
@@ -87,9 +87,9 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
 
     @Override
     protected String getRequestUrl() {
-        KeyCloakConfiguration configuration=GeoStoreContext.bean(KeyCloakConfiguration.class);
-        String redirectUri=configuration.getRedirectUri();
-        if (redirectUri!=null && !"".equals(redirectUri)) return redirectUri;
+        KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
+        String redirectUri = configuration.getRedirectUri();
+        if (redirectUri != null && !"".equals(redirectUri)) return redirectUri;
         return super.getRequestUrl();
     }
 }

@@ -141,6 +141,7 @@ public class OAuth2Utils {
     public static String getAccessToken() {
         String token = getRequestAttribute(ACCESS_TOKEN_PARAM);
         if (token == null) token = tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, getRequest());
+
         return token;
     }
 

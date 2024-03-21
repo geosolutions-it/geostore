@@ -3,8 +3,6 @@ package it.geosolutions.geostore.rest.security.keycloak;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakConfiguration;
-import org.keycloak.adapters.KeycloakDeployment;
-import org.keycloak.adapters.KeycloakDeploymentBuilder;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 
 public abstract class KeycloakTestSupport {
@@ -17,7 +15,6 @@ public abstract class KeycloakTestSupport {
     // locations for useful resources
     public static final String APP_URL = "/app";
     public static final String AUTH_URL = "https://cas.core.maui.mda.ca:8040/auth";
-
 
 
     // some pre-generated data from keycloak that should work until the year 2037
@@ -51,19 +48,19 @@ public abstract class KeycloakTestSupport {
 
     protected AdapterConfig adapterConfig;
 
-    protected void setUpAdapter(String serviceUrl){
+    protected void setUpAdapter(String serviceUrl) {
         AdapterConfig aConfig = new AdapterConfig();
         aConfig.setRealm(REALM);
         aConfig.setResource(CLIENT_ID);
-        aConfig.getCredentials().put("secret",SECRET);
+        aConfig.getCredentials().put("secret", SECRET);
         aConfig.setAuthServerUrl(serviceUrl);
-        this.adapterConfig=aConfig;
+        this.adapterConfig = aConfig;
     }
 
     protected KeyCloakConfiguration createConfiguration() throws JsonProcessingException {
         ObjectMapper om = new ObjectMapper();
-        String stringConfig=om.writeValueAsString(adapterConfig);
-        KeyCloakConfiguration configuration=new KeyCloakConfiguration();
+        String stringConfig = om.writeValueAsString(adapterConfig);
+        KeyCloakConfiguration configuration = new KeyCloakConfiguration();
         configuration.setJsonConfig(stringConfig);
         configuration.setEnabled(true);
         configuration.setAutoCreateUser(true);

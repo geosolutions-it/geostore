@@ -48,11 +48,11 @@ public class KeyCloakConfiguration extends IdPConfiguration {
 
     private Boolean forceConfiguredRedirectURI;
 
-    private Map<String,String> roleMappings;
+    private Map<String, String> roleMappings;
 
-    private Map<String,String> groupMappings;
+    private Map<String, String> groupMappings;
 
-    private boolean dropUnmapped=false;
+    private boolean dropUnmapped = false;
 
     /**
      * @return the JSON config, obtained at client configuration time from Keycloak.
@@ -63,26 +63,19 @@ public class KeyCloakConfiguration extends IdPConfiguration {
 
     /**
      * Set the JsonConfig.
+     *
      * @param jsonConfig the jsonConfig as a string.
      */
     public void setJsonConfig(String jsonConfig) {
         this.jsonConfig = jsonConfig;
-        if (config!=null && StringUtils.isNotBlank(this.jsonConfig)){
-            config=KeycloakDeploymentBuilder.loadAdapterConfig(
+        if (config != null && StringUtils.isNotBlank(this.jsonConfig)) {
+            config = KeycloakDeploymentBuilder.loadAdapterConfig(
                     IOUtils.toInputStream(getJsonConfig()));
         }
     }
 
-    public void setRoleMappings(String roleMappings) {
-        this.roleMappings=toMap(roleMappings);
-    }
-
-    public void setGroupMappings(String groupMappings) {
-        this.groupMappings=toMap(groupMappings);
-    }
-
-    private Map<String,String> toMap(String mappings){
-        if (mappings!=null) {
+    private Map<String, String> toMap(String mappings) {
+        if (mappings != null) {
             String[] keyValues = mappings.split(",");
             Map<String, String> map = new AuthoritiesMappings(keyValues.length);
             for (String keyValue : keyValues) {
@@ -94,12 +87,20 @@ public class KeyCloakConfiguration extends IdPConfiguration {
         return null;
     }
 
-    public Map<String, String> getRoleMappings(){
+    public Map<String, String> getRoleMappings() {
         return roleMappings;
     }
 
-    public Map<String, String> getGroupMappings(){
+    public void setRoleMappings(String roleMappings) {
+        this.roleMappings = toMap(roleMappings);
+    }
+
+    public Map<String, String> getGroupMappings() {
         return groupMappings;
+    }
+
+    public void setGroupMappings(String groupMappings) {
+        this.groupMappings = toMap(groupMappings);
     }
 
     public boolean isDropUnmapped() {
@@ -112,11 +113,12 @@ public class KeyCloakConfiguration extends IdPConfiguration {
 
     /**
      * Read the adapter config from the json.
+     *
      * @return an {@link AdapterConfig} instance.
      */
-    public AdapterConfig readAdapterConfig(){
-        String jsonConfig=getJsonConfig();
-        if (config==null && StringUtils.isNotBlank(jsonConfig)) {
+    public AdapterConfig readAdapterConfig() {
+        String jsonConfig = getJsonConfig();
+        if (config == null && StringUtils.isNotBlank(jsonConfig)) {
             config = KeycloakDeploymentBuilder.loadAdapterConfig(
                     IOUtils.toInputStream(jsonConfig));
             config.setTokenStore(TokenStore.COOKIE.name());
@@ -125,7 +127,7 @@ public class KeyCloakConfiguration extends IdPConfiguration {
     }
 
     public Boolean getForceConfiguredRedirectURI() {
-        if (forceConfiguredRedirectURI==null) return false;
+        if (forceConfiguredRedirectURI == null) return false;
         return forceConfiguredRedirectURI;
     }
 

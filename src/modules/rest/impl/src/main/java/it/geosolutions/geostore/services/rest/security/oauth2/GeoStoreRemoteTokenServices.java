@@ -126,7 +126,7 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         transformNonStandardValuesToStandardValues(checkTokenResponse);
 
         Assert.state(
-                checkTokenResponse.containsKey("client_id"),
+                checkTokenResponse.containsKey("client_id") || checkTokenResponse.containsKey("clientID"),
                 "Client id must be present in response from auth server");
         return tokenConverter.extractAuthentication(checkTokenResponse);
     }
@@ -153,19 +153,18 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
         String accessTokenUrl =
-                new StringBuilder(checkTokenEndpointUrl)
-                        .append("?access_token=")
-                        .append(accessToken)
-                        .toString();
-        return postForMap(accessTokenUrl, formData, headers);
+                checkTokenEndpointUrl +
+                        "?access_token=" +
+                        accessToken;
+        return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.POST);
     }
 
     protected String getAuthorizationHeader(String accessToken) {
         return "Bearer " + accessToken;
     }
 
-    protected Map<String, Object> postForMap(
-            String path, MultiValueMap<String, String> formData, HttpHeaders headers) {
+    protected Map<String, Object> sendRequestForMap(
+            String path, MultiValueMap<String, String> formData, HttpHeaders headers, HttpMethod method) {
         if (headers.getContentType() == null) {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         }
@@ -173,10 +172,10 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
                 new ParameterizedTypeReference<Map<String, Object>>() {
                 };
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Executing request " + path+" form data are "+formData);
+            LOGGER.info("Executing request " + path + " form data are " + formData);
         }
         return restTemplate
-                .exchange(path, HttpMethod.POST, new HttpEntity<>(formData, headers), map)
+                .exchange(path, method, new HttpEntity<>(formData, headers), map)
                 .getBody();
     }
 }

@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -35,12 +35,7 @@ import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.StoredDataService;
 import it.geosolutions.geostore.services.dto.ShortResource;
-import it.geosolutions.geostore.services.dto.search.AndFilter;
-import it.geosolutions.geostore.services.dto.search.BaseField;
-import it.geosolutions.geostore.services.dto.search.CategoryFilter;
-import it.geosolutions.geostore.services.dto.search.FieldFilter;
-import it.geosolutions.geostore.services.dto.search.SearchFilter;
-import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.dto.search.*;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.rest.RESTMiscService;
@@ -50,11 +45,6 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
-import java.util.List;
-
-import javax.ws.rs.core.SecurityContext;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -62,9 +52,12 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import javax.ws.rs.core.SecurityContext;
+import java.util.List;
+
 /**
  * Class RESTMiscServiceImpl.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -77,12 +70,12 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     private ResourceService resourceService;
 
     private StoredDataService storedDataService;
-    
+
     private ApplicationContext appContext;
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getData(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
@@ -121,7 +114,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
@@ -160,7 +153,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
@@ -189,7 +182,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         List<ShortResource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            
+
             resources = resourceService.getResources(filter, user);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
@@ -199,15 +192,15 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
 
         return new ShortResourceList(resources);
     }
-        
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
     public ResourceList getResourcesByCategory(SecurityContext sc, String catName,
-            boolean includeAttributes, boolean includeData) throws NotFoundWebEx, ConflictWebEx,
+                                               boolean includeAttributes, boolean includeData) throws NotFoundWebEx, ConflictWebEx,
             BadRequestWebEx, InternalErrorWebEx {
 
         if (LOGGER.isDebugEnabled())
@@ -267,15 +260,15 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     @Override
     public void reload(SecurityContext sc, String service) throws BadRequestWebEx {
         String reloadService = service;
-        if(appContext != null) {
-            if(!appContext.containsBean(reloadService)) {
+        if (appContext != null) {
+            if (!appContext.containsBean(reloadService)) {
                 reloadService = reloadService + "Initializer";
             }
-            if(!appContext.containsBean(reloadService)) {
+            if (!appContext.containsBean(reloadService)) {
                 throw new BadRequestWebEx("No service named " + service + " to reload");
             }
             InitializingBean bean = appContext.getBean(reloadService, InitializingBean.class);
-            if(bean != null) {
+            if (bean != null) {
                 try {
                     bean.afterPropertiesSet();
                 } catch (Exception e) {
@@ -289,7 +282,6 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     public void setApplicationContext(ApplicationContext appContext) throws BeansException {
         this.appContext = appContext;
     }
-
 
 
 }

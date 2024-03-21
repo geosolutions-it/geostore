@@ -21,19 +21,9 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
-import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.StoredData;
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserAttribute;
-import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.Role;
-import it.geosolutions.geostore.services.CategoryService;
-import it.geosolutions.geostore.services.ResourceService;
-import it.geosolutions.geostore.services.StoredDataService;
-import it.geosolutions.geostore.services.UserGroupService;
-import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.*;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -41,34 +31,33 @@ import it.geosolutions.geostore.services.rest.RESTResourceService;
 import it.geosolutions.geostore.services.rest.RESTUserService;
 import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
-import java.security.Principal;
-import java.util.Collections;
-
-import java.util.List;
-import java.util.Set;
-import javax.ws.rs.core.SecurityContext;
-
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
 import org.apache.commons.collections.CollectionUtils;
-import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+import javax.ws.rs.core.SecurityContext;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.*;
 
 /**
  * Class ServiceTestBase.
  *
  * @author ETj (etj at geo-solutions.it)
  */
-public class ServiceTestBase  {
+public class ServiceTestBase {
 
 
     protected static RESTResourceService restResourceService;
@@ -84,23 +73,20 @@ public class ServiceTestBase  {
     protected static UserDAO userDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
-
+    protected final Logger LOGGER = LogManager.getLogger(getClass());
     @Rule
     public TestName testName = new TestName();
-    
-    protected final Logger LOGGER = LogManager.getLogger(getClass());
-
 
 
     /**
      *
      */
     public ServiceTestBase() {
-        
+
         synchronized (ServiceTestBase.class) {
             if (ctx == null) {
-                String[] paths = { "classpath*:applicationContext.xml"
-                // ,"applicationContext-test.xml"
+                String[] paths = {"classpath*:applicationContext.xml"
+                        // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
@@ -219,7 +205,6 @@ public class ServiceTestBase  {
 
     /**
      * @throws BadRequestServiceEx
-     *
      */
     private void removeAllResource() throws BadRequestServiceEx {
         List<ShortResource> list = resourceService.getAll(null, null, buildFakeAdminUser());
@@ -247,10 +232,10 @@ public class ServiceTestBase  {
      * @param name
      * @param description
      * @param catName
-     * @return long
-     * @throws Exception
      * @param advertised
      * @return long
+     * @return long
+     * @throws Exception
      * @throws Exception
      */
     protected long createResource(String name, String description, String catName, boolean advertised) throws Exception {
@@ -381,8 +366,7 @@ public class ServiceTestBase  {
         return restUserService.insert(null, user);
     }
 
-    protected <T> T getTargetObject(Object proxy, Class<T> targetClass) throws Exception
-    {
+    protected <T> T getTargetObject(Object proxy, Class<T> targetClass) throws Exception {
         if (AopUtils.isJdkDynamicProxy(proxy)) {
             return (T) ((Advised) proxy).getTargetSource().getTarget();
         } else {
@@ -428,54 +412,47 @@ public class ServiceTestBase  {
         return ret;
     }
 
-    class SimpleSecurityContext implements SecurityContext {
-
-        private Principal userPrincipal;
-
-        public SimpleSecurityContext()
-        {
-        }
-
-        public SimpleSecurityContext(long userId)
-        {
-            userPrincipal = new UsernamePasswordAuthenticationToken(userDAO.find(userId), null);
-        }
-
-        @Override
-        public Principal getUserPrincipal()
-        {
-            return userPrincipal;
-        }
-
-        @Override
-        public boolean isUserInRole(String role)
-        {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-
-        @Override
-        public boolean isSecure()
-        {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-
-        @Override
-        public String getAuthenticationScheme()
-        {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        }
-
-        public void setUserPrincipal(Principal userPrincipal)
-        {
-            this.userPrincipal = userPrincipal;
-        }
-
-    }
-    
     protected User buildFakeAdminUser() {
         User user = new User();
         user.setRole(Role.ADMIN);
         user.setName("ThisIsNotARealUser");
         return user;
+    }
+
+    class SimpleSecurityContext implements SecurityContext {
+
+        private Principal userPrincipal;
+
+        public SimpleSecurityContext() {
+        }
+
+        public SimpleSecurityContext(long userId) {
+            userPrincipal = new UsernamePasswordAuthenticationToken(userDAO.find(userId), null);
+        }
+
+        @Override
+        public Principal getUserPrincipal() {
+            return userPrincipal;
+        }
+
+        public void setUserPrincipal(Principal userPrincipal) {
+            this.userPrincipal = userPrincipal;
+        }
+
+        @Override
+        public boolean isUserInRole(String role) {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public boolean isSecure() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
+        @Override
+        public String getAuthenticationScheme() {
+            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        }
+
     }
 }

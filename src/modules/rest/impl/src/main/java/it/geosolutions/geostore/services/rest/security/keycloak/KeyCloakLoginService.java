@@ -29,7 +29,6 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.oauth2.Oauth2LoginService;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
@@ -41,7 +40,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getAccessToken;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRefreshAccessToken;
@@ -91,8 +89,8 @@ public class KeyCloakLoginService extends Oauth2LoginService {
             token = details.getAccessToken();
             refreshToken = details.getRefreshToken();
         } else {
-            token=getAccessToken();
-            refreshToken=getRefreshAccessToken();
+            token = getAccessToken();
+            refreshToken = getRefreshAccessToken();
         }
         return buildCallbackResponse(token, refreshToken, provider);
     }

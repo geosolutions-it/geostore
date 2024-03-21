@@ -8,30 +8,27 @@ import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import static it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl.BEARER_TYPE;
 
 public class SessionServiceDelegateImpl implements SessionServiceDelegate {
 
+    public static final String DEFAULT_NAME = "DEFAULT";
     @Autowired
     private UserSessionService userSessionService;
 
-    public static final String DEFAULT_NAME="DEFAULT";
-
-    public SessionServiceDelegateImpl(RESTSessionService restSessionService){
+    public SessionServiceDelegateImpl(RESTSessionService restSessionService) {
         restSessionService.registerDelegate(DEFAULT_NAME, this);
     }
 
-    public SessionServiceDelegateImpl(){
+    public SessionServiceDelegateImpl() {
     }
 
 
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
-        UserSession sessionToken=userSessionService.refreshSession(accessToken, refreshToken);
-        if(sessionToken == null) {
+        UserSession sessionToken = userSessionService.refreshSession(accessToken, refreshToken);
+        if (sessionToken == null) {
             throw new ForbiddenErrorWebEx("Refresh token was not provided or session is already expired.");
         }
         SessionToken token = new SessionToken();
@@ -44,11 +41,12 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
 
     @Override
     public void doLogout(String accessToken) {
-            userSessionService.removeSession(accessToken);
+        userSessionService.removeSession(accessToken);
     }
 
     /**
      * Set the user session service.
+     *
      * @param userSessionService the user session service.
      */
     public void setUserSessionService(UserSessionService userSessionService) {
@@ -57,8 +55,8 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
 
     public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
         User details = null;
-        if (userSessionService!=null) {
-            details=userSessionService.getUserData(sessionId);
+        if (userSessionService != null) {
+            details = userSessionService.getUserData(sessionId);
             if (details != null && refresh && autorefresh) {
                 userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
             }
@@ -67,8 +65,8 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
     }
 
     public String getUserName(String sessionId, boolean refresh, boolean autorefresh) {
-        User userData=getUser(sessionId,refresh,autorefresh);
-        if(userData!=null) return userData.getName();
+        User userData = getUser(sessionId, refresh, autorefresh);
+        if (userData != null) return userData.getName();
         return null;
     }
 }

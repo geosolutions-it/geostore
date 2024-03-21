@@ -33,7 +33,6 @@ import com.google.common.cache.RemovalCause;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -56,44 +55,42 @@ import java.util.concurrent.TimeUnit;
  */
 public class TokenAuthenticationCache implements ApplicationContextAware {
 
-    private ApplicationContext context;
-
-    private Cache<String, Authentication> cache;
-
-    private int cacheSize = 1000;
-    private int cacheExpirationMinutes = 8;
-
     private final static Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
+    private final Cache<String, Authentication> cache;
+    private final int cacheSize = 1000;
+    private final int cacheExpirationMinutes = 8;
+    private ApplicationContext context;
 
 
     public TokenAuthenticationCache() {
-        CacheBuilder<String,Authentication> cacheBuilder = CacheBuilder.newBuilder()
+        CacheBuilder<String, Authentication> cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(cacheSize)
                 .expireAfterWrite(cacheExpirationMinutes, TimeUnit.HOURS)
                 .removalListener(notification -> {
-                    if (notification.getCause().equals(RemovalCause.EXPIRED)){
-                        Authentication authentication=notification.getValue();
+                    if (notification.getCause().equals(RemovalCause.EXPIRED)) {
+                        Authentication authentication = notification.getValue();
                         revokeAuthIfRefreshExpired(authentication);
                     }
                 });
-        this.cache=cacheBuilder.build();
+        this.cache = cacheBuilder.build();
     }
 
     /**
      * Perform a revoke authorization when the cache entry expires.
+     *
      * @param authentication the authentication object.
      */
-    protected void revokeAuthIfRefreshExpired(Authentication authentication){
-        TokenDetails tokenDetails= OAuth2Utils.getTokenDetails(authentication);
-        if (tokenDetails!=null && tokenDetails.getAccessToken()!=null){
-            OAuth2AccessToken accessToken=tokenDetails.getAccessToken();
-            OAuth2RefreshToken refreshToken=accessToken.getRefreshToken();
-            if (refreshToken instanceof ExpiringOAuth2RefreshToken){
-                ExpiringOAuth2RefreshToken expiring=(ExpiringOAuth2RefreshToken) refreshToken;
-                OAuth2Configuration configuration=(OAuth2Configuration)context.getBean(tokenDetails.getProvider());
-                if (expiring.getExpiration().after(new Date())){
-                    OAuth2Configuration.Endpoint revokeEndpoint=configuration.buildRevokeEndpoint(expiring.getValue());
-                    if (revokeEndpoint!=null) {
+    protected void revokeAuthIfRefreshExpired(Authentication authentication) {
+        TokenDetails tokenDetails = OAuth2Utils.getTokenDetails(authentication);
+        if (tokenDetails != null && tokenDetails.getAccessToken() != null) {
+            OAuth2AccessToken accessToken = tokenDetails.getAccessToken();
+            OAuth2RefreshToken refreshToken = accessToken.getRefreshToken();
+            if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
+                ExpiringOAuth2RefreshToken expiring = (ExpiringOAuth2RefreshToken) refreshToken;
+                OAuth2Configuration configuration = (OAuth2Configuration) context.getBean(tokenDetails.getProvider());
+                if (expiring.getExpiration().after(new Date())) {
+                    OAuth2Configuration.Endpoint revokeEndpoint = configuration.buildRevokeEndpoint(expiring.getValue());
+                    if (revokeEndpoint != null) {
                         RestTemplate template = new RestTemplate();
                         ResponseEntity<String> responseEntity = template.exchange(revokeEndpoint.getUrl(), revokeEndpoint.getMethod(), null, String.class);
                         if (responseEntity.getStatusCode().value() != 200) {
@@ -154,6 +151,6 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        this.context=applicationContext;
+        this.context = applicationContext;
     }
 }

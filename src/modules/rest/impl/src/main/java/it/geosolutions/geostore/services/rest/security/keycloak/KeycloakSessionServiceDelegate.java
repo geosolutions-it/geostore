@@ -30,16 +30,13 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.security.password.SecurityUtils;
 import it.geosolutions.geostore.services.UserService;
-import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
-import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.AdapterTokenStore;
@@ -51,25 +48,17 @@ import org.keycloak.authorization.client.Configuration;
 import org.keycloak.authorization.client.util.Http;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.adapters.config.AdapterConfig;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.NotFoundException;
 import java.util.Date;
 
 import static it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakSecurityConfiguration.CACHE_BEAN_NAME;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getParameterValue;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRequest;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getResponse;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.tokenFromParamsOrBearer;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 
 /**
  * Keycloak implementation of SessionService delegate to provide method of refreshing the token and logging out.
@@ -78,11 +67,11 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
 
     private final static Logger LOGGER = LogManager.getLogger(KeycloakSessionServiceDelegate.class);
 
-    private UserService userService;
+    private final UserService userService;
 
-    public KeycloakSessionServiceDelegate(RESTSessionService restSessionService, UserService userService){
-        restSessionService.registerDelegate("keycloak",this);
-        this.userService=userService;
+    public KeycloakSessionServiceDelegate(RESTSessionService restSessionService, UserService userService) {
+        restSessionService.registerDelegate("keycloak", this);
+        this.userService = userService;
     }
 
     @Override
@@ -91,120 +80,121 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
         if (accessToken == null) accessToken = tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
         if (accessToken == null) throw new NotFoundWebEx("The accessToken is missing");
         if (refreshToken == null) refreshToken = getParameterValue(REFRESH_TOKEN_PARAM, request);
-        TokenAuthenticationCache cache=cache();
-        Date tokenExpiration=tokenExpirationTime(accessToken,cache);
-        Date fiveMinutesFromNow=OAuth2Utils.fiveMinutesFromNow();
+        TokenAuthenticationCache cache = cache();
+        Date tokenExpiration = tokenExpirationTime(accessToken, cache);
+        Date fiveMinutesFromNow = OAuth2Utils.fiveMinutesFromNow();
         SessionToken sessionToken;
-        if (refreshToken!=null && (tokenExpiration==null || fiveMinutesFromNow.after(tokenExpiration)))
-            sessionToken=doRefresh(accessToken,refreshToken,cache);
-        else sessionToken=sessionToken(accessToken,refreshToken,null);
+        if (refreshToken != null && (tokenExpiration == null || fiveMinutesFromNow.after(tokenExpiration)))
+            sessionToken = doRefresh(accessToken, refreshToken, cache);
+        else sessionToken = sessionToken(accessToken, refreshToken, null);
         return sessionToken;
     }
 
-    private SessionToken doRefresh(String accessToken, String refreshToken, TokenAuthenticationCache cache){
+    private SessionToken doRefresh(String accessToken, String refreshToken, TokenAuthenticationCache cache) {
         KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
         AdapterConfig adapter = configuration.readAdapterConfig();
-        KeyCloakHelper helper=GeoStoreContext.bean(KeyCloakHelper.class);
-        AccessTokenResponse response=helper.refreshToken(adapter,refreshToken);
+        KeyCloakHelper helper = GeoStoreContext.bean(KeyCloakHelper.class);
+        AccessTokenResponse response = helper.refreshToken(adapter, refreshToken);
         String newAccessToken = response.getToken();
         long exp = response.getExpiresIn();
         String newRefreshToken = response.getRefreshToken();
-        Authentication updated=helper.updateAuthentication(cache, accessToken, newAccessToken, newRefreshToken, exp);
-        HttpFacade facade=new SimpleHttpFacade(getRequest(),getResponse());
-        KeycloakDeployment deployment=helper.getDeployment(facade);
-        KeycloakCookieUtils.setTokenCookie(deployment,facade,(KeycloakTokenDetails) updated.getDetails());
-        return sessionToken(newAccessToken,newRefreshToken);
+        Authentication updated = helper.updateAuthentication(cache, accessToken, newAccessToken, newRefreshToken, exp);
+        HttpFacade facade = new SimpleHttpFacade(getRequest(), getResponse());
+        KeycloakDeployment deployment = helper.getDeployment(facade);
+        KeycloakCookieUtils.setTokenCookie(deployment, facade, (KeycloakTokenDetails) updated.getDetails());
+        return sessionToken(newAccessToken, newRefreshToken);
     }
 
-    private Date tokenExpirationTime(String accessToken, TokenAuthenticationCache cache){
-        Date result=null;
-        Authentication authentication=cache.get(accessToken);
-        if(authentication!=null && authentication.getDetails() instanceof KeycloakTokenDetails){
-            KeycloakTokenDetails details=(KeycloakTokenDetails) authentication.getDetails();
-            result=details.getExpiration();
+    private Date tokenExpirationTime(String accessToken, TokenAuthenticationCache cache) {
+        Date result = null;
+        Authentication authentication = cache.get(accessToken);
+        if (authentication != null && authentication.getDetails() instanceof KeycloakTokenDetails) {
+            KeycloakTokenDetails details = (KeycloakTokenDetails) authentication.getDetails();
+            result = details.getExpiration();
         }
         return result;
     }
 
     private SessionToken sessionToken(String accessToken, String refreshToken) {
-        return sessionToken(accessToken,refreshToken,null);
+        return sessionToken(accessToken, refreshToken, null);
 
     }
 
-    private SessionToken sessionToken(String accessToken, String refreshToken,Date expires) {
+    private SessionToken sessionToken(String accessToken, String refreshToken, Date expires) {
         SessionToken sessionToken = new SessionToken();
         sessionToken.setAccessToken(accessToken);
         sessionToken.setRefreshToken(refreshToken);
-        if (expires!=null) sessionToken.setExpires(expires.getTime());
+        if (expires != null) sessionToken.setExpires(expires.getTime());
         sessionToken.setTokenType("bearer");
         return sessionToken;
     }
 
     @Override
     public void doLogout(String accessToken) {
-        HttpServletRequest request= OAuth2Utils.getRequest();
-        HttpServletResponse response=OAuth2Utils.getResponse();
-        KeyCloakHelper helper=GeoStoreContext.bean(KeyCloakHelper.class);
-        KeycloakDeployment deployment=helper.getDeployment(request,response);
-        Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
-        String refreshToken=null;
-        if (authentication.getDetails() instanceof KeycloakTokenDetails){
-            refreshToken=((KeycloakTokenDetails) authentication.getDetails()).getRefreshToken();
+        HttpServletRequest request = OAuth2Utils.getRequest();
+        HttpServletResponse response = OAuth2Utils.getResponse();
+        KeyCloakHelper helper = GeoStoreContext.bean(KeyCloakHelper.class);
+        KeycloakDeployment deployment = helper.getDeployment(request, response);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String refreshToken = null;
+        if (authentication.getDetails() instanceof KeycloakTokenDetails) {
+            refreshToken = ((KeycloakTokenDetails) authentication.getDetails()).getRefreshToken();
         }
-        String logoutUrl=deployment
+        String logoutUrl = deployment
                 .getLogoutUrl()
                 .build()
                 .toString();
-        AdapterConfig adapterConfig=GeoStoreContext.bean(KeyCloakConfiguration.class).readAdapterConfig();
-        Configuration clientConfiguration=helper.getClientConfiguration(adapterConfig);
-        Http http = new Http(clientConfiguration, (params, headers) -> {});
+        AdapterConfig adapterConfig = GeoStoreContext.bean(KeyCloakConfiguration.class).readAdapterConfig();
+        Configuration clientConfiguration = helper.getClientConfiguration(adapterConfig);
+        Http http = new Http(clientConfiguration, (params, headers) -> {
+        });
         String clientId = adapterConfig.getResource();
         String secret = (String) adapterConfig.getCredentials().get("secret");
-        try{
+        try {
             http.post(logoutUrl)
                     .form()
                     .param("client_id", clientId)
                     .param("client_secret", secret)
-                    .param("refresh_token",refreshToken)
+                    .param("refresh_token", refreshToken)
                     .execute();
-        } catch (Exception e){
-            LOGGER.error("Error while performing global logout.",e);
+        } catch (Exception e) {
+            LOGGER.error("Error while performing global logout.", e);
         }
-        SpringSecurityAdapterTokenStoreFactory factory=new SpringSecurityAdapterTokenStoreFactory();
-        AdapterTokenStore tokenStore=factory.createAdapterTokenStore(deployment,getRequest(),getResponse());
-        if (tokenStore!=null) tokenStore.logout();
-        internalLogout(accessToken,request,response);
+        SpringSecurityAdapterTokenStoreFactory factory = new SpringSecurityAdapterTokenStoreFactory();
+        AdapterTokenStore tokenStore = factory.createAdapterTokenStore(deployment, getRequest(), getResponse());
+        if (tokenStore != null) tokenStore.logout();
+        internalLogout(accessToken, request, response);
     }
 
-    private void internalLogout(String accessToken, HttpServletRequest request,HttpServletResponse response){
-        TokenAuthenticationCache cache=GeoStoreContext.bean(CACHE_BEAN_NAME,TokenAuthenticationCache.class);
-        if (cache.get(accessToken)!=null) cache.removeEntry(accessToken);
+    private void internalLogout(String accessToken, HttpServletRequest request, HttpServletResponse response) {
+        TokenAuthenticationCache cache = GeoStoreContext.bean(CACHE_BEAN_NAME, TokenAuthenticationCache.class);
+        if (cache.get(accessToken) != null) cache.removeEntry(accessToken);
         SecurityContextHolder.clearContext();
         try {
-            HttpSession session=request.getSession(false);
-            if (session!=null) session.invalidate();
+            HttpSession session = request.getSession(false);
+            if (session != null) session.invalidate();
             request.logout();
         } catch (ServletException e) {
-            if (LOGGER.isDebugEnabled()){
-                LOGGER.warn("Error while logging out from servlet request.",e);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.warn("Error while logging out from servlet request.", e);
             }
         }
     }
 
-    protected TokenAuthenticationCache cache(){
-        return GeoStoreContext.bean(CACHE_BEAN_NAME,TokenAuthenticationCache.class);
+    protected TokenAuthenticationCache cache() {
+        return GeoStoreContext.bean(CACHE_BEAN_NAME, TokenAuthenticationCache.class);
     }
 
     @Override
     public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
-        String username=getUserName(sessionId,refresh,autorefresh);
-        if (username!=null) {
+        String username = getUserName(sessionId, refresh, autorefresh);
+        if (username != null) {
             User user;
             try {
-                user=userService.get(username);
-            } catch (Exception e){
+                user = userService.get(username);
+            } catch (Exception e) {
                 LOGGER.warn("Issue while retrieving user. Will return just the username.", e);
-                user=new User();
+                user = new User();
                 user.setName(username);
             }
             return user;
@@ -214,17 +204,17 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
 
     @Override
     public String getUserName(String sessionId, boolean refresh, boolean autorefresh) {
-        TokenAuthenticationCache cache=cache();
-        Authentication authentication=cache.get(sessionId);
-        if (authentication!=null){
-            if(refresh && autorefresh) {
+        TokenAuthenticationCache cache = cache();
+        Authentication authentication = cache.get(sessionId);
+        if (authentication != null) {
+            if (refresh && autorefresh) {
                 KeycloakTokenDetails tokenDetails = (KeycloakTokenDetails) authentication.getDetails();
                 String refreshToken = tokenDetails.getRefreshToken();
                 String accessToken = tokenDetails.getAccessToken();
                 doRefresh(accessToken, refreshToken, cache);
             }
-            Object o=authentication.getPrincipal();
-            if (o !=null) return SecurityUtils.getUsername(o);
+            Object o = authentication.getPrincipal();
+            if (o != null) return SecurityUtils.getUsername(o);
         }
         return null;
     }

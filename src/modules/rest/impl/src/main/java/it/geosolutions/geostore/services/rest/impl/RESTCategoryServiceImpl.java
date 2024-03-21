@@ -9,7 +9,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -21,7 +21,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -43,18 +43,15 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-
-import javax.ws.rs.core.SecurityContext;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.ws.rs.core.SecurityContext;
+
 /**
  * Class RESTCategoryServiceImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCategoryService {
 
@@ -68,7 +65,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
-    
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
      */
@@ -79,7 +76,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#insert(it.geosolutions.geostore.core.model.Category)
      */
     @Override
@@ -146,7 +143,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#delete(long)
      */
     @Override
@@ -169,7 +166,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#get(long)
      */
     @Override
@@ -195,7 +192,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -210,7 +207,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#getCount(java.lang.String)
      */
     @Override

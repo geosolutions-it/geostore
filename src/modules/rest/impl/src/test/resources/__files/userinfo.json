@@ -6,7 +6,10 @@
   "family_name": "Karl",
   "given_name": "Ritter",
   "roles": "ADMIN",
-  "groups": ["group1","group2"],
+  "groups": [
+    "group1",
+    "group2"
+  ],
   "locale": "it",
   "name": "Karl Ritter",
   "nickname": "Ritz",

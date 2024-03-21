@@ -27,8 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.common.util.KeycloakUriBuilder;
@@ -39,16 +37,16 @@ import org.keycloak.constants.AdapterConstants;
  * Utility class that provides method to update the Keycloak Adapter cookie.
  */
 class KeycloakCookieUtils {
-    
-    private static final String SEPARATOR="___";
+
+    private static final String SEPARATOR = "___";
 
     static void setTokenCookie(KeycloakDeployment deployment, HttpFacade facade, KeycloakTokenDetails tokenDetails) {
         String accessToken = tokenDetails.getAccessToken();
         String idToken = tokenDetails.getIdToken();
         String refreshToken = tokenDetails.getRefreshToken();
-        String cookie = new StringBuilder(accessToken).append(SEPARATOR)
-                .append(idToken).append(SEPARATOR)
-                .append(refreshToken).toString();
+        String cookie = accessToken + SEPARATOR +
+                idToken + SEPARATOR +
+                refreshToken;
 
         String cookiePath = getCookiePath(deployment, facade);
         // forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do it for us.

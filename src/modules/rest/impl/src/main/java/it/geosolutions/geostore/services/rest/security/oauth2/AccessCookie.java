@@ -36,7 +36,7 @@ import java.util.Date;
  */
 public class AccessCookie extends NewCookie {
 
-    private String sameSite;
+    private final String sameSite;
 
     public AccessCookie(Cookie cookie, String comment, int maxAge, boolean secure, String sameSite) {
         super(cookie, comment, maxAge, secure);

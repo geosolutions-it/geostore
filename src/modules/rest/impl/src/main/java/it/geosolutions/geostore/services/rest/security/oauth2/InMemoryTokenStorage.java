@@ -3,25 +3,22 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 
 import java.util.Map;
-import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-public class InMemoryTokenStorage implements TokenStorage<String>{
-
-    private Map<String, SessionToken> sessions = new ConcurrentHashMap<>();
-    private int cleanUpSeconds = 120;
+public class InMemoryTokenStorage implements TokenStorage<String> {
 
     private final ScheduledExecutorService scheduler = Executors
             .newScheduledThreadPool(1);
-
-    private Runnable evictionTask = new Runnable() {
+    private final Map<String, SessionToken> sessions = new ConcurrentHashMap<>();
+    private final int cleanUpSeconds = 120;
+    private final Runnable evictionTask = new Runnable() {
         @Override
         public void run() {
-            for(String sessionId : sessions.keySet()) {
+            for (String sessionId : sessions.keySet()) {
                 removeTokenByIdentifier(sessionId);
             }
         }
@@ -33,6 +30,7 @@ public class InMemoryTokenStorage implements TokenStorage<String>{
         scheduler.scheduleAtFixedRate(evictionTask, cleanUpSeconds, cleanUpSeconds,
                 TimeUnit.SECONDS);
     }
+
     @Override
     public SessionToken getTokenByIdentifier(String identifier) {
         return sessions.get(identifier);
@@ -45,7 +43,7 @@ public class InMemoryTokenStorage implements TokenStorage<String>{
 
     @Override
     public void saveToken(String identifier, SessionToken token) {
-        sessions.put(identifier,token);
+        sessions.put(identifier, token);
     }
 
     @Override

@@ -29,28 +29,25 @@ package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
-
-import java.util.Collection;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 
+import java.util.Collection;
+
 /**
  * Token based authentication filter that looks for the token in a user attribute.
- * 
+ * <p>
  * The attribute name is configurable (defaults to UUID).
- * 
- * @author Mauro Bartolomeoli
  *
+ * @author Mauro Bartolomeoli
  */
 public class UserAttributeTokenAuthenticationFilter extends TokenAuthenticationFilter {
-    
+
     private final static Logger LOGGER = LogManager.getLogger(UserAttributeTokenAuthenticationFilter.class);
-    
+
     private String attributeName = "UUID";
-    
+
     public void setAttributeName(String attributeName) {
         this.attributeName = attributeName;
     }
@@ -64,10 +61,10 @@ public class UserAttributeTokenAuthenticationFilter extends TokenAuthenticationF
         // token value
         Collection<User> users = userService.getByAttribute(attribute);
         // the token is considered valid if only 1 user matches
-        if(users.size() == 1) {
+        if (users.size() == 1) {
             User user = users.iterator().next();
             return createAuthenticationForUser(user);
-        } else if(users.size() > 1) {
+        } else if (users.size() > 1) {
             LOGGER.error("Too many users matching the given token. Only one is allowed for a token to be valid!");
         } else {
             LOGGER.error("No users matching the given token.");
@@ -75,5 +72,5 @@ public class UserAttributeTokenAuthenticationFilter extends TokenAuthenticationF
         return null;
     }
 
-    
+
 }

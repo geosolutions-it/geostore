@@ -23,13 +23,6 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-import javax.ws.rs.core.SecurityContext;
-
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import net.sf.json.JSON;
@@ -38,33 +31,35 @@ import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import org.junit.Before;
 import org.junit.Test;
+
+import javax.ws.rs.core.SecurityContext;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author ETj (etj at geo-solutions.it)
  */
-public class RESTExtJsServiceImplTest extends ServiceTestBase
-{
+public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
-    private RESTExtJsServiceImpl restExtJsService;
+    private final RESTExtJsServiceImpl restExtJsService;
 
-    public RESTExtJsServiceImplTest()
-    {
+    public RESTExtJsServiceImplTest() {
         restExtJsService = ctx.getBean("restExtJsService", RESTExtJsServiceImpl.class);
         assertNotNull(restExtJsService);
     }
 
     @Before
-    public void setUp() throws Exception
-    {
+    public void setUp() throws Exception {
         assertNotNull(restExtJsService);
         removeAll();
     }
 
     @Test
-    public void testGetAllResources_auth_base() throws Exception
-    {
+    public void testGetAllResources_auth_base() throws Exception {
         final String CAT_NAME = "CAT000";
 
         assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
@@ -110,8 +105,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
     }
 
     @Test
-    public void testGetAllResources_auth_many() throws Exception
-    {
+    public void testGetAllResources_auth_many() throws Exception {
         final String CAT_NAME = "CAT009";
 
         assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
@@ -125,10 +119,10 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
         int RESNUM1 = RESNUM0 * 2;
 
         for (int i = 1000; i < 1000 + RESNUM0; i++) {
-            restCreateResource("r_u0_"+i, "x", CAT_NAME, u0, true);
+            restCreateResource("r_u0_" + i, "x", CAT_NAME, u0, true);
 
-            restCreateResource("r_u1_"+i+"a", "x", CAT_NAME, u1, true);
-            restCreateResource("r_u1_"+i+"b", "x", CAT_NAME, u1, true);
+            restCreateResource("r_u1_" + i + "a", "x", CAT_NAME, u1, true);
+            restCreateResource("r_u1_" + i + "b", "x", CAT_NAME, u1, true);
         }
 
         int cnt = resourceDAO.count(new Search(Resource.class));
@@ -180,8 +174,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
 
 
     @Test
-    public void testGetAllResources_iLike() throws Exception
-    {
+    public void testGetAllResources_iLike() throws Exception {
         final String CAT0_NAME = "CAT000";
         final String CAT1_NAME = "CAT111";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
@@ -214,7 +207,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
 
         {
             SecurityContext sc = new SimpleSecurityContext(u0);
-            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);;
+            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
 
             System.out.println("JSON " + response);
 
@@ -225,8 +218,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
     }
 
     @Test
-    public void testGetAllResources_editorUpdate() throws Exception
-    {
+    public void testGetAllResources_editorUpdate() throws Exception {
         final String CAT0_NAME = "CAT000";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
@@ -268,8 +260,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
     }
 
     @Test
-    public void testGetAllResources_unadvertised() throws Exception
-    {
+    public void testGetAllResources_unadvertised() throws Exception {
         final String CAT0_NAME = "CAT000";
         final String CAT1_NAME = "CAT111";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
@@ -345,7 +336,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
         {
             // OWNER
             SecurityContext sc = new SimpleSecurityContext(u0);
-            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);;
+            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
 
             System.out.println("JSON " + response);
 
@@ -355,7 +346,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
 
             // READER
             sc = new SimpleSecurityContext(u1);
-            response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);;
+            response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
 
             System.out.println("JSON " + response);
 
@@ -364,27 +355,25 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
             assertEquals(2, result.returnedCount);
         }
     }
-    
-    private JSONResult parse(String jsonString)
-    {
+
+    private JSONResult parse(String jsonString) {
         JSONResult ret = new JSONResult();
 
         JSON json = JSONSerializer.toJSON(jsonString);
-        JSONObject jo = (JSONObject)json;
+        JSONObject jo = (JSONObject) json;
         ret.total = jo.getInt("totalCount");
 
         Set names;
 
         JSONArray arrResults = jo.optJSONArray("results");
-        if(arrResults != null) {
+        if (arrResults != null) {
             names = getArray(arrResults);
         } else {
             JSONObject results = jo.optJSONObject("results");
 
-            if(results != null) {
+            if (results != null) {
                 names = Collections.singleton(getSingle(results));
-            }
-            else {
+            } else {
                 LOGGER.warn("No results found");
                 names = Collections.EMPTY_SET;
             }
@@ -400,7 +389,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase
         Set<String> ret = new HashSet<>();
 
         for (Object object : arr) {
-            ret.add(getSingle((JSONObject)object));
+            ret.add(getSingle((JSONObject) object));
         }
 
         return ret;
