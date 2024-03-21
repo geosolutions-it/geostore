@@ -19,33 +19,21 @@
  */
 package it.geosolutions.geostore.core.dao.ldap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.BasicAttributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-
-import it.geosolutions.geostore.core.model.UserGroup;
-import org.junit.Test;
-import org.springframework.ldap.core.DirContextAdapter;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.ldap.impl.UserDAOImpl;
 import it.geosolutions.geostore.core.dao.ldap.impl.UserGroupDAOImpl;
-import it.geosolutions.geostore.core.ldap.IterableNamingEnumeration;
 import it.geosolutions.geostore.core.ldap.MockContextSource;
-import it.geosolutions.geostore.core.ldap.MockDirContextOperations;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.*;
 
 public class UserDAOTest extends BaseDAOTest {
     
@@ -61,7 +49,7 @@ public class UserDAOTest extends BaseDAOTest {
     }
     
     @Test
-    public void testSearchByname() {
+    public void testSearchByName() {
         UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
         userDAO.setSearchBase("ou=users");
         Search search = new Search(User.class);
@@ -111,7 +99,7 @@ public class UserDAOTest extends BaseDAOTest {
     @Test
     public void testAttributesMapper() {
         UserDAOImpl userDAO = new UserDAOImpl(new MockContextSource(buildContextForUsers()));
-        Map<String, String> mapper = new HashMap<String, String>();
+        Map<String, String> mapper = new HashMap<>();
         mapper.put("mail", "email");
         userDAO.setAttributesMapper(mapper);
         userDAO.setSearchBase("ou=users");
@@ -172,12 +160,12 @@ public class UserDAOTest extends BaseDAOTest {
             assertTrue(group.getUsers().isEmpty());
         }
 
-        // but yes the group with groupName group actually jas user assigned to it.
+        // but yes, the group with groupName group actually jas user assigned to it.
         Search search1=new Search();
         Filter filter=Filter.equal("groupName","group");
         search1.addFilter(filter);
         List<UserGroup> groups=userGroupDAO.search(search1);
-        assertTrue(groups.get(0).getUsers().size()>0);
+        assertFalse(groups.get(0).getUsers().isEmpty());
 
     }
 }
