@@ -27,7 +27,6 @@ public abstract class Oauth2LoginService implements IdPLoginService {
 
     private final static Logger LOGGER = LogManager.getLogger(Oauth2LoginService.class);
 
-
     @Override
     public void doLogin(HttpServletRequest request, HttpServletResponse response, String provider) {
         HttpServletResponse resp = OAuth2Utils.getResponse();

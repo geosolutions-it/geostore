@@ -41,7 +41,6 @@ import org.springframework.security.oauth2.common.exceptions.InvalidTokenExcepti
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.AccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
-import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.DefaultResponseErrorHandler;
@@ -52,13 +51,13 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- * Extends the SpringSecurity class to provide an additional method in order to be able to deal with
- * not fully standardize /check_token endpoint responses.
+ * Extends the SpringSecurity class to provide an additional method to be able to deal with
+ * not fully standardized/check_token endpoint responses.
  */
 public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
 
     protected static Logger LOGGER =
-            LogManager.getLogger(GeoStoreRemoteTokenServices.class);
+            LogManager.getLogger(GeoStoreRemoteTokenServices.class.getName());
 
     protected RestOperations restTemplate;
 
@@ -120,14 +119,8 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
     public OAuth2Authentication loadAuthentication(String accessToken)
             throws AuthenticationException, InvalidTokenException {
         Map<String, Object> checkTokenResponse = checkToken(accessToken);
-
         verifyTokenResponse(accessToken, checkTokenResponse);
-
         transformNonStandardValuesToStandardValues(checkTokenResponse);
-
-        Assert.state(
-                checkTokenResponse.containsKey("client_id") || checkTokenResponse.containsKey("clientID"),
-                "Client id must be present in response from auth server");
         return tokenConverter.extractAuthentication(checkTokenResponse);
     }
 
@@ -172,7 +165,8 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
                 new ParameterizedTypeReference<Map<String, Object>>() {
                 };
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Executing request " + path + " form data are " + formData);
+            LOGGER.debug("Executing request " + path + " form data are " + formData);
+            LOGGER.debug("Headers are " + headers);
         }
         return restTemplate
                 .exchange(path, method, new HttpEntity<>(formData, headers), map)

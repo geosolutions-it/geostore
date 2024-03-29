@@ -60,7 +60,7 @@ import java.util.*;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 
 /**
- * GeoStore custom Authentication  provider. It is used to map a Keycloak Authentication to a GeoStore Authentication where
+ * GeoStore custom Authentication provider. It is used to map a Keycloak Authentication to a GeoStore Authentication where
  * the principal is of type {@link User}.
  */
 public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {

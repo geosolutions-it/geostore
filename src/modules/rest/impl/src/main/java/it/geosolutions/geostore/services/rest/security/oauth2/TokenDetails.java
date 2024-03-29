@@ -38,7 +38,6 @@ import java.io.Serializable;
  * Holds the token details. Instances of this class are meant to be stored into the SecurityContext along with the corresponding Authentication instance.
  */
 public class TokenDetails implements Serializable {
-
     private final String idToken;
     private final String provider;
     private OAuth2AccessToken accessToken;

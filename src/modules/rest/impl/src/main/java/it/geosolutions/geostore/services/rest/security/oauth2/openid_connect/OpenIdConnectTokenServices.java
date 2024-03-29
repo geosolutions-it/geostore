@@ -46,14 +46,19 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
     @Override
     protected Map<String, Object> checkToken(String accessToken) {
+        LOGGER.debug("Checking token: " + accessToken);
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
         formData.add("token", accessToken);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
+        LOGGER.debug("Headers: " + headers);
         String accessTokenUrl =
                 checkTokenEndpointUrl +
                         "?access_token=" +
                         accessToken;
-        return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.GET);
+        LOGGER.debug("Checking token with url: " + accessTokenUrl);
+        Map<String, Object> reults = sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.GET);
+        LOGGER.debug("Got sendRequestForMap results: " + reults);
+        return reults;
     }
 }

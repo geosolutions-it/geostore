@@ -57,7 +57,7 @@ public class AudienceAccessTokenValidator implements OpenIdTokenValidator {
         Object azp = claimsJWT.get(KEYCLOAK_AUDIENCE_CLAIM_NAME);
         if (azp != null) {
             if (azp instanceof String) {
-                if (((String) azp).equals(config.getClientId())) {
+                if (azp.equals(config.getClientId())) {
                     return;
                 }
             } else if (azp instanceof List) {

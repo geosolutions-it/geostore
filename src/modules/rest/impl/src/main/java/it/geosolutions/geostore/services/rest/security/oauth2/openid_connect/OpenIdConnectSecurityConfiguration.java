@@ -164,5 +164,4 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
     public TokenAuthenticationCache oidcCache() {
         return new TokenAuthenticationCache();
     }
-
 }

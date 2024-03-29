@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
@@ -34,6 +36,7 @@ import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConv
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter;
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -41,7 +44,12 @@ import java.util.*;
  */
 public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
 
-
+    // For oidc, this will be the userinfo.
+    // For oauth2, the result of the "token check" endpoint.
+    // This is attached to the request's extensions once it's been retrieved.
+    public static String ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
+    protected static Logger LOGGER =
+            LogManager.getLogger(GeoStoreAccessTokenConverter.class);
     protected UserAuthenticationConverter userTokenConverter;
 
     public GeoStoreAccessTokenConverter() {
@@ -70,12 +78,31 @@ public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
         Map<String, String> parameters = new HashMap<>();
         Set<String> scope = parseScopes(map);
         Authentication user = userTokenConverter.extractAuthentication(map);
+        LOGGER.debug("User: " + user);
         String clientId = (String) map.get(CLIENT_ID);
         parameters.put(CLIENT_ID, clientId);
+
+        Map<String, Serializable> extensionParameters = new HashMap<>();
+        try {
+            extensionParameters.put(ACCESS_TOKEN_CHECK_KEY, (Serializable) map);
+        } catch (Exception e) {
+            //
+            LOGGER.debug("Exception while trying to record the access token check info", e);
+        }
+
         Set<String> resourceIds = new LinkedHashSet<>(getAud(map));
+        LOGGER.debug("ResourceIds: " + resourceIds);
         OAuth2Request request =
                 new OAuth2Request(
-                        parameters, clientId, null, true, scope, resourceIds, null, null, null);
+                        parameters,
+                        clientId,
+                        null,
+                        true,
+                        scope,
+                        resourceIds,
+                        null,
+                        null,
+                        extensionParameters);
         return new OAuth2Authentication(request, user);
     }
 
@@ -91,8 +118,8 @@ public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
     }
 
     private Set<String> parseScopes(Map<String, ?> map) {
-        // Parsing of scopes coming back from GeoNode are slightly different from
-        // the default implementation. Instead of it being a collection it is a
+        // Parsing of scopes coming back from GeoNode is slightly different from
+        // the default implementation. Instead of it being a collection, it is a
         // String where multiple scopes are separated by a space.
         Object scopeAsObject = map.containsKey(SCOPE) ? map.get(SCOPE) : "";
         Set<String> scope = new LinkedHashSet<>();

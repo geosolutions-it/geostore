@@ -40,7 +40,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.Collections;
 
 /**
- * This class represent the geostore configuration for an OAuth2/OpenId provider.
+ * This class represents the geostore configuration for an OAuth2/OpenId provider.
  * An OAuth2Configuration bean should be provided for each OAuth2 provider. The bean id has to be
  * {providerName}OAuth2Config.
  */
@@ -97,7 +97,7 @@ public class OAuth2Configuration extends IdPConfiguration {
 
     /**
      * @param accessType       the access type request param value. Can be null.
-     * @param additionalScopes additional scopes not set at from geostore-ovr.properties. Can be null.
+     * @param additionalScopes additional scopes aren't set at from geostore-ovr.properties. Can be null.
      * @return the
      */
     public String buildLoginUri(String accessType, String... additionalScopes) {

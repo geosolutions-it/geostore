@@ -78,8 +78,7 @@ import java.util.stream.Stream;
 import static com.google.common.collect.Lists.newArrayList;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.getUsername;
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 
 /**
  * Base filter class for an OAuth2 authentication filter. Authentication instances are cached.
@@ -157,7 +156,15 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         } else {
             clearState();
             authentication = authenticateAndUpdateCache(request, response, null, null);
+            token = (String) RequestContextHolder.getRequestAttributes().getAttribute(ACCESS_TOKEN_PARAM, 0);
+            if (token != null) {
+                request.setAttribute(ACCESS_TOKEN_PARAM, token);
+                request.setAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY, OAuth2AuthenticationType.BEARER);
+                request.setAttribute(ID_TOKEN_PARAM, RequestContextHolder.getRequestAttributes().getAttribute(ID_TOKEN_PARAM, 0));
+                request.setAttribute(REFRESH_TOKEN_PARAM, RequestContextHolder.getRequestAttributes().getAttribute(REFRESH_TOKEN_PARAM, 0));
+            }
         }
+
         return authentication;
     }
 
@@ -173,12 +180,26 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     private Authentication authenticateAndUpdateCache(HttpServletRequest request, HttpServletResponse response, String token, OAuth2AccessToken accessToken) {
         Authentication authentication = performOAuthAuthentication(request, response, accessToken);
         if (authentication != null) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             TokenDetails tokenDetails = tokenDetails(authentication);
             if (tokenDetails != null) {
-                token = tokenDetails.getAccessToken().getValue();
+                OAuth2AccessToken accessTokenDetails = tokenDetails.getAccessToken();
+                if (accessTokenDetails != null) {
+                    token = accessTokenDetails.getValue();
+                    RequestContextHolder.getRequestAttributes().setAttribute(
+                            ACCESS_TOKEN_PARAM, accessTokenDetails.getValue(), 0);
+                    if (accessTokenDetails.getRefreshToken().getValue() != null) {
+                        RequestContextHolder.getRequestAttributes().setAttribute(
+                                REFRESH_TOKEN_PARAM, accessTokenDetails.getRefreshToken().getValue(), 0);
+                    }
+                }
+                if (tokenDetails.getIdToken() != null)
+                    RequestContextHolder.getRequestAttributes().setAttribute(
+                            ID_TOKEN_PARAM, tokenDetails.getIdToken(), 0);
             }
             cache.putCacheEntry(token, authentication);
         }
+        RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY, configuration.getProvider(), 0);
         return authentication;
     }
 
@@ -271,7 +292,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         Authentication authentication = null;
         try {
             authentication = super.attemptAuthentication(req, resp);
-            LOGGER.debug("Authentication result: " + authentication);
             req.setAttribute(OAUTH2_AUTHENTICATION_KEY, authentication);
 
             // The authentication (in the extensions) should contain a Map which is the result of
@@ -519,6 +539,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
             if (tokenDetails != null && tokenDetails.getAccessToken() != null) {
                 OAuth2AccessToken accessToken = tokenDetails.getAccessToken();
                 request.setAttribute(ACCESS_TOKEN_PARAM, accessToken.getValue());
+                if (tokenDetails.getIdToken() != null)
+                    request.setAttribute(ID_TOKEN_PARAM, tokenDetails.getIdToken());
                 if (accessToken.getRefreshToken() != null)
                     request.setAttribute(REFRESH_TOKEN_PARAM, accessToken.getRefreshToken().getValue());
                 request.setAttribute(PROVIDER_KEY, configuration.getProvider());

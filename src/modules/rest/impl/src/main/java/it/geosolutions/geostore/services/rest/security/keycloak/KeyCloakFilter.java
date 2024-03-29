@@ -80,7 +80,11 @@ public class KeyCloakFilter extends GenericFilterBean {
      * @param configuration          the {@link KeyCloakConfiguration} for this geostore instance.
      * @param authenticationProvider the authentication provider to map the Keycloak Authentication to the GeoStore one.
      */
-    public KeyCloakFilter(KeyCloakHelper helper, TokenAuthenticationCache cache, KeyCloakConfiguration configuration, GeoStoreKeycloakAuthProvider authenticationProvider) {
+    public KeyCloakFilter(
+            KeyCloakHelper helper,
+            TokenAuthenticationCache cache,
+            KeyCloakConfiguration configuration,
+            GeoStoreKeycloakAuthProvider authenticationProvider) {
         this.helper = helper;
         this.authenticationProvider = authenticationProvider;
         this.cache = cache;
