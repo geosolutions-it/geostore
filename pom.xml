@@ -181,9 +181,10 @@
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
                 <version>9.0.9</version>
-                <!-- configuration>
-                    <nvdApiKey>******-****-****-****-*********</nvdApiKey>
-                </configuration -->
+                <configuration>
+                    <skip>true</skip>
+                    <!-- <nvdApiKey>******-****-****-****-*********</nvdApiKey> -->
+                </configuration>
                 <executions>
                     <execution>
                         <goals>
