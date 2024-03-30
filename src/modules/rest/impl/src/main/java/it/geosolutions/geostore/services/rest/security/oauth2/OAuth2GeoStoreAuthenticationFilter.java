@@ -188,7 +188,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
                     token = accessTokenDetails.getValue();
                     RequestContextHolder.getRequestAttributes().setAttribute(
                             ACCESS_TOKEN_PARAM, accessTokenDetails.getValue(), 0);
-                    if (accessTokenDetails.getRefreshToken().getValue() != null) {
+                    if (accessTokenDetails != null && accessTokenDetails.getRefreshToken() != null &&
+                            accessTokenDetails.getRefreshToken().getValue() != null) {
                         RequestContextHolder.getRequestAttributes().setAttribute(
                                 REFRESH_TOKEN_PARAM, accessTokenDetails.getRefreshToken().getValue(), 0);
                     }
