@@ -17,10 +17,10 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public class DataURIDecoderTest {

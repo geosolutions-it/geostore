@@ -1,20 +1,19 @@
 package it.geosolutions.geostore.rest.security;
 
 import it.geosolutions.geostore.services.rest.security.GroupsRolesService;
+import org.springframework.ldap.core.DirContextOperations;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-import org.springframework.ldap.core.DirContextOperations;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
-
 public class MockLdapAuthoritiesPopulator implements LdapAuthoritiesPopulator, GroupsRolesService {
 
     @Override
     public Collection<GrantedAuthority> getGrantedAuthorities(DirContextOperations userData,
-            String username) {
+                                                              String username) {
         return Collections.EMPTY_LIST;
     }
 
@@ -27,7 +26,6 @@ public class MockLdapAuthoritiesPopulator implements LdapAuthoritiesPopulator, G
     public Set<GrantedAuthority> getAllRoles() {
         return Collections.EMPTY_SET;
     }
-    
-    
+
 
 }

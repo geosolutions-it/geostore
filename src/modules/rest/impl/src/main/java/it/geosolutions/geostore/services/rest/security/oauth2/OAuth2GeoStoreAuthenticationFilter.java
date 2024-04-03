@@ -38,7 +38,6 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.apache.commons.lang.StringUtils;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +55,7 @@ import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
@@ -71,48 +71,38 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.getUsername;
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 
 /**
  * Base filter class for an OAuth2 authentication filter. Authentication instances are cached.
  */
 public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAuthenticationProcessingFilter {
 
+    public static final String OAUTH2_AUTHENTICATION_KEY = "oauth2.authentication";
+    public static final String OAUTH2_AUTHENTICATION_TYPE_KEY = "oauth2.authenticationType";
+    public static final String OAUTH2_ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
     private final static Logger LOGGER = LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
-
-
+    private final AuthenticationEntryPoint authEntryPoint;
+    private final TokenAuthenticationCache cache;
     @Autowired
     protected UserService userService;
-
     @Autowired
     protected UserGroupService userGroupService;
-
     protected RemoteTokenServices tokenServices;
-
     protected OAuth2Configuration configuration;
 
-    private AuthenticationEntryPoint authEntryPoint;
-
-    private TokenAuthenticationCache cache;
-
-
     /**
-     * @param tokenServices      a RemoteTokenServices instance.
-     * @param oAuth2RestTemplate the rest template to use for OAuth2 requests.
-     * @param configuration      the OAuth2 configuration.
-     * @param tokenAuthenticationCache        the cache.
+     * @param tokenServices            a RemoteTokenServices instance.
+     * @param oAuth2RestTemplate       the rest template to use for OAuth2 requests.
+     * @param configuration            the OAuth2 configuration.
+     * @param tokenAuthenticationCache the cache.
      */
     public OAuth2GeoStoreAuthenticationFilter(RemoteTokenServices tokenServices, GeoStoreOAuthRestTemplate oAuth2RestTemplate, OAuth2Configuration configuration, TokenAuthenticationCache tokenAuthenticationCache) {
         super("/**");
@@ -131,11 +121,12 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null)
             super.doFilter(req, res, chain);
         else if (req instanceof HttpServletRequest)
-            // ok no need to authenticate but in case the security context
-            // holds a Token authentication we set the access token to request's attributes.
+            // ok no need to authenticate, but in case the security context
+            // holds a Token authentication, we set the access token to request's attributes.
             addRequestAttributes((HttpServletRequest) req, authentication);
         if (configuration.isEnabled() && configuration.isInvalid())
-            if (LOGGER.isDebugEnabled()) LOGGER.info("Skipping configured OAuth2 authentication. One or more mandatory properties are missing (clientId, clientSecret, authorizationUri, tokenUri");
+            if (LOGGER.isDebugEnabled())
+                LOGGER.info("Skipping configured OAuth2 authentication. One or more mandatory properties are missing (clientId, clientSecret, authorizationUri, tokenUri");
         chain.doFilter(req, res);
     }
 
@@ -143,6 +134,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
         Authentication authentication;
         String token = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
+
+        if (token != null) {
+            request.setAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY, OAuth2AuthenticationType.BEARER);
+        } else {
+            request.setAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY, OAuth2AuthenticationType.USER);
+        }
+
         if (token != null) {
             authentication = cache.get(token);
             if (authentication == null) {
@@ -158,7 +156,15 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         } else {
             clearState();
             authentication = authenticateAndUpdateCache(request, response, null, null);
+            token = (String) RequestContextHolder.getRequestAttributes().getAttribute(ACCESS_TOKEN_PARAM, 0);
+            if (token != null) {
+                request.setAttribute(ACCESS_TOKEN_PARAM, token);
+                request.setAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY, OAuth2AuthenticationType.BEARER);
+                request.setAttribute(ID_TOKEN_PARAM, RequestContextHolder.getRequestAttributes().getAttribute(ID_TOKEN_PARAM, 0));
+                request.setAttribute(REFRESH_TOKEN_PARAM, RequestContextHolder.getRequestAttributes().getAttribute(REFRESH_TOKEN_PARAM, 0));
+            }
         }
+
         return authentication;
     }
 
@@ -171,16 +177,30 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         return tokenDetails;
     }
 
-
     private Authentication authenticateAndUpdateCache(HttpServletRequest request, HttpServletResponse response, String token, OAuth2AccessToken accessToken) {
         Authentication authentication = performOAuthAuthentication(request, response, accessToken);
         if (authentication != null) {
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             TokenDetails tokenDetails = tokenDetails(authentication);
             if (tokenDetails != null) {
-                token = tokenDetails.getAccessToken().getValue();
+                OAuth2AccessToken accessTokenDetails = tokenDetails.getAccessToken();
+                if (accessTokenDetails != null) {
+                    token = accessTokenDetails.getValue();
+                    RequestContextHolder.getRequestAttributes().setAttribute(
+                            ACCESS_TOKEN_PARAM, accessTokenDetails.getValue(), 0);
+                    if (accessTokenDetails != null && accessTokenDetails.getRefreshToken() != null &&
+                            accessTokenDetails.getRefreshToken().getValue() != null) {
+                        RequestContextHolder.getRequestAttributes().setAttribute(
+                                REFRESH_TOKEN_PARAM, accessTokenDetails.getRefreshToken().getValue(), 0);
+                    }
+                }
+                if (tokenDetails.getIdToken() != null)
+                    RequestContextHolder.getRequestAttributes().setAttribute(
+                            ID_TOKEN_PARAM, tokenDetails.getIdToken(), 0);
             }
             cache.putCacheEntry(token, authentication);
         }
+        RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY, configuration.getProvider(), 0);
         return authentication;
     }
 
@@ -192,7 +212,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
             clientContext
                     .removePreservedState(accessTokenRequest.getStateKey());
         }
-        if (accessTokenRequest!=null) {
+        if (accessTokenRequest != null) {
             try {
                 accessTokenRequest.remove(ACCESS_TOKEN_PARAM);
             } finally {
@@ -207,21 +227,21 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         }
     }
 
-
     /**
      * Perform the authentication.
-     * @param request the httpServletRequest.
-     * @param response the httpServletResponse.
+     *
+     * @param request     the httpServletRequest.
+     * @param response    the httpServletResponse.
      * @param accessToken the accessToken.
      * @return the Authentication object. Null if not authenticated.
      */
     protected Authentication performOAuthAuthentication(HttpServletRequest request, HttpServletResponse response, OAuth2AccessToken accessToken) {
-        if(LOGGER.isDebugEnabled()){
-            LOGGER.info("About to perform remote authentication.");
-        }
+        LOGGER.debug("About to perform remote authentication.");
+        LOGGER.debug("Access Token: " + accessToken);
         String principal = null;
         PreAuthenticatedAuthenticationToken result = null;
         try {
+            LOGGER.debug("Trying to get the preauthenticated principal.");
             principal = getPreAuthenticatedPrincipal(request, response, accessToken);
         } catch (IOException e1) {
             LOGGER.error(e1.getMessage(), e1);
@@ -242,8 +262,9 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
 
     /**
      * Get the PreAuthenticatedPrincipal.
-     * @param req the request.
-     * @param resp the response.
+     *
+     * @param req         the request.
+     * @param resp        the response.
      * @param accessToken the access token.
      * @return the principal as a string.
      * @throws IOException
@@ -253,21 +274,45 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
             throws IOException, ServletException {
 
         // Make sure the REST Resource Template has been correctly configured
+        LOGGER.debug("About to configure the REST Resource Template");
         configureRestTemplate();
+
         if (accessToken != null) {
+            LOGGER.debug("Setting the access token on the OAuth2ClientContext");
             restTemplate
                     .getOAuth2ClientContext()
                     .setAccessToken(accessToken);
         }
 
         // Setting up OAuth2 Filter services and resource template
-        //setRestTemplate(restTemplate);
-        //setTokenServices(tokenServices);
+        LOGGER.debug("Setting up OAuth2 Filter services and resource template");
+        setRestTemplate(restTemplate);
+        setTokenServices(tokenServices);
 
         // Validating the access_token
         Authentication authentication = null;
         try {
             authentication = super.attemptAuthentication(req, resp);
+            req.setAttribute(OAUTH2_AUTHENTICATION_KEY, authentication);
+
+            // The authentication (in the extensions) should contain a Map which is the result of
+            // the Access Token Check Request (which will be the json result from the oidc "userinfo"
+            // endpoint).
+            // We move it from inside the authentication to directly to a request attributes.
+            // This will make it a "peer" with the Access Token (which spring puts on the request as
+            // an attribute).
+            if (authentication instanceof OAuth2Authentication) {
+                OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;
+                Object map =
+                        oAuth2Authentication
+                                .getOAuth2Request()
+                                .getExtensions()
+                                .get(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
+                if (map instanceof Map) {
+                    req.setAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY, map);
+                }
+            }
+
             if (authentication != null && LOGGER.isDebugEnabled())
                 LOGGER.debug(
                         "Authenticated OAuth request for principal " +
@@ -314,7 +359,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     }
 
     private void handleUserRedirection(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-        if (req.getRequestURI().contains(configuration.getProvider()+"/login")) {
+        if (req.getRequestURI().contains(configuration.getProvider() + "/login")) {
             authEntryPoint.commence(req, resp, null);
         } else {
             if (resp.getStatus() != 302) {
@@ -330,7 +375,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
             }
         }
     }
-
 
     protected void configureRestTemplate() {
         AuthorizationCodeResourceDetails details =
@@ -349,6 +393,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
 
     /**
      * Parse the scopes from a comma separated string to a list.
+     *
      * @param commaSeparatedScopes the scopes as a string.
      * @return the scopes as a list.
      */
@@ -360,51 +405,53 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
 
     /**
      * Create the preauthentication token instance from the User name.
+     *
      * @param username the username.
-     * @param request the HttpServletRequest.
+     * @param request  the HttpServletRequest.
      * @param response the HttpServletResponse.
      * @return the PreAuthenticatedAuthenticationToken instance. Null if no user was found for the username.
      */
     protected PreAuthenticatedAuthenticationToken createPreAuthentication(String username, HttpServletRequest request, HttpServletResponse response) {
         User user = retrieveUserWithAuthorities(username, request, response);
-        if (user==null ) return null;
+        if (user == null) return null;
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
-        PreAuthenticatedAuthenticationToken authenticationToken = new PreAuthenticatedAuthenticationToken(user, null, Arrays.asList(authority));
+        PreAuthenticatedAuthenticationToken authenticationToken = new PreAuthenticatedAuthenticationToken(user, null, Collections.singletonList(authority));
         String idToken = OAuth2Utils.getIdToken();
-        if (user!=null && (StringUtils.isNotBlank(configuration.getGroupsClaim()) || StringUtils.isNotBlank(configuration.getRolesClaim()))){
-            addAuthoritiesFromToken(user,idToken);
+        if (user != null && (StringUtils.isNotBlank(configuration.getGroupsClaim()) || StringUtils.isNotBlank(configuration.getRolesClaim()))) {
+            addAuthoritiesFromToken(user, idToken);
         }
         OAuth2AccessToken accessToken = restTemplate.getOAuth2ClientContext().getAccessToken();
-        authenticationToken.setDetails(new TokenDetails(accessToken, idToken,configuration.getBeanName()));
+        authenticationToken.setDetails(new TokenDetails(accessToken, idToken, configuration.getBeanName()));
         return authenticationToken;
     }
 
     /**
      * Add authorities from the idToken claims if found.
-     * @param user the user instance.
+     *
+     * @param user    the user instance.
      * @param idToken the id token.
      */
-    protected void addAuthoritiesFromToken(User user, String idToken){
-        JWTHelper helper=new JWTHelper(idToken);
-        List<String> roles=null;
-        List<String> groups=null;
-        if (configuration.getRolesClaim()!=null)
-            roles=helper.getClaimAsList(configuration.getRolesClaim(),String.class);
-        else roles=Collections.emptyList();
+    protected void addAuthoritiesFromToken(User user, String idToken) {
+        JWTHelper helper = new JWTHelper(idToken);
+        List<String> roles = null;
+        List<String> groups = null;
+        if (configuration.getRolesClaim() != null)
+            roles = helper.getClaimAsList(configuration.getRolesClaim(), String.class);
+        else roles = Collections.emptyList();
 
-        if (configuration.getGroupsClaim()!=null)
-            groups=helper.getClaimAsList(configuration.getGroupsClaim(),String.class);
-        if (groups==null) groups=Collections.emptyList();
-        for (String r:roles){
+        if (configuration.getGroupsClaim() != null)
+            groups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+        if (groups == null) groups = Collections.emptyList();
+        for (String r : roles) {
             if (r.equals(Role.ADMIN.name()))
                 user.setRole(Role.ADMIN);
         }
-        for (String g:groups){
-            UserGroup group=null;
-            if (userGroupService!=null)
-                group=userGroupService.get(g);
-            if (group==null){
-                group=new UserGroup();
+        for (String g : groups) {
+            UserGroup group = null;
+            if (userGroupService != null)
+                group = userGroupService.get(g);
+            if (group == null) {
+                group = new UserGroup();
                 group.setGroupName(g);
             }
             user.getGroups().add(group);
@@ -414,14 +461,15 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
 
     /**
      * Retrieves a user by username. Will create the user when not found, if the auto create flag was set to true.
+     *
      * @param username the username.
-     * @param request the HttpServletRequest.
+     * @param request  the HttpServletRequest.
      * @param response the HttpServletResponse.
      * @return a {@link User} instance if the user was found/created. Null otherwise.
      */
     protected User retrieveUserWithAuthorities(String username, HttpServletRequest request, HttpServletResponse response) {
         User user = null;
-        if (username != null && userService!=null) {
+        if (username != null && userService != null) {
             try {
                 user = userService.get(username);
             } catch (NotFoundServiceEx notFoundServiceEx) {
@@ -440,9 +488,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
 
     /**
      * Create a User instance.
-     * @param userName the username.
+     *
+     * @param userName    the username.
      * @param credentials the password.
-     * @param rawUser user object.
+     * @param rawUser     user object.
      * @return a User instance.
      * @throws BadRequestServiceEx
      * @throws NotFoundServiceEx
@@ -456,13 +505,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         UserAttribute userAttribute = new UserAttribute();
         userAttribute.setName(OAuth2Configuration.CONFIGURATION_NAME);
         userAttribute.setValue(configuration.getBeanName());
-        user.setAttribute(Arrays.asList(userAttribute));
+        user.setAttribute(Collections.singletonList(userAttribute));
         Set<UserGroup> groups = new HashSet<UserGroup>();
         user.setGroups(groups);
         user.setRole(Role.USER);
         if (userService != null && configuration.isAutoCreateUser()) {
-            long id=userService.insert(user);
-            user=new User(user);
+            long id = userService.insert(user);
+            user = new User(user);
             user.setId(id);
         }
         return user;
@@ -486,11 +535,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
     }
 
     private void addRequestAttributes(HttpServletRequest request, Authentication authentication) {
-        if (authentication!=null) {
+        if (authentication != null) {
             TokenDetails tokenDetails = tokenDetails(authentication);
             if (tokenDetails != null && tokenDetails.getAccessToken() != null) {
                 OAuth2AccessToken accessToken = tokenDetails.getAccessToken();
                 request.setAttribute(ACCESS_TOKEN_PARAM, accessToken.getValue());
+                if (tokenDetails.getIdToken() != null)
+                    request.setAttribute(ID_TOKEN_PARAM, tokenDetails.getIdToken());
                 if (accessToken.getRefreshToken() != null)
                     request.setAttribute(REFRESH_TOKEN_PARAM, accessToken.getRefreshToken().getValue());
                 request.setAttribute(PROVIDER_KEY, configuration.getProvider());
@@ -503,9 +554,14 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends OAuth2ClientAut
         if (failed instanceof AccessTokenRequiredException) {
             SecurityContextHolder.clearContext();
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Authentication request failed: " + failed.toString(), failed);
+                LOGGER.debug("Authentication request failed: " + failed, failed);
                 LOGGER.debug("Updated SecurityContextHolder to contain null Authentication");
             }
         }
+    }
+
+    public enum OAuth2AuthenticationType {
+        BEARER, // this is a bearer token (meaning existing access token is in the request headers)
+        USER // this is a "normal" oauth2 login (i.e. interactive user login)
     }
 }

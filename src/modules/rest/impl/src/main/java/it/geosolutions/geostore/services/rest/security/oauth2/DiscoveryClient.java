@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import org.springframework.web.client.RestTemplate;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -59,13 +60,6 @@ public class DiscoveryClient {
         this.restTemplate = restTemplate;
     }
 
-    private void setLocation(String location) {
-        if (!location.endsWith(PROVIDER_END_PATH)) {
-            location = appendPath(location, PROVIDER_END_PATH);
-        }
-        this.location = location;
-    }
-
     private static String appendPath(String... pathComponents) {
         StringBuilder result = new StringBuilder(pathComponents[0]);
         for (int i = 1; i < pathComponents.length; i++) {
@@ -83,13 +77,20 @@ public class DiscoveryClient {
         return result.toString();
     }
 
+    private void setLocation(String location) {
+        if (!location.endsWith(PROVIDER_END_PATH)) {
+            location = appendPath(location, PROVIDER_END_PATH);
+        }
+        this.location = location;
+    }
+
     /**
      * Fill the OAuth2Configuration instance with the values found in the discovery response.
      *
      * @param conf the OAuth2Configuration.
      */
     public void autofill(OAuth2Configuration conf) {
-        if (location!=null) {
+        if (location != null) {
             Map response = restTemplate.getForObject(this.location, Map.class);
             Optional.ofNullable(response.get(getAuthorizationEndpointAttrName()))
                     .ifPresent(uri -> conf.setAuthorizationUri((String) uri));

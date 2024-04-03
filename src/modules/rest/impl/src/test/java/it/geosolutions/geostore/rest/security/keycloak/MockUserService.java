@@ -39,18 +39,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * MockUserService for testing purpose with KeycloakFilter
  */
 class MockUserService implements UserService {
 
-    private Map<String,User> users=new ConcurrentHashMap<>();
-    private AtomicLong atomicLong=new AtomicLong();
+    private final Map<String, User> users = new ConcurrentHashMap<>();
+    private final AtomicLong atomicLong = new AtomicLong();
+
     @Override
     public long insert(User user) throws BadRequestServiceEx, NotFoundServiceEx {
-        Long id=atomicLong.incrementAndGet();
+        Long id = atomicLong.incrementAndGet();
         user.setId(id);
-        users.put(user.getName(),user);
+        users.put(user.getName(), user);
         return id;
     }
 
@@ -66,7 +68,7 @@ class MockUserService implements UserService {
 
     @Override
     public User get(long id) {
-        return users.values().stream().filter(u->u.getId().equals(id)).findAny().get();
+        return users.values().stream().filter(u -> u.getId().equals(id)).findAny().get();
     }
 
     @Override

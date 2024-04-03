@@ -33,10 +33,8 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
@@ -46,13 +44,7 @@ import org.springframework.http.HttpStatus;
 
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
@@ -250,7 +242,7 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
                 CredentialRepresentation credentialRepresentation = new CredentialRepresentation();
                 credentialRepresentation.setType(CredentialRepresentation.PASSWORD);
                 credentialRepresentation.setValue(user.getNewPassword());
-                representation.setCredentials(Arrays.asList(credentialRepresentation));
+                representation.setCredentials(Collections.singletonList(credentialRepresentation));
             }
             representation.setUsername(user.getName());
             representation.setEnabled(user.isEnabled());

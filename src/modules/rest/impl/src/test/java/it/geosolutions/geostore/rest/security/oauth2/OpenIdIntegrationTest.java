@@ -8,8 +8,8 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
-import it.geosolutions.geostore.services.rest.security.oauth2.OpenIdFilter;
 import it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration;
+import it.geosolutions.geostore.services.rest.security.oauth2.google.OpenIdFilter;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -28,11 +28,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import javax.servlet.ServletException;
 import java.io.IOException;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.any;
-import static com.github.tomakehurst.wiremock.client.WireMock.containing;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertEquals;
 
@@ -80,24 +76,24 @@ public class OpenIdIntegrationTest {
                                                 "Content-Type", MediaType.APPLICATION_JSON_VALUE)
                                         .withBodyFile("token_response.json")));
         openIdService.stubFor(any(urlPathEqualTo("/userinfo")).willReturn(
-                        aResponse()
-                                .withStatus(200)
-                                .withHeader(
-                                        "Content-Type", MediaType.APPLICATION_JSON_VALUE)
-                                .withBodyFile("userinfo.json"))); // disallow query parameters
+                aResponse()
+                        .withStatus(200)
+                        .withHeader(
+                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                        .withBodyFile("userinfo.json"))); // disallow query parameters
     }
 
 
     @Before
-    public void before()  {
+    public void before() {
         // prepare mock server base path
         authService = "http://localhost:" + openIdService.port();
-        OAuth2Configuration configuration=new OAuth2Configuration();
+        OAuth2Configuration configuration = new OAuth2Configuration();
         configuration.setClientId(CLIENT_ID);
         configuration.setClientSecret(CLIENT_SECRET);
-        configuration.setRevokeEndpoint(authService+"/revoke");
-        configuration.setAccessTokenUri(authService+"/token");
-        configuration.setAuthorizationUri(authService+"/authorize");
+        configuration.setRevokeEndpoint(authService + "/revoke");
+        configuration.setAccessTokenUri(authService + "/token");
+        configuration.setAuthorizationUri(authService + "/authorize");
         configuration.setCheckTokenEndpointUrl(authService + "/userinfo");
         configuration.setEnabled(true);
         configuration.setAutoCreateUser(true);
@@ -106,12 +102,12 @@ public class OpenIdIntegrationTest {
         configuration.setEnableRedirectEntryPoint(true);
         configuration.setRedirectUri("../../../geostore/rest/users/user/details");
         configuration.setScopes("openId,email");
-        this.configuration=configuration;
-        OAuthGoogleSecurityConfiguration securityConfiguration=new OAuthGoogleSecurityConfiguration(){
+        this.configuration = configuration;
+        OAuthGoogleSecurityConfiguration securityConfiguration = new OAuthGoogleSecurityConfiguration() {
 
             @Override
             protected GeoStoreOAuthRestTemplate restTemplate() {
-                return new GeoStoreOAuthRestTemplate(resourceDetails(), new DefaultOAuth2ClientContext(new DefaultAccessTokenRequest()),configuration());
+                return new GeoStoreOAuthRestTemplate(resourceDetails(), new DefaultOAuth2ClientContext(new DefaultAccessTokenRequest()), configuration());
             }
 
             @Override
@@ -119,13 +115,13 @@ public class OpenIdIntegrationTest {
                 return configuration;
             }
         };
-        GeoStoreOAuthRestTemplate restTemplate=securityConfiguration.oauth2RestTemplate();
-        OpenIdFilter filter=new OpenIdFilter(securityConfiguration.googleTokenServices(),restTemplate,configuration, securityConfiguration.oAuth2Cache());
-        this.filter=filter;
+        GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
+        OpenIdFilter filter = new OpenIdFilter(securityConfiguration.googleTokenServices(), restTemplate, configuration, securityConfiguration.oAuth2Cache());
+        this.filter = filter;
     }
 
     @After
-    public void afterTest(){
+    public void afterTest() {
         SecurityContextHolder.clearContext();
         RequestContextHolder.resetRequestAttributes();
     }
@@ -133,54 +129,54 @@ public class OpenIdIntegrationTest {
 
     @Test
     public void testRedirect() throws IOException, ServletException {
-        MockHttpServletRequest request=createRequest("google/login");
-        MockHttpServletResponse response=new MockHttpServletResponse();
+        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.doFilter(request,response,chain);
-        assertEquals(302,response.getStatus());
-        assertEquals(response.getRedirectedUrl(),configuration.buildLoginUri());
+        filter.doFilter(request, response, chain);
+        assertEquals(302, response.getStatus());
+        assertEquals(response.getRedirectedUrl(), configuration.buildLoginUri());
     }
 
     @Test
     public void testAuthentication() throws IOException, ServletException {
-        MockHttpServletRequest request=createRequest("google/login");
-        request.setParameter("authorization_code",CODE);
-        MockHttpServletResponse response=new MockHttpServletResponse();
+        MockHttpServletRequest request = createRequest("google/login");
+        request.setParameter("authorization_code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
         filter.restTemplate.getOAuth2ClientContext().getAccessTokenRequest().setAuthorizationCode(CODE);
-        filter.doFilter(request,response,chain);
-        assertEquals(200,response.getStatus());
-        Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
-        assertEquals("ritter@erdukunde.de",user.getName());
-        assertEquals(Role.USER,user.getRole());
+        assertEquals("ritter@erdukunde.de", user.getName());
+        assertEquals(Role.USER, user.getRole());
     }
 
     @Test
     public void testGroupsAndRolesFromToken() throws IOException, ServletException {
         configuration.setGroupsClaim("hd");
-        MockHttpServletRequest request=createRequest("google/login");
-        request.setParameter("authorization_code",CODE);
-        MockHttpServletResponse response=new MockHttpServletResponse();
+        MockHttpServletRequest request = createRequest("google/login");
+        request.setParameter("authorization_code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
         filter.restTemplate.getOAuth2ClientContext().getAccessTokenRequest().setAuthorizationCode(CODE);
-        filter.doFilter(request,response,chain);
-        assertEquals(200,response.getStatus());
-        Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
-        assertEquals("ritter@erdukunde.de",user.getName());
-        assertEquals(Role.USER,user.getRole());
-        UserGroup group=user.getGroups().stream().findAny().get();
-        assertEquals("geosolutionsgroup.com",group.getGroupName());
+        assertEquals("ritter@erdukunde.de", user.getName());
+        assertEquals(Role.USER, user.getRole());
+        UserGroup group = user.getGroups().stream().findAny().get();
+        assertEquals("geosolutionsgroup.com", group.getGroupName());
     }
 
-    private MockHttpServletRequest createRequest(String path){
-        MockHttpServletRequest request=new MockHttpServletRequest();
+    private MockHttpServletRequest createRequest(String path) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
         request.setScheme("http");
         request.setServerName("localhost");
         request.setServerPort(8080);
         request.setContextPath("/geostore");
-        request.setRequestURI("/geostore/"+path);
+        request.setRequestURI("/geostore/" + path);
         // request.setRequestURL(ResponseUtils.appendPath("http://localhost:8080/geoserver", path )
         // );
         request.setRemoteAddr("127.0.0.1");
@@ -191,6 +187,5 @@ public class OpenIdIntegrationTest {
         RequestContextHolder.setRequestAttributes(attributes);
         return request;
     }
-
 
 }

@@ -29,10 +29,11 @@ package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
 
@@ -52,11 +53,10 @@ public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
         String accessTokenUrl =
-                new StringBuilder(checkTokenEndpointUrl)
-                        .append("?access_token=")
-                        .append(accessToken)
-                        .toString();
-        return postForMap(accessTokenUrl, formData, headers);
+                checkTokenEndpointUrl +
+                        "?access_token=" +
+                        accessToken;
+        return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.POST);
     }
 
     @Override
@@ -70,10 +70,6 @@ public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
     @Override
     protected String getAuthorizationHeader(String accessToken) {
         String creds = String.format("%s:%s", clientId, clientSecret);
-        try {
-            return "Basic " + new String(Base64.getEncoder().encode(creds.getBytes("UTF-8")));
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException("Could not convert String");
-        }
+        return "Basic " + new String(Base64.getEncoder().encode(creds.getBytes(StandardCharsets.UTF_8)));
     }
 }

@@ -31,26 +31,12 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 import it.geosolutions.geostore.services.rest.utils.DataURIDecoder;
-
-
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-
 import net.sf.json.JSON;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 import net.sf.json.xml.XMLSerializer;
 import org.apache.commons.codec.binary.Base64;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jdom.Element;
@@ -58,18 +44,37 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Class RESTStoredDataServiceImpl.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTStoredDataService {
 
     private final static Logger LOGGER = LogManager.getLogger(RESTStoredDataServiceImpl.class);
-
+    private final static Collection<MediaType> GET_XML_MEDIA_TYPES = Arrays.asList(
+            MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
+    private final static Collection<MediaType> GET_JSON_MEDIA_TYPES = Collections.singletonList(MediaType.APPLICATION_JSON_TYPE);
+    private final static Collection<MediaType> GET_TEXT_MEDIA_TYPES = Collections.singletonList(MediaType.TEXT_PLAIN_TYPE);
     private StoredDataService storedDataService;
+
+    // /* (non-Javadoc)
+    // * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#getAll()
+    // */
+    // @Override
+    // public StoredDataList getAll(SecurityContext sc) {
+    // return new StoredDataList(storedDataService.getAll());
+    // }
 
     /**
      * @param storedDataService
@@ -77,18 +82,18 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
     }
-    
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
      */
     @Override
     protected SecurityService getSecurityService() {
-        return storedDataService; 
+        return storedDataService;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#update(long, java.lang.String)
      */
     @Override
@@ -117,17 +122,9 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         }
     }
 
-    // /* (non-Javadoc)
-    // * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#getAll()
-    // */
-    // @Override
-    // public StoredDataList getAll(SecurityContext sc) {
-    // return new StoredDataList(storedDataService.getAll());
-    // }
-
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#delete(long)
      */
     @Override
@@ -147,18 +144,9 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             throw new ForbiddenErrorWebEx("This user cannot delete this store !");
     }
 
-    private final static Collection<MediaType> GET_XML_MEDIA_TYPES = Arrays.asList(
-            MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
-
-    private final static Collection<MediaType> GET_JSON_MEDIA_TYPES = Arrays
-            .asList(MediaType.APPLICATION_JSON_TYPE);
-
-    private final static Collection<MediaType> GET_TEXT_MEDIA_TYPES = Arrays
-            .asList(MediaType.TEXT_PLAIN_TYPE);
-
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#get(long)
      */
     @Override
@@ -172,10 +160,10 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         boolean canRead = false;
         User authUser = extractAuthUser(sc);
         canRead = resourceAccessRead(authUser, id); // The ID is also the resource ID
-        if(!canRead){
+        if (!canRead) {
             throw new ForbiddenErrorWebEx("This user cannot read this stored data !");
         }
-        
+
         StoredData storedData;
         try {
             storedData = storedDataService.get(id);
@@ -286,66 +274,61 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
 
     @Override
     public Response getRaw(SecurityContext sc, HttpHeaders headers, long id, String decodeFormat)
-            throws NotFoundWebEx
-    {
-        if(id == -1)
+            throws NotFoundWebEx {
+        if (id == -1)
             return Response.ok().entity("dummy payload").build();
 
         StoredData storedData;
         try {
             storedData = storedDataService.get(id);
-        } catch(NotFoundServiceEx e){
+        } catch (NotFoundServiceEx e) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
-        if(storedData == null) {
+        if (storedData == null) {
             return Response.noContent().build();
         }
 
         String data = storedData.getData();
 
         // prefer no transformation
-        if( decodeFormat == null) {
+        if (decodeFormat == null) {
             return Response.ok().entity(data).build();
-        }
-        else if(decodeFormat.equalsIgnoreCase(RawFormat.BASE64.name())) {
+        } else if (decodeFormat.equalsIgnoreCase(RawFormat.BASE64.name())) {
             byte[] decoded = Base64.decodeBase64(data);
             return Response.ok().entity(decoded).build();
-        }
-        else if(decodeFormat.equalsIgnoreCase(RawFormat.DATAURI.name())) {
+        } else if (decodeFormat.equalsIgnoreCase(RawFormat.DATAURI.name())) {
             return decodeDataURI(data);
-        }
-        else {
-            LOGGER.warn("Unknown decode format '"+decodeFormat+"'");
+        } else {
+            LOGGER.warn("Unknown decode format '" + decodeFormat + "'");
             return Response.ok().entity(data).build();
         }
     }
 
-    private Response decodeDataURI(String data) 
-    {
-        if(! data.startsWith("data:")) {
+    private Response decodeDataURI(String data) {
+        if (!data.startsWith("data:")) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Not a data URI").build();
         }
 
         String[] split = data.split(",", 2);
 
-        if(split.length < 2) {
+        if (split.length < 2) {
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad data, comma is missing").build();
         }
 
         DataURIDecoder dud = new DataURIDecoder(split[0]);
 
-        if(! dud.isValid()) {
-            LOGGER.warn("Could not parse data URI '"+split[0]+"'");
+        if (!dud.isValid()) {
+            LOGGER.warn("Could not parse data URI '" + split[0] + "'");
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad data URI").build();
         }
 
-        if(dud.getCharset() != null) {
-            LOGGER.warn("TODO: Charset '"+dud.getCharset()+"' should be handled.");
+        if (dud.getCharset() != null) {
+            LOGGER.warn("TODO: Charset '" + dud.getCharset() + "' should be handled.");
         }
 
-        if(dud.getEncoding() != null && ! dud.isBase64Encoded()) {
-            LOGGER.warn("TODO: Encoding '"+dud.getEncoding()+"' should be handled.");
+        if (dud.getEncoding() != null && !dud.isBase64Encoded()) {
+            LOGGER.warn("TODO: Encoding '" + dud.getEncoding() + "' should be handled.");
         }
 
         Object entity = dud.isBase64Encoded() ? Base64.decodeBase64(split[1]) : split[1];

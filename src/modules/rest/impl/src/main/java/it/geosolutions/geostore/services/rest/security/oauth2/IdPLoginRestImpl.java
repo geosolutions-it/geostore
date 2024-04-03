@@ -44,30 +44,30 @@ import java.util.Map;
  */
 public class IdPLoginRestImpl implements IdPLoginRest {
 
-    private Map<String, IdPLoginService> services =new HashMap<>();
+    private final Map<String, IdPLoginService> services = new HashMap<>();
 
 
     @Override
     public void login(String provider) {
-        HttpServletRequest request=OAuth2Utils.getRequest();
+        HttpServletRequest request = OAuth2Utils.getRequest();
         HttpServletResponse resp = OAuth2Utils.getResponse();
-        IdPLoginService service=services.get(provider);
-        service.doLogin(request,resp,provider);
+        IdPLoginService service = services.get(provider);
+        service.doLogin(request, resp, provider);
     }
 
     @Override
     public Response callback(String provider) throws NotFoundWebEx {
-        IdPLoginService service= services.get(provider);
-        return service.doInternalRedirect(OAuth2Utils.getRequest(),OAuth2Utils.getResponse(),provider);
+        IdPLoginService service = services.get(provider);
+        return service.doInternalRedirect(OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider);
     }
 
     @Override
     public SessionToken getTokensByTokenIdentifier(String provider, String tokenIdentifier) throws NotFoundWebEx {
-        return services.get(provider).getTokenByIdentifier(provider,tokenIdentifier);
+        return services.get(provider).getTokenByIdentifier(provider, tokenIdentifier);
     }
 
     @Override
-    public void registerService(String providerName,IdPLoginService service){
-        this.services.put(providerName,service);
+    public void registerService(String providerName, IdPLoginService service) {
+        this.services.put(providerName, service);
     }
 }

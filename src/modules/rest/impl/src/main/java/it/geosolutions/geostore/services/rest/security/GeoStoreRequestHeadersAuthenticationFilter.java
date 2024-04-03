@@ -27,27 +27,25 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+
+import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.security.core.context.SecurityContextHolder;
-
 /**
  * Authentication filter for preauthentication through
  * request headers.
- * 
- * An header for username and one for credentials/password (optional) 
+ * <p>
+ * An header for username and one for credentials/password (optional)
  * are supported.
- * 
+ * <p>
  * Automatic new user creation is supported, and in the case of user creation,
  * attributes mapping from headers is supported through a userMapper of type
  * MapExpressionUserMapper.
- * 
- * @author Mauro Bartolomeoli
  *
+ * @author Mauro Bartolomeoli
  */
 public class GeoStoreRequestHeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     private String userNameHeader;
@@ -64,11 +62,11 @@ public class GeoStoreRequestHeadersAuthenticationFilter extends GeoStoreAuthenti
     @Override
     protected void authenticate(HttpServletRequest req) {
         String userName = req.getHeader(userNameHeader);
-        if(userName != null) {
+        if (userName != null) {
             String credentials = null;
-            if(credentialsHeader != null) {
+            if (credentialsHeader != null) {
                 credentials = req.getHeader(credentialsHeader);
-                if(credentials.trim().isEmpty()) {
+                if (credentials.trim().isEmpty()) {
                     credentials = null;
                 }
             }
@@ -81,14 +79,14 @@ public class GeoStoreRequestHeadersAuthenticationFilter extends GeoStoreAuthenti
 
     /**
      * Transform headers into a map.
-     * 
+     *
      * @param req
      * @return
      */
     private Object getHeadersMap(HttpServletRequest req) {
         Map<String, String> headers = new HashMap<String, String>();
         Enumeration headerNames = req.getHeaderNames();
-        while(headerNames.hasMoreElements()) {
+        while (headerNames.hasMoreElements()) {
             String headerName = headerNames.nextElement().toString();
             headers.put(cleanHeaderName(headerName), req.getHeader(headerName));
         }
@@ -99,7 +97,6 @@ public class GeoStoreRequestHeadersAuthenticationFilter extends GeoStoreAuthenti
         // create  a good SpEL identifier
         return headerName.replaceAll("[^a-zA-Z0-9_$]", "_");
     }
-
 
 
 }

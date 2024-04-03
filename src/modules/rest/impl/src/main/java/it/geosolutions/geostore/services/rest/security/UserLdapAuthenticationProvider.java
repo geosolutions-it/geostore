@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package it.geosolutions.geostore.services.rest.security;
 
@@ -12,15 +12,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.logging.log4j.Level;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,44 +29,38 @@ import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
+import java.util.*;
+
 /**
  * @author alessio.fabiani
- *
  */
 public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
-private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
-    
-    @Autowired
-    UserService userService;
-    
-    @Autowired
-    UserGroupService userGroupService;
-
-    private UserMapper userMapper;
-    
-    /**
-     * Message shown if the user credentials are wrong. TODO: Localize it
-     */
-    private static final String UNAUTHORIZED_MSG = "Bad credentials";
-    
     /**
      * Message shown if the user it's not found. TODO: Localize it
      */
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
     public static final String USER_NOT_ENABLED = "The user present but not enabled";
-    
+    private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
+    /**
+     * Message shown if the user credentials are wrong. TODO: Localize it
+     */
+    private static final String UNAUTHORIZED_MSG = "Bad credentials";
+    @Autowired
+    UserService userService;
+    @Autowired
+    UserGroupService userGroupService;
+    private UserMapper userMapper;
+
     public UserLdapAuthenticationProvider(LdapAuthenticator authenticator,
-            LdapAuthoritiesPopulator authoritiesPopulator) {
+                                          LdapAuthoritiesPopulator authoritiesPopulator) {
         super(authenticator, authoritiesPopulator);
     }
 
-    
-    
+
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
-
 
 
     public void setUserGroupService(UserGroupService userGroupService) {
@@ -82,11 +68,9 @@ private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthentication
     }
 
 
-
     public void setUserMapper(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
-
 
 
     @Override
@@ -120,7 +104,7 @@ private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthentication
             try {
                 user = userService.get(us);
                 LOGGER.info("US: " + us);// + " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
-                
+
                 if (!user.isEnabled()) {
                     throw new DisabledException(USER_NOT_FOUND_MSG);
                 }
@@ -162,7 +146,7 @@ private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthentication
                     Role role = extractUserRoleAndGroups(null, authorities, groups);
                     user.setRole(role);
                     user.setGroups(GroupReservedNames.checkReservedGroups(groups));
-                    if(userMapper != null) {
+                    if (userMapper != null) {
                         userMapper.mapUser(ldapUser, user);
                     }
                     if (userService != null)
@@ -205,7 +189,7 @@ private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthentication
      * @throws BadRequestServiceEx
      */
     protected Role extractUserRoleAndGroups(Role userRole,
-            Collection<? extends GrantedAuthority> authorities, Set<UserGroup> groups)
+                                            Collection<? extends GrantedAuthority> authorities, Set<UserGroup> groups)
             throws BadRequestServiceEx {
         Role role = (userRole != null ? userRole : Role.USER);
         for (GrantedAuthority a : authorities) {
@@ -224,9 +208,9 @@ private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthentication
     }
 
     public void synchronizeGroups() throws BadRequestServiceEx {
-        if(getAuthoritiesPopulator() instanceof GroupsRolesService) {
+        if (getAuthoritiesPopulator() instanceof GroupsRolesService) {
             GroupsRolesService groupsService = (GroupsRolesService) getAuthoritiesPopulator();
-            for(GrantedAuthority authority : groupsService.getAllGroups()) {
+            for (GrantedAuthority authority : groupsService.getAllGroups()) {
                 synchronizeGroup(authority);
             }
         }

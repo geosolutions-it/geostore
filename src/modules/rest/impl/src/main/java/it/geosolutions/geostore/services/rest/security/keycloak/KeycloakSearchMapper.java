@@ -41,56 +41,46 @@ import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERY
  */
 class KeycloakSearchMapper {
 
-    private static final List<Integer> SUPPORTED_OPERATORS= Arrays.asList(Filter.OP_AND,Filter.OP_EQUAL,Filter.OP_ILIKE,Filter.OP_NOT_EQUAL);
-
-
-
-    enum FilterType {
-        NAME,
-        GROUPNAME,
-        ENABLED,
-        NOT_FOUND
-    }
-
+    private static final List<Integer> SUPPORTED_OPERATORS = Arrays.asList(Filter.OP_AND, Filter.OP_EQUAL, Filter.OP_ILIKE, Filter.OP_NOT_EQUAL);
 
     /**
      * Convert the ISearch to a keycloak query.
+     *
      * @param search the search instance.
      * @return the keycloak query.
      */
-    KeycloakQuery keycloackQuery(ISearch search){
-        KeycloakQuery query=new KeycloakQuery();
-        search=getNestedSearch(search);
-        List<Filter> filters=search.getFilters();
-        boolean allSupported=filters.stream().allMatch(f->SUPPORTED_OPERATORS.contains(f.getOperator()));
-        if(!allSupported){
+    KeycloakQuery keycloackQuery(ISearch search) {
+        KeycloakQuery query = new KeycloakQuery();
+        search = getNestedSearch(search);
+        List<Filter> filters = search.getFilters();
+        boolean allSupported = filters.stream().allMatch(f -> SUPPORTED_OPERATORS.contains(f.getOperator()));
+        if (!allSupported) {
             throw new UnsupportedOperationException("Keycloak DAO cannot filter for more then one value");
         }
         if (!filters.isEmpty()) {
-            for (Filter filter:filters)
-               processFilter(query,filter);
+            for (Filter filter : filters)
+                processFilter(query, filter);
         }
-        Integer page=search.getPage();
-        Integer maxRes=search.getMaxResults();
-        if (page>-1) {
-            int startIndex=maxRes!=null? page*maxRes:page;
-            if (startIndex>0) startIndex ++;
-            if (maxRes!=null) query.setStartIndex(startIndex);
+        Integer page = search.getPage();
+        Integer maxRes = search.getMaxResults();
+        if (page > -1) {
+            int startIndex = maxRes != null ? page * maxRes : page;
+            if (startIndex > 0) startIndex++;
+            if (maxRes != null) query.setStartIndex(startIndex);
         }
-        if (maxRes>-1)
+        if (maxRes > -1)
             query.setMaxResults(maxRes);
         return query;
     }
 
-
-    private void processFilter(KeycloakQuery query,Filter filter){
-        if (filter.getOperator()==Filter.OP_AND) return;
-        else if (filter.getOperator()==Filter.OP_EQUAL)
+    private void processFilter(KeycloakQuery query, Filter filter) {
+        if (filter.getOperator() == Filter.OP_AND) return;
+        else if (filter.getOperator() == Filter.OP_EQUAL)
             query.setExact(true);
-        else if (filter.getOperator()!=Filter.OP_ILIKE && filter.getOperator() != Filter.OP_NOT_EQUAL)
+        else if (filter.getOperator() != Filter.OP_ILIKE && filter.getOperator() != Filter.OP_NOT_EQUAL)
             throw new UnsupportedOperationException("Keycloak DAO supports only EQUAL and LIKE operators");
 
-        if (filter.getOperator()==Filter.OP_NOT_EQUAL && filter.getValue().toString().equalsIgnoreCase(EVERYONE.groupName()))
+        if (filter.getOperator() == Filter.OP_NOT_EQUAL && filter.getValue().toString().equalsIgnoreCase(EVERYONE.groupName()))
             query.setSkipEveryBodyGroup(true);
         else {
             String property = filter.getProperty().toUpperCase();
@@ -119,6 +109,7 @@ class KeycloakSearchMapper {
     /**
      * If the given search has filters working on nested objects,
      * replaces them with the nested filter.
+     *
      * @param search
      * @return
      */
@@ -145,11 +136,17 @@ class KeycloakSearchMapper {
      */
     protected Filter getNestedFilter(Filter filter) {
         if (filter.getOperator() == Filter.OP_SOME || filter.getOperator() == Filter.OP_ALL) {
-            return (Filter)filter.getValue();
+            return (Filter) filter.getValue();
         }
         return null;
     }
 
+    enum FilterType {
+        NAME,
+        GROUPNAME,
+        ENABLED,
+        NOT_FOUND
+    }
 
 
 }

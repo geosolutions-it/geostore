@@ -1,19 +1,19 @@
 /*
  *  Copyright (C) 2015 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
- * 
+ *
  *  GPLv3 + Classpath exception
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -27,43 +27,39 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MockedUserGroupService implements UserGroupService {
 
-    private static Random RANDOM = new Random();
+    private static final Random RANDOM = new Random();
 
-    private Map<Long, UserGroup> GROUPS = new ConcurrentHashMap<Long, UserGroup>();
-    
+    private final Map<Long, UserGroup> GROUPS = new ConcurrentHashMap<Long, UserGroup>();
+
     @Override
     public long insert(UserGroup userGroup) throws BadRequestServiceEx {
         Long id = RANDOM.nextLong();
         userGroup.setId(id);
-        
+
         GROUPS.put(id, userGroup);
         return id;
     }
 
     @Override
     public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
-        return GROUPS.containsKey(new Long(id)) && GROUPS.remove(new Long(id)) != null;
+        return GROUPS.containsKey(Long.valueOf(id)) && GROUPS.remove(Long.valueOf(id)) != null;
     }
 
     @Override
     public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -73,12 +69,12 @@ public class MockedUserGroupService implements UserGroupService {
 
     @Override
     public UserGroup get(long id) throws BadRequestServiceEx {
-        return GROUPS.get(new Long(id));
+        return GROUPS.get(Long.valueOf(id));
     }
 
     @Override
     public List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesToSet,
-            boolean canRead, boolean canWrite) throws NotFoundServiceEx, BadRequestServiceEx {
+                                                   boolean canRead, boolean canWrite) throws NotFoundServiceEx, BadRequestServiceEx {
         // TODO Auto-generated method stub
         return null;
     }
@@ -88,7 +84,7 @@ public class MockedUserGroupService implements UserGroupService {
         // TODO Auto-generated method stub
         return false;
     }
-    
+
     @Override
     public boolean removeSpecialUsersGroups() {
         // TODO Auto-generated method stub
@@ -105,27 +101,27 @@ public class MockedUserGroupService implements UserGroupService {
         return null;
     }
 
-	@Override
-	public List<UserGroup> getAllAllowed(User user, Integer page,
-			Integer entries, String nameLike, boolean all)
-			throws BadRequestServiceEx {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public List<UserGroup> getAllAllowed(User user, Integer page,
+                                         Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
-	@Override
-	public long getCount(User authUser, String nameLike)
-			throws BadRequestServiceEx {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    @Override
+    public long getCount(User authUser, String nameLike)
+            throws BadRequestServiceEx {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
-	@Override
-	public long getCount(User authUser, String nameLike, boolean all)
-			throws BadRequestServiceEx {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    @Override
+    public long getCount(User authUser, String nameLike, boolean all)
+            throws BadRequestServiceEx {
+        // TODO Auto-generated method stub
+        return 0;
+    }
 
     @Override
     public void updateAttributes(long id, List<UserGroupAttribute> attributes) throws NotFoundServiceEx {

@@ -1,46 +1,38 @@
 /*
  *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
- * 
+ *
  *  GPLv3 + Classpath exception
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-import it.geosolutions.geostore.core.model.Attribute;
-import it.geosolutions.geostore.core.model.Category;
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.StoredData;
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
+import org.apache.commons.collections.CollectionUtils;
 
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.collections.CollectionUtils;
-
 /**
- * 
  * @author ETj (etj at geo-solutions.it)
  */
 public class Convert {
@@ -96,25 +88,25 @@ public class Convert {
             throw new BadRequestWebEx("Missing type for attribute " + shattr);
 
         switch (ret.getType()) {
-        case DATE:
-            try {
-                ret.setDateValue(Attribute.DATE_FORMAT.parse(shattr.getValue()));
-            } catch (ParseException e) {
-                throw new BadRequestWebEx("Error parsing attribute date value " + shattr);
-            }
-            break;
-        case NUMBER:
-            try {
-                ret.setNumberValue(Double.valueOf(shattr.getValue()));
-            } catch (NumberFormatException ex) {
-                throw new BadRequestWebEx("Error parsing number value " + shattr);
-            }
-            break;
-        case STRING:
-            ret.setTextValue(shattr.getValue());
-            break;
-        default:
-            throw new InternalErrorWebEx("Unknown attribute type " + shattr);
+            case DATE:
+                try {
+                    ret.setDateValue(Attribute.DATE_FORMAT.parse(shattr.getValue()));
+                } catch (ParseException e) {
+                    throw new BadRequestWebEx("Error parsing attribute date value " + shattr);
+                }
+                break;
+            case NUMBER:
+                try {
+                    ret.setNumberValue(Double.valueOf(shattr.getValue()));
+                } catch (NumberFormatException ex) {
+                    throw new BadRequestWebEx("Error parsing number value " + shattr);
+                }
+                break;
+            case STRING:
+                ret.setTextValue(shattr.getValue());
+                break;
+            default:
+                throw new InternalErrorWebEx("Unknown attribute type " + shattr);
         }
         return ret;
     }
@@ -127,38 +119,38 @@ public class Convert {
         return attributes;
     }
 
-	public static List<SecurityRule> convertSecurityRuleList(
-			List<RESTSecurityRule> list, Long resourceId) {
-		if(list==null){
-			list = new ArrayList<RESTSecurityRule>();	
-		}
-		List<SecurityRule> rules = new ArrayList<SecurityRule>(list.size());
-		for(RESTSecurityRule rule : list) {
-			SecurityRule securityRule = new SecurityRule();
-			Resource resource = new Resource();
-			resource.setId(resourceId);
-			securityRule.setResource(resource);
-			
-			if(rule.getUser() != null) {
-				User user = new User();
-				user.setId(rule.getUser().getId());
-				user.setName(rule.getUser().getName());
-				securityRule.setUser(user);
-			}
-			
-			if(rule.getGroup() != null) {
-				UserGroup group = new UserGroup();
-				group.setId(rule.getGroup().getId());
-				group.setGroupName(rule.getGroup().getGroupName());
-				securityRule.setGroup(group);
-			}
-			
-			securityRule.setCanRead(rule.isCanRead());
-			securityRule.setCanWrite(rule.isCanWrite());
-			
-			rules.add(securityRule);
-		}
-		return rules;
-	}
+    public static List<SecurityRule> convertSecurityRuleList(
+            List<RESTSecurityRule> list, Long resourceId) {
+        if (list == null) {
+            list = new ArrayList<RESTSecurityRule>();
+        }
+        List<SecurityRule> rules = new ArrayList<SecurityRule>(list.size());
+        for (RESTSecurityRule rule : list) {
+            SecurityRule securityRule = new SecurityRule();
+            Resource resource = new Resource();
+            resource.setId(resourceId);
+            securityRule.setResource(resource);
+
+            if (rule.getUser() != null) {
+                User user = new User();
+                user.setId(rule.getUser().getId());
+                user.setName(rule.getUser().getName());
+                securityRule.setUser(user);
+            }
+
+            if (rule.getGroup() != null) {
+                UserGroup group = new UserGroup();
+                group.setId(rule.getGroup().getId());
+                group.setGroupName(rule.getGroup().getGroupName());
+                securityRule.setGroup(group);
+            }
+
+            securityRule.setCanRead(rule.isCanRead());
+            securityRule.setCanWrite(rule.isCanWrite());
+
+            rules.add(securityRule);
+        }
+        return rules;
+    }
 
 }

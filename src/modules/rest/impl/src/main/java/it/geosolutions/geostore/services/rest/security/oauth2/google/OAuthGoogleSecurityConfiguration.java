@@ -28,10 +28,9 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
+import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreSecurityConfiguration;
-import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
-import it.geosolutions.geostore.services.rest.security.oauth2.OpenIdFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -76,17 +75,17 @@ public class OAuthGoogleSecurityConfiguration extends OAuth2GeoStoreSecurityConf
     }
 
     @Bean
-    public OpenIdFilter googleOpenIdFilter(){
-        return new OpenIdFilter(googleTokenServices(), oauth2RestTemplate(),configuration(),oAuth2Cache());
+    public OpenIdFilter googleOpenIdFilter() {
+        return new OpenIdFilter(googleTokenServices(), oauth2RestTemplate(), configuration(), oAuth2Cache());
     }
 
     @Bean
-    public GoogleTokenServices googleTokenServices(){
+    public GoogleTokenServices googleTokenServices() {
         return new GoogleTokenServices(configuration().getPrincipalKey());
     }
 
     @Bean
-    public TokenAuthenticationCache oAuth2Cache(){
+    public TokenAuthenticationCache oAuth2Cache() {
         return new TokenAuthenticationCache();
     }
 

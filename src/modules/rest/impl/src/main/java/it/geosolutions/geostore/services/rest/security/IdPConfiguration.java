@@ -11,7 +11,7 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected String beanName;
 
-    protected boolean enabled=false;
+    protected boolean enabled = false;
 
     protected boolean autoCreateUser;
 
@@ -20,8 +20,6 @@ public abstract class IdPConfiguration implements BeanNameAware {
     protected String redirectUri;
 
     protected Role authenticatedDefaultRole;
-
-
 
 
     /**
@@ -33,6 +31,7 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     /**
      * Set the enabled flag.
+     *
      * @param enabled true to enable the filter to which this configuration refers.
      */
     public void setEnabled(boolean enabled) {
@@ -41,7 +40,6 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
 
     /**
-     *
      * @return true if the logged in user should be created on the db if not present.
      * False otherwise.
      */
@@ -51,23 +49,29 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     /**
      * Set the autocreate user flag.
+     *
      * @param autoCreateUser the autoCreateUser flag.
      */
     public void setAutoCreateUser(Boolean autoCreateUser) {
         this.autoCreateUser = autoCreateUser;
     }
 
-    @Override
-    public void setBeanName(String s) {
-        this.beanName=s;
+    public void setAutoCreateUser(boolean autoCreateUser) {
+        this.autoCreateUser = autoCreateUser;
     }
 
     /**
      * Return the bean name of this configuration object.
+     *
      * @return the bean name.
      */
     public String getBeanName() {
         return beanName;
+    }
+
+    @Override
+    public void setBeanName(String s) {
+        this.beanName = s;
     }
 
     /**
@@ -80,15 +84,14 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     /**
      * Set the internalRedirectUri.
+     *
      * @param internalRedirectUri the internal redirect URI.
      */
     public void setInternalRedirectUri(String internalRedirectUri) {
         this.internalRedirectUri = internalRedirectUri;
     }
 
-
     /**
-     *
      * @return the redirect URI.
      */
     public String getRedirectUri() {
@@ -97,18 +100,15 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     /**
      * Set the redirect URI.
+     *
      * @param redirectUri the redirect URI.
      */
     public void setRedirectUri(String redirectUri) {
         this.redirectUri = redirectUri;
     }
 
-    public void setAutoCreateUser(boolean autoCreateUser) {
-        this.autoCreateUser = autoCreateUser;
-    }
-
     public Role getAuthenticatedDefaultRole() {
-        if (authenticatedDefaultRole==null) return Role.USER;
+        if (authenticatedDefaultRole == null) return Role.USER;
         return authenticatedDefaultRole;
     }
 
@@ -116,4 +116,5 @@ public abstract class IdPConfiguration implements BeanNameAware {
         if (StringUtils.isNotBlank(authenticatedDefaultRole))
             this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
     }
+
 }

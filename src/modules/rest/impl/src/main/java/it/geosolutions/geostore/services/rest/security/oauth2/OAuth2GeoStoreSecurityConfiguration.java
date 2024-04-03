@@ -27,12 +27,10 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -51,8 +49,9 @@ import org.springframework.security.oauth2.client.token.grant.password.ResourceO
 import org.springframework.security.oauth2.common.AuthenticationScheme;
 
 import javax.annotation.Resource;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -64,7 +63,6 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
     static final String DETAILS_ID = "oauth2-client";
 
     protected ApplicationContext context;
-
 
     @Resource
     @Qualifier("accessTokenRequest")
@@ -96,11 +94,10 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
     }
 
     protected GeoStoreOAuthRestTemplate restTemplate() {
-        return new GeoStoreOAuthRestTemplate(resourceDetails(), new DefaultOAuth2ClientContext(getAccessTokenRequest()),configuration());
+        return new GeoStoreOAuthRestTemplate(resourceDetails(), new DefaultOAuth2ClientContext(getAccessTokenRequest()), configuration());
     }
 
     public GeoStoreOAuthRestTemplate oauth2RestTemplate() {
-
         GeoStoreOAuthRestTemplate oAuth2RestTemplate = restTemplate();
         setJacksonConverter(oAuth2RestTemplate);
         AuthorizationCodeAccessTokenProvider authorizationCodeAccessTokenProvider =
@@ -119,7 +116,7 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
         return oAuth2RestTemplate;
     }
 
-    private void setJacksonConverter(OAuth2RestTemplate oAuth2RestTemplate) {
+    protected void setJacksonConverter(OAuth2RestTemplate oAuth2RestTemplate) {
         List<HttpMessageConverter<?>> converterList = oAuth2RestTemplate.getMessageConverters();
         MappingJackson2HttpMessageConverter jacksonConverter = null;
         for (HttpMessageConverter<?> converter : converterList) {
@@ -132,7 +129,7 @@ public abstract class OAuth2GeoStoreSecurityConfiguration implements Application
             jacksonConverter = new MappingJackson2HttpMessageConverter();
             oAuth2RestTemplate.getMessageConverters().add(jacksonConverter);
         }
-        jacksonConverter.setSupportedMediaTypes(Arrays.asList(new MediaType("application", "json", Charset.forName("UTF-8"))));
+        jacksonConverter.setSupportedMediaTypes(Collections.singletonList(new MediaType("application", "json", StandardCharsets.UTF_8)));
     }
 
     @Override

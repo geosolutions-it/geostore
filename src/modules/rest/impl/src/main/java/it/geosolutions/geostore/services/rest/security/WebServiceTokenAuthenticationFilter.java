@@ -27,10 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -40,45 +36,40 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Token based authentication filter that looks for the token calling an external webservice.
- *
+ * <p>
  * The url of the service needs to be configured. A placeholder in the url will be replaced by
  * the actual token.
- *
+ * <p>
  * The result of the web service call will be parsed using given regular expression to:
- *  - check if the token is valid
- *  - extract the user name from the result
+ * - check if the token is valid
+ * - extract the user name from the result
  *
  * @author Mauro Bartolomeoli
- *
  */
 public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilter {
 
     private final static Logger LOGGER = LogManager.getLogger(WebServiceTokenAuthenticationFilter.class);
-
-    private String url;
-
+    private final String url;
     // compiled user search regex
     Pattern searchUserRegex = null;
-
     // connection timeout to the mapper web service (in seconds)
     int connectTimeout = 5;
-
     // read timeout to the mapper web service (in seconds)
     int readTimeout = 10;
-
+    HttpClientBuilder clientBuilder = HttpClientBuilder.create();
     // optional external httpClient for web service connection (used mainly for tests)
     private HttpClient httpClient = null;
-
     private RequestConfig connectionConfig;
-
-    HttpClientBuilder clientBuilder = HttpClientBuilder.create();
 
     public WebServiceTokenAuthenticationFilter(String url) {
         super();
@@ -88,7 +79,7 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
     /**
      * Regular expression to extract the username from the
      * webservice response.
-     *
+     * <p>
      * The first group in the expression will be used for extraction.
      *
      * @param searchUser
@@ -98,15 +89,20 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
     }
 
 
-
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
     }
 
 
-
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
+    }
+
+    private HttpClient getHttpClient() {
+        if (httpClient == null) {
+            httpClient = clientBuilder.useSystemProperties().build();
+        }
+        return httpClient;
     }
 
     /**
@@ -116,13 +112,6 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
      */
     public void setHttpClient(HttpClient httpClient) {
         this.httpClient = httpClient;
-    }
-
-    private HttpClient getHttpClient() {
-        if (httpClient == null) {
-            httpClient = clientBuilder.useSystemProperties().build();
-        }
-        return httpClient;
     }
 
     @Override
@@ -146,7 +135,7 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
                 // so that is simpler to apply an extraction regular expression
                 String response = EntityUtils.toString(httpResponse.getEntity(), "UTF-8")
                         .replace("\r", "").replace("\n", "");
-                if(response != null) {
+                if (response != null) {
                     if (searchUserRegex == null) {
                         return createAuthenticationForUser(response, null, "");
                     } else {
@@ -164,7 +153,7 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
         } catch (IOException e) {
             LOGGER.error("Error reading data from webservice: " + url, e);
         } finally {
-            if(method != null) {
+            if (method != null) {
                 method.releaseConnection();
             }
         }

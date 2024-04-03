@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -48,29 +48,29 @@ import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCa
 import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.utils.Convert;
-
-import java.util.List;
-
-import javax.ws.rs.core.SecurityContext;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.NotImplementedException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** 
+import javax.ws.rs.core.SecurityContext;
+import java.util.List;
+
+/**
  *
  */
 public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackupService {
 
     private final static Logger LOGGER = LogManager.getLogger(RESTBackupServiceImpl.class);
-
+    private final static long MAX_RESOURCES_FOR_QUICK_BACKUP = 100L;
     private CategoryService categoryService;
-
     private ResourceService resourceService;
 
-    private final static long MAX_RESOURCES_FOR_QUICK_BACKUP = 100l;
+    private static Category rbc2cat(RESTBackupCategory rbc) {
+        Category ret = new Category();
+        ret.setName(rbc.getName());
+        return ret;
+    }
 
     @Override
     public String backup(SecurityContext sc) {
@@ -88,7 +88,7 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
         if (LOGGER.isDebugEnabled())
             LOGGER.debug("quickBackup()");
 
-        if (resourceService.getCount((String) null) > MAX_RESOURCES_FOR_QUICK_BACKUP)
+        if (resourceService.getCount(null) > MAX_RESOURCES_FOR_QUICK_BACKUP)
             throw new BadRequestServiceEx("Too many resources for a quick backup");
 
         RESTQuickBackup backup = new RESTQuickBackup();
@@ -154,12 +154,6 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
             resourceService.insert(res);
             // TODO: res auth
         }
-    }
-
-    private static Category rbc2cat(RESTBackupCategory rbc) {
-        Category ret = new Category();
-        ret.setName(rbc.getName());
-        return ret;
     }
 
     private Resource rbr2res(RESTBackupResource rbr, long catId) {
