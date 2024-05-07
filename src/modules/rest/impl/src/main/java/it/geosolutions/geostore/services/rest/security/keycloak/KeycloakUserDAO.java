@@ -118,13 +118,14 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
         try {
             UsersResource ur = getUsersResource(keycloak);
             List<UserRepresentation> userRep = ur.search(user.getName(), true);
-            if (userRep.size() == 0) return false;
-            Response response = ur.delete(userRep.get(0).getId());
-            if (response.getStatus() == HttpStatus.NO_CONTENT.value()) return true;
-            LOGGER.debug("Delete failed with response status " + response.getStatus());
-            return false;
+            if (userRep.isEmpty()) return false;
+            try (Response response = ur.delete(userRep.get(0).getId())) {
+                if (response.getStatus() == HttpStatus.NO_CONTENT.value()) return true;
+                LOGGER.debug("Delete failed with response status {}", response.getStatus());
+                return false;
+            }
         } catch (NotFoundException e) {
-            LOGGER.warn("No user found with name " + user.getName(), e);
+            LOGGER.warn("No user found with name {}", user.getName(), e);
             return false;
         } finally {
             close(keycloak);

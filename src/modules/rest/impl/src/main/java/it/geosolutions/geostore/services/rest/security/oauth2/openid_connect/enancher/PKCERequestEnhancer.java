@@ -40,6 +40,7 @@ import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.util.MultiValueMap;
 
 /** Used to enhance Token Requests with previously generated code_verifier. */
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class PKCERequestEnhancer implements RequestEnhancer {
 
     private final StringKeyGenerator secureKeyGenerator =

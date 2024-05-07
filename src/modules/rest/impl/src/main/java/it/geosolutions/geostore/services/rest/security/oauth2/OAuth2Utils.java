@@ -72,7 +72,6 @@ public class OAuth2Utils {
 
     public static Date fiveMinutesFromNow() {
         Calendar currentTimeNow = Calendar.getInstance();
-        System.out.println("Current time now : " + currentTimeNow.getTime());
         currentTimeNow.add(Calendar.MINUTE, 5);
         return currentTimeNow.getTime();
     }

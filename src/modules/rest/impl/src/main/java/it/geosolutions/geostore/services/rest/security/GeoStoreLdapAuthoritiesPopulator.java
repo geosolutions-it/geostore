@@ -45,6 +45,7 @@ import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopul
 import org.springframework.util.Assert;
 
 /** @author alessio.fabiani */
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class GeoStoreLdapAuthoritiesPopulator extends DefaultLdapAuthoritiesPopulator
         implements GroupsRolesService {
 
