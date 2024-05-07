@@ -30,9 +30,7 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
-/**
- * A request wrapper to fix the url when using nginx.
- */
+/** A request wrapper to fix the url when using nginx. */
 public class KeyCloakRequestWrapper extends HttpServletRequestWrapper {
     /**
      * Constructs a request object wrapping the given request.

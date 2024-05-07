@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services;
 
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.services.dto.UserSession;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,56 +36,48 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.UserSessionService;
-import it.geosolutions.geostore.services.dto.UserSession;
-
 /**
  * In memory implementation of a UserSessionService.
- * 
+ *
  * @author Mauro Bartolomeoli
  * @author Lorenzo Natali
- *
  */
 public class InMemoryUserSessionServiceImpl implements UserSessionService {
 
     private Map<String, UserSession> sessions = new ConcurrentHashMap<String, UserSession>();
     private int cleanUpSeconds = 60;
 
-    private final ScheduledExecutorService scheduler = Executors
-            .newScheduledThreadPool(1);
-    
-    private Runnable evictionTask = new Runnable() {
-        @Override
-        public void run() {
-            for(String sessionId : sessions.keySet()) {
-                UserSession session = sessions.get(sessionId);
-                if(session.isExpired()) {
-                    removeSession(sessionId);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    private Runnable evictionTask =
+            new Runnable() {
+                @Override
+                public void run() {
+                    for (String sessionId : sessions.keySet()) {
+                        UserSession session = sessions.get(sessionId);
+                        if (session.isExpired()) {
+                            removeSession(sessionId);
+                        }
+                    }
                 }
-            }
-        }
-    };
-    
+            };
+
     public InMemoryUserSessionServiceImpl() {
         super();
         // schedule eviction thread
-        scheduler.scheduleAtFixedRate(evictionTask, cleanUpSeconds, cleanUpSeconds,
-                TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(
+                evictionTask, cleanUpSeconds, cleanUpSeconds, TimeUnit.SECONDS);
     }
-    
+
     public void setCleanUpSeconds(int cleanUpSeconds) {
         this.cleanUpSeconds = cleanUpSeconds;
     }
 
-
-
     @Override
     public User getUserData(String sessionId) {
-        if(sessions.containsKey(sessionId)) {
+        if (sessions.containsKey(sessionId)) {
             UserSession session = sessions.get(sessionId);
-            if(session.isExpired()) {
+            if (session.isExpired()) {
                 removeSession(sessionId);
                 return null;
             }
@@ -91,12 +85,12 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
         }
         return null;
     }
-    
+
     @Override
     public void registerNewSession(String sessionId, UserSession session) {
         sessions.put(sessionId, session);
     }
-    
+
     @Override
     public String registerNewSession(UserSession session) {
         String sessionId = createSessionId();
@@ -106,7 +100,7 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
         registerNewSession(sessionId, session);
         return sessionId;
     }
-    
+
     private String createSessionId() {
         return UUID.randomUUID().toString();
     }
@@ -115,50 +109,45 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
     public void removeSession(String sessionId) {
         sessions.remove(sessionId);
     }
-    
-   
+
     @Override
     public void removeAllSessions() {
         sessions.clear();
     }
-    
+
     /**
-     * Checks that owner is the user bound to the given sessionId.
-     * Ownership is checked by:
-     *  - userData equality to the given object
-     *  - username equality to the string representation of ownwer
-     * 
+     * Checks that owner is the user bound to the given sessionId. Ownership is checked by: -
+     * userData equality to the given object - username equality to the string representation of
+     * ownwer
+     *
      * @param sessionId
      * @param owner
      * @return
      */
     public boolean isOwner(String sessionId, Object owner) {
         UserSession session = sessions.get(sessionId);
-        if(session != null) {
-            return owner.toString().equals(session.getUser().getId())
+        if (session != null) {
+            return owner.toString().equals(String.valueOf(session.getUser().getId()))
                     || owner.equals(session.getUser());
         }
         return false;
     }
 
-	@Override
-	public UserSession refreshSession(String sessionId, String refreshToken) {
-		if(sessions.containsKey(sessionId)) {
-			UserSession sess = sessions.get(sessionId);
-			if(sess!=null && sess.getRefreshToken().equals(refreshToken));
-				sess.refresh();
-				return sess;
-		}
-		return null;
-		
-	}
+    @Override
+    public UserSession refreshSession(String sessionId, String refreshToken) {
+        if (sessions.containsKey(sessionId)) {
+            UserSession sess = sessions.get(sessionId);
+            if (sess != null && sess.getRefreshToken().equals(refreshToken)) sess.refresh();
+            return sess;
+        }
+        return null;
+    }
 
-	@Override
-	public String getRefreshToken(String sessionId) {
-		if(sessions.containsKey(sessionId)) {
-			return sessions.get(sessionId).getRefreshToken();
-		}
-		return null;
-	}
-
+    @Override
+    public String getRefreshToken(String sessionId) {
+        if (sessions.containsKey(sessionId)) {
+            return sessions.get(sessionId).getRefreshToken();
+        }
+        return null;
+    }
 }

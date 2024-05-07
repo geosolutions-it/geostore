@@ -37,13 +37,15 @@ import org.keycloak.adapters.spi.AdapterSessionStore;
 import org.keycloak.adapters.spi.AuthChallenge;
 import org.keycloak.adapters.spi.HttpFacade;
 
-
-/**
- * Custom OAuthRequestAuthenticator. Used to force the redirect URI to the configured one.
- */
+/** Custom OAuthRequestAuthenticator. Used to force the redirect URI to the configured one. */
 public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
 
-    public GeoStoreOAuthAuthenticator(RequestAuthenticator requestAuthenticator, HttpFacade facade, KeycloakDeployment deployment, int sslRedirectPort, AdapterSessionStore tokenStore) {
+    public GeoStoreOAuthAuthenticator(
+            RequestAuthenticator requestAuthenticator,
+            HttpFacade facade,
+            KeycloakDeployment deployment,
+            int sslRedirectPort,
+            AdapterSessionStore tokenStore) {
         super(requestAuthenticator, facade, deployment, sslRedirectPort, tokenStore);
     }
 
@@ -66,9 +68,20 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
                 tokenStore.saveRequest();
                 exchange.getResponse().setStatus(302);
                 // the default keycloak authenticator set the path to /
-                // but this causes a bug for which the state cookie is overrided all the times by the keycloak
+                // but this causes a bug for which the state cookie is overrided all the times by
+                // the keycloak
                 // server. Here we set it to null.
-                exchange.getResponse().setCookie(deployment.getStateCookieName(), state, null, null, -1, deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
+                exchange.getResponse()
+                        .setCookie(
+                                deployment.getStateCookieName(),
+                                state,
+                                null,
+                                null,
+                                -1,
+                                deployment
+                                        .getSslRequired()
+                                        .isRequired(facade.getRequest().getRemoteAddr()),
+                                true);
                 exchange.getResponse().setHeader("Location", redirect);
                 return true;
             }
@@ -80,8 +93,7 @@ public class GeoStoreOAuthAuthenticator extends OAuthRequestAuthenticator {
         String redirectUrl = super.stripOauthParametersFromRedirect();
         KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
         Boolean forceRedirectURI = configuration.getForceConfiguredRedirectURI();
-        if (forceRedirectURI)
-            return configuration.getRedirectUri();
+        if (forceRedirectURI) return configuration.getRedirectUri();
         return redirectUrl;
     }
 

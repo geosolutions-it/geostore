@@ -29,11 +29,10 @@
 package it.geosolutions.geostore.services.model;
 
 import it.geosolutions.geostore.core.model.User;
-
+import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.util.List;
 
 /**
  * Class ExtUserList.
@@ -47,44 +46,32 @@ public class ExtUserList {
 
     private List<User> list;
 
-    public ExtUserList() {
+    public ExtUserList() {}
 
-    }
-
-    /**
-     * @param list
-     */
+    /** @param list */
     public ExtUserList(long count, List<User> list) {
         this.count = count;
         this.list = list;
     }
 
-    /**
-     * @return the count
-     */
+    /** @return the count */
     @XmlElement(name = "UserCount")
     public long getCount() {
         return count;
     }
 
-    /**
-     * @param count the count to set
-     */
+    /** @param count the count to set */
     public void setCount(long count) {
         this.count = count;
     }
 
-    /**
-     * @return List<ShortResource>
-     */
+    /** @return List<ShortResource> */
     @XmlElement(name = "User")
     public List<User> getList() {
         return list;
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public void setList(List<User> list) {
         this.list = list;
     }
@@ -93,5 +80,4 @@ public class ExtUserList {
     public boolean isEmpty() {
         return list == null || list.isEmpty();
     }
-
 }

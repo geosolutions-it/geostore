@@ -34,16 +34,13 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * MockUserGroupService for testing purpose with KeycloakFilter
- */
+/** MockUserGroupService for testing purpose with KeycloakFilter */
 class MockUserGroupService implements UserGroupService {
 
     private final Map<String, UserGroup> groups = new ConcurrentHashMap<>();
@@ -63,14 +60,10 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
-    public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
-
-    }
+    public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx {}
 
     @Override
-    public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
-
-    }
+    public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx {}
 
     @Override
     public List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
@@ -78,7 +71,9 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
-    public List<UserGroup> getAllAllowed(User user, Integer page, Integer entries, String nameLike, boolean all) throws BadRequestServiceEx {
+    public List<UserGroup> getAllAllowed(
+            User user, Integer page, Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx {
         return null;
     }
 
@@ -88,7 +83,9 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
-    public List<ShortResource> updateSecurityRules(Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite) throws NotFoundServiceEx, BadRequestServiceEx {
+    public List<ShortResource> updateSecurityRules(
+            Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite)
+            throws NotFoundServiceEx, BadRequestServiceEx {
         return null;
     }
 
@@ -118,9 +115,8 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
-    public void updateAttributes(long id, List<UserGroupAttribute> attributes) throws NotFoundServiceEx {
-
-    }
+    public void updateAttributes(long id, List<UserGroupAttribute> attributes)
+            throws NotFoundServiceEx {}
 
     @Override
     public long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx {
@@ -128,7 +124,8 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
-    public Collection<UserGroup> findByAttribute(String name, List<String> values, boolean ignoreCase) {
+    public Collection<UserGroup> findByAttribute(
+            String name, List<String> values, boolean ignoreCase) {
         return null;
     }
 }

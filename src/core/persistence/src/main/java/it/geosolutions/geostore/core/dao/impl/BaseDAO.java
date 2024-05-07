@@ -21,20 +21,16 @@ package it.geosolutions.geostore.core.dao.impl;
 
 import com.googlecode.genericdao.dao.jpa.GenericDAOImpl;
 import com.googlecode.genericdao.search.jpa.JPASearchProcessor;
-
 import java.io.Serializable;
-
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-
 import org.springframework.stereotype.Repository;
 
 /**
- * 
  * Class BaseDAO.
- * 
- * The base DAO furnish a set of methods usually used
- * 
+ *
+ * <p>The base DAO furnish a set of methods usually used
+ *
  * @author Tobia Di Pisa (tobia.dipisa@geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
@@ -48,7 +44,7 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
 
     /**
      * EntityManager setting
-     * 
+     *
      * @param entityManager the entity manager to set
      */
     @Override
@@ -59,7 +55,7 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
 
     /**
      * JPASearchProcessor setting
-     * 
+     *
      * @param searchProcessor the search processor to set
      */
     @Override
@@ -70,7 +66,7 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.JPABaseDAO#em()
      */
     @Override

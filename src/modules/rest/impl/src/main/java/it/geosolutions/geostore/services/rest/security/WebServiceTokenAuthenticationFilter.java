@@ -27,6 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
+import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -40,25 +43,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 
-import java.io.IOException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * Token based authentication filter that looks for the token calling an external webservice.
- * <p>
- * The url of the service needs to be configured. A placeholder in the url will be replaced by
+ *
+ * <p>The url of the service needs to be configured. A placeholder in the url will be replaced by
  * the actual token.
- * <p>
- * The result of the web service call will be parsed using given regular expression to:
- * - check if the token is valid
- * - extract the user name from the result
+ *
+ * <p>The result of the web service call will be parsed using given regular expression to: - check
+ * if the token is valid - extract the user name from the result
  *
  * @author Mauro Bartolomeoli
  */
 public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilter {
 
-    private final static Logger LOGGER = LogManager.getLogger(WebServiceTokenAuthenticationFilter.class);
+    private static final Logger LOGGER =
+            LogManager.getLogger(WebServiceTokenAuthenticationFilter.class);
     private final String url;
     // compiled user search regex
     Pattern searchUserRegex = null;
@@ -77,10 +76,9 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
     }
 
     /**
-     * Regular expression to extract the username from the
-     * webservice response.
-     * <p>
-     * The first group in the expression will be used for extraction.
+     * Regular expression to extract the username from the webservice response.
+     *
+     * <p>The first group in the expression will be used for extraction.
      *
      * @param searchUser
      */
@@ -88,11 +86,9 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
         searchUserRegex = Pattern.compile(searchUser);
     }
 
-
     public void setConnectTimeout(int connectTimeout) {
         this.connectTimeout = connectTimeout;
     }
-
 
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
@@ -118,10 +114,11 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
     protected Authentication checkToken(String token) {
         String webServiceUrl = url.replace("{token}", token);
         HttpClient client = getHttpClient();
-        connectionConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(connectTimeout * 1000)
-                .setSocketTimeout(readTimeout * 1000)
-                .build();
+        connectionConfig =
+                RequestConfig.custom()
+                        .setConnectionRequestTimeout(connectTimeout * 1000)
+                        .setSocketTimeout(readTimeout * 1000)
+                        .build();
 
         HttpRequestBase method = null;
         try {
@@ -133,8 +130,10 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
             if (getStatusCode(httpResponse) == HttpStatus.SC_OK) {
                 // get response content as a single string, without new lines
                 // so that is simpler to apply an extraction regular expression
-                String response = EntityUtils.toString(httpResponse.getEntity(), "UTF-8")
-                        .replace("\r", "").replace("\n", "");
+                String response =
+                        EntityUtils.toString(httpResponse.getEntity(), "UTF-8")
+                                .replace("\r", "")
+                                .replace("\n", "");
                 if (response != null) {
                     if (searchUserRegex == null) {
                         return createAuthenticationForUser(response, null, "");
@@ -143,7 +142,8 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
                         if (matcher.find()) {
                             return createAuthenticationForUser(matcher.group(1), null, response);
                         } else {
-                            LOGGER.warn("Error in getting username from webservice response cannot find userName in response");
+                            LOGGER.warn(
+                                    "Error in getting username from webservice response cannot find userName in response");
                         }
                     }
                 } else {
@@ -158,7 +158,6 @@ public class WebServiceTokenAuthenticationFilter extends TokenAuthenticationFilt
             }
         }
         return null;
-
     }
 
     public int getStatusCode(HttpResponse response) {

@@ -30,9 +30,8 @@ package it.geosolutions.geostore.services.rest.auditing;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
+import org.apache.commons.io.FileUtils;
 
 final class AuditingTemplates {
 
@@ -54,19 +53,28 @@ final class AuditingTemplates {
         this(templatesDirectoryPath, null, null, null);
     }
 
-    AuditingTemplates(String templatesDirectoryPath, Long headerTemplateChecksum,
-                      Long bodyTemplateChecksum, Long footerTemplateChecksum) {
+    AuditingTemplates(
+            String templatesDirectoryPath,
+            Long headerTemplateChecksum,
+            Long bodyTemplateChecksum,
+            Long footerTemplateChecksum) {
         templatesDirectory = getTemplatesDirectory(templatesDirectoryPath);
         Configuration configuration = getConfiguration();
         headerTemplate = getTemplate(configuration, HEADER);
         bodyTemplate = getTemplate(configuration, BODY);
         footerTemplate = getTemplate(configuration, FOOTER);
-        this.headerTemplateChecksum = headerTemplateChecksum == null ?
-                checksum(new File(templatesDirectory, "header.ftl")) : headerTemplateChecksum;
-        this.bodyTemplateChecksum = bodyTemplateChecksum == null ?
-                checksum(new File(templatesDirectory, "body.ftl")) : bodyTemplateChecksum;
-        this.footerTemplateChecksum = footerTemplateChecksum == null ?
-                checksum(new File(templatesDirectory, "footer.ftl")) : footerTemplateChecksum;
+        this.headerTemplateChecksum =
+                headerTemplateChecksum == null
+                        ? checksum(new File(templatesDirectory, "header.ftl"))
+                        : headerTemplateChecksum;
+        this.bodyTemplateChecksum =
+                bodyTemplateChecksum == null
+                        ? checksum(new File(templatesDirectory, "body.ftl"))
+                        : bodyTemplateChecksum;
+        this.footerTemplateChecksum =
+                footerTemplateChecksum == null
+                        ? checksum(new File(templatesDirectory, "footer.ftl"))
+                        : footerTemplateChecksum;
     }
 
     Template getHeaderTemplate() {
@@ -90,8 +98,11 @@ final class AuditingTemplates {
                 || headerTemplateChecksum == candidateHeaderTemplateChecksum
                 || bodyTemplateChecksum == candidateBodyTemplateChecksum
                 || footerTemplateChecksum == candidateFooterTemplateChecksum) {
-            return new AuditingTemplates(candidateTemplatesDirectoryPath, candidateHeaderTemplateChecksum,
-                    candidateBodyTemplateChecksum, candidateFooterTemplateChecksum);
+            return new AuditingTemplates(
+                    candidateTemplatesDirectoryPath,
+                    candidateHeaderTemplateChecksum,
+                    candidateBodyTemplateChecksum,
+                    candidateFooterTemplateChecksum);
         }
         return null;
     }
@@ -99,7 +110,8 @@ final class AuditingTemplates {
     private File getTemplatesDirectory(String templatesDirectoryPath) {
         File file = new File(templatesDirectoryPath);
         if (!file.exists()) {
-            throw new AuditingException("Templates directory '%s' does not exists.", templatesDirectoryPath);
+            throw new AuditingException(
+                    "Templates directory '%s' does not exists.", templatesDirectoryPath);
         }
         return file;
     }
@@ -112,7 +124,9 @@ final class AuditingTemplates {
             configuration.setTemplateExceptionHandler(TemplateExceptionHandler.RETHROW_HANDLER);
             return configuration;
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error initiating templates configuration from directory '%s'.",
+            throw new AuditingException(
+                    exception,
+                    "Error initiating templates configuration from directory '%s'.",
                     templatesDirectory.getPath());
         }
     }
@@ -129,7 +143,8 @@ final class AuditingTemplates {
         try {
             return FileUtils.checksumCRC32(file);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error computign checksum of file '%s'.", file.getPath());
+            throw new AuditingException(
+                    exception, "Error computign checksum of file '%s'.", file.getPath());
         }
     }
 }

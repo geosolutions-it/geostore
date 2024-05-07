@@ -28,12 +28,11 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.impl.RESTResourceServiceImpl;
 import it.geosolutions.geostore.services.rest.model.RESTAttribute;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.core.SecurityContext;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Class ResourceServiceImplTest.

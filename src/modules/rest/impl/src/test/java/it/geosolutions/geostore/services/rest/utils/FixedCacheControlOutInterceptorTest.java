@@ -16,21 +16,17 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
+import static org.junit.Assert.assertEquals;
+
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-
-import static org.junit.Assert.assertEquals;
-
-/**
- * @author Emanuele Tajariol (etj at geo-solutions.it)
- */
+/** @author Emanuele Tajariol (etj at geo-solutions.it) */
 public class FixedCacheControlOutInterceptorTest {
-
 
     @Test
     public void testCacheControlHeader() {
@@ -40,7 +36,8 @@ public class FixedCacheControlOutInterceptorTest {
         FixedCacheControlOutInterceptor interceptor = new FixedCacheControlOutInterceptor();
         interceptor.handleMessage(message);
         @SuppressWarnings("unchecked")
-        MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
+        MetadataMap<String, Object> headers =
+                (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
         assertEquals(headers.get("Expires").get(0), "-1");
         assertEquals(headers.get("Cache-Control").get(0), "no-cache");
     }
@@ -51,7 +48,8 @@ public class FixedCacheControlOutInterceptorTest {
         Message message = new MessageImpl();
         ByteArrayOutputStream sw = new ByteArrayOutputStream();
         message.setContent(OutputStream.class, sw);
-        MetadataMap<String, Object> headers = (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
+        MetadataMap<String, Object> headers =
+                (MetadataMap<String, Object>) message.get(Message.PROTOCOL_HEADERS);
         if (headers == null) {
             headers = new MetadataMap<String, Object>();
         }
@@ -67,6 +65,4 @@ public class FixedCacheControlOutInterceptorTest {
         assertEquals(headers.get("Expires").get(0), "-1");
         assertEquals(headers.get("Test").get(0), "Test");
     }
-
-
 }

@@ -29,9 +29,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 
-/**
- * Google specific OAuth2Configuration object.
- */
+/** Google specific OAuth2Configuration object. */
 public class GoogleOAuth2Configuration extends OAuth2Configuration {
 
     @Override

@@ -23,10 +23,7 @@ import it.geosolutions.geostore.core.model.User;
 
 /**
  * Interface UserDAO.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
-public interface UserDAO extends RestrictedGenericDAO<User> {
-
-}
+public interface UserDAO extends RestrictedGenericDAO<User> {}

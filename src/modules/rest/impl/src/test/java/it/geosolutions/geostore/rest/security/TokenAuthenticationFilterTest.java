@@ -27,8 +27,18 @@
  */
 package it.geosolutions.geostore.rest.security;
 
+import static org.junit.Assert.*;
+
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,17 +47,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.junit.Assert.*;
-
 public class TokenAuthenticationFilterTest {
     private static final String DEFAULT_PREFIX = "Bearer ";
 
@@ -55,7 +54,8 @@ public class TokenAuthenticationFilterTest {
     private static final String SAMPLE_USER = "user";
     private static final String SAMPLE_TOKEN = UUID.randomUUID().toString();
     private static final String WRONG_TOKEN = UUID.randomUUID().toString();
-    private static final Authentication SAMPLE_AUTH = new UsernamePasswordAuthenticationToken(SAMPLE_USER, "");
+    private static final Authentication SAMPLE_AUTH =
+            new UsernamePasswordAuthenticationToken(SAMPLE_USER, "");
     HttpServletRequest request = null;
     HttpServletResponse response = null;
     FilterChain chain = null;
@@ -67,14 +67,14 @@ public class TokenAuthenticationFilterTest {
         tokens = new HashMap<String, Authentication>();
         tokens.put(SAMPLE_TOKEN, SAMPLE_AUTH);
 
-        filter = new TokenAuthenticationFilter() {
+        filter =
+                new TokenAuthenticationFilter() {
 
-            @Override
-            protected Authentication checkToken(String token) {
-                return tokens.get(token);
-            }
-
-        };
+                    @Override
+                    protected Authentication checkToken(String token) {
+                        return tokens.get(token);
+                    }
+                };
 
         filter.setUserService(new MockedUserService());
         request = Mockito.mock(HttpServletRequest.class);
@@ -123,7 +123,6 @@ public class TokenAuthenticationFilterTest {
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
         assertEquals(SAMPLE_USER, SecurityContextHolder.getContext().getAuthentication().getName());
     }
-
 
     @Test
     public void testCacheExpiration() throws IOException, ServletException, InterruptedException {

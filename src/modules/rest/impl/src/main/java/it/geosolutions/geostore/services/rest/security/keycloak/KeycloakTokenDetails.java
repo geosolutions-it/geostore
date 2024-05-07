@@ -31,8 +31,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * Data class meant to be set as details to an Authentication object. It holds information about the access
- * and the refresh tokens.
+ * Data class meant to be set as details to an Authentication object. It holds information about the
+ * access and the refresh tokens.
  */
 public class KeycloakTokenDetails {
 
@@ -62,9 +62,7 @@ public class KeycloakTokenDetails {
         return calendar.getTime();
     }
 
-    /**
-     * @return the access_token.
-     */
+    /** @return the access_token. */
     public String getAccessToken() {
         return accessToken;
     }
@@ -78,9 +76,7 @@ public class KeycloakTokenDetails {
         this.accessToken = accessToken;
     }
 
-    /**
-     * @return the refresh_token.
-     */
+    /** @return the refresh_token. */
     public String getRefreshToken() {
         return refreshToken;
     }
@@ -94,9 +90,7 @@ public class KeycloakTokenDetails {
         this.refreshToken = refreshToken;
     }
 
-    /**
-     * @return the access_token expiration date.
-     */
+    /** @return the access_token expiration date. */
     public Date getExpiration() {
         return expiration;
     }

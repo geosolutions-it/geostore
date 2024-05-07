@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
+
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
@@ -37,6 +39,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bea
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
+import java.util.Arrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.annotation.Bean;
@@ -56,19 +59,14 @@ import org.springframework.security.oauth2.config.annotation.web.configuration.E
 import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStore;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.util.Arrays;
-
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
-
-/**
- * Configuration class for OpenID Connect client.
- */
+/** Configuration class for OpenID Connect client. */
 @Configuration("oidcSecConfig")
 @EnableOAuth2Client
 public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityConfiguration {
 
     static final String CONF_BEAN_NAME = "oidc" + CONFIG_NAME_SUFFIX;
-    private final static Logger LOGGER = LogManager.getLogger(OpenIdConnectSecurityConfiguration.class);
+    private static final Logger LOGGER =
+            LogManager.getLogger(OpenIdConnectSecurityConfiguration.class);
 
     @Override
     public OAuth2ProtectedResourceDetails resourceDetails() {
@@ -84,9 +82,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         return new OpenIdConnectConfiguration();
     }
 
-    /**
-     * Must have "request" scope
-     */
+    /** Must have "request" scope */
     @Override
     @Bean(value = "oidcOpenIdRestTemplate")
     @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -94,15 +90,18 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
         GeoStoreOAuthRestTemplate oAuth2RestTemplate = restTemplate();
         setJacksonConverter(oAuth2RestTemplate);
 
-        AuthorizationCodeAccessTokenProvider authorizationAccessTokenProvider = authorizationAccessTokenProvider();
+        AuthorizationCodeAccessTokenProvider authorizationAccessTokenProvider =
+                authorizationAccessTokenProvider();
 
         OpenIdConnectConfiguration idConfig = (OpenIdConnectConfiguration) configuration();
         if (idConfig.isUsePKCE()) {
             LOGGER.info("Using PKCE for OpenID Connect");
-            authorizationAccessTokenProvider.setTokenRequestEnhancer(new PKCERequestEnhancer(idConfig));
+            authorizationAccessTokenProvider.setTokenRequestEnhancer(
+                    new PKCERequestEnhancer(idConfig));
         } else if (idConfig.isSendClientSecret()) {
             LOGGER.info("Using client secret for OpenID Connect");
-            authorizationAccessTokenProvider.setTokenRequestEnhancer(new ClientSecretRequestEnhancer());
+            authorizationAccessTokenProvider.setTokenRequestEnhancer(
+                    new ClientSecretRequestEnhancer());
         } else {
             LOGGER.info("Using default request enhancer for OpenID Connect");
             authorizationAccessTokenProvider.setTokenRequestEnhancer(new DefaultRequestEnhancer());
@@ -149,10 +148,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
     @Bean
     public OpenIdTokenValidator openIdConnectBearerTokenValidator() {
         return new MultiTokenValidator(
-                Arrays.asList(
-                        new AudienceAccessTokenValidator(),
-                        new SubjectTokenValidator())
-        );
+                Arrays.asList(new AudienceAccessTokenValidator(), new SubjectTokenValidator()));
     }
 
     @Bean

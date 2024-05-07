@@ -27,42 +27,39 @@
  */
 package it.geosolutions.geostore.services.dto;
 
-import java.util.Calendar;
-
 import it.geosolutions.geostore.core.model.User;
+import java.util.Calendar;
 
 /**
  * Basic implementation of UserSession.
- * 
- * @author Mauro Bartolomeoli
  *
+ * @author Mauro Bartolomeoli
  */
 public class UserSessionImpl implements UserSession {
 
     private String id;
-    
+
     private User user;
-    
+
     private Calendar expiration;
-    
+
     private long expirationInterval = 0l;
-    
 
-	private String refreshToken;
+    private String refreshToken;
 
-	public UserSessionImpl(String id, User user, Calendar expiration) {
+    public UserSessionImpl(String id, User user, Calendar expiration) {
         super();
         this.id = id;
         this.user = user;
         this.expiration = expiration;
     }
-    
+
     public UserSessionImpl(User user, Calendar expiration) {
         super();
         this.user = user;
         this.setExpiration(expiration);
     }
-    
+
     public void setId(String id) {
         this.id = id;
     }
@@ -72,54 +69,52 @@ public class UserSessionImpl implements UserSession {
     }
 
     public String getRefreshToken() {
-		return refreshToken;
-	}
+        return refreshToken;
+    }
 
-	public void setRefreshToken(String refreshToken) {
-		this.refreshToken = refreshToken;
-	}
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
+    }
 
     @Override
     public String getId() {
         return id;
     }
-    
+
     @Override
     public User getUser() {
         return user;
     }
-    
+
     @Override
     public boolean isExpired() {
-        if(expiration != null) {
+        if (expiration != null) {
             return expiration.getTime().before(Calendar.getInstance().getTime());
         }
         return false;
     }
 
-	@Override
-	public void refresh() {
-		if(expiration != null) {
-			Calendar newExpiration = Calendar.getInstance();
-			newExpiration.setTimeInMillis(newExpiration.getTimeInMillis() + expirationInterval* 1000);
-			setExpiration(newExpiration);
-		}
-		
-	}
-	public void setExpiration(Calendar expiration) {
+    @Override
+    public void refresh() {
+        if (expiration != null) {
+            Calendar newExpiration = Calendar.getInstance();
+            newExpiration.setTimeInMillis(
+                    newExpiration.getTimeInMillis() + expirationInterval * 1000);
+            setExpiration(newExpiration);
+        }
+    }
+
+    public void setExpiration(Calendar expiration) {
         this.expiration = expiration;
     }
-    
-	@Override
-	public long getExpirationInterval() {
-		return expirationInterval;
-	}
 
-	@Override
-	public void setExpirationInterval(long expirationInterval) {
-		this.expirationInterval = expirationInterval;
-	}
+    @Override
+    public long getExpirationInterval() {
+        return expirationInterval;
+    }
 
-
-    
+    @Override
+    public void setExpirationInterval(long expirationInterval) {
+        this.expirationInterval = expirationInterval;
+    }
 }

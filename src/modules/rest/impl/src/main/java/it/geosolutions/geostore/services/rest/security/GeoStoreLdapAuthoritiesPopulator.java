@@ -28,6 +28,11 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
+import java.text.MessageFormat;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.naming.directory.SearchControls;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.ldap.core.ContextSource;
@@ -39,56 +44,41 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.util.Assert;
 
-import javax.naming.directory.SearchControls;
-import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-/**
- * @author alessio.fabiani
- */
-public class GeoStoreLdapAuthoritiesPopulator extends
-        DefaultLdapAuthoritiesPopulator implements GroupsRolesService {
+/** @author alessio.fabiani */
+@SuppressWarnings("PMD.UnusedPrivateField")
+public class GeoStoreLdapAuthoritiesPopulator extends DefaultLdapAuthoritiesPopulator
+        implements GroupsRolesService {
 
     private static final Log logger = LogFactory.getLog(GeoStoreLdapAuthoritiesPopulator.class);
-    /**
-     * Template that will be used for searching
-     */
+    /** Template that will be used for searching */
     private final SpringSecurityLdapTemplate ldapTemplate;
     /**
-     * Controls used to determine whether group searches should be performed over the full sub-tree from the
-     * base DN. Modified by searchSubTree property
+     * Controls used to determine whether group searches should be performed over the full sub-tree
+     * from the base DN. Modified by searchSubTree property
      */
     private final SearchControls searchControls = new SearchControls();
-    /**
-     * The base DN from which the search for group membership should be performed
-     */
+    /** The base DN from which the search for group membership should be performed */
     private final String groupSearchBase;
+
     private final String roleSearchBase;
     private final String allGroupsSearchFilter = "(objectClass=group)";
     private final String allRolesSearchFilter = "(objectClass=group)";
-    /**
-     * The ID of the attribute which contains the role name for a group
-     */
+    /** The ID of the attribute which contains the role name for a group */
     private String groupRoleAttribute = "cn";
-    /**
-     * The pattern to be used for the user search. {0} is the user's DN
-     */
+    /** The pattern to be used for the user search. {0} is the user's DN */
     private String groupSearchFilter = "(member={0})";
+
     private String roleSearchFilter = "(member={0})";
-    /**
-     * The role prefix that will be prepended to each role name
-     */
+    /** The role prefix that will be prepended to each role name */
     private String rolePrefix = "ROLE_";
+
     private boolean searchSubtree = false;
     private boolean enableHierarchicalGroups = false;
     private String groupInGroupSearchFilter = "(member={0})";
     private int maxLevelGroupsSearch = Integer.MAX_VALUE;
-    /**
-     * Should we convert the role name to uppercase
-     */
+    /** Should we convert the role name to uppercase */
     private boolean convertToUpperCase = true;
+
     private GrantedAuthoritiesMapper roleMapper = null;
     private GrantedAuthoritiesMapper groupMapper = null;
 
@@ -96,8 +86,8 @@ public class GeoStoreLdapAuthoritiesPopulator extends
      * @param contextSource
      * @param groupSearchBase
      */
-    public GeoStoreLdapAuthoritiesPopulator(ContextSource contextSource, String groupSearchBase,
-                                            String roleSearchBase) {
+    public GeoStoreLdapAuthoritiesPopulator(
+            ContextSource contextSource, String groupSearchBase, String roleSearchBase) {
         super(contextSource, groupSearchBase);
 
         Assert.notNull(contextSource, "contextSource must not be null");
@@ -110,7 +100,8 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         if (groupSearchBase == null) {
             logger.info("groupSearchBase is null. No group search will be performed.");
         } else if (groupSearchBase.length() == 0) {
-            logger.info("groupSearchBase is empty. Searches will be performed from the context source base");
+            logger.info(
+                    "groupSearchBase is empty. Searches will be performed from the context source base");
         }
 
         this.roleSearchBase = roleSearchBase;
@@ -118,13 +109,15 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         if (roleSearchBase == null) {
             logger.info("roleSearchBase is null. No group search will be performed.");
         } else if (roleSearchBase.length() == 0) {
-            logger.info("roleSearchBase is empty. Searches will be performed from the context source base");
+            logger.info(
+                    "roleSearchBase is empty. Searches will be performed from the context source base");
         }
     }
 
     @Deprecated
     public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
-        logger.error("AuthoritiesMapper is deprecated, please set roleMapper and groupMapper separately");
+        logger.error(
+                "AuthoritiesMapper is deprecated, please set roleMapper and groupMapper separately");
         this.roleMapper = authoritiesMapper;
         this.groupMapper = authoritiesMapper;
     }
@@ -153,12 +146,22 @@ public class GeoStoreLdapAuthoritiesPopulator extends
 
         Set<GrantedAuthority> authorities = new HashSet<>();
 
-        String[] searchParams = username == null ? new String[]{} : new String[]{userDn, username};
+        String[] searchParams =
+                username == null ? new String[] {} : new String[] {userDn, username};
 
         // Searching for ROLES
         if (logger.isDebugEnabled()) {
-            logger.debug("Searching for roles for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                    + roleSearchFilter + " in search base '" + roleSearchBase + "'");
+            logger.debug(
+                    "Searching for roles for user '"
+                            + username
+                            + "', DN = "
+                            + "'"
+                            + userDn
+                            + "', with filter "
+                            + roleSearchFilter
+                            + " in search base '"
+                            + roleSearchBase
+                            + "'");
         }
 
         String[] rolesRoots = roleSearchBase.split(";");
@@ -180,17 +183,28 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         }
 
         Set<GrantedAuthority> authorities = new HashSet<>();
-        String[] searchParams = username == null ? new String[]{} : new String[]{userDn, username};
+        String[] searchParams =
+                username == null ? new String[] {} : new String[] {userDn, username};
 
         // Searching for Groups
         if (logger.isDebugEnabled()) {
-            logger.debug("Searching for groups for user '" + username + "', DN = " + "'" + userDn + "', with filter "
-                    + groupSearchFilter + " in search base '" + groupSearchBase + "'");
+            logger.debug(
+                    "Searching for groups for user '"
+                            + username
+                            + "', DN = "
+                            + "'"
+                            + userDn
+                            + "', with filter "
+                            + groupSearchFilter
+                            + " in search base '"
+                            + groupSearchBase
+                            + "'");
         }
         String[] groupsRoots = groupSearchBase.split(";");
         String filter = username == null ? allGroupsSearchFilter : groupSearchFilter;
         for (String groupsRoot : groupsRoots) {
-            addAuthorities(searchParams, authorities, groupsRoot, filter, null, enableHierarchicalGroups);
+            addAuthorities(
+                    searchParams, authorities, groupsRoot, filter, null, enableHierarchicalGroups);
         }
 
         if (groupMapper != null) {
@@ -207,21 +221,38 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         return getRoles(null, null);
     }
 
-    private void addAuthorities(String[] params, Set<GrantedAuthority> authorities,
-                                String root, String filter, String authorityPrefix, boolean hierarchical) {
+    private void addAuthorities(
+            String[] params,
+            Set<GrantedAuthority> authorities,
+            String root,
+            String filter,
+            String authorityPrefix,
+            boolean hierarchical) {
         addAuthorities(params, authorities, root, filter, authorityPrefix, hierarchical, 0);
     }
 
-    private void addAuthorities(String[] params, Set<GrantedAuthority> authorities,
-                                String root, String filter, String authorityPrefix, boolean hierarchical, int level) {
+    private void addAuthorities(
+            String[] params,
+            Set<GrantedAuthority> authorities,
+            String root,
+            String filter,
+            String authorityPrefix,
+            boolean hierarchical,
+            int level) {
         String formattedFilter = MessageFormat.format(filter, params);
 
-        List ldapAuthorities = ldapTemplate.search(root, formattedFilter, new AbstractContextMapper() {
-            @Override
-            protected Object doMapFromContext(DirContextOperations ctx) {
-                return new Authority(ctx.getStringAttribute(groupRoleAttribute), ctx.getNameInNamespace());
-            }
-        });
+        List ldapAuthorities =
+                ldapTemplate.search(
+                        root,
+                        formattedFilter,
+                        new AbstractContextMapper() {
+                            @Override
+                            protected Object doMapFromContext(DirContextOperations ctx) {
+                                return new Authority(
+                                        ctx.getStringAttribute(groupRoleAttribute),
+                                        ctx.getNameInNamespace());
+                            }
+                        });
 
         if (logger.isDebugEnabled()) {
             logger.debug("Found " + ldapAuthorities.size() + " authorities from search");
@@ -231,14 +262,22 @@ public class GeoStoreLdapAuthoritiesPopulator extends
 
             boolean added = addAuthority(authorities, authorityPrefix, ldapAuthority.getName());
             if (added && hierarchical && level < maxLevelGroupsSearch) {
-                String[] searchParams = new String[]{ldapAuthority.getDn(), ldapAuthority.getName()};
-                addAuthorities(searchParams, authorities, root, groupInGroupSearchFilter, authorityPrefix, hierarchical, level + 1);
+                String[] searchParams =
+                        new String[] {ldapAuthority.getDn(), ldapAuthority.getName()};
+                addAuthorities(
+                        searchParams,
+                        authorities,
+                        root,
+                        groupInGroupSearchFilter,
+                        authorityPrefix,
+                        hierarchical,
+                        level + 1);
             }
         }
     }
 
-    private boolean addAuthority(Set<GrantedAuthority> authorities, String authorityPrefix,
-                                 String authority) {
+    private boolean addAuthority(
+            Set<GrantedAuthority> authorities, String authorityPrefix, String authority) {
 
         if (logger.isDebugEnabled()) {
             logger.debug("Adding authority: " + authorityPrefix + "::" + authority);
@@ -248,7 +287,10 @@ public class GeoStoreLdapAuthoritiesPopulator extends
             authority = authority.toUpperCase();
         }
 
-        String prefix = (authorityPrefix != null && !authority.startsWith(authorityPrefix) ? authorityPrefix : "");
+        String prefix =
+                (authorityPrefix != null && !authority.startsWith(authorityPrefix)
+                        ? authorityPrefix
+                        : "");
 
         String rolename = prefix + authority;
         SimpleGrantedAuthority role = new SimpleGrantedAuthority(rolename);
@@ -331,7 +373,5 @@ public class GeoStoreLdapAuthoritiesPopulator extends
         public String getDn() {
             return dn;
         }
-
     }
-
 }

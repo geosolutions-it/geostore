@@ -28,22 +28,17 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreAccessTokenConverter;
+import java.util.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
 
-import java.util.*;
-
-/**
- * Google AccessTokenConverter. Retrieves Authentication information from the AccessToken.
- */
+/** Google AccessTokenConverter. Retrieves Authentication information from the AccessToken. */
 public class GoogleAccessTokenConverter extends GeoStoreAccessTokenConverter {
-
 
     public GoogleAccessTokenConverter(String principalKey) {
         super(principalKey);
     }
-
 
     @Override
     public OAuth2Authentication extractAuthentication(Map<String, ?> map) {
@@ -53,8 +48,7 @@ public class GoogleAccessTokenConverter extends GeoStoreAccessTokenConverter {
         String clientId = (String) map.get(CLIENT_ID);
         parameters.put(CLIENT_ID, clientId);
         Object aud = map.get(AUD);
-        Set<String> resourceIds =
-                new LinkedHashSet<>();
+        Set<String> resourceIds = new LinkedHashSet<>();
         if (aud instanceof Collection) {
             ((Collection<Object>) aud).stream().forEach(a -> resourceIds.add(a.toString()));
         } else if (aud instanceof String) {
@@ -65,7 +59,6 @@ public class GoogleAccessTokenConverter extends GeoStoreAccessTokenConverter {
                         parameters, clientId, null, true, scope, resourceIds, null, null, null);
         return new OAuth2Authentication(request, user);
     }
-
 
     private Set<String> parseScopes(Map<String, ?> map) {
         // Parsing of scopes coming back from Google are slightly different from
@@ -82,5 +75,4 @@ public class GoogleAccessTokenConverter extends GeoStoreAccessTokenConverter {
         }
         return scope;
     }
-
 }

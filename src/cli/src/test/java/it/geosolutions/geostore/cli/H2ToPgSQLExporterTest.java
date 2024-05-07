@@ -5,7 +5,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -36,41 +36,45 @@ import org.junit.Before;
 
 public abstract class H2ToPgSQLExporterTest {
     protected H2ToPgSQLExporter exporter;
+
     @Before
     public void setUp() {
         exporter = new H2ToPgSQLExporter();
         exporter.username = "geostore";
         exporter.password = "geostore";
     }
-    
+
     protected String getInvalidDbPath() {
         return "WRONGPATH";
     }
+
     protected String getTestDbPath() throws IOException {
         File tempFile = File.createTempFile("geostore", ".h2.db");
         tempFile.deleteOnExit();
         return tempFile.getAbsolutePath();
     }
-    
 
     protected String getTestDbPathWithoutExtension() throws IOException {
         String path = getTestDbPath();
         return path.substring(0, path.indexOf("."));
     }
-    
-    
+
     protected String getTestDb() throws IOException {
         File tempFile = File.createTempFile("geostore", ".h2.db");
         tempFile.delete();
-        Files.copy(H2ToPgSQLExporterScriptTest.class.getResourceAsStream("geostore.h2.db"), Paths.get(tempFile.getAbsolutePath()));
+        Files.copy(
+                H2ToPgSQLExporterScriptTest.class.getResourceAsStream("geostore.h2.db"),
+                Paths.get(tempFile.getAbsolutePath()));
         tempFile.deleteOnExit();
         return tempFile.getAbsolutePath();
     }
-    
+
     protected String getInvalidDb() throws IOException {
         File tempFile = File.createTempFile("geostore", ".h2.db");
         tempFile.delete();
-        Files.copy(H2ToPgSQLExporterScriptTest.class.getResourceAsStream("geostore_invalid.h2.db"), Paths.get(tempFile.getAbsolutePath()));
+        Files.copy(
+                H2ToPgSQLExporterScriptTest.class.getResourceAsStream("geostore_invalid.h2.db"),
+                Paths.get(tempFile.getAbsolutePath()));
         tempFile.deleteOnExit();
         return tempFile.getAbsolutePath();
     }

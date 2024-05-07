@@ -27,9 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.junit.Assert;
-import org.apache.commons.io.FileUtils;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -37,6 +34,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
 
 final class AuditingTestsUtils {
 
@@ -44,10 +43,16 @@ final class AuditingTestsUtils {
         return new File(original.getPath() + "-" + UUID.randomUUID().toString());
     }
 
-    static void createDefaultConfiguration(File configurationDirectory, File configurationFilePath, File outputDirectory, File templatesDirectory) {
+    static void createDefaultConfiguration(
+            File configurationDirectory,
+            File configurationFilePath,
+            File outputDirectory,
+            File templatesDirectory) {
         initDirectory(configurationDirectory);
-        System.setProperty(AuditingConfiguration.CONFIGURATION_PATH, configurationFilePath.getAbsolutePath());
-        String properties = propertiesToString(getDefaultProperties(outputDirectory, templatesDirectory));
+        System.setProperty(
+                AuditingConfiguration.CONFIGURATION_PATH, configurationFilePath.getAbsolutePath());
+        String properties =
+                propertiesToString(getDefaultProperties(outputDirectory, templatesDirectory));
         createFile(configurationFilePath, properties);
     }
 
@@ -60,7 +65,8 @@ final class AuditingTestsUtils {
         try {
             FileUtils.forceMkdir(directory);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error creating directory '%s'.", directory.getAbsolutePath());
+            throw new AuditingException(
+                    exception, "Error creating directory '%s'.", directory.getAbsolutePath());
         }
     }
 
@@ -70,12 +76,14 @@ final class AuditingTestsUtils {
 
     static void deleteFile(File file) {
         if (!file.getAbsolutePath().contains("auditing-tests")) {
-            throw new AuditingException("This path '%s' requested to delete looks suspicious.", file.getAbsolutePath());
+            throw new AuditingException(
+                    "This path '%s' requested to delete looks suspicious.", file.getAbsolutePath());
         }
         try {
             FileUtils.deleteQuietly(file);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error deleting file '%s'.", file.getAbsolutePath());
+            throw new AuditingException(
+                    exception, "Error deleting file '%s'.", file.getAbsolutePath());
         }
     }
 
@@ -91,7 +99,8 @@ final class AuditingTestsUtils {
             writer.flush();
             writer.close();
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error writing content to file '%s'.", file.getAbsolutePath());
+            throw new AuditingException(
+                    exception, "Error writing content to file '%s'.", file.getAbsolutePath());
         }
     }
 
@@ -103,7 +112,8 @@ final class AuditingTestsUtils {
             input.close();
             return new String(data).replaceAll("\\r\\n", "\n");
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error reading file '%s' content.", file.getAbsolutePath());
+            throw new AuditingException(
+                    exception, "Error reading file '%s' content.", file.getAbsolutePath());
         }
     }
 
@@ -111,9 +121,13 @@ final class AuditingTestsUtils {
         Map<String, String> properties = new HashMap<String, String>();
         properties.put(AuditingConfiguration.AUDIT_ENABLE, "true");
         properties.put(AuditingConfiguration.MAX_RESQUEST_PER_FILE, "3");
-        properties.put(AuditingConfiguration.OUTPUT_DIRECTORY, outputDirectory.getAbsolutePath().replace("\\", "\\\\"));
+        properties.put(
+                AuditingConfiguration.OUTPUT_DIRECTORY,
+                outputDirectory.getAbsolutePath().replace("\\", "\\\\"));
         properties.put(AuditingConfiguration.OUTPUT_FILES_EXTENSION, "txt");
-        properties.put(AuditingConfiguration.TEMPLATES_DIRECTORY, templatesDirectory.getAbsolutePath().replace("\\", "\\\\"));
+        properties.put(
+                AuditingConfiguration.TEMPLATES_DIRECTORY,
+                templatesDirectory.getAbsolutePath().replace("\\", "\\\\"));
         properties.put(AuditingConfiguration.TEMPLATES_VERSION, "1");
         return properties;
     }
@@ -121,7 +135,11 @@ final class AuditingTestsUtils {
     static String propertiesToString(Map<String, String> properties) {
         StringBuilder stringBuilder = new StringBuilder();
         for (Map.Entry<String, String> property : properties.entrySet()) {
-            stringBuilder.append(property.getKey()).append('=').append(property.getValue()).append("\n");
+            stringBuilder
+                    .append(property.getKey())
+                    .append('=')
+                    .append(property.getValue())
+                    .append("\n");
         }
         return stringBuilder.toString();
     }
@@ -147,11 +165,13 @@ final class AuditingTestsUtils {
         try {
             return FileUtils.checksumCRC32(file);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error computing checksum of file '%s'.", file.getAbsolutePath());
+            throw new AuditingException(
+                    exception, "Error computing checksum of file '%s'.", file.getAbsolutePath());
         }
     }
 
-    static void waitFileChange(File file, long checksum, long timeoutInMs) throws InterruptedException {
+    static void waitFileChange(File file, long checksum, long timeoutInMs)
+            throws InterruptedException {
         for (int i = 0; i < timeoutInMs / 100; i++) {
             if (checksum(file) != checksum) {
                 return;

@@ -1,10 +1,21 @@
 package it.geosolutions.geostore.rest.security.keycloak;
 
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.keycloak.*;
+import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,18 +39,6 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 
 public class KeycloakFilterTest extends KeycloakTestSupport {
 
@@ -89,8 +88,14 @@ public class KeycloakFilterTest extends KeycloakTestSupport {
         ObjectMapper om = new ObjectMapper();
         String stringConfig = om.writeValueAsString(config);
         configuration.setJsonConfig(stringConfig);
-        try (MockedStatic<AdapterTokenVerifier> utilities = Mockito.mockStatic(AdapterTokenVerifier.class)) {
-            utilities.when(() -> AdapterTokenVerifier.verifyToken(eq(JWT_2018_2037), any(KeycloakDeployment.class))).thenReturn(verifyToken());
+        try (MockedStatic<AdapterTokenVerifier> utilities =
+                Mockito.mockStatic(AdapterTokenVerifier.class)) {
+            utilities
+                    .when(
+                            () ->
+                                    AdapterTokenVerifier.verifyToken(
+                                            eq(JWT_2018_2037), any(KeycloakDeployment.class)))
+                    .thenReturn(verifyToken());
             TokenAuthenticationCache cache = new TokenAuthenticationCache();
             KeyCloakFilter filter = createFilter(configuration, cache);
             String auth_header = "bearer " + JWT_2018_2037;
@@ -100,7 +105,10 @@ public class KeycloakFilterTest extends KeycloakTestSupport {
             assertTrue(authentication.getPrincipal() instanceof User);
             User user = (User) authentication.getPrincipal();
             Set<UserGroup> groupSet = user.getGroups();
-            groupSet = groupSet.stream().filter(g -> !g.getGroupName().equals("everyone")).collect(Collectors.toSet());
+            groupSet =
+                    groupSet.stream()
+                            .filter(g -> !g.getGroupName().equals("everyone"))
+                            .collect(Collectors.toSet());
             for (UserGroup group : groupSet) {
                 assertNotNull(groupService.get(group.getGroupName()));
             }
@@ -131,21 +139,27 @@ public class KeycloakFilterTest extends KeycloakTestSupport {
         return createFilter(configuration, new TokenAuthenticationCache());
     }
 
-    private KeyCloakFilter createFilter(KeyCloakConfiguration configuration, TokenAuthenticationCache cache) {
+    private KeyCloakFilter createFilter(
+            KeyCloakConfiguration configuration, TokenAuthenticationCache cache) {
         KeycloakDeployment deployment =
                 KeycloakDeploymentBuilder.build(configuration.readAdapterConfig());
         AdapterDeploymentContext context = new AdapterDeploymentContext(deployment);
-        KeyCloakHelper helper = new KeyCloakHelper(context) {
-            @Override
-            public RequestAuthenticator getAuthenticator(HttpServletRequest request, HttpServletResponse response, KeycloakDeployment deployment) {
-                request =
-                        new KeyCloakRequestWrapper(request);
-                AdapterTokenStore tokenStore =
-                        adapterTokenStoreFactory.createAdapterTokenStore(deployment, request, response);
-                SimpleHttpFacade simpleHttpFacade = new SimpleHttpFacade(request, response);
-                return new TestAuthenticator(simpleHttpFacade, request, deployment, tokenStore, -1);
-            }
-        };
+        KeyCloakHelper helper =
+                new KeyCloakHelper(context) {
+                    @Override
+                    public RequestAuthenticator getAuthenticator(
+                            HttpServletRequest request,
+                            HttpServletResponse response,
+                            KeycloakDeployment deployment) {
+                        request = new KeyCloakRequestWrapper(request);
+                        AdapterTokenStore tokenStore =
+                                adapterTokenStoreFactory.createAdapterTokenStore(
+                                        deployment, request, response);
+                        SimpleHttpFacade simpleHttpFacade = new SimpleHttpFacade(request, response);
+                        return new TestAuthenticator(
+                                simpleHttpFacade, request, deployment, tokenStore, -1);
+                    }
+                };
         GeoStoreKeycloakAuthProvider authProvider = new GeoStoreKeycloakAuthProvider(configuration);
         authProvider.setUserService(userService);
         authProvider.setGroupService(groupService);
@@ -168,8 +182,14 @@ public class KeycloakFilterTest extends KeycloakTestSupport {
         ObjectMapper om = new ObjectMapper();
         String stringConfig = om.writeValueAsString(config);
         configuration.setJsonConfig(stringConfig);
-        try (MockedStatic<AdapterTokenVerifier> utilities = Mockito.mockStatic(AdapterTokenVerifier.class)) {
-            utilities.when(() -> AdapterTokenVerifier.verifyToken(eq(JWT_2018_2037), any(KeycloakDeployment.class))).thenReturn(verifyToken());
+        try (MockedStatic<AdapterTokenVerifier> utilities =
+                Mockito.mockStatic(AdapterTokenVerifier.class)) {
+            utilities
+                    .when(
+                            () ->
+                                    AdapterTokenVerifier.verifyToken(
+                                            eq(JWT_2018_2037), any(KeycloakDeployment.class)))
+                    .thenReturn(verifyToken());
             TokenAuthenticationCache cache = new TokenAuthenticationCache();
             KeyCloakFilter filter = createFilter(configuration, cache);
             String auth_header = "bearer " + JWT_2018_2037;
@@ -190,10 +210,14 @@ public class KeycloakFilterTest extends KeycloakTestSupport {
 
     private class TestOAuthAuthenticator extends GeoStoreOAuthAuthenticator {
 
-        public TestOAuthAuthenticator(RequestAuthenticator requestAuthenticator, HttpFacade facade, KeycloakDeployment deployment, int sslRedirectPort, AdapterSessionStore tokenStore) {
+        public TestOAuthAuthenticator(
+                RequestAuthenticator requestAuthenticator,
+                HttpFacade facade,
+                KeycloakDeployment deployment,
+                int sslRedirectPort,
+                AdapterSessionStore tokenStore) {
             super(requestAuthenticator, facade, deployment, sslRedirectPort, tokenStore);
         }
-
 
         @Override
         protected String getRedirectUri(String state) {
@@ -203,15 +227,19 @@ public class KeycloakFilterTest extends KeycloakTestSupport {
 
     private class TestAuthenticator extends SpringSecurityRequestAuthenticator {
 
-        public TestAuthenticator(HttpFacade facade, HttpServletRequest request, KeycloakDeployment deployment, AdapterTokenStore tokenStore, int sslRedirectPort) {
+        public TestAuthenticator(
+                HttpFacade facade,
+                HttpServletRequest request,
+                KeycloakDeployment deployment,
+                AdapterTokenStore tokenStore,
+                int sslRedirectPort) {
             super(facade, request, deployment, tokenStore, sslRedirectPort);
         }
 
         @Override
         protected OAuthRequestAuthenticator createOAuthAuthenticator() {
-            return new TestOAuthAuthenticator(this, facade, deployment, sslRedirectPort, tokenStore);
+            return new TestOAuthAuthenticator(
+                    this, facade, deployment, sslRedirectPort, tokenStore);
         }
     }
-
-
 }

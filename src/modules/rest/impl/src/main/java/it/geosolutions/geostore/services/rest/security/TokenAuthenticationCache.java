@@ -33,6 +33,8 @@ import com.google.common.cache.RemovalCause;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -46,32 +48,30 @@ import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.Date;
-import java.util.concurrent.TimeUnit;
-
 /**
  * A cache for OAuth2 Authentication object. Authentication instances are identified by the
  * corresponding accessToken.
  */
 public class TokenAuthenticationCache implements ApplicationContextAware {
 
-    private final static Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
+    private static final Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
     private final Cache<String, Authentication> cache;
     private final int cacheSize = 1000;
     private final int cacheExpirationMinutes = 8;
     private ApplicationContext context;
 
-
     public TokenAuthenticationCache() {
-        CacheBuilder<String, Authentication> cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(cacheSize)
-                .expireAfterWrite(cacheExpirationMinutes, TimeUnit.HOURS)
-                .removalListener(notification -> {
-                    if (notification.getCause().equals(RemovalCause.EXPIRED)) {
-                        Authentication authentication = notification.getValue();
-                        revokeAuthIfRefreshExpired(authentication);
-                    }
-                });
+        CacheBuilder<String, Authentication> cacheBuilder =
+                CacheBuilder.newBuilder()
+                        .maximumSize(cacheSize)
+                        .expireAfterWrite(cacheExpirationMinutes, TimeUnit.HOURS)
+                        .removalListener(
+                                notification -> {
+                                    if (notification.getCause().equals(RemovalCause.EXPIRED)) {
+                                        Authentication authentication = notification.getValue();
+                                        revokeAuthIfRefreshExpired(authentication);
+                                    }
+                                });
         this.cache = cacheBuilder.build();
     }
 
@@ -87,14 +87,23 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
             OAuth2RefreshToken refreshToken = accessToken.getRefreshToken();
             if (refreshToken instanceof ExpiringOAuth2RefreshToken) {
                 ExpiringOAuth2RefreshToken expiring = (ExpiringOAuth2RefreshToken) refreshToken;
-                OAuth2Configuration configuration = (OAuth2Configuration) context.getBean(tokenDetails.getProvider());
+                OAuth2Configuration configuration =
+                        (OAuth2Configuration) context.getBean(tokenDetails.getProvider());
                 if (expiring.getExpiration().after(new Date())) {
-                    OAuth2Configuration.Endpoint revokeEndpoint = configuration.buildRevokeEndpoint(expiring.getValue());
+                    OAuth2Configuration.Endpoint revokeEndpoint =
+                            configuration.buildRevokeEndpoint(expiring.getValue());
                     if (revokeEndpoint != null) {
                         RestTemplate template = new RestTemplate();
-                        ResponseEntity<String> responseEntity = template.exchange(revokeEndpoint.getUrl(), revokeEndpoint.getMethod(), null, String.class);
+                        ResponseEntity<String> responseEntity =
+                                template.exchange(
+                                        revokeEndpoint.getUrl(),
+                                        revokeEndpoint.getMethod(),
+                                        null,
+                                        String.class);
                         if (responseEntity.getStatusCode().value() != 200) {
-                            LOGGER.error("Error while revoking authorization. Error is: " + responseEntity.getBody());
+                            LOGGER.error(
+                                    "Error while revoking authorization. Error is: "
+                                            + responseEntity.getBody());
                         }
                     }
                 }
@@ -113,12 +122,11 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
     }
 
     /**
-     * Put an Authentication instance identified by an accessToken value.
-     * If the passed Authentication instance those not have a refresh token
-     * and we have an old one that has, the refresh Token
-     * is set to the new instance.
+     * Put an Authentication instance identified by an accessToken value. If the passed
+     * Authentication instance those not have a refresh token and we have an old one that has, the
+     * refresh Token is set to the new instance.
      *
-     * @param accessToken    the access token identifying the instance to update
+     * @param accessToken the access token identifying the instance to update
      * @param authentication the Authentication to cache.
      * @return the Authentication cached.
      */
@@ -130,7 +138,8 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
             OAuth2AccessToken newToken = newDetails.getAccessToken();
             OAuth2AccessToken oldToken = oldDetails.getAccessToken();
             if (newToken.getRefreshToken() == null && oldToken != null) {
-                DefaultOAuth2AccessToken defaultOAuth2AccessToken = new DefaultOAuth2AccessToken(newToken.getValue());
+                DefaultOAuth2AccessToken defaultOAuth2AccessToken =
+                        new DefaultOAuth2AccessToken(newToken.getValue());
                 defaultOAuth2AccessToken.setRefreshToken(oldToken.getRefreshToken());
                 newDetails.setAccessToken(defaultOAuth2AccessToken);
             }

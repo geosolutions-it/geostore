@@ -19,26 +19,24 @@
  */
 package it.geosolutions.geostore.services;
 
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.googlecode.genericdao.search.Search;
-
 /**
  * Class CategoryServiceImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class CategoryServiceImpl implements CategoryService {
 
     private static final Logger LOGGER = LogManager.getLogger(CategoryServiceImpl.class);
@@ -47,23 +45,19 @@ public class CategoryServiceImpl implements CategoryService {
 
     private SecurityDAO securityDAO;
 
-    /**
-     * @param securityDAO the securityDAO to set
-     */
+    /** @param securityDAO the securityDAO to set */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }
 
-    /**
-     * @param categoryDAO the categoryDAO to set
-     */
+    /** @param categoryDAO the categoryDAO to set */
     public void setCategoryDAO(CategoryDAO categoryDAO) {
         this.categoryDAO = categoryDAO;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#insert(it.geosolutions.geostore.core.model.Category)
      */
     @Override
@@ -98,7 +92,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#update(it.geosolutions.geostore.core.model.Category)
      */
     @Override
@@ -108,7 +102,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#get(long)
      */
     @Override
@@ -120,7 +114,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#get(long)
      */
     @Override
@@ -141,7 +135,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#delete(long)
      */
     @Override
@@ -151,7 +145,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -177,7 +171,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#getCount(java.lang.String)
      */
     @Override
@@ -193,7 +187,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.CategoryService#getUserSecurityRule(java.lang.String, long)
      */
     @Override

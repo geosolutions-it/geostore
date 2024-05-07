@@ -27,6 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
+
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
@@ -40,27 +43,27 @@ import org.springframework.security.oauth2.provider.token.store.jwk.JwkTokenStor
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Optional;
-
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
-
-/**
- * Custom OAuth2RestTemplate. Allows the extraction of the id token from the response.
- */
+/** Custom OAuth2RestTemplate. Allows the extraction of the id token from the response. */
+@SuppressWarnings("PMD.UnusedPrivateField")
 public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
 
     public static final String ID_TOKEN_VALUE = "OpenIdConnect-IdTokenValue";
-    private final static Logger LOGGER = LogManager.getLogger(GeoStoreOAuthRestTemplate.class);
+    private static final Logger LOGGER = LogManager.getLogger(GeoStoreOAuthRestTemplate.class);
     private final String idTokenParam;
     private JwkTokenStore store;
 
     public GeoStoreOAuthRestTemplate(
-            OAuth2ProtectedResourceDetails resource, OAuth2ClientContext context, OAuth2Configuration configuration) {
+            OAuth2ProtectedResourceDetails resource,
+            OAuth2ClientContext context,
+            OAuth2Configuration configuration) {
         this(resource, context, configuration, ID_TOKEN_PARAM);
     }
 
     public GeoStoreOAuthRestTemplate(
-            OAuth2ProtectedResourceDetails resource, OAuth2ClientContext context, OAuth2Configuration configuration, String idTokenParam) {
+            OAuth2ProtectedResourceDetails resource,
+            OAuth2ClientContext context,
+            OAuth2Configuration configuration,
+            String idTokenParam) {
         super(resource, context);
         if (configuration.getIdTokenUri() != null)
             this.store = new JwkTokenStore(configuration.getIdTokenUri());
@@ -93,8 +96,8 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
                         LOGGER.debug("OIDC: SCOPES=" + String.join(" ", result.getScope()));
                         final String accessToken = saferJWT(result.getValue());
                         LOGGER.debug("OIDC: ACCESS TOKEN:" + accessToken);
-                        RequestContextHolder.getRequestAttributes().setAttribute(
-                                ACCESS_TOKEN_PARAM, accessToken, 0);
+                        RequestContextHolder.getRequestAttributes()
+                                .setAttribute(ACCESS_TOKEN_PARAM, accessToken, 0);
                         if (result.getAdditionalInformation().containsKey("refresh_token")) {
                             final String refreshToken =
                                     saferJWT(
@@ -102,8 +105,8 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
                                                     result.getAdditionalInformation()
                                                             .get("refresh_token"));
                             LOGGER.debug("OIDC: REFRESH TOKEN:" + refreshToken);
-                            RequestContextHolder.getRequestAttributes().setAttribute(
-                                    REFRESH_TOKEN_PARAM, accessToken, 0);
+                            RequestContextHolder.getRequestAttributes()
+                                    .setAttribute(REFRESH_TOKEN_PARAM, accessToken, 0);
                         }
                         if (result.getAdditionalInformation().containsKey("id_token")) {
                             final String idToken =
@@ -112,8 +115,8 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
                                                     result.getAdditionalInformation()
                                                             .get("id_token"));
                             LOGGER.debug("OIDC: ID TOKEN:" + idToken);
-                            RequestContextHolder.getRequestAttributes().setAttribute(
-                                    ID_TOKEN_PARAM, accessToken, 0);
+                            RequestContextHolder.getRequestAttributes()
+                                    .setAttribute(ID_TOKEN_PARAM, accessToken, 0);
                         }
                     }
                 }
@@ -122,8 +125,8 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
     }
 
     /**
-     * Logs the string value of a token if it's a JWT token - it should be in 3 parts, separated by a
-     * "." These 3 sections are: header, claims, signature We only log the 2nd (claims) part. This
+     * Logs the string value of a token if it's a JWT token - it should be in 3 parts, separated by
+     * a "." These 3 sections are: header, claims, signature We only log the 2nd (claims) part. This
      * is safer because without the signature, the token will not validate.
      *
      * <p>We don't log the token directly because it can be used to access protected resources.

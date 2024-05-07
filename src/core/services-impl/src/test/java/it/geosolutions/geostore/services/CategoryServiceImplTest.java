@@ -20,29 +20,24 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Category;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * Class CategoryServiceImplTest.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class CategoryServiceImplTest extends ServiceTestBase {
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
+    public static void setUpClass() throws Exception {}
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
+    public static void tearDownClass() throws Exception {}
 
-    public CategoryServiceImplTest() {
-    }
+    public CategoryServiceImplTest() {}
 
     @Test
     public void testInsertDeleteCategory() throws Exception {
@@ -103,6 +98,5 @@ public class CategoryServiceImplTest extends ServiceTestBase {
             categoryService.delete(categoryId);
             assertEquals(0, categoryService.getCount(null));
         }
-
     }
 }

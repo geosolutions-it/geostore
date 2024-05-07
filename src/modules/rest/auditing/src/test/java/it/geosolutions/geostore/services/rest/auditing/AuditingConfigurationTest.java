@@ -27,12 +27,11 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.junit.Test;
-
-import java.util.Map;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+
+import java.util.Map;
+import org.junit.Test;
 
 public final class AuditingConfigurationTest extends AuditingTestsBase {
 
@@ -42,20 +41,25 @@ public final class AuditingConfigurationTest extends AuditingTestsBase {
         assertEquals(auditingConfiguration.isAuditEnable(), true);
         assertEquals(auditingConfiguration.getMaxRequestPerFile(), 3);
         assertEquals(auditingConfiguration.getTemplatesVersion(), 1);
-        assertEquals(auditingConfiguration.getOutputDirectory(), OUTPUT_DIRECTORY.getAbsolutePath());
+        assertEquals(
+                auditingConfiguration.getOutputDirectory(), OUTPUT_DIRECTORY.getAbsolutePath());
         assertEquals(auditingConfiguration.getOutputFilesExtension(), "txt");
-        assertEquals(auditingConfiguration.getTemplatesDirectory(), TEMPLATES_DIRECTORY.getAbsolutePath());
+        assertEquals(
+                auditingConfiguration.getTemplatesDirectory(),
+                TEMPLATES_DIRECTORY.getAbsolutePath());
     }
 
     @Test
     public void testUpdateConfiguration() {
         AuditingConfiguration auditingConfiguration = new AuditingConfiguration();
         assertEquals(auditingConfiguration.isAuditEnable(), true);
-        Map<String, String> properties = AuditingTestsUtils.getDefaultProperties(OUTPUT_DIRECTORY, TEMPLATES_DIRECTORY);
+        Map<String, String> properties =
+                AuditingTestsUtils.getDefaultProperties(OUTPUT_DIRECTORY, TEMPLATES_DIRECTORY);
         properties.put(AuditingConfiguration.AUDIT_ENABLE, "false");
-        AuditingTestsUtils.createFile(CONFIGURATION_FILE_PATH,
-                AuditingTestsUtils.propertiesToString(properties));
-        AuditingConfiguration newAuditingConfiguration = auditingConfiguration.checkForNewConfiguration();
+        AuditingTestsUtils.createFile(
+                CONFIGURATION_FILE_PATH, AuditingTestsUtils.propertiesToString(properties));
+        AuditingConfiguration newAuditingConfiguration =
+                auditingConfiguration.checkForNewConfiguration();
         assertNotNull(newAuditingConfiguration);
     }
 }

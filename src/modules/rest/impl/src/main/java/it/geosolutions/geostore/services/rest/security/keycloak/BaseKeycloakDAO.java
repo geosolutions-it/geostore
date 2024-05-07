@@ -33,9 +33,7 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.RolesResource;
 import org.keycloak.admin.client.resource.UsersResource;
 
-/**
- * Base DAO class for keycloak based repository.
- */
+/** Base DAO class for keycloak based repository. */
 public abstract class BaseKeycloakDAO {
 
     protected KeycloakAdminClientConfiguration adminClientConfiguration;
@@ -89,8 +87,7 @@ public abstract class BaseKeycloakDAO {
      * @param keycloak the {@link Keycloak} REST client instance.
      */
     protected void close(Keycloak keycloak) {
-        if (keycloak.isClosed())
-            keycloak.close();
+        if (keycloak.isClosed()) keycloak.close();
     }
 
     /**
@@ -101,7 +98,10 @@ public abstract class BaseKeycloakDAO {
     protected GeoStoreKeycloakAuthoritiesMapper getAuthoritiesMapper() {
         KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);
         if (configuration != null)
-            return new GeoStoreKeycloakAuthoritiesMapper(configuration.getRoleMappings(), configuration.getGroupMappings(), configuration.isDropUnmapped());
+            return new GeoStoreKeycloakAuthoritiesMapper(
+                    configuration.getRoleMappings(),
+                    configuration.getGroupMappings(),
+                    configuration.isDropUnmapped());
         else return new GeoStoreKeycloakAuthoritiesMapper(null, null, false);
     }
 }

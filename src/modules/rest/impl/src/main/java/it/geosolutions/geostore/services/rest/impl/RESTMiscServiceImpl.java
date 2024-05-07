@@ -45,6 +45,8 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+import java.util.List;
+import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -52,18 +54,17 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
-import javax.ws.rs.core.SecurityContext;
-import java.util.List;
-
 /**
  * Class RESTMiscServiceImpl.
  *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscService, ApplicationContextAware {
+@SuppressWarnings("PMD.UnusedPrivateField")
+public class RESTMiscServiceImpl extends RESTServiceImpl
+        implements RESTMiscService, ApplicationContextAware {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTMiscServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(RESTMiscServiceImpl.class);
 
     private CategoryService categoryService;
 
@@ -79,19 +80,18 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getData(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
-    public String getData(SecurityContext sc, String catName, String resName) throws NotFoundWebEx,
-            ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
+    public String getData(SecurityContext sc, String catName, String resName)
+            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("getData(" + catName + "," + resName + ")");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("getData(" + catName + "," + resName + ")");
 
-        if (catName == null)
-            throw new BadRequestWebEx("Category is null");
-        if (resName == null)
-            throw new BadRequestWebEx("Resource is null");
+        if (catName == null) throw new BadRequestWebEx("Category is null");
+        if (resName == null) throw new BadRequestWebEx("Resource is null");
 
-        SearchFilter filter = new AndFilter(new CategoryFilter(catName, SearchOperator.EQUAL_TO),
-                new FieldFilter(BaseField.NAME, resName, SearchOperator.EQUAL_TO));
+        SearchFilter filter =
+                new AndFilter(
+                        new CategoryFilter(catName, SearchOperator.EQUAL_TO),
+                        new FieldFilter(BaseField.NAME, resName, SearchOperator.EQUAL_TO));
 
         List<Resource> resources = null;
         try {
@@ -121,16 +121,15 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     public Resource getResource(SecurityContext sc, String catName, String resName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("getResource(" + catName + "," + resName + ")");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("getResource(" + catName + "," + resName + ")");
 
-        if (catName == null)
-            throw new BadRequestWebEx("Category is null");
-        if (resName == null)
-            throw new BadRequestWebEx("Resource is null");
+        if (catName == null) throw new BadRequestWebEx("Category is null");
+        if (resName == null) throw new BadRequestWebEx("Resource is null");
 
-        SearchFilter filter = new AndFilter(new CategoryFilter(catName, SearchOperator.EQUAL_TO),
-                new FieldFilter(BaseField.NAME, resName, SearchOperator.EQUAL_TO));
+        SearchFilter filter =
+                new AndFilter(
+                        new CategoryFilter(catName, SearchOperator.EQUAL_TO),
+                        new FieldFilter(BaseField.NAME, resName, SearchOperator.EQUAL_TO));
 
         List<Resource> resources = null;
         try {
@@ -160,12 +159,10 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     public ShortResourceList getResourcesByCategory(SecurityContext sc, String catName)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("getResourcesByCategory(" + catName + ")");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("getResourcesByCategory(" + catName + ")");
 
         // some checks on category
-        if (catName == null)
-            throw new BadRequestWebEx("Category is null");
+        if (catName == null) throw new BadRequestWebEx("Category is null");
 
         Category category;
         try {
@@ -173,8 +170,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
-        if (category == null)
-            throw new NotFoundWebEx("Category not found");
+        if (category == null) throw new NotFoundWebEx("Category not found");
 
         // ok, search for the resource list
         SearchFilter filter = new CategoryFilter(catName, SearchOperator.EQUAL_TO);
@@ -199,16 +195,14 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
      * @see it.geosolutions.geostore.services.rest.RESTMiscService#getResource(javax.ws.rs.core.SecurityContext, java.lang.String, java.lang.String)
      */
     @Override
-    public ResourceList getResourcesByCategory(SecurityContext sc, String catName,
-                                               boolean includeAttributes, boolean includeData) throws NotFoundWebEx, ConflictWebEx,
-            BadRequestWebEx, InternalErrorWebEx {
+    public ResourceList getResourcesByCategory(
+            SecurityContext sc, String catName, boolean includeAttributes, boolean includeData)
+            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx {
 
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("getResourcesByCategory(" + catName + ")");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("getResourcesByCategory(" + catName + ")");
 
         // some checks on category
-        if (catName == null)
-            throw new BadRequestWebEx("Category is null");
+        if (catName == null) throw new BadRequestWebEx("Category is null");
 
         Category category;
         try {
@@ -216,8 +210,7 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
-        if (category == null)
-            throw new NotFoundWebEx("Category not found");
+        if (category == null) throw new NotFoundWebEx("Category not found");
 
         // ok, search for the resource list
         SearchFilter filter = new CategoryFilter(catName, SearchOperator.EQUAL_TO);
@@ -225,7 +218,9 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
         List<Resource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            resources = resourceService.getResources(filter, null, null, includeAttributes, includeData, user);
+            resources =
+                    resourceService.getResources(
+                            filter, null, null, includeAttributes, includeData, user);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -282,6 +277,4 @@ public class RESTMiscServiceImpl extends RESTServiceImpl implements RESTMiscServ
     public void setApplicationContext(ApplicationContext appContext) throws BeansException {
         this.appContext = appContext;
     }
-
-
 }

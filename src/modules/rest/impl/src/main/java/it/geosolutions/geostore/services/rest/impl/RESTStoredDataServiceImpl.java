@@ -31,6 +31,14 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 import it.geosolutions.geostore.services.rest.utils.DataURIDecoder;
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
@@ -44,15 +52,6 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-
 /**
  * Class RESTStoredDataServiceImpl.
  *
@@ -61,11 +60,13 @@ import java.util.Collections;
  */
 public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTStoredDataService {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTStoredDataServiceImpl.class);
-    private final static Collection<MediaType> GET_XML_MEDIA_TYPES = Arrays.asList(
-            MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
-    private final static Collection<MediaType> GET_JSON_MEDIA_TYPES = Collections.singletonList(MediaType.APPLICATION_JSON_TYPE);
-    private final static Collection<MediaType> GET_TEXT_MEDIA_TYPES = Collections.singletonList(MediaType.TEXT_PLAIN_TYPE);
+    private static final Logger LOGGER = LogManager.getLogger(RESTStoredDataServiceImpl.class);
+    private static final Collection<MediaType> GET_XML_MEDIA_TYPES =
+            Arrays.asList(MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
+    private static final Collection<MediaType> GET_JSON_MEDIA_TYPES =
+            Collections.singletonList(MediaType.APPLICATION_JSON_TYPE);
+    private static final Collection<MediaType> GET_TEXT_MEDIA_TYPES =
+            Collections.singletonList(MediaType.TEXT_PLAIN_TYPE);
     private StoredDataService storedDataService;
 
     // /* (non-Javadoc)
@@ -76,9 +77,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     // return new StoredDataList(storedDataService.getAll());
     // }
 
-    /**
-     * @param storedDataService
-     */
+    /** @param storedDataService */
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
     }
@@ -99,8 +98,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     @Override
     public long update(SecurityContext sc, long id, String data) throws NotFoundWebEx {
         try {
-            if (data == null)
-                throw new BadRequestWebEx("Data is null");
+            if (data == null) throw new BadRequestWebEx("Data is null");
 
             //
             // Authorization check.
@@ -138,10 +136,8 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
 
         if (canDelete) {
             boolean ret = storedDataService.delete(id);
-            if (!ret)
-                throw new NotFoundWebEx("Data not found");
-        } else
-            throw new ForbiddenErrorWebEx("This user cannot delete this store !");
+            if (!ret) throw new NotFoundWebEx("Data not found");
+        } else throw new ForbiddenErrorWebEx("This user cannot delete this store !");
     }
 
     /*
@@ -151,8 +147,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
      */
     @Override
     public String get(SecurityContext sc, HttpHeaders headers, long id) throws NotFoundWebEx {
-        if (id == -1)
-            return "dummy payload";
+        if (id == -1) return "dummy payload";
 
         //
         // Authorization check.
@@ -183,8 +178,8 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         } else if (!Collections.disjoint(GET_XML_MEDIA_TYPES, headers.getAcceptableMediaTypes())) {
             return toXML(data);
         } else
-            throw new InternalErrorWebEx("Illegal state (" + headers.getAcceptableMediaTypes()
-                    + ")");
+            throw new InternalErrorWebEx(
+                    "Illegal state (" + headers.getAcceptableMediaTypes() + ")");
     }
 
     private String toJSON(String data) {
@@ -196,12 +191,10 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             XMLSerializer xmlSerializer = new XMLSerializer();
             JSON json = xmlSerializer.read(data);
             String ret = json.toString();
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Transformed XML -> JSON");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed XML -> JSON");
             return ret;
         } catch (JSONException exc) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Data is not in native XML format.");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native XML format.");
         }
 
         try {
@@ -209,38 +202,32 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             // data To JSON conversion
             // ///////////////////////
             JSONSerializer.toJSON(data);
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Data is in native JSON format.");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is in native JSON format.");
             return data;
 
         } catch (JSONException e) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Data is not in native JSON format.");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native JSON format.");
         }
 
         JSONObject jsonObj = new JSONObject();
         jsonObj.put("data", data);
         String ret = jsonObj.toString();
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Transformed plaintext -> JSON");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed plaintext -> JSON");
 
         return ret;
     }
 
     private String toXML(String data) {
 
-        // Try XML source
-        try {
-            StringReader reader = new StringReader(data);
+        // Try an XML source
+        try (StringReader reader = new StringReader(data)) {
             SAXBuilder builder = new SAXBuilder();
             builder.build(reader);
             // no errors: return the original data
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Data is in native XML format.");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is in native XML format.");
             return data;
         } catch (Exception e) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Data is not in native XML format.");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native XML format.", e);
         }
 
         // Try JSON source
@@ -251,13 +238,11 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             JSON json = JSONSerializer.toJSON(data);
             XMLSerializer xmlSerializer = new XMLSerializer();
             String ret = xmlSerializer.write(json);
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Transformed JSON -> XML");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed JSON -> XML");
             return ret;
 
         } catch (JSONException exc) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Data is not in native JSON format.");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native JSON format.", exc);
         }
 
         // Force XML format
@@ -266,8 +251,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
 
         XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
         String ret = outputter.outputString(element);
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Transformed plaintext -> XML");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed plaintext -> XML");
 
         return ret;
     }
@@ -275,8 +259,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     @Override
     public Response getRaw(SecurityContext sc, HttpHeaders headers, long id, String decodeFormat)
             throws NotFoundWebEx {
-        if (id == -1)
-            return Response.ok().entity("dummy payload").build();
+        if (id == -1) return Response.ok().entity("dummy payload").build();
 
         StoredData storedData;
         try {
@@ -313,7 +296,9 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         String[] split = data.split(",", 2);
 
         if (split.length < 2) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad data, comma is missing").build();
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Bad data, comma is missing")
+                    .build();
         }
 
         DataURIDecoder dud = new DataURIDecoder(split[0]);

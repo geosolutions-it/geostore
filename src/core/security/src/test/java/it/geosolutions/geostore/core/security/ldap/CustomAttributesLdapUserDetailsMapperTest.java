@@ -29,39 +29,37 @@ package it.geosolutions.geostore.core.security.ldap;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
 import it.geosolutions.geostore.core.ldap.MockDirContextOperations;
 import it.geosolutions.geostore.core.security.UserDetailsWithAttributes;
-import it.geosolutions.geostore.core.security.ldap.CustomAttributesLdapUserDetailsMapper;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 public class CustomAttributesLdapUserDetailsMapperTest {
-    
+
     private static final String SAMPLE_USERNAME = "username";
-    
+
     private CustomAttributesLdapUserDetailsMapper mapper;
     private Map<String, String> attributeMappings;
 
     private Collection<GrantedAuthority> authorities;
-    
+
     MockDirContextOperations ctx;
-    
+
     @Before
     public void setUp() {
         attributeMappings = new HashMap<String, String>();
         authorities = Collections.EMPTY_LIST;
-        mapper = new CustomAttributesLdapUserDetailsMapper(attributeMappings );
+        mapper = new CustomAttributesLdapUserDetailsMapper(attributeMappings);
         ctx = new MockDirContextOperations();
     }
-    
+
     @Test
     public void testMappings() {
         ctx.getLdapAttributes().put("cn", "mock");

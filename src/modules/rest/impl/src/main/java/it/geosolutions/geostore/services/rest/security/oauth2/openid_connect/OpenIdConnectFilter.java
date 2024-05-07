@@ -33,6 +33,11 @@ import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestT
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.OpenIdTokenValidator;
+import java.io.IOException;
+import java.util.Map;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,25 +47,17 @@ import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Map;
-
-/**
- * OpenId Connect filter implementation.
- */
+/** OpenId Connect filter implementation. */
 public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
 
-    private final static Logger LOGGER = LogManager.getLogger(OpenIdConnectFilter.class);
+    private static final Logger LOGGER = LogManager.getLogger(OpenIdConnectFilter.class);
 
     private final OpenIdTokenValidator bearerTokenValidator;
 
     /**
-     * @param tokenServices            a RemoteTokenServices instance.
-     * @param oAuth2RestTemplate       the rest template to use for OAuth2 requests.
-     * @param configuration            the OAuth2 configuration.
+     * @param tokenServices a RemoteTokenServices instance.
+     * @param oAuth2RestTemplate the rest template to use for OAuth2 requests.
+     * @param configuration the OAuth2 configuration.
      * @param tokenAuthenticationCache the cache.
      */
     public OpenIdConnectFilter(
@@ -76,7 +73,8 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
     }
 
     @Override
-    protected String getPreAuthenticatedPrincipal(HttpServletRequest req, HttpServletResponse resp, OAuth2AccessToken accessToken)
+    protected String getPreAuthenticatedPrincipal(
+            HttpServletRequest req, HttpServletResponse resp, OAuth2AccessToken accessToken)
             throws IOException, ServletException {
         String result = super.getPreAuthenticatedPrincipal(req, resp, accessToken);
 
@@ -96,8 +94,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             if (accessToken == null) {
                 token = accessToken.getValue();
             } else {
-                token =
-                        (String) req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);
+                token = (String) req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);
             }
             Map userinfoMap = (Map) req.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
             Jwt decodedAccessToken = JwtHelper.decode(token);

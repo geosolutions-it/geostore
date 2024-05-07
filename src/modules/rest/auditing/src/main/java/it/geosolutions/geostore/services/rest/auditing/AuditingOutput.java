@@ -27,10 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,12 +34,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 final class AuditingOutput {
 
     private static final Logger LOGGER = LogManager.getLogger(AuditingOutput.class);
 
-    private final BlockingQueue<Map<String, String>> messagesQueue = new ArrayBlockingQueue<Map<String, String>>(10000);
+    private final BlockingQueue<Map<String, String>> messagesQueue =
+            new ArrayBlockingQueue<Map<String, String>>(10000);
 
     private AuditingConfiguration configuration;
 
@@ -63,24 +62,30 @@ final class AuditingOutput {
                 LOGGER.info("Auditing enable.");
                 auditEnable = true;
                 templates = new AuditingTemplates(configuration.getTemplatesDirectory());
-                auditingFilesManager = new AuditingFilesManager(
-                        configuration.getOutputDirectory(), configuration.getOutputFilesExtension());
+                auditingFilesManager =
+                        new AuditingFilesManager(
+                                configuration.getOutputDirectory(),
+                                configuration.getOutputFilesExtension());
                 openWriter();
                 final Consumer consumer = new Consumer();
                 final Thread consumerThread = new Thread(consumer);
                 consumerThread.start();
-                Runtime.getRuntime().addShutdownHook(new Thread() {
-                    public void run() {
-                        consumer.running = false;
-                        try {
-                            consumerThread.interrupt();
-                            consumerThread.join(500);
-                        } catch (InterruptedException exception) {
-                            LOGGER.error("Interrupted when waiting for consumer thread.", exception);
-                        }
-                        closeWriter();
-                    }
-                });
+                Runtime.getRuntime()
+                        .addShutdownHook(
+                                new Thread() {
+                                    public void run() {
+                                        consumer.running = false;
+                                        try {
+                                            consumerThread.interrupt();
+                                            consumerThread.join(500);
+                                        } catch (InterruptedException exception) {
+                                            LOGGER.error(
+                                                    "Interrupted when waiting for consumer thread.",
+                                                    exception);
+                                        }
+                                        closeWriter();
+                                    }
+                                });
             } else {
                 LOGGER.info("Auditing not enable.");
             }
@@ -111,14 +116,18 @@ final class AuditingOutput {
         try {
             writer = new FileWriter(auditingFilesManager.getOutputFile());
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error open writer for file output '%s'.",
+            throw new AuditingException(
+                    exception,
+                    "Error open writer for file output '%s'.",
                     auditingFilesManager.getOutputFile().getPath());
         }
         try {
 
             templates.getHeaderTemplate().process(Collections.EMPTY_MAP, writer);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error writing header to file '%s'.",
+            throw new AuditingException(
+                    exception,
+                    "Error writing header to file '%s'.",
                     auditingFilesManager.getOutputFile().getPath());
         }
     }
@@ -128,13 +137,15 @@ final class AuditingOutput {
             templates.getFooterTemplate().process(Collections.EMPTY_MAP, writer);
 
         } catch (Exception exception) {
-            throw new AuditingException("Error writing footer to file output '%s'.",
+            throw new AuditingException(
+                    "Error writing footer to file output '%s'.",
                     auditingFilesManager.getOutputFile().getPath());
         }
         try {
             writer.close();
         } catch (Exception exception) {
-            throw new AuditingException("Error closing writer for file output '%s'.",
+            throw new AuditingException(
+                    "Error closing writer for file output '%s'.",
                     auditingFilesManager.getOutputFile().getPath());
         }
     }

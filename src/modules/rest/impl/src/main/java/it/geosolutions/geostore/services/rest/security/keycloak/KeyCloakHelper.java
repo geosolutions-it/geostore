@@ -28,6 +28,9 @@
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.AdapterDeploymentContext;
@@ -46,17 +49,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.Map;
-
-/**
- * This class provides some utility methods to deal with Keycloak Authentication.
- */
+/** This class provides some utility methods to deal with Keycloak Authentication. */
 public class KeyCloakHelper {
 
-    private final static Logger LOGGER = LogManager.getLogger(KeycloakSessionServiceDelegate.class);
-
+    private static final Logger LOGGER = LogManager.getLogger(KeycloakSessionServiceDelegate.class);
 
     protected final SpringSecurityAdapterTokenStoreFactory adapterTokenStoreFactory;
     protected AdapterDeploymentContext keycloakContext;
@@ -67,11 +63,12 @@ public class KeyCloakHelper {
     }
 
     /**
-     * @param request  request.
+     * @param request request.
      * @param response response.
      * @return return a KeycloakDeployment instance.
      */
-    public KeycloakDeployment getDeployment(HttpServletRequest request, HttpServletResponse response) {
+    public KeycloakDeployment getDeployment(
+            HttpServletRequest request, HttpServletResponse response) {
         HttpFacade exchange = new SimpleHttpFacade(request, response);
         return getDeployment(exchange);
     }
@@ -88,22 +85,24 @@ public class KeyCloakHelper {
     }
 
     /**
-     * Return the request authenticator that will be used by the filter to perform the various authentication steps.
+     * Return the request authenticator that will be used by the filter to perform the various
+     * authentication steps.
      *
-     * @param request    the request.
-     * @param response   the response.
+     * @param request the request.
+     * @param response the response.
      * @param deployment the deployment instance.
      * @return the request authenticator.
      */
-    public RequestAuthenticator getAuthenticator(HttpServletRequest request, HttpServletResponse response, KeycloakDeployment deployment) {
-        request =
-                new KeyCloakRequestWrapper(request);
+    public RequestAuthenticator getAuthenticator(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            KeycloakDeployment deployment) {
+        request = new KeyCloakRequestWrapper(request);
         AdapterTokenStore tokenStore =
                 adapterTokenStoreFactory.createAdapterTokenStore(deployment, request, response);
         SimpleHttpFacade simpleHttpFacade = new SimpleHttpFacade(request, response);
-        return
-                new GeoStoreKeycloakAuthenticator(
-                        simpleHttpFacade, request, deployment, tokenStore, -1);
+        return new GeoStoreKeycloakAuthenticator(
+                simpleHttpFacade, request, deployment, tokenStore, -1);
     }
 
     /**
@@ -113,11 +112,14 @@ public class KeyCloakHelper {
      */
     public AccessTokenResponse refreshToken(AdapterConfig adapter, String refreshToken) {
         Configuration clientConf = getClientConfiguration(adapter);
-        String url = adapter.getAuthServerUrl() + "/realms/" + adapter.getRealm() + "/protocol/openid-connect/token";
+        String url =
+                adapter.getAuthServerUrl()
+                        + "/realms/"
+                        + adapter.getRealm()
+                        + "/protocol/openid-connect/token";
         String clientId = adapter.getResource();
         String secret = (String) adapter.getCredentials().get("secret");
-        Http http = new Http(clientConf, (params, headers) -> {
-        });
+        Http http = new Http(clientConf, (params, headers) -> {});
 
         return http.<AccessTokenResponse>post(url)
                 .authentication()
@@ -149,16 +151,21 @@ public class KeyCloakHelper {
     //
 
     /**
-     * Builds an authentication instance out of the passed values.
-     * Sets it to the cache and to the SecurityContext to be sure the new token is updates.
+     * Builds an authentication instance out of the passed values. Sets it to the cache and to the
+     * SecurityContext to be sure the new token is updates.
      *
-     * @param cache     the auth cache.
-     * @param oldToken  the old token.
-     * @param newToken  the new token.
+     * @param cache the auth cache.
+     * @param oldToken the old token.
+     * @param newToken the new token.
      * @param expiresIn the expiration of the new token.
      * @return the new Authentication object.
      */
-    public Authentication updateAuthentication(TokenAuthenticationCache cache, String oldToken, String newToken, String refreshToken, long expiresIn) {
+    public Authentication updateAuthentication(
+            TokenAuthenticationCache cache,
+            String oldToken,
+            String newToken,
+            String refreshToken,
+            long expiresIn) {
         Authentication authentication = cache.get(oldToken);
         if (authentication == null)
             authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -168,10 +175,14 @@ public class KeyCloakHelper {
                 LOGGER.info("Updating the cache and the SecurityContext with new Auth details");
             cache.removeEntry(oldToken);
 
-            PreAuthenticatedAuthenticationToken updated = new PreAuthenticatedAuthenticationToken(authentication.getPrincipal(), authentication.getCredentials(), authentication.getAuthorities());
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Updating keycloak details.");
-            KeycloakTokenDetails details = new KeycloakTokenDetails(newToken, refreshToken, expiresIn);
+            PreAuthenticatedAuthenticationToken updated =
+                    new PreAuthenticatedAuthenticationToken(
+                            authentication.getPrincipal(),
+                            authentication.getCredentials(),
+                            authentication.getAuthorities());
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Updating keycloak details.");
+            KeycloakTokenDetails details =
+                    new KeycloakTokenDetails(newToken, refreshToken, expiresIn);
             updated.setDetails(details);
 
             cache.putCacheEntry(newToken, updated);

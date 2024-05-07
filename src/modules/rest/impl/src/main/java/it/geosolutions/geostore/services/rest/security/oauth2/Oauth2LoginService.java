@@ -1,31 +1,30 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
+import static org.springframework.security.oauth2.common.OAuth2AccessToken.BEARER_TYPE;
+
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-import org.apache.commons.lang.time.DateUtils;
-import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Date;
-
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
-import static org.springframework.security.oauth2.common.OAuth2AccessToken.BEARER_TYPE;
+import org.apache.commons.lang.time.DateUtils;
+import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class Oauth2LoginService implements IdPLoginService {
 
-    private final static Logger LOGGER = LogManager.getLogger(Oauth2LoginService.class);
+    private static final Logger LOGGER = LogManager.getLogger(Oauth2LoginService.class);
 
     @Override
     public void doLogin(HttpServletRequest request, HttpServletResponse response, String provider) {
@@ -40,13 +39,15 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     }
 
     @Override
-    public Response doInternalRedirect(HttpServletRequest request, HttpServletResponse response, String provider) {
+    public Response doInternalRedirect(
+            HttpServletRequest request, HttpServletResponse response, String provider) {
         String token = getAccessToken();
         String refreshToken = getRefreshAccessToken();
         return buildCallbackResponse(token, refreshToken, provider);
     }
 
-    protected Response.ResponseBuilder getCallbackResponseBuilder(String token, String refreshToken, String provider) {
+    protected Response.ResponseBuilder getCallbackResponseBuilder(
+            String token, String refreshToken, String provider) {
         Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
         LOGGER.info("Callback Provider: " + provider);
@@ -57,8 +58,9 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             LOGGER.info("AccessToken found");
             SessionToken sessionToken = new SessionToken();
             try {
-                result = result.status(302)
-                        .location(new URI(configuration.getInternalRedirectUri()));
+                result =
+                        result.status(302)
+                                .location(new URI(configuration.getInternalRedirectUri()));
                 if (token != null) {
                     LOGGER.debug("AccessToken: " + token);
                     sessionToken.setAccessToken(token);
@@ -77,14 +79,17 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 result.header("Set-Cookie", cookie.toString());
             } catch (URISyntaxException e) {
                 LOGGER.error(e);
-                result = result
-                        .status(Response.Status.INTERNAL_SERVER_ERROR)
-                        .entity("Exception while parsing the internal redirect url: " + e.getMessage());
+                result =
+                        result.status(Response.Status.INTERNAL_SERVER_ERROR)
+                                .entity(
+                                        "Exception while parsing the internal redirect url: "
+                                                + e.getMessage());
             }
         } else {
             LOGGER.error("No access token found on callback request.");
-            result = Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity("No access token found.");
+            result =
+                    Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                            .entity("No access token found.");
         }
         return result;
     }
@@ -100,7 +105,6 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     protected TokenStorage tokenStorage() {
         return GeoStoreContext.bean(TokenStorage.class);
     }
-
 
     protected Response buildCallbackResponse(String token, String refreshToken, String provider) {
         Response.ResponseBuilder result = getCallbackResponseBuilder(token, refreshToken, provider);
@@ -121,6 +125,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
 
     protected NewCookie cookie(String name, String value, Date expires) {
         Cookie cookie = new Cookie(name, value, "/", null);
-        return new AccessCookie(cookie, "", 120, DateUtils.addMinutes(new Date(), 2), false, false, "lax");
+        return new AccessCookie(
+                cookie, "", 120, DateUtils.addMinutes(new Date(), 2), false, false, "lax");
     }
 }

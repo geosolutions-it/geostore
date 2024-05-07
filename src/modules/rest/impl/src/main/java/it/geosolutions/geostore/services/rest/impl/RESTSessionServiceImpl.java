@@ -27,6 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
+import static it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl.DEFAULT_NAME;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserSessionService;
@@ -35,26 +38,21 @@ import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.SecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-
-import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
-import static it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl.DEFAULT_NAME;
-
 public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService {
     static final String BEARER_TYPE = "bearer";
-    private static final SimpleDateFormat expireParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-    @Autowired
-    UserSessionService userSessionService;
+    private static final String expireParser = "yyyy-MM-dd'T'HH:mm:ssZ";
+    @Autowired UserSessionService userSessionService;
     private Map<String, SessionServiceDelegate> delegates;
     private boolean autorefresh = false;
     private long sessionTimeout = 86400; // 1 day
@@ -63,18 +61,14 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
         registerDelegate(DEFAULT_NAME, new SessionServiceDelegateImpl());
     }
 
-    /**
-     * Transform Calendar to ISO 8601 string.
-     */
+    /** Transform Calendar to ISO 8601 string. */
     public static String fromCalendar(final Calendar calendar) {
         Date date = calendar.getTime();
         String formatted = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
         return formatted.substring(0, 22) + ":" + formatted.substring(22);
     }
 
-    /**
-     * Transform ISO 8601 string to Calendar.
-     */
+    /** Transform ISO 8601 string to Calendar. */
     public static Calendar toCalendar(final String iso8601string) throws ParseException {
         Calendar calendar = GregorianCalendar.getInstance();
         String s = iso8601string.replace("Z", "+00:00");
@@ -83,7 +77,7 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
         } catch (IndexOutOfBoundsException e) {
             throw new ParseException("Invalid length", 0);
         }
-        Date date = expireParser.parse(s);
+        Date date = new SimpleDateFormat(expireParser).parse(s);
         calendar.setTime(date);
         return calendar;
     }
@@ -194,15 +188,15 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
     @Override
     public SessionToken refresh(SecurityContext sc, String sessionId, String refreshToken) {
-        String provider = (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+        String provider =
+                (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
         SessionServiceDelegate delegate = getDelegate(provider);
         return delegate.refresh(refreshToken, sessionId);
     }
 
     private SessionServiceDelegate getDelegate(String key) {
         SessionServiceDelegate result;
-        if (key == null)
-            result = delegates.get(DEFAULT_NAME);
+        if (key == null) result = delegates.get(DEFAULT_NAME);
         else result = delegates.get(key);
 
         if (result == null) result = delegates.get(DEFAULT_NAME);
@@ -216,7 +210,8 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
      * @return
      */
     public void removeSession(String sessionId) {
-        String provider = (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+        String provider =
+                (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
         SessionServiceDelegate delegate = getDelegate(provider);
         delegate.doLogout(sessionId);
     }
@@ -228,8 +223,9 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
     @Override
     public void removeSession() {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                .getRequest();
+        HttpServletRequest request =
+                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                        .getRequest();
         Authentication authentication = new BearerTokenExtractor().extract(request);
         if (authentication != null && authentication.getPrincipal() != null)
             removeSession(authentication.getPrincipal().toString());
@@ -259,8 +255,7 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
     @Override
     public void registerDelegate(String key, SessionServiceDelegate delegate) {
-        if (delegates == null)
-            this.delegates = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        if (delegates == null) this.delegates = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.delegates.put(key, delegate);
     }
 }

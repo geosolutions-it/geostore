@@ -28,34 +28,25 @@
 
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
-/**
- * GeoStore specific AuthenticationConverter.
- */
+/** GeoStore specific AuthenticationConverter. */
 public class GeoStoreAuthenticationConverter extends DefaultUserAuthenticationConverter {
-    protected static Logger LOGGER =
-            LogManager.getLogger(GeoStoreAuthenticationConverter.class);
+    protected static Logger LOGGER = LogManager.getLogger(GeoStoreAuthenticationConverter.class);
     private Object usernameKey = USERNAME;
 
-    /**
-     * Default Constructor.
-     */
+    /** Default Constructor. */
     public GeoStoreAuthenticationConverter() {
         super();
     }
 
-    /**
-     * Default Constructor.
-     */
+    /** Default Constructor. */
     public GeoStoreAuthenticationConverter(final String username_key) {
         super();
 
@@ -65,7 +56,9 @@ public class GeoStoreAuthenticationConverter extends DefaultUserAuthenticationCo
     @Override
     public Authentication extractAuthentication(Map<String, ?> map) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Extracting authentication from a map with following keys: " + map.keySet().stream().collect(Collectors.joining(",")));
+            LOGGER.info(
+                    "Extracting authentication from a map with following keys: "
+                            + map.keySet().stream().collect(Collectors.joining(",")));
         }
         if (map.containsKey(usernameKey)) {
             return new UsernamePasswordAuthenticationToken(map.get(usernameKey), "N/A", null);

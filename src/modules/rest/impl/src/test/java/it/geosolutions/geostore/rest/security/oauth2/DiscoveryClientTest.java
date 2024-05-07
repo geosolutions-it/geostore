@@ -1,5 +1,9 @@
 package it.geosolutions.geostore.rest.security.oauth2;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.Assert.assertEquals;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
@@ -7,10 +11,6 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.http.MediaType;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertEquals;
 
 public class DiscoveryClientTest {
 
@@ -40,13 +40,18 @@ public class DiscoveryClientTest {
 
     @Test
     public void testDiscovery() {
-        DiscoveryClient discoveryClient = new DiscoveryClient(authService + "/.well-known/openid-configuration");
+        DiscoveryClient discoveryClient =
+                new DiscoveryClient(authService + "/.well-known/openid-configuration");
         OAuth2Configuration configuration = new OAuth2Configuration();
         discoveryClient.autofill(configuration);
         assertEquals("https://oauth2.googleapis.com/token", configuration.getAccessTokenUri());
-        assertEquals("https://accounts.google.com/o/oauth2/v2/auth", configuration.getAuthorizationUri());
+        assertEquals(
+                "https://accounts.google.com/o/oauth2/v2/auth",
+                configuration.getAuthorizationUri());
         assertEquals("https://oauth2.googleapis.com/revoke", configuration.getRevokeEndpoint());
-        assertEquals("https://openidconnect.googleapis.com/v1/userinfo", configuration.getCheckTokenEndpointUrl());
+        assertEquals(
+                "https://openidconnect.googleapis.com/v1/userinfo",
+                configuration.getCheckTokenEndpointUrl());
         assertEquals("https://www.googleapis.com/oauth2/v3/certs", configuration.getIdTokenUri());
         assertEquals("openid,email,profile", configuration.getScopes());
     }

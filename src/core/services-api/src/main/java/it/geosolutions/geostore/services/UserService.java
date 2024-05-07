@@ -5,7 +5,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -33,15 +33,13 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.Collection;
 import java.util.List;
 
 /**
  * Class UserInterface.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public interface UserService {
 
@@ -111,23 +109,23 @@ public interface UserService {
      * @throws NotFoundServiceEx
      */
     void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx;
-    
+
     /**
      * Persist the special Users, those that implies special behavior (Like GUEST)
-     * 
-     * For obvious reasons this Method MUST NOT exposed through the rest interface.
-     * 
-     * @return true if the persist operation finish with success, false otherwise  
+     *
+     * <p>For obvious reasons this Method MUST NOT exposed through the rest interface.
+     *
+     * @return true if the persist operation finish with success, false otherwise
      */
     public boolean insertSpecialUsers();
-    
+
     /**
      * Returns all user with the specified attribute (name / value).
-     * 
+     *
      * @param attribute
      * @return
      */
-    public Collection<User>  getByAttribute(UserAttribute attribute);
-    public Collection<User>  getByGroup(UserGroup group);
+    public Collection<User> getByAttribute(UserAttribute attribute);
 
+    public Collection<User> getByGroup(UserGroup group);
 }

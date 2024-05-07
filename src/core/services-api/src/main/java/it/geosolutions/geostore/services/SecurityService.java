@@ -20,31 +20,27 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
-
 import java.util.List;
 
 /**
  * @author DamianoG
- *
- * This Interface defines operations to retrieve the security rules based on users and groups 
+ *     <p>This Interface defines operations to retrieve the security rules based on users and groups
  */
 public interface SecurityService {
-    
+
     /**
-     * 
      * @param userName
-     * @param entityId the Id of the entity (f.e. Resource, Category, StoredData...) that the underlying implementation will be responsible for retrieve security rules
+     * @param entityId the Id of the entity (f.e. Resource, Category, StoredData...) that the
+     *     underlying implementation will be responsible for retrieve security rules
      * @return
      */
     List<SecurityRule> getUserSecurityRule(String userName, long entityId);
-    
+
     /**
-     * 
      * @param groupName
-     * @param entityId entityId the Id of the entity (f.e. Resource, Category, StoredData...) that the underlying implementation will be responsible for retrieve security rules
+     * @param entityId entityId the Id of the entity (f.e. Resource, Category, StoredData...) that
+     *     the underlying implementation will be responsible for retrieve security rules
      * @return
      */
     List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long entityId);
-
-
 }

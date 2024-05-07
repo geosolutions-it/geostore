@@ -32,15 +32,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Class AbstractGeoStoreAuthenticationInterceptor. Envelop for different authentication provider interceptors.
+ * Class AbstractGeoStoreAuthenticationInterceptor. Envelop for different authentication provider
+ * interceptors.
  *
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
-public abstract class AbstractGeoStoreAuthenticationInterceptor extends
-        AbstractPhaseInterceptor<Message> {
+@SuppressWarnings("PMD.UnusedPrivateField")
+public abstract class AbstractGeoStoreAuthenticationInterceptor
+        extends AbstractPhaseInterceptor<Message> {
 
-    protected static final Logger LOGGER = LogManager
-            .getLogger(AbstractGeoStoreAuthenticationInterceptor.class);
+    protected static final Logger LOGGER =
+            LogManager.getLogger(AbstractGeoStoreAuthenticationInterceptor.class);
 
     public AbstractGeoStoreAuthenticationInterceptor() {
         super(Phase.UNMARSHAL);
@@ -67,39 +69,33 @@ public abstract class AbstractGeoStoreAuthenticationInterceptor extends
         if (policy != null) {
             username = policy.getUserName();
             password = policy.getPassword();
-            if (password == null)
-                password = "";
+            if (password == null) password = "";
 
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info("Requesting user: " + username);
+            if (LOGGER.isInfoEnabled()) LOGGER.info("Requesting user: " + username);
 
             // //////////////////////////////////////////////////////////////////
             // read user from the interceptor: If user and PW do not match,
             // throw new AuthenticationException("Unauthorized");
             // ///////////////////////////////////////////////////////////////////
-
-            String encodedPw = null;
             try {
                 user = getUser(username, message);
             } catch (Exception e) {
-                LOGGER.error("Exception while checking pw: " + username, e);
+                LOGGER.error("Exception while checking pw: {}", username, e);
                 throw new AccessDeniedException("Authorization error");
             }
 
             if (!PwEncoder.isPasswordValid(user.getPassword(), password)) {
-                if (LOGGER.isInfoEnabled())
-                    LOGGER.info("Bad pw for user " + username);
+                if (LOGGER.isInfoEnabled()) LOGGER.info("Bad pw for user {}", username);
                 throw new AccessDeniedException("Not authorized");
             }
 
         } else {
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info("No requesting user -- GUEST access");
+            if (LOGGER.isInfoEnabled()) LOGGER.info("No requesting user -- GUEST access");
         }
 
         GeoStoreSecurityContext securityContext = new GeoStoreSecurityContext();
-        GeoStorePrincipal principal = user != null ? new GeoStorePrincipal(user)
-                : GeoStorePrincipal.createGuest();
+        GeoStorePrincipal principal =
+                user != null ? new GeoStorePrincipal(user) : GeoStorePrincipal.createGuest();
         securityContext.setPrincipal(principal);
 
         message.put(SecurityContext.class, securityContext);
@@ -109,9 +105,8 @@ public abstract class AbstractGeoStoreAuthenticationInterceptor extends
      * Obtain an user from his username
      *
      * @param username of the user
-     * @param message  intercepted
+     * @param message intercepted
      * @return user identified with the username
      */
     protected abstract User getUser(String username, Message message);
-
 }

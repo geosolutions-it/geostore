@@ -6,5 +6,7 @@ package it.geosolutions.geostore.services.rest.utils;
  * @see GeoStoreAuthenticationInterceptor
  */
 public enum NewPasswordStrategy {
-    NONE, USERNAME, FROMHEADER
+    NONE,
+    USERNAME,
+    FROMHEADER
 }

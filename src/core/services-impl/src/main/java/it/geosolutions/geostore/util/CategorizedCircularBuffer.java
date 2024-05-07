@@ -26,10 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class CategorizedCircularBuffer<T, K> {
     // protected final static Logger LOGGER = LogManager.getLogger(CategorizedCircularBuffer.class);
 
@@ -72,8 +69,8 @@ public class CategorizedCircularBuffer<T, K> {
 
         T remove = typedList.removeLast();
         if (!lastEntry.value.equals(remove)) {
-            throw new IllegalStateException("Internal error - mismatching values "
-                    + lastEntry.value + " , " + remove);
+            throw new IllegalStateException(
+                    "Internal error - mismatching values " + lastEntry.value + " , " + remove);
         }
 
         if (typedList.size() == 0) {

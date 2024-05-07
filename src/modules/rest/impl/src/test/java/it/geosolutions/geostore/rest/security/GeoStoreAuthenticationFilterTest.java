@@ -19,6 +19,8 @@
  */
 package it.geosolutions.geostore.rest.security;
 
+import static org.junit.Assert.*;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.enums.Role;
@@ -26,22 +28,19 @@ import it.geosolutions.geostore.core.security.MapExpressionUserMapper;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.GeoStoreRequestHeadersAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.security.core.context.SecurityContextHolder;
-
+import java.io.IOException;
+import java.util.*;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
-
-import static org.junit.Assert.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 public class GeoStoreAuthenticationFilterTest {
 
@@ -65,8 +64,8 @@ public class GeoStoreAuthenticationFilterTest {
 
         Mockito.when(req.getHeader(USERNAME_HEADER)).thenReturn(SAMPLE_USER);
         Mockito.when(req.getHeader("header1")).thenReturn("value1");
-        Mockito.when(req.getHeaderNames()).thenReturn(
-                new Vector(Arrays.asList(USERNAME_HEADER, "header1")).elements());
+        Mockito.when(req.getHeaderNames())
+                .thenReturn(new Vector(Arrays.asList(USERNAME_HEADER, "header1")).elements());
     }
 
     @After
@@ -77,38 +76,34 @@ public class GeoStoreAuthenticationFilterTest {
     @Test
     public void testAutoCreate() throws IOException, ServletException, NotFoundServiceEx {
 
+        filter.doFilter(
+                req,
+                resp,
+                new FilterChain() {
 
-        filter.doFilter(req, resp, new FilterChain() {
-
-            @Override
-            public void doFilter(ServletRequest arg0, ServletResponse arg1) throws IOException,
-                    ServletException {
-
-
-            }
-
-        });
+                    @Override
+                    public void doFilter(ServletRequest arg0, ServletResponse arg1)
+                            throws IOException, ServletException {}
+                });
 
         User user = userService.get(SAMPLE_USER);
         checkUser(user);
         assertTrue(user.isEnabled());
     }
 
-
     @Test
     public void testAutoCreateDisabled() throws IOException, ServletException, NotFoundServiceEx {
 
         filter.setEnableAutoCreatedUsers(false);
-        filter.doFilter(req, resp, new FilterChain() {
+        filter.doFilter(
+                req,
+                resp,
+                new FilterChain() {
 
-            @Override
-            public void doFilter(ServletRequest arg0, ServletResponse arg1) throws IOException,
-                    ServletException {
-
-
-            }
-
-        });
+                    @Override
+                    public void doFilter(ServletRequest arg0, ServletResponse arg1)
+                            throws IOException, ServletException {}
+                });
 
         User user = userService.get(SAMPLE_USER);
         checkUser(user);
@@ -116,23 +111,22 @@ public class GeoStoreAuthenticationFilterTest {
     }
 
     @Test
-    public void testAutoCreateAttributesMapping() throws IOException, ServletException, NotFoundServiceEx {
+    public void testAutoCreateAttributesMapping()
+            throws IOException, ServletException, NotFoundServiceEx {
 
         Map<String, String> attributeMappings = new HashMap<String, String>();
         attributeMappings.put("attr1", "header1");
         filter.setUserMapper(new MapExpressionUserMapper(attributeMappings));
 
+        filter.doFilter(
+                req,
+                resp,
+                new FilterChain() {
 
-        filter.doFilter(req, resp, new FilterChain() {
-
-            @Override
-            public void doFilter(ServletRequest arg0, ServletResponse arg1) throws IOException,
-                    ServletException {
-
-
-            }
-
-        });
+                    @Override
+                    public void doFilter(ServletRequest arg0, ServletResponse arg1)
+                            throws IOException, ServletException {}
+                });
 
         User user = userService.get(SAMPLE_USER);
         checkUser(user);
@@ -141,7 +135,6 @@ public class GeoStoreAuthenticationFilterTest {
         assertEquals("attr1", attributes.get(0).getName());
         assertEquals("value1", attributes.get(0).getValue());
     }
-
 
     private void checkUser(User user) {
         assertNotNull(user);

@@ -1,20 +1,19 @@
 package it.geosolutions.geostore.rest.service.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import java.text.ParseException;
+import javax.ws.rs.core.Response;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.ws.rs.core.Response;
-import java.text.ParseException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class RESTSessionServiceDelegateImplTest {
 
@@ -34,12 +33,13 @@ public class RESTSessionServiceDelegateImplTest {
         SessionToken result = null;
         int status = 0;
         try {
-            result = sessionServiceDelegate.refresh(sessionToken.getRefreshToken(), sessionToken.getAccessToken());
+            result =
+                    sessionServiceDelegate.refresh(
+                            sessionToken.getRefreshToken(), sessionToken.getAccessToken());
         } catch (ForbiddenErrorWebEx e) {
             status = e.getResponse().getStatus();
         }
         assertNull(result);
         assertEquals(status, Response.Status.FORBIDDEN.getStatusCode());
-
     }
 }

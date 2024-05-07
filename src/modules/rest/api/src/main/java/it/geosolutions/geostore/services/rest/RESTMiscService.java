@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -34,7 +34,6 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
-
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -44,62 +43,62 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
-
 import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTMiscService. Experimental operations go here.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-
 public interface RESTMiscService {
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}/data")
-    @Produces({ MediaType.TEXT_PLAIN })
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
-    String getData(@Context SecurityContext sc, @PathParam("cname") String cname,
-            @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
-            InternalErrorWebEx;
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    String getData(
+            @Context SecurityContext sc,
+            @PathParam("cname") String cname,
+            @PathParam("rname") String rname)
+            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
 
     @GET
     @Path("/category/name/{cname}/resource/name/{rname}")
-    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
-    Resource getResource(@Context SecurityContext sc, @PathParam("cname") String cname,
-            @PathParam("rname") String rname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
-            InternalErrorWebEx;
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    Resource getResource(
+            @Context SecurityContext sc,
+            @PathParam("cname") String cname,
+            @PathParam("rname") String rname)
+            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
 
     @GET
     @Path("/category/name/{cname}/resources/")
-    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
-    ShortResourceList getResourcesByCategory(@Context SecurityContext sc,
-            @PathParam("cname") String cname) throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx,
-            InternalErrorWebEx;
-    
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    ShortResourceList getResourcesByCategory(
+            @Context SecurityContext sc, @PathParam("cname") String cname)
+            throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
+
     @GET
     @Path("/category/name/{cname}/fullresources/")
-    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
-    ResourceList getResourcesByCategory(@Context SecurityContext sc,
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    ResourceList getResourcesByCategory(
+            @Context SecurityContext sc,
             @PathParam("cname") String cname,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeData)
             throws NotFoundWebEx, ConflictWebEx, BadRequestWebEx, InternalErrorWebEx;
 
-
     @GET
     @Path("/reload/{service}")
-    @Secured({ "ROLE_ADMIN" })
-    void reload(@Context SecurityContext sc, @PathParam("service") String service) throws BadRequestWebEx;
-        
-   
+    @Secured({"ROLE_ADMIN"})
+    void reload(@Context SecurityContext sc, @PathParam("service") String service)
+            throws BadRequestWebEx;
 }
-

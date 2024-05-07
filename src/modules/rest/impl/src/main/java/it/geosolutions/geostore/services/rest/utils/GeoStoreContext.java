@@ -8,10 +8,10 @@ import org.springframework.context.ApplicationContextAware;
 
 public class GeoStoreContext implements ApplicationContextAware {
 
-    private final static Logger LOGGER = LogManager.getLogger(GeoStoreContext.class);
+    private static final Logger LOGGER = LogManager.getLogger(GeoStoreContext.class);
     /**
      * Static application context provided to {@link #setApplicationContext(ApplicationContext)}
-     * during initalization.
+     * during initialization.
      *
      * <p>This context is used by methods such as {@link #bean(String)}, {@link #bean(Class)}.
      */
@@ -22,7 +22,7 @@ public class GeoStoreContext implements ApplicationContextAware {
         try {
             if (context != null) result = context.getBean(clazz);
         } catch (Exception e) {
-            LOGGER.error("Error while retrieving the bean of type " + clazz.getSimpleName(), e);
+            LOGGER.error("Error while retrieving the bean of type {}", clazz.getSimpleName(), e);
         }
         return result;
     }
@@ -32,7 +32,7 @@ public class GeoStoreContext implements ApplicationContextAware {
         try {
             if (context != null) result = context.getBean(name);
         } catch (BeansException e) {
-            LOGGER.error("Error while retrieving the bean with name " + name, e);
+            LOGGER.error("Error while retrieving the bean with name {}", name, e);
         }
         return result;
     }

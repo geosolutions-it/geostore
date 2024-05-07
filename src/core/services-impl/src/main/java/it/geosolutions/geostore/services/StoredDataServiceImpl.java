@@ -19,10 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.Date;
-import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
@@ -31,10 +27,14 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import java.util.Date;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class StoredDataServiceImpl.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -45,23 +45,19 @@ public class StoredDataServiceImpl implements StoredDataService {
     private StoredDataDAO storedDataDAO;
 
     private ResourceDAO resourceDAO;
-    
+
     private SecurityDAO securityDAO;
 
-    /**
-     * @param resourceDAO the resourceDAO to set
-     */
+    /** @param resourceDAO the resourceDAO to set */
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
-    /**
-     * @param storedDataDAO
-     */
+    /** @param storedDataDAO */
     public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
         this.storedDataDAO = storedDataDAO;
     }
-    
+
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }
@@ -98,7 +94,6 @@ public class StoredDataServiceImpl implements StoredDataService {
     }
 
     /**
-     * 
      * @param id
      * @return the StoredData or null if none was found with given id
      * @throws NotFoundServiceEx
@@ -165,5 +160,4 @@ public class StoredDataServiceImpl implements StoredDataService {
     public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long storedDataId) {
         return securityDAO.findGroupSecurityRule(groupNames, storedDataId);
     }
-
 }

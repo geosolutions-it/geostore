@@ -26,7 +26,6 @@ import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -50,8 +49,10 @@ public class MockedUserService implements UserService {
     public long insert(User user) throws BadRequestServiceEx, NotFoundServiceEx {
         Long id = RANDOM.nextLong();
         user.setId(id);
-        String password = user.getPassword() != null ? user.getPassword()
-                : user.getNewPassword() != null ? user.getNewPassword() : null;
+        String password =
+                user.getPassword() != null
+                        ? user.getPassword()
+                        : user.getNewPassword() != null ? user.getNewPassword() : null;
         user.setPassword(password == null ? null : PwEncoder.encode(password));
         USERS.put(id, user);
         return id;
@@ -107,9 +108,7 @@ public class MockedUserService implements UserService {
         throw new NotFoundServiceEx("User not found");
     }
 
-    /**
-     * Don't use page for the mocked service
-     */
+    /** Don't use page for the mocked service */
     public List<User> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
         List<User> users = new LinkedList<User>();
         for (User user : USERS.values()) {
@@ -118,11 +117,10 @@ public class MockedUserService implements UserService {
         return users;
     }
 
-    /**
-     * Don't filter in the mocked service
-     */
-    public List<User> getAll(Integer page, Integer entries, String nameLike,
-                             boolean includeAttributes) throws BadRequestServiceEx {
+    /** Don't filter in the mocked service */
+    public List<User> getAll(
+            Integer page, Integer entries, String nameLike, boolean includeAttributes)
+            throws BadRequestServiceEx {
         return getAll(page, entries);
     }
 
@@ -169,7 +167,8 @@ public class MockedUserService implements UserService {
             Set<UserGroup> groups = user.getGroups();
             if (groups != null) {
                 for (UserGroup group : groups) {
-                    if (group.getId() == ug.getId() || group.getGroupName().equals(ug.getGroupName())) {
+                    if (group.getId() == ug.getId()
+                            || group.getGroupName().equals(ug.getGroupName())) {
                         ret.add(user);
                         break;
                     }

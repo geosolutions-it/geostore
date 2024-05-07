@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
+
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import org.keycloak.adapters.AdapterDeploymentContext;
 import org.keycloak.adapters.KeycloakDeployment;
@@ -34,9 +36,6 @@ import org.keycloak.adapters.KeycloakDeploymentBuilder;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
-
 
 @Configuration("keycloakConfig")
 public class KeyCloakSecurityConfiguration {
@@ -56,7 +55,11 @@ public class KeyCloakSecurityConfiguration {
 
     @Bean
     public KeyCloakFilter keycloakFilter() {
-        return new KeyCloakFilter(keyCloakHelper(), keycloakCache(), keycloakConfiguration(), keycloakAuthenticationProvider());
+        return new KeyCloakFilter(
+                keyCloakHelper(),
+                keycloakCache(),
+                keycloakConfiguration(),
+                keycloakAuthenticationProvider());
     }
 
     @Bean
@@ -74,8 +77,7 @@ public class KeyCloakSecurityConfiguration {
         AdapterConfig config = keycloakConfiguration().readAdapterConfig();
         AdapterDeploymentContext context;
         if (config != null) {
-            KeycloakDeployment deployment =
-                    KeycloakDeploymentBuilder.build(config);
+            KeycloakDeployment deployment = KeycloakDeploymentBuilder.build(config);
             context = new AdapterDeploymentContext(deployment);
         } else {
             context = new AdapterDeploymentContext();

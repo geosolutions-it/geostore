@@ -19,6 +19,8 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import static org.junit.Assert.*;
+
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.*;
@@ -33,6 +35,11 @@ import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,21 +51,12 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
-import javax.ws.rs.core.SecurityContext;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-
 /**
  * Class ServiceTestBase.
  *
  * @author ETj (etj at geo-solutions.it)
  */
 public class ServiceTestBase {
-
 
     protected static RESTResourceService restResourceService;
     protected static RESTUserService restUserService;
@@ -74,19 +72,15 @@ public class ServiceTestBase {
 
     protected static ClassPathXmlApplicationContext ctx = null;
     protected final Logger LOGGER = LogManager.getLogger(getClass());
-    @Rule
-    public TestName testName = new TestName();
+    @Rule public TestName testName = new TestName();
 
-
-    /**
-     *
-     */
+    /** */
     public ServiceTestBase() {
 
         synchronized (ServiceTestBase.class) {
             if (ctx == null) {
                 String[] paths = {"classpath*:applicationContext.xml"
-                        // ,"applicationContext-test.xml"
+                    // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
@@ -109,13 +103,15 @@ public class ServiceTestBase {
     protected void setUp() throws Exception {
         testCheckServices();
 
-        LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + testName.getMethodName());
+        LOGGER.info(
+                "################ Running "
+                        + getClass().getSimpleName()
+                        + "::"
+                        + testName.getMethodName());
         removeAll();
     }
 
-    /**
-     *
-     */
+    /** */
     public void testCheckServices() {
         assertNotNull(restResourceService);
         assertNotNull(restUserService);
@@ -159,10 +155,7 @@ public class ServiceTestBase {
         assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
     }
 
-
-    /**
-     * @throws BadRequestServiceEx
-     */
+    /** @throws BadRequestServiceEx */
     private void removeAllUser() throws BadRequestServiceEx {
         List<User> list = userService.getAll(null, null);
         for (User item : list) {
@@ -175,9 +168,7 @@ public class ServiceTestBase {
         assertEquals("User have not been properly deleted", 0, userService.getCount(null));
     }
 
-    /**
-     * @throws BadRequestServiceEx
-     */
+    /** @throws BadRequestServiceEx */
     private void removeAllCategory() throws BadRequestServiceEx {
         List<Category> list = categoryService.getAll(null, null);
         for (Category item : list) {
@@ -190,9 +181,7 @@ public class ServiceTestBase {
         assertEquals("Category have not been properly deleted", 0, categoryService.getCount(null));
     }
 
-    /**
-     * @throws NotFoundServiceEx
-     */
+    /** @throws NotFoundServiceEx */
     protected void removeAllStoredData() throws NotFoundServiceEx {
         List<StoredData> list = storedDataService.getAll();
         for (StoredData item : list) {
@@ -203,9 +192,7 @@ public class ServiceTestBase {
         }
     }
 
-    /**
-     * @throws BadRequestServiceEx
-     */
+    /** @throws BadRequestServiceEx */
     private void removeAllResource() throws BadRequestServiceEx {
         List<ShortResource> list = resourceService.getAll(null, null, buildFakeAdminUser());
         for (ShortResource item : list) {
@@ -238,7 +225,8 @@ public class ServiceTestBase {
      * @throws Exception
      * @throws Exception
      */
-    protected long createResource(String name, String description, String catName, boolean advertised) throws Exception {
+    protected long createResource(
+            String name, String description, String catName, boolean advertised) throws Exception {
         Category category = new Category();
         category.setName(catName);
 
@@ -255,7 +243,9 @@ public class ServiceTestBase {
         return resourceService.insert(resource);
     }
 
-    protected long restCreateResource(String name, String description, String catName, long userId, boolean advertised) throws Exception {
+    protected long restCreateResource(
+            String name, String description, String catName, long userId, boolean advertised)
+            throws Exception {
         RESTResource resource = new RESTResource();
         resource.setName(name);
         resource.setDescription(description);
@@ -267,7 +257,14 @@ public class ServiceTestBase {
         return restResourceService.insert(sc, resource);
     }
 
-    protected long restCreateResource(String name, String description, String catName, long userId, SecurityRuleList rules, boolean advertised) throws Exception {
+    protected long restCreateResource(
+            String name,
+            String description,
+            String catName,
+            long userId,
+            SecurityRuleList rules,
+            boolean advertised)
+            throws Exception {
         long resId = restCreateResource(name, description, catName, userId, advertised);
 
         SecurityContext sc = new SimpleSecurityContext(userId);
@@ -276,7 +273,9 @@ public class ServiceTestBase {
         return resId;
     }
 
-    protected long createResource(String name, String description, Category category, boolean advertised) throws Exception {
+    protected long createResource(
+            String name, String description, Category category, boolean advertised)
+            throws Exception {
         Resource resource = new Resource();
         resource.setName(name);
         resource.setDescription(description);
@@ -297,7 +296,13 @@ public class ServiceTestBase {
      * @return long
      * @throws Exception
      */
-    protected long createResource(String name, String description, String catName, List<SecurityRule> rules, boolean advertised) throws Exception {
+    protected long createResource(
+            String name,
+            String description,
+            String catName,
+            List<SecurityRule> rules,
+            boolean advertised)
+            throws Exception {
 
         Category category = new Category();
         category.setName(catName);
@@ -350,12 +355,12 @@ public class ServiceTestBase {
         return userService.insert(user);
     }
 
-    protected long restCreateUser(String name, Role role, Set<UserGroup> groups, String password) throws Exception {
+    protected long restCreateUser(String name, Role role, Set<UserGroup> groups, String password)
+            throws Exception {
         User user = new User();
         user.setName(name);
         user.setRole(role);
-        if (groups != null && !groups.isEmpty())
-            user.setGroups(groups);
+        if (groups != null && !groups.isEmpty()) user.setGroups(groups);
         user.setNewPassword(password);
 
         UserAttribute attr = new UserAttribute();
@@ -370,11 +375,14 @@ public class ServiceTestBase {
         if (AopUtils.isJdkDynamicProxy(proxy)) {
             return (T) ((Advised) proxy).getTargetSource().getTarget();
         } else {
-            return (T) proxy; // expected to be cglib proxy then, which is simply a specialized class
+            return (T)
+                    proxy; // expected to be cglib proxy then, which is simply a specialized class
         }
     }
 
-    protected long createUser(String name, Role role, String password, List<UserAttribute> attributes) throws Exception {
+    protected long createUser(
+            String name, Role role, String password, List<UserAttribute> attributes)
+            throws Exception {
         User user = new User();
         user.setName(name);
         user.setRole(role);
@@ -405,8 +413,7 @@ public class ServiceTestBase {
         ret.setMetadata(resource.getMetadata());
         ret.setCreator(resource.getCreator());
         ret.setEditor(resource.getEditor());
-        if (resource.getData() != null)
-            ret.setData(resource.getData().getData());
+        if (resource.getData() != null) ret.setData(resource.getData().getData());
         if (CollectionUtils.isNotEmpty(resource.getAttribute()))
             ret.setAttribute(Convert.convertToShortAttributeList(resource.getAttribute()));
         return ret;
@@ -423,8 +430,7 @@ public class ServiceTestBase {
 
         private Principal userPrincipal;
 
-        public SimpleSecurityContext() {
-        }
+        public SimpleSecurityContext() {}
 
         public SimpleSecurityContext(long userId) {
             userPrincipal = new UsernamePasswordAuthenticationToken(userDAO.find(userId), null);
@@ -441,18 +447,23 @@ public class ServiceTestBase {
 
         @Override
         public boolean isUserInRole(String role) {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            throw new UnsupportedOperationException(
+                    "Not supported yet."); // To change body of generated methods, choose Tools |
+            // Templates.
         }
 
         @Override
         public boolean isSecure() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            throw new UnsupportedOperationException(
+                    "Not supported yet."); // To change body of generated methods, choose Tools |
+            // Templates.
         }
 
         @Override
         public String getAuthenticationScheme() {
-            throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+            throw new UnsupportedOperationException(
+                    "Not supported yet."); // To change body of generated methods, choose Tools |
+            // Templates.
         }
-
     }
 }

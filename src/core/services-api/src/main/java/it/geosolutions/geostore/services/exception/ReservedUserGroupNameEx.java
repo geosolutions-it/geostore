@@ -19,19 +19,13 @@
  */
 package it.geosolutions.geostore.services.exception;
 
-/**
- * @author DamianoG
- *
- */
+/** @author DamianoG */
 public class ReservedUserGroupNameEx extends BadRequestServiceEx {
 
     private static final long serialVersionUID = -4948918988222070783L;
 
-    /**
-     * @param message
-     */
+    /** @param message */
     public ReservedUserGroupNameEx(String message) {
         super(message);
     }
-
 }

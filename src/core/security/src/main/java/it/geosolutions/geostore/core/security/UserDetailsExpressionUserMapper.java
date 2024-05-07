@@ -28,60 +28,57 @@
 package it.geosolutions.geostore.core.security;
 
 import java.util.Map;
-
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
 
 /**
- * Implementation of UserMapper that maps attributes from a UserDetailsWithAttributes
- * object to GeoStore User attributes. Mappings are expressed using SpEL expressions.
- * 
- * @author Mauro Bartolomeoli
+ * Implementation of UserMapper that maps attributes from a UserDetailsWithAttributes object to
+ * GeoStore User attributes. Mappings are expressed using SpEL expressions.
  *
+ * @author Mauro Bartolomeoli
  */
 public class UserDetailsExpressionUserMapper extends ExpressionUserMapper {
 
     public UserDetailsExpressionUserMapper(Map<String, String> attributeMappings) {
         super(attributeMappings);
-        
+
         // property accessor for UserDetailsWithAttributes attributes (read only)
-        evaluationContext.addPropertyAccessor(new PropertyAccessor() {
+        evaluationContext.addPropertyAccessor(
+                new PropertyAccessor() {
 
-            @Override
-            public void write(EvaluationContext ctx, Object target, String name, Object value)
-                    throws AccessException {
+                    @Override
+                    public void write(
+                            EvaluationContext ctx, Object target, String name, Object value)
+                            throws AccessException {}
 
-            }
+                    @Override
+                    public TypedValue read(EvaluationContext ctx, Object target, String name)
+                            throws AccessException {
+                        if (target instanceof UserDetailsWithAttributes) {
+                            UserDetailsWithAttributes details = (UserDetailsWithAttributes) target;
+                            return new TypedValue(details.getAttribute(name));
+                        }
+                        return null;
+                    }
 
-            @Override
-            public TypedValue read(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                if (target instanceof UserDetailsWithAttributes) {
-                    UserDetailsWithAttributes details = (UserDetailsWithAttributes) target;
-                    return new TypedValue(details.getAttribute(name));
-                }
-                return null;
-            }
+                    @Override
+                    public Class[] getSpecificTargetClasses() {
+                        return new Class[] {UserDetailsWithAttributes.class};
+                    }
 
-            @Override
-            public Class[] getSpecificTargetClasses() {
-                return new Class[] { UserDetailsWithAttributes.class };
-            }
+                    @Override
+                    public boolean canWrite(EvaluationContext ctx, Object target, String name)
+                            throws AccessException {
+                        return false;
+                    }
 
-            @Override
-            public boolean canWrite(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                return false;
-            }
-
-            @Override
-            public boolean canRead(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                return target instanceof UserDetailsWithAttributes;
-            }
-        });
+                    @Override
+                    public boolean canRead(EvaluationContext ctx, Object target, String name)
+                            throws AccessException {
+                        return target instanceof UserDetailsWithAttributes;
+                    }
+                });
     }
-
 }

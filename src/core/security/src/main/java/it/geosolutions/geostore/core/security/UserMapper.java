@@ -30,14 +30,12 @@ package it.geosolutions.geostore.core.security;
 import it.geosolutions.geostore.core.model.User;
 
 /**
- * Interface used to map a user detail object (in any format) to a GeoStore User
- * object. Allows for custom attributes / groups / roles mapping.
- * 
- * @author Mauro Bartolomeoli
+ * Interface used to map a user detail object (in any format) to a GeoStore User object. Allows for
+ * custom attributes / groups / roles mapping.
  *
+ * @author Mauro Bartolomeoli
  */
 public interface UserMapper {
 
     void mapUser(Object details, User user);
-
 }

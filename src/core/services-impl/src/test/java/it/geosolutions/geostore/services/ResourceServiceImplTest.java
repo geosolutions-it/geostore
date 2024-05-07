@@ -19,12 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.*;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -38,25 +32,25 @@ import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
+import java.util.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  * Class ResourceServiceImplTest.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class ResourceServiceImplTest extends ServiceTestBase {
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
+    public static void setUpClass() throws Exception {}
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
+    public static void tearDownClass() throws Exception {}
 
-    public ResourceServiceImplTest() {
-    }    
+    public ResourceServiceImplTest() {}
 
     @Test
     public void testInsertDeleteResource() throws Exception {
@@ -117,18 +111,21 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(10, resourceService.getCount("name%"));
         assertEquals(10, resourceService.getList("name%", null, null, buildFakeAdminUser()).size());
         assertEquals(20, resourceService.getCount("%name%"));
-        assertEquals(20, resourceService.getList("%name%", null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                20, resourceService.getList("%name%", null, null, buildFakeAdminUser()).size());
         assertEquals(2, resourceService.getCount("%name1%"));
-        assertEquals(2, resourceService.getList("%name1%", null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                2, resourceService.getList("%name1%", null, null, buildFakeAdminUser()).size());
     }
     /**
      * Tests if the results are sorted by name
+     *
      * @throws Exception
      */
     @Test
     public void testSorting() throws Exception {
-    	assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
-    	// setup data. First set is ordered
+        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        // setup data. First set is ordered
         for (int i = 0; i < 20; i++) {
             createResource("FIRST SET - " + i, "description" + i, "MAP1" + i);
         }
@@ -142,41 +139,50 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         List<ShortResource> getAllResult = resourceService.getAll(null, null, buildFakeAdminUser());
         assertEquals(40, getAllResult.size());
         assertTrue(isSorted(getAllResult));
-        
+
         //
         // check getResources, various filters
-        // 
-        
-        // category like 
+        //
+
+        // category like
         SearchFilter MAPCategoryFilter = new CategoryFilter("MAP%", SearchOperator.LIKE);
-        List<ShortResource> getResourcesMAPResult = resourceService.getResources(MAPCategoryFilter, buildFakeAdminUser());
+        List<ShortResource> getResourcesMAPResult =
+                resourceService.getResources(MAPCategoryFilter, buildFakeAdminUser());
         assertEquals(40, getResourcesMAPResult.size());
         assertTrue(isSorted(getResourcesMAPResult));
         SearchFilter MAP1CategoryFilter = new CategoryFilter("MAP1%", SearchOperator.LIKE);
-        List<ShortResource> getResourcesMAP1Result = resourceService.getResources(MAP1CategoryFilter, buildFakeAdminUser());
+        List<ShortResource> getResourcesMAP1Result =
+                resourceService.getResources(MAP1CategoryFilter, buildFakeAdminUser());
         assertEquals(20, getResourcesMAP1Result.size());
         assertTrue(isSorted(getResourcesMAP1Result));
         SearchFilter MAP2CategoryFilter = new CategoryFilter("MAP2%", SearchOperator.LIKE);
-        List<ShortResource> getResourcesMAP2Result = resourceService.getResources(MAP2CategoryFilter, buildFakeAdminUser());
+        List<ShortResource> getResourcesMAP2Result =
+                resourceService.getResources(MAP2CategoryFilter, buildFakeAdminUser());
         assertEquals(20, getResourcesMAP2Result.size());
         assertTrue(isSorted(getResourcesMAP2Result));
-        
+
         // name like
-        SearchFilter nameContain1Filter = new FieldFilter(BaseField.NAME, "%1%", SearchOperator.LIKE);
-        List<ShortResource> nameContain1Result = resourceService.getResources(nameContain1Filter, buildFakeAdminUser());
-        // 22 resources contain 1 in the name: "FIRST SET - 1" + "FIRST SET - 10" ... "FIRST SET - 19", same for second set
+        SearchFilter nameContain1Filter =
+                new FieldFilter(BaseField.NAME, "%1%", SearchOperator.LIKE);
+        List<ShortResource> nameContain1Result =
+                resourceService.getResources(nameContain1Filter, buildFakeAdminUser());
+        // 22 resources contain 1 in the name: "FIRST SET - 1" + "FIRST SET - 10" ... "FIRST SET -
+        // 19", same for second set
         assertEquals(22, nameContain1Result.size());
         assertTrue(isSorted(nameContain1Result));
-        
-        SearchFilter nameContain2Filter = new FieldFilter(BaseField.NAME, "%2%", SearchOperator.LIKE);
-        List<ShortResource> nameContain2Result = resourceService.getResources(nameContain2Filter, buildFakeAdminUser());
-        // 4 resources contain 1 in the name: "FIRST SET - 2" + "FIRST SET - 12" 
+
+        SearchFilter nameContain2Filter =
+                new FieldFilter(BaseField.NAME, "%2%", SearchOperator.LIKE);
+        List<ShortResource> nameContain2Result =
+                resourceService.getResources(nameContain2Filter, buildFakeAdminUser());
+        // 4 resources contain 1 in the name: "FIRST SET - 2" + "FIRST SET - 12"
         assertEquals(4, nameContain2Result.size());
         assertTrue(isSorted(nameContain2Result));
     }
-    
+
     /**
-     * Check if the List passed is sorted by name 
+     * Check if the List passed is sorted by name
+     *
      * @param resourcesList
      * @return
      */
@@ -184,7 +190,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         if (resourcesList.size() == 1) {
             return true;
         }
-     
+
         Iterator<ShortResource> iter = resourcesList.iterator();
         ShortResource current, previous = iter.next();
         while (iter.hasNext()) {
@@ -240,110 +246,110 @@ public class ResourceServiceImplTest extends ServiceTestBase {
             assertEquals(3, list.size());
         }
     }
-    
+
     @Test
     public void testGetSecurityRules() throws Exception {
-    	long userId = createUser("user1", Role.USER, "password");
-    	User user = new User();
-    	user.setId(userId);
-    	
-    	long groupId = createGroup("group1");
-    	UserGroup group = new UserGroup();
-    	group.setId(groupId);
-    	
-    	List<SecurityRule> rules = new ArrayList<>();
-    	
-    	SecurityRule rule = new SecurityRule();
-    	rule.setUser(user);
-    	rule.setCanRead(true);
-    	rules.add(rule);
-    	
-    	rule = new SecurityRule();
-    	rule.setCanRead(true);
-    	rule.setCanWrite(true);
-    	rule.setGroup(group);
-    	rules.add(rule);
-    	
-    	long resourceId = createResource("name1", "description1", "MAP", rules);
-    	
-    	List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
-    	
-    	assertEquals(2, writtenRules.size());
-    	
-    	SecurityRule userRule = writtenRules.get(0);
-		assertNotNull(userRule.getUser());
-    	assertNull(userRule.getGroup());
-    	assertEquals((Long)userId, userRule.getUser().getId());
-    	assertEquals((Long)resourceId, userRule.getResource().getId());
-    	
-    	SecurityRule groupRule = writtenRules.get(1);
-		assertNotNull(groupRule.getGroup());
-    	assertNull(groupRule.getUser());
-    	assertEquals((Long)groupId, groupRule.getGroup().getId());
-    	assertEquals((Long)resourceId, groupRule.getResource().getId());
+        long userId = createUser("user1", Role.USER, "password");
+        User user = new User();
+        user.setId(userId);
+
+        long groupId = createGroup("group1");
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
+
+        List<SecurityRule> rules = new ArrayList<>();
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(user);
+        rule.setCanRead(true);
+        rules.add(rule);
+
+        rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rule.setGroup(group);
+        rules.add(rule);
+
+        long resourceId = createResource("name1", "description1", "MAP", rules);
+
+        List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
+
+        assertEquals(2, writtenRules.size());
+
+        SecurityRule userRule = writtenRules.get(0);
+        assertNotNull(userRule.getUser());
+        assertNull(userRule.getGroup());
+        assertEquals((Long) userId, userRule.getUser().getId());
+        assertEquals((Long) resourceId, userRule.getResource().getId());
+
+        SecurityRule groupRule = writtenRules.get(1);
+        assertNotNull(groupRule.getGroup());
+        assertNull(groupRule.getUser());
+        assertEquals((Long) groupId, groupRule.getGroup().getId());
+        assertEquals((Long) resourceId, groupRule.getResource().getId());
     }
-    
+
     @Test
     public void testUpdateSecurityRules() throws Exception {
-    	long resourceId = createResource("name1", "description1", "MAP");
+        long resourceId = createResource("name1", "description1", "MAP");
 
-    	List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
-    	assertEquals(0, writtenRules.size());
+        List<SecurityRule> writtenRules = resourceService.getSecurityRules(resourceId);
+        assertEquals(0, writtenRules.size());
 
-    	List<SecurityRule> rules = new ArrayList<SecurityRule>();
+        List<SecurityRule> rules = new ArrayList<SecurityRule>();
 
-		long userId = createUser("user1", Role.USER, "password");
-		User user = new User();
-		user.setId(userId);
+        long userId = createUser("user1", Role.USER, "password");
+        User user = new User();
+        user.setId(userId);
 
-		long groupId = createGroup("group1");
-		UserGroup group = new UserGroup();
-		group.setId(groupId);
+        long groupId = createGroup("group1");
+        UserGroup group = new UserGroup();
+        group.setId(groupId);
 
-		long otherGroupId = createGroup("group2");
-		UserGroup othergroup = new UserGroup();
-		othergroup.setId(otherGroupId);
+        long otherGroupId = createGroup("group2");
+        UserGroup othergroup = new UserGroup();
+        othergroup.setId(otherGroupId);
 
-    	SecurityRule rule = new SecurityRule();
-    	rule.setUser(user);
-    	rule.setCanRead(true);
-    	rules.add(rule);
-    	
-    	rule = new SecurityRule();
-    	rule.setCanRead(true);
-    	rule.setCanWrite(true);
-    	rule.setGroup(group);
-    	rules.add(rule);
-    	
-    	resourceService.updateSecurityRules(resourceId, rules);
-    	
-    	writtenRules = resourceService.getSecurityRules(resourceId);
-    	assertEquals(2, writtenRules.size());
-    	
-    	rules.clear();
-    	
-    	rule = new SecurityRule();
-    	rule.setUser(user);
-    	rule.setCanRead(true);
-    	rules.add(rule);
-    	
-    	rule = new SecurityRule();
-    	rule.setCanRead(true);
-    	rule.setCanWrite(true);
-    	rule.setGroup(group);
-    	rules.add(rule);
-    	rule = new SecurityRule();
-    	rule.setCanRead(true);
-    	rule.setCanWrite(true);
-    	rule.setGroup(othergroup);
-    	rules.add(rule);
-    	
-    	resourceService.updateSecurityRules(resourceId, rules);
-    	
-    	writtenRules = resourceService.getSecurityRules(resourceId);
-    	assertEquals(3, writtenRules.size());
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(user);
+        rule.setCanRead(true);
+        rules.add(rule);
+
+        rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rule.setGroup(group);
+        rules.add(rule);
+
+        resourceService.updateSecurityRules(resourceId, rules);
+
+        writtenRules = resourceService.getSecurityRules(resourceId);
+        assertEquals(2, writtenRules.size());
+
+        rules.clear();
+
+        rule = new SecurityRule();
+        rule.setUser(user);
+        rule.setCanRead(true);
+        rules.add(rule);
+
+        rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rule.setGroup(group);
+        rules.add(rule);
+        rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rule.setGroup(othergroup);
+        rules.add(rule);
+
+        resourceService.updateSecurityRules(resourceId, rules);
+
+        writtenRules = resourceService.getSecurityRules(resourceId);
+        assertEquals(3, writtenRules.size());
     }
-    
+
     @Test
     public void testInsertTooBigResource() throws Exception {
         final String ORIG_RES_NAME = "testRes";
@@ -354,13 +360,13 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(0, resourceService.getCount(null));
         try {
             createResource(ORIG_RES_NAME, DESCRIPTION, CATEGORY_NAME, bigData);
-        } catch(Exception e) {
+        } catch (Exception e) {
             error = true;
         }
         assertEquals(0, resourceService.getCount(null));
         assertTrue(error);
     }
-    
+
     private static String createDataSize(int msgSize) {
         StringBuilder sb = new StringBuilder(msgSize);
         for (int i = 0; i < msgSize; i++) {
@@ -368,83 +374,91 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         }
         return sb.toString();
     }
-    
+
     @Test
     public void testInsertUpdateDuplicatedResource() throws Exception {
-    	final String ORIG_RES_NAME = "testRes";
-    	final String DESCRIPTION = "description";
-    	final String CATEGORY_NAME = "MAP";
-    	final int NUM_COPIES = 3;
-    	final long[] COPY_IDS = new long[NUM_COPIES];
-    	
-    	long origResourceId = createResource(ORIG_RES_NAME, DESCRIPTION, CATEGORY_NAME);
-    	Category category = categoryService.get(CATEGORY_NAME);
+        final String ORIG_RES_NAME = "testRes";
+        final String DESCRIPTION = "description";
+        final String CATEGORY_NAME = "MAP";
+        final int NUM_COPIES = 3;
+        final long[] COPY_IDS = new long[NUM_COPIES];
+
+        long origResourceId = createResource(ORIG_RES_NAME, DESCRIPTION, CATEGORY_NAME);
+        Category category = categoryService.get(CATEGORY_NAME);
 
         assertEquals(1, resourceService.getCount(null));
         assertNotNull(category);
-        
-        for (int i=0; i<NUM_COPIES; i++) {
-        	// //////////////////////
+
+        for (int i = 0; i < NUM_COPIES; i++) {
+            // //////////////////////
             // test insert
             // //////////////////////
-        	
-        	long copyId = -1;
+
+            long copyId = -1;
             try {
-            	createResource(ORIG_RES_NAME, DESCRIPTION, category);
-            	fail("DuplicatedResourceNameServiceEx was not thrown as expected");
+                createResource(ORIG_RES_NAME, DESCRIPTION, category);
+                fail("DuplicatedResourceNameServiceEx was not thrown as expected");
             } catch (DuplicatedResourceNameServiceEx ex) {
-            	// OK, exception was thrown: exception message be a valid resource name
-            	String validCopyName = ex.getMessage();
-            	
-            	assertNotNull("Thrown DuplicatedResourceNameServiceEx exception's message was null", validCopyName);
-                assertFalse("Thrown DuplicatedResourceNameServiceEx exception's message was empty", validCopyName.isEmpty());
-                 
+                // OK, exception was thrown: exception message be a valid resource name
+                String validCopyName = ex.getMessage();
+
+                assertNotNull(
+                        "Thrown DuplicatedResourceNameServiceEx exception's message was null",
+                        validCopyName);
+                assertFalse(
+                        "Thrown DuplicatedResourceNameServiceEx exception's message was empty",
+                        validCopyName.isEmpty());
+
                 copyId = createResource(validCopyName, DESCRIPTION, category);
             }
-            
+
             assertTrue(copyId > 0);
-            assertEquals(i+2, resourceService.getCount(null));
-            
+            assertEquals(i + 2, resourceService.getCount(null));
+
             // //////////////////////
             // test update
             // //////////////////////
-            
+
             Resource copy = resourceService.get(copyId);
             assertNotNull(copy);
             copy.setName(ORIG_RES_NAME);
             try {
-            	resourceService.update(copy);
-            	fail("DuplicatedResourceNameServiceEx was not thrown as expected");
+                resourceService.update(copy);
+                fail("DuplicatedResourceNameServiceEx was not thrown as expected");
             } catch (DuplicatedResourceNameServiceEx ex) {
-            	// OK, exception was thrown: exception message be a valid resource name
-            	String validCopyName = ex.getMessage();
-            	
-            	assertNotNull("Thrown DuplicatedResourceNameServiceEx exception's message was null", validCopyName);
-                assertFalse("Thrown DuplicatedResourceNameServiceEx exception's message was empty", validCopyName.isEmpty());
-                 
+                // OK, exception was thrown: exception message be a valid resource name
+                String validCopyName = ex.getMessage();
+
+                assertNotNull(
+                        "Thrown DuplicatedResourceNameServiceEx exception's message was null",
+                        validCopyName);
+                assertFalse(
+                        "Thrown DuplicatedResourceNameServiceEx exception's message was empty",
+                        validCopyName.isEmpty());
+
                 copy.setName(validCopyName);
                 // should throw no exception
                 try {
-                	resourceService.update(copy);
-                	
-                	// update description
-                	copy.setDescription(DESCRIPTION + " modified");
-                	resourceService.update(copy);
+                    resourceService.update(copy);
+
+                    // update description
+                    copy.setDescription(DESCRIPTION + " modified");
+                    resourceService.update(copy);
                 } catch (Exception e) {
-                	fail("Exception was thrown during update: " + e.getMessage());
-                }                
+                    fail("Exception was thrown during update: " + e.getMessage());
+                }
             }
-            
+
             COPY_IDS[i] = copyId;
         }
-        
+
         // cleanup
         assertTrue("Could not delete resource", resourceService.delete(origResourceId));
-        for (int i=0; i<NUM_COPIES; i++) {
-        	assertTrue("Could not delete resource", resourceService.delete(COPY_IDS[i]));        	
+        for (int i = 0; i < NUM_COPIES; i++) {
+            assertTrue("Could not delete resource", resourceService.delete(COPY_IDS[i]));
         }
-        
-        assertEquals(0, resourceService.getCount(null));    	
+
+        assertEquals(0, resourceService.getCount(null));
     }
 
     @Test
@@ -496,11 +510,12 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         user2.setRole(Role.USER);
         user2.setGroups(new HashSet<>(Collections.singletonList(otherGroup)));
 
-        List<SecurityRule> rules1 = new ArrayList<>(Arrays.asList(
-            new SecurityRuleBuilder().user(user1).canRead(true).build(),
-            new SecurityRuleBuilder().group(group).canRead(true).build(),
-            new SecurityRuleBuilder().group(otherGroup).canRead(true).build()
-        ));
+        List<SecurityRule> rules1 =
+                new ArrayList<>(
+                        Arrays.asList(
+                                new SecurityRuleBuilder().user(user1).canRead(true).build(),
+                                new SecurityRuleBuilder().group(group).canRead(true).build(),
+                                new SecurityRuleBuilder().group(otherGroup).canRead(true).build()));
 
         long resourceId = createResource("name1", "description1", "MAP1", false, rules1);
 
@@ -509,17 +524,25 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(3, writtenRules.size());
 
         // name like
-        SearchFilter nameContains1Filter = new FieldFilter(BaseField.NAME, "%name1%", SearchOperator.LIKE);
-        resourceService.getResources(nameContains1Filter,null, null, user2);
-        assertEquals(1, resourceService.getResources(nameContains1Filter,null, null, buildFakeAdminUser()).size());
-        assertEquals(1, resourceService.getResources(nameContains1Filter,null, null, user1).size());
-        assertEquals(0, resourceService.getResources(nameContains1Filter,null, null, user2).size());
+        SearchFilter nameContains1Filter =
+                new FieldFilter(BaseField.NAME, "%name1%", SearchOperator.LIKE);
+        resourceService.getResources(nameContains1Filter, null, null, user2);
+        assertEquals(
+                1,
+                resourceService
+                        .getResources(nameContains1Filter, null, null, buildFakeAdminUser())
+                        .size());
+        assertEquals(
+                1, resourceService.getResources(nameContains1Filter, null, null, user1).size());
+        assertEquals(
+                0, resourceService.getResources(nameContains1Filter, null, null, user2).size());
 
-        List<SecurityRule> rules2 = new ArrayList<>(Arrays.asList(
-                new SecurityRuleBuilder().user(user1).canRead(true).build(),
-                new SecurityRuleBuilder().group(group).canRead(true).build(),
-                new SecurityRuleBuilder().group(otherGroup).canRead(true).build()
-        ));
+        List<SecurityRule> rules2 =
+                new ArrayList<>(
+                        Arrays.asList(
+                                new SecurityRuleBuilder().user(user1).canRead(true).build(),
+                                new SecurityRuleBuilder().group(group).canRead(true).build(),
+                                new SecurityRuleBuilder().group(otherGroup).canRead(true).build()));
 
         resourceId = createResource("name2", "description2", "MAP2", true, rules2);
 
@@ -528,9 +551,16 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(3, writtenRules.size());
 
         // name like
-        SearchFilter nameContains2Filter = new FieldFilter(BaseField.NAME, "%name2%", SearchOperator.LIKE);
-        assertEquals(1, resourceService.getResources(nameContains2Filter,null, null, buildFakeAdminUser()).size());
-        assertEquals(1, resourceService.getResources(nameContains2Filter,null, null, user1).size());
-        assertEquals(1, resourceService.getResources(nameContains2Filter,null, null, user2).size());
+        SearchFilter nameContains2Filter =
+                new FieldFilter(BaseField.NAME, "%name2%", SearchOperator.LIKE);
+        assertEquals(
+                1,
+                resourceService
+                        .getResources(nameContains2Filter, null, null, buildFakeAdminUser())
+                        .size());
+        assertEquals(
+                1, resourceService.getResources(nameContains2Filter, null, null, user1).size());
+        assertEquals(
+                1, resourceService.getResources(nameContains2Filter, null, null, user2).size());
     }
 }

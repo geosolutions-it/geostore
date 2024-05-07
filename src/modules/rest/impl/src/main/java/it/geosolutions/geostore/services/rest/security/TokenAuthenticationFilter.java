@@ -31,36 +31,35 @@ import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
 /**
  * Base Token based authentication filter.
- * <p>
- * Authenticates a user reading an authentication token from a configured header
- * (defaults to Authorization).
- * <p>
- * The token can have a prefix that needs to be present in the header value (defaults to
- * Bearer, to be compatible with OAuth 2.0 tokens).
- * <p>
- * Each implementation can verify the validity of a token (and the user bounded to it)
- * using a different methodology.
- * <p>
- * A cache is internally used to avoid continuous token testing.
- * <p>
- * Cache expiration time and size can be configured.
+ *
+ * <p>Authenticates a user reading an authentication token from a configured header (defaults to
+ * Authorization).
+ *
+ * <p>The token can have a prefix that needs to be present in the header value (defaults to Bearer,
+ * to be compatible with OAuth 2.0 tokens).
+ *
+ * <p>Each implementation can verify the validity of a token (and the user bounded to it) using a
+ * different methodology.
+ *
+ * <p>A cache is internally used to avoid continuous token testing.
+ *
+ * <p>Cache expiration time and size can be configured.
  *
  * @author Mauro Bartolomeoli
  */
 public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFilter {
 
-    private final static Logger LOGGER = LogManager.getLogger(TokenAuthenticationFilter.class);
+    private static final Logger LOGGER = LogManager.getLogger(TokenAuthenticationFilter.class);
 
     protected LoadingCache<String, Optional<Authentication>> cache;
 
@@ -69,7 +68,6 @@ public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFi
 
     private int cacheSize = 1000;
     private int cacheExpiration = 60;
-
 
     /**
      * Header to check for token (defaults to Authorization).
@@ -81,10 +79,10 @@ public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFi
     }
 
     /**
-     * Static prefix to look for in the header value.
-     * Only if the prefix is found, the rest of the header is checked as a Token.
-     * <p>
-     * Defaults to Bearer (OAuth 2.0 compatible).
+     * Static prefix to look for in the header value. Only if the prefix is found, the rest of the
+     * header is checked as a Token.
+     *
+     * <p>Defaults to Bearer (OAuth 2.0 compatible).
      *
      * @param tokenPrefix
      */
@@ -113,14 +111,16 @@ public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFi
     protected LoadingCache<String, Optional<Authentication>> getCache() {
         if (cache == null) {
 
-            cache = CacheBuilder.newBuilder()
-                    .maximumSize(cacheSize)
-                    .refreshAfterWrite(cacheExpiration, TimeUnit.SECONDS)
-                    .build(new CacheLoader<String, Optional<Authentication>>() {
-                        public Optional<Authentication> load(String token) {
-                            return Optional.fromNullable(checkToken(token));
-                        }
-                    });
+            cache =
+                    CacheBuilder.newBuilder()
+                            .maximumSize(cacheSize)
+                            .refreshAfterWrite(cacheExpiration, TimeUnit.SECONDS)
+                            .build(
+                                    new CacheLoader<String, Optional<Authentication>>() {
+                                        public Optional<Authentication> load(String token) {
+                                            return Optional.fromNullable(checkToken(token));
+                                        }
+                                    });
         }
         return cache;
     }
@@ -146,17 +146,14 @@ public abstract class TokenAuthenticationFilter extends GeoStoreAuthenticationFi
                 LOGGER.error("Error authenticating token", e);
             }
         }
-
     }
 
-
     /**
-     * Phisically checks the validity of the given token and
-     * returns an Authentication object for the corresponding principal.
+     * Phisically checks the validity of the given token and returns an Authentication object for
+     * the corresponding principal.
      *
      * @param token
      * @return
      */
     protected abstract Authentication checkToken(String token);
-
 }

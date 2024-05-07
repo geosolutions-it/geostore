@@ -27,9 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import org.springframework.security.core.GrantedAuthority;
-
 import java.util.Set;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Service to extract groups and/or roles list from an external service.
@@ -46,9 +45,8 @@ public interface GroupsRolesService {
 
     /**
      * Get all roles from the external service.
-     * <p>
-     * (currently not used, it will be useful when roles will not be
-     * fixed, finally).
+     *
+     * <p>(currently not used, it will be useful when roles will not be fixed, finally).
      *
      * @return
      */

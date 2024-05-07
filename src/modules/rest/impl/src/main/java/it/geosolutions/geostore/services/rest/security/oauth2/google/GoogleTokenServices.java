@@ -28,18 +28,15 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Map;
-
-/**
- * RemoteTokenServices that handles specifically the GoogleResponse.
- */
+/** RemoteTokenServices that handles specifically the GoogleResponse. */
 public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
 
     public GoogleTokenServices(String principalKey) {
@@ -52,10 +49,7 @@ public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
         formData.add("token", accessToken);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
-        String accessTokenUrl =
-                checkTokenEndpointUrl +
-                        "?access_token=" +
-                        accessToken;
+        String accessTokenUrl = checkTokenEndpointUrl + "?access_token=" + accessToken;
         return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.POST);
     }
 
@@ -70,6 +64,7 @@ public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
     @Override
     protected String getAuthorizationHeader(String accessToken) {
         String creds = String.format("%s:%s", clientId, clientSecret);
-        return "Basic " + new String(Base64.getEncoder().encode(creds.getBytes(StandardCharsets.UTF_8)));
+        return "Basic "
+                + new String(Base64.getEncoder().encode(creds.getBytes(StandardCharsets.UTF_8)));
     }
 }

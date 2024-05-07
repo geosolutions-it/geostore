@@ -19,9 +19,11 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import static org.junit.Assert.*;
+
 import com.sun.jersey.api.client.ClientResponse;
 import com.sun.jersey.api.client.ClientResponse.Status;
-import static org.junit.Assert.*;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -30,6 +32,7 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
+import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
@@ -43,6 +46,7 @@ import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -53,21 +57,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
-import com.sun.jersey.api.client.UniformInterfaceException;
-import it.geosolutions.geostore.services.dto.ShortResource;
-import java.util.Collections;
-
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class GeoStoreClientTest extends BaseGeoStoreClientTest {
-    private final static Logger LOGGER = LogManager.getLogger(GeoStoreClientTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(GeoStoreClientTest.class);
 
     final String DEFAULTCATEGORYNAME = "TestCategory1";
 
-    
-    
     @Test
     public void testRemoveAllAttribs() {
 
@@ -134,7 +129,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             List<Attribute> loadedAttrs = loaded.getAttribute();
             assertEquals(0, loadedAttrs.size());
         }
-
     }
 
     @Test
@@ -195,11 +189,10 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertEquals(DataType.DATE, datt.getType());
             assertEquals(KEY_DATE, datt.getName());
             assertEquals(origDate, datt.getDateValue());
-
         }
         // test Search
-        SearchFilter searchFilter = new FieldFilter(BaseField.NAME, "%" + timeid,
-                SearchOperator.LIKE);
+        SearchFilter searchFilter =
+                new FieldFilter(BaseField.NAME, "%" + timeid, SearchOperator.LIKE);
         ShortResourceList rlist = client.searchResources(searchFilter);
         assertNotNull(rlist);
         assertEquals(1, rlist.getList().size());
@@ -320,7 +313,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         SearchFilter filter = new CategoryFilter(DEFAULTCATEGORYNAME, SearchOperator.EQUAL_TO);
         ShortResourceList resources = client.searchResources(filter);
         assertEquals(1, resources.getList().size());
-
     }
 
     // @Test
@@ -392,7 +384,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             System.out.println("RESOURCE: " + loaded);
             assertNotNull(loaded.getData());
         }
-
     }
 
     @Test
@@ -401,11 +392,10 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         createDefaultCategory();
 
         final String DATA = "we wish you a merry xmas and a happy new year";
-        final String ENCODED  = Base64.encodeBase64String(DATA.getBytes());
+        final String ENCODED = Base64.encodeBase64String(DATA.getBytes());
 
         RESTStoredData storedData = new RESTStoredData();
         storedData.setData(ENCODED);
-
 
         RESTResource origResource = new RESTResource();
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
@@ -428,7 +418,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             byte[] encoded = client.getRawData(rid, null);
             assertArrayEquals(ENCODED.getBytes(), encoded);
         }
-        
+
         {
             LOGGER.info("RAW data: base64");
             byte[] decoded = client.getRawData(rid, RawFormat.BASE64);
@@ -442,14 +432,13 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         createDefaultCategory();
 
         final String DATA = "we wish you a merry xmas and a happy new year";
-        final String ENCODED_DATA  = Base64.encodeBase64String(DATA.getBytes());
+        final String ENCODED_DATA = Base64.encodeBase64String(DATA.getBytes());
         final String MEDIATYPE = "test/custom";
         final String DATAURIHEADER = "data:" + MEDIATYPE + ";base64,";
         final String FULL_DATA = DATAURIHEADER + ENCODED_DATA;
 
         RESTStoredData storedData = new RESTStoredData();
         storedData.setData(FULL_DATA);
-
 
         RESTResource origResource = new RESTResource();
         origResource.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
@@ -475,7 +464,8 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         // Also test the content type
         {
             LOGGER.info("RAW data: test content type");
-            ClientResponse response = client.getRawData(ClientResponse.class, rid, RawFormat.DATAURI);
+            ClientResponse response =
+                    client.getRawData(ClientResponse.class, rid, RawFormat.DATAURI);
 
             byte[] decoded = response.getEntity(byte[].class);
 
@@ -485,7 +475,6 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertTrue(contenttypes.contains(MEDIATYPE));
         }
     }
-
 
     @Test
     public void testSearch01() {
@@ -530,12 +519,11 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertNotNull(resources.getList().get(0).getData());
             assertEquals("pippo", resources.getList().get(0).getData().getData());
         }
-
     }
 
     @Test
     public void testDefaultSecurityRules() {
-    	createDefaultCategory();
+        createDefaultCategory();
 
         RESTResource res = new RESTResource();
         res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
@@ -549,11 +537,11 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         assertNotNull(rules.getList());
         assertEquals(1, rules.getList().size());
     }
-    
+
     @Test
     public void testupdateSecurityRules() {
-    	
-    	createDefaultCategory();
+
+        createDefaultCategory();
 
         RESTResource res = new RESTResource();
         res.setCategory(new RESTCategory(DEFAULTCATEGORYNAME));
@@ -562,39 +550,37 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         res.setName("rest_test_resource_" + timeid);
 
         Long userId = createUser("u1_" + timeid, Role.USER, "---");
-        
+
         UserGroup g1 = new UserGroup();
-        g1.setGroupName("g1_"  + timeid);
+        g1.setGroupName("g1_" + timeid);
         Long groupId = adminClient.insertUserGroup(g1);
-        
-        
+
         Long id = client.insert(res);
         List<SecurityRule> ruleList = new ArrayList<SecurityRule>();
-        
+
         SecurityRule rule = new SecurityRule();
         rule.setCanRead(true);
-        rule.setCanWrite(true);   
+        rule.setCanWrite(true);
         User user = new User();
         user.setId(userId);
         rule.setUser(user);
         ruleList.add(rule);
-        
+
         rule = new SecurityRule();
         rule.setCanRead(true);
-        rule.setCanWrite(false); 
+        rule.setCanWrite(false);
         UserGroup group = new UserGroup();
         group.setId(groupId);
         rule.setGroup(group);
         ruleList.add(rule);
-        
+
         SecurityRuleList rules = new SecurityRuleList(ruleList);
         client.updateSecurityRules(id, rules);
-        
+
         SecurityRuleList writtenRules = client.getSecurityRules(id);
         assertNotNull(writtenRules.getList());
         assertEquals(2, rules.getList().size());
     }
-
 
     @Test
     public void testGetShortResource() {
@@ -654,11 +640,9 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertEquals("r1", loaded.getName());
             assertFalse(loaded.isCanEdit());
         }
-
     }
 
-    private RESTResource buildResource(String name, String catName)
-    {
+    private RESTResource buildResource(String name, String catName) {
         RESTResource res = new RESTResource();
         res.setCategory(new RESTCategory(catName));
         res.setName(name);
@@ -670,5 +654,4 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         assertNotNull(catid);
         return catid;
     }
-
 }

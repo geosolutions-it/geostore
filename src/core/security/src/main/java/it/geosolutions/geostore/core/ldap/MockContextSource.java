@@ -7,9 +7,11 @@ import org.springframework.ldap.core.ContextSource;
 public class MockContextSource implements ContextSource {
 
     DirContext ctx;
+
     public MockContextSource(DirContext ctx) {
         this.ctx = ctx;
     }
+
     @Override
     public DirContext getContext(String arg0, String arg1) throws NamingException {
         return ctx;
@@ -24,5 +26,4 @@ public class MockContextSource implements ContextSource {
     public DirContext getReadWriteContext() throws NamingException {
         return ctx;
     }
-
 }

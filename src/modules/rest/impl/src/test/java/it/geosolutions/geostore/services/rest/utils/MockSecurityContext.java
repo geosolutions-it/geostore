@@ -1,12 +1,11 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.User;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-
-import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 import java.util.Collection;
+import javax.ws.rs.core.SecurityContext;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 
 /**
  * Mock class to simulate REST Services Requests
@@ -20,47 +19,49 @@ public class MockSecurityContext implements SecurityContext {
 
     public MockSecurityContext(User uu) {
         this.user = uu;
-        principal = new Authentication() {
+        principal =
+                new Authentication() {
 
-            @Override
-            public String getName() {
-                return user.getName();
-            }
+                    @Override
+                    public String getName() {
+                        return user.getName();
+                    }
 
-            @Override
-            public Collection<GrantedAuthority> getAuthorities() {
-                // TODO Auto-generated method stub
-                return null;
-            }
+                    @Override
+                    public Collection<GrantedAuthority> getAuthorities() {
+                        // TODO Auto-generated method stub
+                        return null;
+                    }
 
-            @Override
-            public Object getCredentials() {
-                // TODO Auto-generated method stub
-                return null;
-            }
+                    @Override
+                    public Object getCredentials() {
+                        // TODO Auto-generated method stub
+                        return null;
+                    }
 
-            @Override
-            public Object getDetails() {
-                // TODO Auto-generated method stub
-                return null;
-            }
+                    @Override
+                    public Object getDetails() {
+                        // TODO Auto-generated method stub
+                        return null;
+                    }
 
-            @Override
-            public Object getPrincipal() {
-                return user;
-            }
+                    @Override
+                    public Object getPrincipal() {
+                        return user;
+                    }
 
-            @Override
-            public boolean isAuthenticated() {
-                // TODO Auto-generated method stub
-                return false;
-            }
+                    @Override
+                    public boolean isAuthenticated() {
+                        // TODO Auto-generated method stub
+                        return false;
+                    }
 
-            @Override
-            public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-                // TODO Auto-generated method stub
-            }
-        };
+                    @Override
+                    public void setAuthenticated(boolean isAuthenticated)
+                            throws IllegalArgumentException {
+                        // TODO Auto-generated method stub
+                    }
+                };
     }
 
     @Override

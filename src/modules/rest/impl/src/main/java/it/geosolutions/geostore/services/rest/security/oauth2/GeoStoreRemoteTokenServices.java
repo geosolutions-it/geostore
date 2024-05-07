@@ -27,7 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-
+import java.io.IOException;
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.ParameterizedTypeReference;
@@ -47,12 +48,9 @@ import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.util.Map;
-
 /**
- * Extends the SpringSecurity class to provide an additional method to be able to deal with
- * not fully standardized/check_token endpoint responses.
+ * Extends the SpringSecurity class to provide an additional method to be able to deal with not
+ * fully standardized/check_token endpoint responses.
  */
 public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
 
@@ -145,10 +143,7 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         formData.add("token", accessToken);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
-        String accessTokenUrl =
-                checkTokenEndpointUrl +
-                        "?access_token=" +
-                        accessToken;
+        String accessTokenUrl = checkTokenEndpointUrl + "?access_token=" + accessToken;
         return sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.POST);
     }
 
@@ -157,13 +152,15 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
     }
 
     protected Map<String, Object> sendRequestForMap(
-            String path, MultiValueMap<String, String> formData, HttpHeaders headers, HttpMethod method) {
+            String path,
+            MultiValueMap<String, String> formData,
+            HttpHeaders headers,
+            HttpMethod method) {
         if (headers.getContentType() == null) {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         }
         ParameterizedTypeReference<Map<String, Object>> map =
-                new ParameterizedTypeReference<Map<String, Object>>() {
-                };
+                new ParameterizedTypeReference<Map<String, Object>>() {};
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Executing request " + path + " form data are " + formData);
             LOGGER.debug("Headers are " + headers);

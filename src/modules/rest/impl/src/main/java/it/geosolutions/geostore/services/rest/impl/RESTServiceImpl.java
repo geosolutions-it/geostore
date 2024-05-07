@@ -37,6 +37,12 @@ import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -46,27 +52,19 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import javax.ws.rs.core.SecurityContext;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 /**
  * Class RESTServiceImpl.
- * <p>
- * This is the super class for each RESTServices implementation
+ *
+ * <p>This is the super class for each RESTServices implementation
  *
  * @author ETj (etj at geo-solutions.it)
  * @author DamianoG
  */
 public abstract class RESTServiceImpl {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(RESTServiceImpl.class);
 
-    @Autowired
-    UserService userService;
+    @Autowired UserService userService;
 
     /**
      * Given a Group Set returns a List that contains all the group names
@@ -89,51 +87,59 @@ public abstract class RESTServiceImpl {
     }
 
     /**
-     * @return User - The authenticated user that is accessing this service, or null if guest access.
+     * @return User - The authenticated user that is accessing this service, or null if guest
+     *     access.
      */
     protected User extractAuthUser(SecurityContext sc) throws InternalErrorWebEx {
-        if (sc == null)
-            throw new InternalErrorWebEx("Missing auth info");
+        if (sc == null) throw new InternalErrorWebEx("Missing auth info");
         else {
             Principal principal = sc.getUserPrincipal();
             if (principal == null) {
-                // If I'm here I'm sure that the service is running is allowed for the unauthenticated users
-                // due to service-based authorization step that uses annotations on services declaration (seee module geostore-rest-api).
-                // So I'm going to create a Principal to be used during resources-based authorization.
+                // If I'm here I'm sure that the service is running is allowed for the
+                // unauthenticated users
+                // due to service-based authorization step that uses annotations on services
+                // declaration (seee module geostore-rest-api).
+                // So I'm going to create a Principal to be used during resources-based
+                // authorization.
                 principal = createGuestPrincipal();
             }
             if (!(principal instanceof Authentication)) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Mismatching auth principal");
                 }
-                throw new InternalErrorWebEx("Mismatching auth principal (" + principal.getClass()
-                        + ")");
+                throw new InternalErrorWebEx(
+                        "Mismatching auth principal (" + principal.getClass() + ")");
             }
 
             Authentication usrToken = (Authentication) principal;
 
-            //DamianoG 06/03/2014 Why create a new Instance when we can deal with the object taken from the DB? Being the instance taken from DB Transient we avoid problems saving security rules...
-//            User user = new User();
-//            user.setName(usrToken.getName());
-//            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-//                if (authority != null) {
-//                    if (authority.getAuthority() != null
-//                            && authority.getAuthority().contains("ADMIN"))
-//                        user.setRole(Role.ADMIN);
-//
-//                    if (authority.getAuthority() != null
-//                            && authority.getAuthority().contains("USER") && user.getRole() == null)
-//                        user.setRole(Role.USER);
-//
-//                    if (user.getRole() == null)
-//                        user.setRole(Role.GUEST);
-//                }
-//            }
+            // DamianoG 06/03/2014 Why create a new Instance when we can deal with the object taken
+            // from the DB? Being the instance taken from DB Transient we avoid problems saving
+            // security rules...
+            //            User user = new User();
+            //            user.setName(usrToken.getName());
+            //            for (GrantedAuthority authority : usrToken.getAuthorities()) {
+            //                if (authority != null) {
+            //                    if (authority.getAuthority() != null
+            //                            && authority.getAuthority().contains("ADMIN"))
+            //                        user.setRole(Role.ADMIN);
+            //
+            //                    if (authority.getAuthority() != null
+            //                            && authority.getAuthority().contains("USER") &&
+            // user.getRole() == null)
+            //                        user.setRole(Role.USER);
+            //
+            //                    if (user.getRole() == null)
+            //                        user.setRole(Role.GUEST);
+            //                }
+            //            }
             if (usrToken.getPrincipal() instanceof User) {
                 User user = (User) usrToken.getPrincipal();
 
-                LOGGER.info("Accessing service with user " + user.getName() + " and role "
-                        + user.getRole());
+                LOGGER.info(
+                        "Accessing service with user {} and role {}",
+                        user.getName(),
+                        user.getRole());
 
                 return user;
             }
@@ -145,8 +151,9 @@ public abstract class RESTServiceImpl {
     }
 
     /**
-     * This operation is responsible for check if a resource is accessible to an user to perform WRITE operations (update/delete).
-     * this operation must checks first if the user has the right permissions then, if not, check if its group is allowed.
+     * This operation is responsible for check if a resource is accessible to an user to perform
+     * WRITE operations (update/delete). this operation must checks first if the user has the right
+     * permissions then, if not, check if its group is allowed.
      *
      * @param resource
      * @return boolean
@@ -155,17 +162,20 @@ public abstract class RESTServiceImpl {
         if (authUser.getRole().equals(Role.ADMIN)) {
             return true;
         }
-//        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
-//            return true;
-//        }
+        //        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
+        //            return true;
+        //        }
         else {
-            List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
-                    authUser.getName(), resourceId);
+            List<SecurityRule> userSecurityRules =
+                    getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
 
             if (userSecurityRules != null && userSecurityRules.size() > 0) {
                 for (SecurityRule sr : userSecurityRules) {
-                    // the getUserSecurityRules returns all rules instead of user rules. So the user name check is necessary until problem with DAO is solved
-                    if (sr.isCanWrite() && sr.getUser() != null && sr.getUser().getName().equals(authUser.getName())) {
+                    // the getUserSecurityRules returns all rules instead of user rules. So the user
+                    // name check is necessary until problem with DAO is solved
+                    if (sr.isCanWrite()
+                            && sr.getUser() != null
+                            && sr.getUser().getName().equals(authUser.getName())) {
                         return true;
                     }
                 }
@@ -173,8 +183,8 @@ public abstract class RESTServiceImpl {
 
             List<String> groupNames = extratcGroupNames(authUser.getGroups());
             if (groupNames != null && groupNames.size() > 0) {
-                List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
-                        groupNames, resourceId);
+                List<SecurityRule> groupSecurityRules =
+                        getSecurityService().getGroupSecurityRule(groupNames, resourceId);
 
                 if (groupSecurityRules != null && groupSecurityRules.size() > 0) {
                     // Check if at least one user group has write permission
@@ -190,8 +200,9 @@ public abstract class RESTServiceImpl {
     }
 
     /**
-     * This operation is responsible for check if a resource is accessible to an user to perform READ operations.
-     * this operation must checks first if the user has the right permissions then, if not, check if its group is allowed.
+     * This operation is responsible for check if a resource is accessible to an user to perform
+     * READ operations. this operation must checks first if the user has the right permissions then,
+     * if not, check if its group is allowed.
      *
      * @param resource
      * @return boolean
@@ -200,17 +211,20 @@ public abstract class RESTServiceImpl {
         if (authUser.getRole().equals(Role.ADMIN)) {
             return true;
         }
-//        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
-//            return true;
-//        }
+        //        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
+        //            return true;
+        //        }
         else {
-            List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(
-                    authUser.getName(), resourceId);
+            List<SecurityRule> userSecurityRules =
+                    getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
 
             if (userSecurityRules != null && userSecurityRules.size() > 0) {
-                // the getUserSecurityRules returns all rules instead of user rules. So the user name check is necessary until problem with DAO is solved
+                // the getUserSecurityRules returns all rules instead of user rules. So the user
+                // name check is necessary until problem with DAO is solved
                 for (SecurityRule sr : userSecurityRules) {
-                    if (sr.isCanRead() && sr.getUser() != null && sr.getUser().getName().equals(authUser.getName())) {
+                    if (sr.isCanRead()
+                            && sr.getUser() != null
+                            && sr.getUser().getName().equals(authUser.getName())) {
                         return true;
                     }
                 }
@@ -218,8 +232,8 @@ public abstract class RESTServiceImpl {
 
             List<String> groupNames = extratcGroupNames(authUser.getGroups());
             if (groupNames != null && groupNames.size() > 0) {
-                List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(
-                        groupNames, resourceId);
+                List<SecurityRule> groupSecurityRules =
+                        getSecurityService().getGroupSecurityRule(groupNames, resourceId);
 
                 if (groupSecurityRules != null && groupSecurityRules.size() > 0) {
                     // Check if at least one user group has read permission
@@ -239,7 +253,8 @@ public abstract class RESTServiceImpl {
             return new ResourceAuth(true, true);
         }
 
-        List<SecurityRule> userSecurityRules = getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
+        List<SecurityRule> userSecurityRules =
+                getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
 
         ResourceAuth ret = new ResourceAuth();
 
@@ -257,7 +272,8 @@ public abstract class RESTServiceImpl {
 
         List<String> groupNames = extratcGroupNames(authUser.getGroups());
         if (groupNames != null && groupNames.size() > 0) {
-            List<SecurityRule> groupSecurityRules = getSecurityService().getGroupSecurityRule(groupNames, resourceId);
+            List<SecurityRule> groupSecurityRules =
+                    getSecurityService().getGroupSecurityRule(groupNames, resourceId);
 
             if (CollectionUtils.isNotEmpty(groupSecurityRules)) {
                 // take the more permissive grants
@@ -268,7 +284,6 @@ public abstract class RESTServiceImpl {
                     if (ret.canRead && ret.canWrite) { // short circuit
                         return ret;
                     }
-
                 }
             }
         }
@@ -277,8 +292,8 @@ public abstract class RESTServiceImpl {
     }
 
     /**
-     * Creates a Guest principal with Username="guest" password="" and role ROLE_GUEST.
-     * The guest principal should be used with unauthenticated users.
+     * Creates a Guest principal with Username="guest" password="" and role ROLE_GUEST. The guest
+     * principal should be used with unauthenticated users.
      *
      * @return the Principal instance
      */
@@ -312,7 +327,6 @@ public abstract class RESTServiceImpl {
         boolean canRead;
         boolean canWrite;
 
-
         public ResourceAuth() {
             this(false, false);
         }
@@ -322,5 +336,4 @@ public abstract class RESTServiceImpl {
             this.canWrite = canWrite;
         }
     }
-
 }

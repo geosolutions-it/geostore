@@ -28,71 +28,69 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.ForeignKey;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
-import javax.persistence.Index;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 /**
  * Class Security.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @Entity(name = "Security")
-@Table(name = "gs_security", uniqueConstraints = {
-        @UniqueConstraint(columnNames = { "user_id", "resource_id" }),
-        /* @UniqueConstraint(columnNames = {"user_id", "category_id"}), */
-        @UniqueConstraint(columnNames = { "resource_id", "group_id" }) /*
+@Table(
+        name = "gs_security",
+        uniqueConstraints = {
+            @UniqueConstraint(columnNames = {"user_id", "resource_id"}),
+            /* @UniqueConstraint(columnNames = {"user_id", "category_id"}), */
+            @UniqueConstraint(columnNames = {"resource_id", "group_id"}) /*
                                                                         * ,
-                                                                        * 
+                                                                        *
                                                                         * @UniqueConstraint(columnNames = {"category_id", "group_id"})
                                                                         */
-        }, indexes = {
-                @Index(name = "idx_security_resource", columnList = "resource_id"),
-                @Index(name = "idx_security_user", columnList = "user_id"),
-                @Index(name = "idx_security_group", columnList = "group_id"),
-                @Index(name = "idx_security_read", columnList = "canread"),
-                @Index(name = "idx_security_write", columnList = "canwrite"),
-                @Index(name = "idx_security_username", columnList = "username"),
-                @Index(name = "idx_security_groupname", columnList = "groupname")
+        },
+        indexes = {
+            @Index(name = "idx_security_resource", columnList = "resource_id"),
+            @Index(name = "idx_security_user", columnList = "user_id"),
+            @Index(name = "idx_security_group", columnList = "group_id"),
+            @Index(name = "idx_security_read", columnList = "canread"),
+            @Index(name = "idx_security_write", columnList = "canwrite"),
+            @Index(name = "idx_security_username", columnList = "username"),
+            @Index(name = "idx_security_groupname", columnList = "groupname")
         })
-//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
 @XmlRootElement(name = "Security")
 public class SecurityRule implements Serializable {
 
     private static final long serialVersionUID = -4160546863296343389L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
 
     /**
-     * A SecurityRule may refer either to a resource or to a Category, then neither of them are mandatory. A check to ensure they are not both null is
-     * done in onPreUpdate() <BR>
+     * A SecurityRule may refer either to a resource or to a Category, then neither of them are
+     * mandatory. A check to ensure they are not both null is done in onPreUpdate() <br>
      * TODO: it would be nice to have a DB constraint on nonnullability on them.
      */
     @ManyToOne(optional = true)
-    @JoinColumn(foreignKey=@ForeignKey(name="fk_security_resource"))
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_security_resource"))
     private Resource resource;
 
     // /**
-    // * A SecurityRule may refer either to a resource or to a Category, then neither of them are mandatory. A check to ensure they
-    // * are not both null is done in onPreUpdate() <BR>TODO: it would be nice to have a DB constraint on nonnullability on them.
+    // * A SecurityRule may refer either to a resource or to a Category, then neither of them are
+    // mandatory. A check to ensure they
+    // * are not both null is done in onPreUpdate() <BR>TODO: it would be nice to have a DB
+    // constraint on nonnullability on them.
     // */
     // @ManyToOne(optional = true)
     // @Index(name = "idx_security_category")
@@ -100,11 +98,11 @@ public class SecurityRule implements Serializable {
     // private Category category;
 
     @ManyToOne(optional = true)
-    @JoinColumn(foreignKey=@ForeignKey(name="fk_security_user"))
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_security_user"))
     private User user;
 
     @ManyToOne(optional = true)
-    @JoinColumn(foreignKey=@ForeignKey(name="fk_security_group"))
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_security_group"))
     private UserGroup group;
 
     @Column(nullable = false, updatable = true)
@@ -112,50 +110,41 @@ public class SecurityRule implements Serializable {
 
     @Column(nullable = false, updatable = true)
     private boolean canWrite;
-    
+
     @Column(nullable = true, updatable = true)
     private String username;
-    
+
     @Column(nullable = true, updatable = true)
     private String groupname;
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     @PreUpdate
     @PrePersist
     public void onPreUpdate() throws Exception {
         // if ( !((this.resource != null) ^ (this.category != null)) ) {
-        // throw new Exception("Only one between Category and Resource can be not-null inside the Security entity");
+        // throw new Exception("Only one between Category and Resource can be not-null inside the
+        // Security entity");
         // }
     }
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the resource
-     */
+    /** @return the resource */
     @XmlTransient
     public Resource getResource() {
         return resource;
     }
 
-    /**
-     * @param resource the resource to set
-     */
+    /** @param resource the resource to set */
     public void setResource(Resource resource) {
         this.resource = resource;
     }
@@ -175,94 +164,66 @@ public class SecurityRule implements Serializable {
     // this.category = category;
     // }
 
-    /**
-     * @return the user
-     */
+    /** @return the user */
     @XmlTransient
     public User getUser() {
         return user;
     }
 
-    /**
-     * @param user the user to set
-     */
+    /** @param user the user to set */
     public void setUser(User user) {
         this.user = user;
     }
 
-    /**
-     * @return the group
-     */
+    /** @return the group */
     @XmlTransient
     public UserGroup getGroup() {
         return group;
     }
 
-    /**
-     * @param group the group to set
-     */
+    /** @param group the group to set */
     public void setGroup(UserGroup group) {
         this.group = group;
     }
 
-    /**
-     * 
-     * @return the username (from external authentication)
-     */
+    /** @return the username (from external authentication) */
     public String getUsername() {
         return username;
     }
 
-    /**
-     * 
-     * @param username the user name to set
-     */
+    /** @param username the user name to set */
     public void setUsername(String username) {
         this.username = username;
     }
 
-    /**
-     * 
-     * @return the group name (from external authentication)
-     */
+    /** @return the group name (from external authentication) */
     public String getGroupname() {
         return groupname;
     }
 
-    /**
-     * 
-     * @param groupname the group name to set
-     */
+    /** @param groupname the group name to set */
     public void setGroupname(String groupname) {
         this.groupname = groupname;
     }
 
-    /**
-     * @return the canRead
-     */
+    /** @return the canRead */
     @XmlTransient
     public boolean isCanRead() {
         return canRead;
     }
 
-    /**
-     * @param canRead the canRead to set
-     */
+    /** @param canRead the canRead to set */
     public void setCanRead(boolean canRead) {
         this.canRead = canRead;
     }
 
-    /**
-     * @return the canWrite
-     */
+    /** @return the canWrite */
     @XmlTransient
     public boolean isCanWrite() {
         return canWrite;
     }
 
-    /**
-     * @param canWrite the canWrite to set
-     */
+    /** @param canWrite the canWrite to set */
     public void setCanWrite(boolean canWrite) {
         this.canWrite = canWrite;
     }

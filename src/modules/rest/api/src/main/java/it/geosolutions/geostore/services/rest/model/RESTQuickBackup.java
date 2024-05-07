@@ -33,20 +33,15 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 @XmlRootElement(name = "Backup")
 public class RESTQuickBackup implements Serializable {
 
     private Collection<RESTBackupCategory> categories = new LinkedList<RESTBackupCategory>();
 
-    public RESTQuickBackup() {
-    }
+    public RESTQuickBackup() {}
 
     @XmlElement(name = "category")
     public Collection<RESTBackupCategory> getCategories() {
@@ -75,13 +70,12 @@ public class RESTQuickBackup implements Serializable {
                 }
                 sb.append('}');
             }
-
         }
         sb.append(']');
         return sb.toString();
     }
 
-    static public class RESTBackupCategory {
+    public static class RESTBackupCategory implements Serializable {
         Long id;
 
         String name;
@@ -125,14 +119,13 @@ public class RESTQuickBackup implements Serializable {
         public void addResource(RESTBackupResource resource) {
             resources.add(resource);
         }
-
     }
 
-    static public class RESTBackupAuth {
+    public static class RESTBackupAuth implements Serializable {
         // TODO
     }
 
-    static public class RESTBackupResource {
+    public static class RESTBackupResource implements Serializable {
         RESTResource resource;
 
         // TODO: add auth info
@@ -144,6 +137,5 @@ public class RESTQuickBackup implements Serializable {
         public void setResource(RESTResource resource) {
             this.resource = resource;
         }
-
     }
 }

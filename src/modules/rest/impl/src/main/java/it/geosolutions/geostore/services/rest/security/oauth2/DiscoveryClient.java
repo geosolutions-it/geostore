@@ -27,15 +27,15 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import org.springframework.web.client.RestTemplate;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.web.client.RestTemplate;
 
 /**
- * DiscoveryClient to perform a discovery request and set the value to the OAuth2Configuration instance.
+ * DiscoveryClient to perform a discovery request and set the value to the OAuth2Configuration
+ * instance.
  */
 public class DiscoveryClient {
     private static final String PROVIDER_END_PATH = "/.well-known/openid-configuration";
@@ -110,8 +110,7 @@ public class DiscoveryClient {
                                 conf.setScopes(collectScopes(scopes));
                             });
             Optional.ofNullable(response.get(getRevocationEndpoint()))
-                    .ifPresent(
-                            s -> conf.setRevokeEndpoint((String) s));
+                    .ifPresent(s -> conf.setRevokeEndpoint((String) s));
         }
     }
 

@@ -28,17 +28,16 @@
  */
 package it.geosolutions.geostore.core.model.adapter;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Polygon;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * The Class PolygonAdapter.
- * 
+ *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public class PolygonAdapter extends XmlAdapter<String, Polygon> {

@@ -21,14 +21,12 @@ package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Filter by category name
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  */
 @XmlRootElement(name = "CategoryFilter")
@@ -38,11 +36,8 @@ public class CategoryFilter extends SearchFilter implements Serializable {
 
     private SearchOperator operator;
 
-    /**
-	 * 
-	 */
-    public CategoryFilter() {
-    }
+    /** */
+    public CategoryFilter() {}
 
     /**
      * @param name
@@ -53,30 +48,22 @@ public class CategoryFilter extends SearchFilter implements Serializable {
         setOperator(operator);
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the operator
-     */
+    /** @return the operator */
     public SearchOperator getOperator() {
         return operator;
     }
 
-    /**
-     * @param operator the operator to set
-     */
+    /** @param operator the operator to set */
     public final void setOperator(SearchOperator operator) {
         checkOperator(operator);
         this.operator = operator;
@@ -94,7 +81,7 @@ public class CategoryFilter extends SearchFilter implements Serializable {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#toString()
      */
     @Override
@@ -107,5 +94,4 @@ public class CategoryFilter extends SearchFilter implements Serializable {
         builder.append(']');
         return builder.toString();
     }
-
 }

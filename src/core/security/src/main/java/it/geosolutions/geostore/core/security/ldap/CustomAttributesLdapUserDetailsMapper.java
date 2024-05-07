@@ -29,7 +29,6 @@ package it.geosolutions.geostore.core.security.ldap;
 
 import java.util.Collection;
 import java.util.Map;
-
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,29 +37,31 @@ import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
 
 /**
  * Extends LdapUserDetailsMapper with the ability to map LDAP attributes to UserDetails attributes.
- * 
+ *
  * @author Mauro Bartolomeoli
  */
 public class CustomAttributesLdapUserDetailsMapper extends LdapUserDetailsMapper {
 
     Map<String, String> attributeMappings;
-    
+
     public CustomAttributesLdapUserDetailsMapper(Map<String, String> attributeMappings) {
         super();
         this.attributeMappings = attributeMappings;
     }
 
-
-
     @Override
-    public UserDetails mapUserFromContext(DirContextOperations ctx, String username,
+    public UserDetails mapUserFromContext(
+            DirContextOperations ctx,
+            String username,
             Collection<? extends GrantedAuthority> authorities) {
-        LdapUserDetails details =  (LdapUserDetails)super.mapUserFromContext(ctx, username, authorities);
-        LdapUserDetailsWithAttributes detailsWithAttributes = new LdapUserDetailsWithAttributes(details);
-        for(String attributeName : attributeMappings.keySet()) {
-            detailsWithAttributes.setAttribute(attributeName, ctx.getStringAttribute(attributeMappings.get(attributeName)));
+        LdapUserDetails details =
+                (LdapUserDetails) super.mapUserFromContext(ctx, username, authorities);
+        LdapUserDetailsWithAttributes detailsWithAttributes =
+                new LdapUserDetailsWithAttributes(details);
+        for (String attributeName : attributeMappings.keySet()) {
+            detailsWithAttributes.setAttribute(
+                    attributeName, ctx.getStringAttribute(attributeMappings.get(attributeName)));
         }
         return detailsWithAttributes;
     }
-    
 }

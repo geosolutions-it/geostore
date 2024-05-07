@@ -21,17 +21,22 @@ package it.geosolutions.geostore.core.security.password;
 
 /**
  * Enumeration for password encoding type.
- * <p>
- * <ul>
- * <li>{@link #EMPTY} - empty, only for null or empty ("") passwords</li>
- * <li>{@link #PLAIN} -  plain text</li>
- * <li>{@link #ENCRYPT} - symmetric encryption</li>
- * <li>{@link #DIGEST} - password hashing (recommended)</li>
- * <li>{@link #GEOSTORE} - old geostore system</li>
- *</p>
- * @author Lorenzo Natali
  *
+ * <p>
+ *
+ * <ul>
+ *   <li>{@link #EMPTY} - empty, only for null or empty ("") passwords
+ *   <li>{@link #PLAIN} - plain text
+ *   <li>{@link #ENCRYPT} - symmetric encryption
+ *   <li>{@link #DIGEST} - password hashing (recommended)
+ *   <li>{@link #GEOSTORE} - old geostore system
+ *
+ * @author Lorenzo Natali
  */
 public enum PasswordEncodingType {
-    EMPTY,PLAIN,ENCRYPT,DIGEST,GEOSTORE;
+    EMPTY,
+    PLAIN,
+    ENCRYPT,
+    DIGEST,
+    GEOSTORE;
 }

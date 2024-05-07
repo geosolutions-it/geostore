@@ -27,21 +27,19 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-
 /**
- * This Class wrap the AuthenticationEntryPoint to reply with forbidden for the
- * /users/user/details path.
- * It is used to emulate the login without showing a WWW-Authenticate window in the browser
+ * This Class wrap the AuthenticationEntryPoint to reply with forbidden for the /users/user/details
+ * path. It is used to emulate the login without showing a WWW-Authenticate window in the browser
  *
  * @author Lorenzo Natali (lorenzo.natali at geo-solutions.it)
  */
@@ -51,8 +49,10 @@ public class RestAuthenticationEntryPoint extends BasicAuthenticationEntryPoint 
     private static final Logger LOGGER = LogManager.getLogger(RestAuthenticationEntryPoint.class);
 
     @Override
-    public void commence(HttpServletRequest request,
-                         HttpServletResponse response, AuthenticationException authException)
+    public void commence(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            AuthenticationException authException)
             throws IOException {
         URI url = null;
         try {
@@ -72,8 +72,6 @@ public class RestAuthenticationEntryPoint extends BasicAuthenticationEntryPoint 
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         } else {
             super.commence(request, response, authException);
-
         }
-
     }
 }

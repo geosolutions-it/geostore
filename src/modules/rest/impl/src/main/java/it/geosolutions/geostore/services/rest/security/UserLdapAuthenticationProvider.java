@@ -1,6 +1,4 @@
-/**
- *
- */
+/** */
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.User;
@@ -12,6 +10,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import java.util.*;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,49 +28,37 @@ import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
-import java.util.*;
-
-/**
- * @author alessio.fabiani
- */
+/** @author alessio.fabiani */
 public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
-    /**
-     * Message shown if the user it's not found. TODO: Localize it
-     */
+    /** Message shown if the user it's not found. TODO: Localize it */
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
+
     public static final String USER_NOT_ENABLED = "The user present but not enabled";
-    private final static Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
-    /**
-     * Message shown if the user credentials are wrong. TODO: Localize it
-     */
+    private static final Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
+    /** Message shown if the user credentials are wrong. TODO: Localize it */
     private static final String UNAUTHORIZED_MSG = "Bad credentials";
-    @Autowired
-    UserService userService;
-    @Autowired
-    UserGroupService userGroupService;
+
+    @Autowired UserService userService;
+    @Autowired UserGroupService userGroupService;
     private UserMapper userMapper;
 
-    public UserLdapAuthenticationProvider(LdapAuthenticator authenticator,
-                                          LdapAuthoritiesPopulator authoritiesPopulator) {
+    public UserLdapAuthenticationProvider(
+            LdapAuthenticator authenticator, LdapAuthoritiesPopulator authoritiesPopulator) {
         super(authenticator, authoritiesPopulator);
     }
-
 
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
-
     public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
 
-
     public void setUserMapper(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
-
 
     @Override
     public Authentication authenticate(Authentication authentication)
@@ -89,8 +76,10 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
             ldapUser = (LdapUserDetails) authentication.getPrincipal();
 
-            if (!(ldapUser.isAccountNonExpired() && ldapUser.isAccountNonLocked()
-                    && ldapUser.isCredentialsNonExpired() && ldapUser.isEnabled())) {
+            if (!(ldapUser.isAccountNonExpired()
+                    && ldapUser.isAccountNonLocked()
+                    && ldapUser.isCredentialsNonExpired()
+                    && ldapUser.isEnabled())) {
                 throw new DisabledException(USER_NOT_FOUND_MSG);
             }
 
@@ -103,7 +92,8 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             User user = null;
             try {
                 user = userService.get(us);
-                LOGGER.info("US: " + us);// + " PW: " + PwEncoder.encode(pw) + " -- " + user.getPassword());
+                LOGGER.info("US: " + us); // + " PW: " + PwEncoder.encode(pw) + " -- " +
+                // user.getPassword());
 
                 if (!user.isEnabled()) {
                     throw new DisabledException(USER_NOT_FOUND_MSG);
@@ -121,8 +111,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
                     user.setRole(role);
                     user.setGroups(GroupReservedNames.checkReservedGroups(groups));
 
-                    if (userService != null)
-                        userService.update(user);
+                    if (userService != null) userService.update(user);
 
                     Authentication a = prepareAuthentication(pw, user, role);
                     return a;
@@ -149,8 +138,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
                     if (userMapper != null) {
                         userMapper.mapUser(ldapUser, user);
                     }
-                    if (userService != null)
-                        userService.insert(user);
+                    if (userService != null) userService.insert(user);
 
                     Authentication a = prepareAuthentication(pw, user, role);
                     return a;
@@ -188,8 +176,10 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
      * @return
      * @throws BadRequestServiceEx
      */
-    protected Role extractUserRoleAndGroups(Role userRole,
-                                            Collection<? extends GrantedAuthority> authorities, Set<UserGroup> groups)
+    protected Role extractUserRoleAndGroups(
+            Role userRole,
+            Collection<? extends GrantedAuthority> authorities,
+            Set<UserGroup> groups)
             throws BadRequestServiceEx {
         Role role = (userRole != null ? userRole : Role.USER);
         for (GrantedAuthority a : authorities) {
@@ -216,8 +206,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
         }
     }
 
-    private UserGroup synchronizeGroup(GrantedAuthority a)
-            throws BadRequestServiceEx {
+    private UserGroup synchronizeGroup(GrantedAuthority a) throws BadRequestServiceEx {
         UserGroup group = new UserGroup();
         group.setGroupName(a.getAuthority());
 

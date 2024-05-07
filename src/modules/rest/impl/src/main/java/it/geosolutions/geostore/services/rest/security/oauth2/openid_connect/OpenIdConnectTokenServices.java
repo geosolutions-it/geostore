@@ -28,16 +28,13 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
+import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Map;
-
-/**
- * RemoteTokenServices that handles specifically the GoogleResponse.
- */
+/** RemoteTokenServices that handles specifically the GoogleResponse. */
 public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
     public OpenIdConnectTokenServices(String principalKey) {
@@ -52,12 +49,10 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
         LOGGER.debug("Headers: " + headers);
-        String accessTokenUrl =
-                checkTokenEndpointUrl +
-                        "?access_token=" +
-                        accessToken;
+        String accessTokenUrl = checkTokenEndpointUrl + "?access_token=" + accessToken;
         LOGGER.debug("Checking token with url: " + accessTokenUrl);
-        Map<String, Object> reults = sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.GET);
+        Map<String, Object> reults =
+                sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.GET);
         LOGGER.debug("Got sendRequestForMap results: " + reults);
         return reults;
     }

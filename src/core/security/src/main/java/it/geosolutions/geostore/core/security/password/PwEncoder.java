@@ -19,31 +19,32 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
-
 /**
- * 
  * @author ETj <etj at geo-solutions.it>
  * @author Lorenzo Natali <lorenzo.natali at geo-solutions.it>
  */
 public class PwEncoder {
 
-    private static GeoStorePasswordEncoder encoder = new it.geosolutions.geostore.core.security.password.GeoStoreDigestPasswordEncoder();
+    private static GeoStorePasswordEncoder encoder =
+            new it.geosolutions.geostore.core.security.password.GeoStoreDigestPasswordEncoder();
+
     public static String encode(String msg) {
-    	return encoder.encodePassword(msg.toCharArray(), null);
+        return encoder.encodePassword(msg.toCharArray(), null);
     }
 
     public static String decode(String msg) {
         return encoder.decode(msg);
     }
-    
-    public static boolean isPasswordValid(String encPass,String rawPass){
-    	return encoder.isPasswordValid(encPass, rawPass, null);
+
+    public static boolean isPasswordValid(String encPass, String rawPass) {
+        return encoder.isPasswordValid(encPass, rawPass, null);
     }
-    
-    public static void setEncoder(GeoStorePasswordEncoder e){
-    	encoder=e;
+
+    public static void setEncoder(GeoStorePasswordEncoder e) {
+        encoder = e;
     }
-    public static GeoStorePasswordEncoder getEncoder(){
-    	return encoder;
+
+    public static GeoStorePasswordEncoder getEncoder() {
+        return encoder;
     }
 }

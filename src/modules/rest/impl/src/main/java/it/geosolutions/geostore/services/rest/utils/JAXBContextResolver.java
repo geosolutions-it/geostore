@@ -21,7 +21,6 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
-
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 import javax.xml.bind.JAXBContext;
@@ -35,7 +34,7 @@ import javax.xml.bind.JAXBContext;
 @Provider
 public class JAXBContextResolver implements ContextResolver<JAXBContext> {
 
-    private final static JAXBContext context = GeoStoreJAXBContext.getContext();
+    private static final JAXBContext context = GeoStoreJAXBContext.getContext();
 
     /*
      * (non-Javadoc)
@@ -44,9 +43,7 @@ public class JAXBContextResolver implements ContextResolver<JAXBContext> {
      */
     @Override
     public JAXBContext getContext(Class<?> clazz) {
-        if (clazz.equals(SearchFilter.class))
-            return context;
+        if (clazz.equals(SearchFilter.class)) return context;
         return null;
     }
-
 }

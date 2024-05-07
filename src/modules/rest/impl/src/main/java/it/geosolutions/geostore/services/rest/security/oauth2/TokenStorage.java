@@ -4,7 +4,6 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 
 public interface TokenStorage<T> {
 
-
     SessionToken getTokenByIdentifier(T identifier);
 
     void removeTokenByIdentifier(T identifier);

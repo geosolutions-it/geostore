@@ -32,12 +32,7 @@ import org.apache.cxf.message.Message;
 import org.apache.cxf.phase.AbstractPhaseInterceptor;
 import org.apache.cxf.phase.Phase;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 public final class AuditingInterceptorPostMarshall extends AbstractPhaseInterceptor<Message> {
-
-    private static final Logger LOGGER = LogManager.getLogger(AuditingInterceptorPostMarshall.class);
 
     public AuditingInterceptorPostMarshall() {
         super(Phase.POST_MARSHAL);
@@ -47,7 +42,8 @@ public final class AuditingInterceptorPostMarshall extends AbstractPhaseIntercep
     public void handleMessage(Message message) throws Fault {
         Long responseLength = AuditInfoExtractor.getResponseLength(message);
         if (responseLength != null) {
-            message.getExchange().put(AuditInfo.RESPONSE_LENGTH.getKey(), responseLength.toString());
+            message.getExchange()
+                    .put(AuditInfo.RESPONSE_LENGTH.getKey(), responseLength.toString());
         }
     }
 }

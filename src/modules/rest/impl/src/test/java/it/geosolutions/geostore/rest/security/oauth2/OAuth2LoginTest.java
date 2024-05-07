@@ -1,8 +1,14 @@
 package it.geosolutions.geostore.rest.security.oauth2;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
+import static org.junit.Assert.assertEquals;
+
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.*;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.ws.rs.core.Response;
 import org.junit.After;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -10,15 +16,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.ws.rs.core.Response;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
-import static org.junit.Assert.assertEquals;
-
 public class OAuth2LoginTest {
-
 
     private final IdPLoginRest idPLoginRest = new IdPLoginRestImpl();
 
@@ -36,7 +34,9 @@ public class OAuth2LoginTest {
         setConfiguration.setConfiguration(configuration);
         idPLoginRest.login("mock");
         assertEquals(302, response.getStatus());
-        assertEquals("http://localhost:8080/authorization?response_type=code&client_id=mockClientId&scope=openid&redirect_uri=null", response.getRedirectedUrl());
+        assertEquals(
+                "http://localhost:8080/authorization?response_type=code&client_id=mockClientId&scope=openid&redirect_uri=null",
+                response.getRedirectedUrl());
     }
 
     @Test
@@ -55,7 +55,13 @@ public class OAuth2LoginTest {
         Response result = idPLoginRest.callback("mock");
         assertEquals(302, result.getStatus());
         List<Object> cookies = result.getMetadata().get("Set-Cookie");
-        List<Object> tokenCookies = cookies.stream().filter(c -> ((String) c).contains(AUTH_PROVIDER) || ((String) c).contains(TOKENS_KEY)).collect(Collectors.toList());
+        List<Object> tokenCookies =
+                cookies.stream()
+                        .filter(
+                                c ->
+                                        ((String) c).contains(AUTH_PROVIDER)
+                                                || ((String) c).contains(TOKENS_KEY))
+                        .collect(Collectors.toList());
         assertEquals(2, tokenCookies.size());
         assertEquals("http://localhost:8080/geostore/redirect", result.getHeaderString("Location"));
     }

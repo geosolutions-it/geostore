@@ -20,14 +20,12 @@
 package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class FieldFilter.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  */
 @XmlRootElement(name = "Field")
@@ -42,12 +40,8 @@ public class FieldFilter extends SearchFilter implements Serializable {
 
     private SearchOperator operator;
 
-    /**
-	 * 
-	 */
-    public FieldFilter() {
-
-    }
+    /** */
+    public FieldFilter() {}
 
     public FieldFilter(BaseField field, String value, SearchOperator operator) {
         this.field = field;
@@ -96,5 +90,4 @@ public class FieldFilter extends SearchFilter implements Serializable {
         builder.append(']');
         return builder.toString();
     }
-
 }

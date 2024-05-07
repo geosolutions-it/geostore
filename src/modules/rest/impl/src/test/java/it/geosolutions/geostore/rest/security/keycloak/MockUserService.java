@@ -33,16 +33,13 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * MockUserService for testing purpose with KeycloakFilter
- */
+/** MockUserService for testing purpose with KeycloakFilter */
 class MockUserService implements UserService {
 
     private final Map<String, User> users = new ConcurrentHashMap<>();
@@ -82,7 +79,9 @@ class MockUserService implements UserService {
     }
 
     @Override
-    public List<User> getAll(Integer page, Integer entries, String nameLike, boolean includeAttributes) throws BadRequestServiceEx {
+    public List<User> getAll(
+            Integer page, Integer entries, String nameLike, boolean includeAttributes)
+            throws BadRequestServiceEx {
         return null;
     }
 
@@ -92,9 +91,8 @@ class MockUserService implements UserService {
     }
 
     @Override
-    public void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx {
-
-    }
+    public void updateAttributes(long id, List<UserAttribute> attributes)
+            throws NotFoundServiceEx {}
 
     @Override
     public boolean insertSpecialUsers() {

@@ -23,11 +23,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+
 import it.geosolutions.geostore.core.model.User;
-
 import java.net.ConnectException;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
@@ -35,19 +33,20 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 /**
- * Auto create users integration test. You need to override this properties on your GeoStore instance (use your geostore-ovr.properties): <br />
- * <br />
+ * Auto create users integration test. You need to override this properties on your GeoStore
+ * instance (use your geostore-ovr.properties): <br>
+ * <br>
  * <code>
  * 	geostoreAuthInterceptor.autoCreateUsers=true
  * 	geostoreAuthInterceptor.newUsersRole=USER
  * 	geostoreAuthInterceptor.newUsersPassword=NONE
  * 	geostoreAuthInterceptor.newUsersPasswordHeader=
  * </code>
- * 
+ *
  * @author adiaz (alejandro.diaz at geo-solutions.it)
  */
 public class AutoCreateUsersTest {
-    private final static Logger LOGGER = LogManager.getLogger(AutoCreateUsersTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(AutoCreateUsersTest.class);
 
     AdministratorGeoStoreClient geoStoreClient;
 
@@ -86,9 +85,7 @@ public class AutoCreateUsersTest {
         assumeTrue(pingGeoStore(geoStoreClient));
     }
 
-    /**
-     * Test auto create users with GeoStore client
-     */
+    /** Test auto create users with GeoStore client */
     @Test
     @Ignore("Ignore this test until the user autocreation won't be restored")
     public void testAutoCreateUsers() {
@@ -103,7 +100,5 @@ public class AutoCreateUsersTest {
         } catch (Exception e) {
             fail("Unable to create user");
         }
-
     }
-
 }
