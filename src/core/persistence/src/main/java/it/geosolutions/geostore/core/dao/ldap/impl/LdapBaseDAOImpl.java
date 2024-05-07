@@ -20,12 +20,12 @@
 
 package it.geosolutions.geostore.core.dao.ldap.impl;
 
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import javax.naming.directory.DirContext;
-
 import org.apache.commons.lang.StringUtils;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -35,17 +35,13 @@ import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.LdapTemplate;
 
-import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.ISearch;
-
 /**
- * Class LdapBaseDAOImpl.
- * Base class for LDAP (read-only) based DAOs.
- * 
+ * Class LdapBaseDAOImpl. Base class for LDAP (read-only) based DAOs.
+ *
  * @author Mauro Bartolomeoli (mauro.bartolomeoli at geo-solutions.it)
  */
 public abstract class LdapBaseDAOImpl {
-    
+
     public static final class NullDirContextProcessor implements DirContextProcessor {
         public void postProcess(DirContext ctx) {
             // Do nothing
@@ -55,28 +51,28 @@ public abstract class LdapBaseDAOImpl {
             // Do nothing
         }
     }
-    
+
     protected String searchBase = "";
     protected String baseFilter = "cn=*";
-    protected  String nameAttribute = "cn";
-    protected  String descriptionAttribute = "description";
+    protected String nameAttribute = "cn";
+    protected String descriptionAttribute = "description";
     protected boolean sortEnabled = false;
-    
+
     protected ContextSource contextSource;
     protected LdapTemplate template;
-    
+
     public LdapBaseDAOImpl(ContextSource contextSource) {
         this.contextSource = contextSource;
         template = new LdapTemplate(contextSource);
     }
-    
+
     public String getSearchBase() {
         return searchBase;
     }
 
     /**
      * LDAP root for all searches.
-     *  
+     *
      * @param searchBase
      */
     public void setSearchBase(String searchBase) {
@@ -89,7 +85,7 @@ public abstract class LdapBaseDAOImpl {
 
     /**
      * Filter applied to all searches (eventually combined with a more specific filter).
-     * 
+     *
      * @param filter
      */
     public void setBaseFilter(String filter) {
@@ -102,7 +98,7 @@ public abstract class LdapBaseDAOImpl {
 
     /**
      * Attribute to be mapped to the GeoStore object name.
-     * 
+     *
      * @param nameAttribute
      */
     public void setNameAttribute(String nameAttribute) {
@@ -115,17 +111,16 @@ public abstract class LdapBaseDAOImpl {
 
     /**
      * Attribute to be mapped to the GeoStore object description.
-     * 
+     *
      * @param nameAttribute
      */
     public void setDescriptionAttribute(String descriptionAttribute) {
         this.descriptionAttribute = descriptionAttribute;
     }
-    
+
     /**
-     * Builds a proper processor for the given search.
-     * Implements sorting if enabled.
-     * 
+     * Builds a proper processor for the given search. Implements sorting if enabled.
+     *
      * @param search
      * @return
      */
@@ -135,14 +130,14 @@ public abstract class LdapBaseDAOImpl {
         }
         return new NullDirContextProcessor();
     }
-    
+
     public boolean isSortEnabled() {
         return sortEnabled;
     }
 
     /**
      * Enables LDAP-side sorting (to be enabled if supported by the LDAP server).
-     * 
+     *
      * @param sortEnabled
      */
     public void setSortEnabled(boolean sortEnabled) {
@@ -150,9 +145,9 @@ public abstract class LdapBaseDAOImpl {
     }
 
     /**
-     * Returns a combined filter (AND) from the given two.
-     * If any is empty, the other filter is returned.
-     * 
+     * Returns a combined filter (AND) from the given two. If any is empty, the other filter is
+     * returned.
+     *
      * @param baseFilter
      * @param ldapFilter
      * @return
@@ -164,12 +159,12 @@ public abstract class LdapBaseDAOImpl {
         if ("".equals(ldapFilter)) {
             return baseFilter;
         }
-        return "(& ("+baseFilter+") ("+ldapFilter+"))";
+        return "(& (" + baseFilter + ") (" + ldapFilter + "))";
     }
 
     /**
      * Creates an LDAP filter for a GenericDAO search.
-     * 
+     *
      * @param search
      * @return
      */
@@ -184,10 +179,9 @@ public abstract class LdapBaseDAOImpl {
         return currentFilter;
     }
 
-    
     /**
-     * Creates an LDAP filter for a GenericDAO filter
-     * .
+     * Creates an LDAP filter for a GenericDAO filter .
+     *
      * @param filter
      * @return
      */
@@ -196,45 +190,45 @@ public abstract class LdapBaseDAOImpl {
         Map<String, Object> mapper = propertyMapper;
         if (propertyMapper.containsKey(property)) {
             if (propertyMapper.get(property) instanceof String) {
-                property = (String)propertyMapper.get(property);
+                property = (String) propertyMapper.get(property);
             } else if (propertyMapper.get(property) instanceof Map) {
-                mapper = (Map)propertyMapper.get(property);
+                mapper = (Map) propertyMapper.get(property);
             }
         }
         // we support the minimum set of operators used by GeoStore user and group services
-        switch(filter.getOperator()) {
+        switch (filter.getOperator()) {
             case Filter.OP_EQUAL:
                 return property + "=" + filter.getValue().toString();
             case Filter.OP_SOME:
-                return getLdapFilter((Filter)filter.getValue(), mapper);
+                return getLdapFilter((Filter) filter.getValue(), mapper);
             case Filter.OP_ILIKE:
                 return property + "=" + filter.getValue().toString().replaceAll("[%]", "*");
             case Filter.OP_IN:
-            	return getInLdapFilter(property, (List)filter.getValue());
-            //TODO: implement all operators
+                return getInLdapFilter(property, (List) filter.getValue());
+                // TODO: implement all operators
         }
         return "";
     }
-    
+
     /**
-     * Builds a filter for property in (values) search type.
-     * This is done by creating a list of property=value combined by or (|).
-     * 
+     * Builds a filter for property in (values) search type. This is done by creating a list of
+     * property=value combined by or (|).
+     *
      * @param property
      * @param values
      * @return
      */
     private String getInLdapFilter(String property, List values) {
-    	List<String> filters = new ArrayList<String>();
-		for(Object value : values) {
-			filters.add("(" + property + "=" + value.toString() + ")");
-		}
-		return StringUtils.join(filters, "|");
-	}
+        List<String> filters = new ArrayList<String>();
+        for (Object value : values) {
+            filters.add("(" + property + "=" + value.toString() + ")");
+        }
+        return StringUtils.join(filters, "|");
+    }
 
-	/**
+    /**
      * Returns true if the given search has one or more filters on a nested object.
-     * 
+     *
      * @param search
      * @return
      */
@@ -245,23 +239,24 @@ public abstract class LdapBaseDAOImpl {
         }
         return found;
     }
-    
+
     /**
-    * Returns true if the given filter works on a nested object.
-    * 
-    * @param filter
-    * @return
-    */
+     * Returns true if the given filter works on a nested object.
+     *
+     * @param filter
+     * @return
+     */
     private boolean isNested(Filter filter) {
         if (filter.getOperator() == Filter.OP_SOME || filter.getOperator() == Filter.OP_ALL) {
             return true;
         }
         return false;
     }
-    
+
     /**
-     * If the given search has filters working on nested objects, 
-     * replaces them with the nested filter.
+     * If the given search has filters working on nested objects, replaces them with the nested
+     * filter.
+     *
      * @param search
      * @return
      */
@@ -279,29 +274,29 @@ public abstract class LdapBaseDAOImpl {
         search.getFilters().addAll(newFilters);
         return search;
     }
-    
+
     /**
      * Returns the internal filter of a nested filter, null otherwise.
-     * 
+     *
      * @param filter
      * @return
      */
     protected Filter getNestedFilter(Filter filter) {
         if (filter.getOperator() == Filter.OP_SOME || filter.getOperator() == Filter.OP_ALL) {
-            return (Filter)filter.getValue();
+            return (Filter) filter.getValue();
         }
         return null;
     }
 
     /**
      * Creates an SpEL expression for a GenericDAO search.
-     * 
+     *
      * @param search
      * @return
      */
     protected Expression getSearchExpression(ISearch search) {
         String expression = "";
-        for (Filter filter: search.getFilters()) {
+        for (Filter filter : search.getFilters()) {
             expression = combineExpressions(expression, getSearchExpression(filter));
         }
         if ("".equals(expression)) {
@@ -312,9 +307,9 @@ public abstract class LdapBaseDAOImpl {
     }
 
     /**
-     * Returns a combined expression (AND) from the given two.
-     * If any is empty, the other filter is returned.
-     * 
+     * Returns a combined expression (AND) from the given two. If any is empty, the other filter is
+     * returned.
+     *
      * @param expression
      * @param searchExpression
      * @return
@@ -326,7 +321,7 @@ public abstract class LdapBaseDAOImpl {
         if ("".equals(searchExpression)) {
             return expression;
         }
-        return "("+expression+") && ("+searchExpression+")";
+        return "(" + expression + ") && (" + searchExpression + ")";
     }
 
     /**
@@ -336,14 +331,16 @@ public abstract class LdapBaseDAOImpl {
      * @return
      */
     private String getSearchExpression(Filter filter) {
-        switch(filter.getOperator()) {
+        switch (filter.getOperator()) {
             case Filter.OP_EQUAL:
-                return filter.getProperty() + "=='" + filter.getValue().toString() +"'";
+                return filter.getProperty() + "=='" + filter.getValue().toString() + "'";
             case Filter.OP_ILIKE:
-                return filter.getProperty() + " matches '^" + filter.getValue().toString().replace("*", ".*") +"$'";
-            //TODO: implement all operators
+                return filter.getProperty()
+                        + " matches '^"
+                        + filter.getValue().toString().replace("*", ".*")
+                        + "$'";
+                // TODO: implement all operators
         }
         return "";
     }
-
 }

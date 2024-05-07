@@ -28,6 +28,8 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
+import java.util.Base64;
+import java.util.Collections;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
@@ -37,12 +39,7 @@ import org.springframework.security.oauth2.client.token.RequestEnhancer;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Base64;
-import java.util.Collections;
-
-/**
- * Used to enhance Token Requests with previously generated code_verifier.
- */
+/** Used to enhance Token Requests with previously generated code_verifier. */
 public class PKCERequestEnhancer implements RequestEnhancer {
 
     private final StringKeyGenerator secureKeyGenerator =

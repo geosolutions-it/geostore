@@ -27,6 +27,12 @@
  */
 package it.geosolutions.geostore.rest.security.oauth2;
 
+import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.when;
+
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
@@ -37,6 +43,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleOAuth
 import it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
+import java.util.ArrayList;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -52,14 +59,6 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import wiremock.org.eclipse.jetty.http.HttpStatus;
 
-import java.util.ArrayList;
-
-import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Mockito.when;
-
 public class OAuth2SessionServiceTest {
 
     private static final String ID_TOKEN = "test.id.token";
@@ -70,7 +69,8 @@ public class OAuth2SessionServiceTest {
     public void testLogout() {
         GoogleOAuth2Configuration configuration = new GoogleOAuth2Configuration();
         configuration.setIdTokenUri("https://www.googleapis.com/oauth2/v3/certs");
-        PreAuthenticatedAuthenticationToken authenticationToken = new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
+        PreAuthenticatedAuthenticationToken authenticationToken =
+                new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
         OAuth2AccessToken accessToken = new DefaultOAuth2AccessToken(ACCESS_TOKEN);
         TokenDetails details = Mockito.mock(TokenDetails.class);
         when(details.getProvider()).thenReturn("google");
@@ -79,12 +79,28 @@ public class OAuth2SessionServiceTest {
         authenticationToken.setDetails(details);
         TokenAuthenticationCache cache = new TokenAuthenticationCache();
         cache.putCacheEntry(ACCESS_TOKEN, authenticationToken);
-        OAuth2RestTemplate restTemplate = new GeoStoreOAuthRestTemplate(new OAuthGoogleSecurityConfiguration().resourceDetails(), new DefaultOAuth2ClientContext(), configuration);
+        OAuth2RestTemplate restTemplate =
+                new GeoStoreOAuthRestTemplate(
+                        new OAuthGoogleSecurityConfiguration().resourceDetails(),
+                        new DefaultOAuth2ClientContext(),
+                        configuration);
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
         try (MockedStatic<GeoStoreContext> utilities = Mockito.mockStatic(GeoStoreContext.class)) {
-            utilities.when(() -> GeoStoreContext.bean("googleOAuth2Config", OAuth2Configuration.class)).thenReturn(configuration);
-            utilities.when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class)).thenReturn(cache);
-            utilities.when(() -> GeoStoreContext.bean("googleOpenIdRestTemplate", OAuth2RestTemplate.class)).thenReturn(restTemplate);
+            utilities
+                    .when(
+                            () ->
+                                    GeoStoreContext.bean(
+                                            "googleOAuth2Config", OAuth2Configuration.class))
+                    .thenReturn(configuration);
+            utilities
+                    .when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class))
+                    .thenReturn(cache);
+            utilities
+                    .when(
+                            () ->
+                                    GeoStoreContext.bean(
+                                            "googleOpenIdRestTemplate", OAuth2RestTemplate.class))
+                    .thenReturn(restTemplate);
             MockHttpServletRequest request = new MockHttpServletRequest();
             request.setParameter(ACCESS_TOKEN_PARAM, ACCESS_TOKEN);
             // test request.logout();

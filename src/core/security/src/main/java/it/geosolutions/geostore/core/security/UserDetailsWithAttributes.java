@@ -31,10 +31,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Extends UserDetails with the ability to store generic attributes.
- * 
- * @author Mauro Bartolomeoli
  *
+ * @author Mauro Bartolomeoli
  */
-public interface UserDetailsWithAttributes extends UserDetails{
+public interface UserDetailsWithAttributes extends UserDetails {
     public Object getAttribute(String name);
 }

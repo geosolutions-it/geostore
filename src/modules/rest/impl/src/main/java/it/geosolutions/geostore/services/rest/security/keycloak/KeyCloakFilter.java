@@ -27,9 +27,22 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
+import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
+import static it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService.KEYCLOAK_REDIRECT;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import java.io.IOException;
+import java.util.Date;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.KeycloakDeployment;
@@ -42,27 +55,13 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
 
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Date;
-
-import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
-import static it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService.KEYCLOAK_REDIRECT;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
-
 /**
- * Keycloak Authentication Filter. Manage the logic to authenticate a user against a keycloak server.
+ * Keycloak Authentication Filter. Manage the logic to authenticate a user against a keycloak
+ * server.
  */
 public class KeyCloakFilter extends GenericFilterBean {
 
-
-    private final static Logger LOGGER = LogManager.getLogger(KeyCloakFilter.class);
+    private static final Logger LOGGER = LogManager.getLogger(KeyCloakFilter.class);
     // used to map keycloak roles to spring-security roles
     private final GeoStoreKeycloakAuthProvider authenticationProvider;
     // creates token stores capable of generating spring-security tokens from keycloak auth
@@ -70,15 +69,14 @@ public class KeyCloakFilter extends GenericFilterBean {
     private final KeyCloakHelper helper;
     private final KeyCloakConfiguration configuration;
     private final TokenAuthenticationCache cache;
-    @Autowired
-    protected UserService userService;
-
+    @Autowired protected UserService userService;
 
     /**
-     * @param helper                 a {@link KeyCloakHelper} instance.
-     * @param cache                  an instance of {@link TokenAuthenticationCache} to cache authentication objects.
-     * @param configuration          the {@link KeyCloakConfiguration} for this geostore instance.
-     * @param authenticationProvider the authentication provider to map the Keycloak Authentication to the GeoStore one.
+     * @param helper a {@link KeyCloakHelper} instance.
+     * @param cache an instance of {@link TokenAuthenticationCache} to cache authentication objects.
+     * @param configuration the {@link KeyCloakConfiguration} for this geostore instance.
+     * @param authenticationProvider the authentication provider to map the Keycloak Authentication
+     *     to the GeoStore one.
      */
     public KeyCloakFilter(
             KeyCloakHelper helper,
@@ -91,19 +89,23 @@ public class KeyCloakFilter extends GenericFilterBean {
         this.configuration = configuration;
     }
 
-
     @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+            throws IOException, ServletException {
         if (enabledAndValid() && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Authentication authentication = authenticate((HttpServletRequest) request, (HttpServletResponse) response);
+            Authentication authentication =
+                    authenticate((HttpServletRequest) request, (HttpServletResponse) response);
             if (authentication != null) {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 if (authentication.getDetails() instanceof KeycloakTokenDetails) {
-                    KeycloakTokenDetails details = (KeycloakTokenDetails) authentication.getDetails();
+                    KeycloakTokenDetails details =
+                            (KeycloakTokenDetails) authentication.getDetails();
                     if (details.getAccessToken() != null)
-                        RequestContextHolder.getRequestAttributes().setAttribute(ACCESS_TOKEN_PARAM, details.getAccessToken(), 0);
+                        RequestContextHolder.getRequestAttributes()
+                                .setAttribute(ACCESS_TOKEN_PARAM, details.getAccessToken(), 0);
                     if (details.getRefreshToken() != null)
-                        RequestContextHolder.getRequestAttributes().setAttribute(REFRESH_TOKEN_PARAM, details.getRefreshToken(), 0);
+                        RequestContextHolder.getRequestAttributes()
+                                .setAttribute(REFRESH_TOKEN_PARAM, details.getRefreshToken(), 0);
                 }
             }
             RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY, "keycloak", 0);
@@ -118,11 +120,12 @@ public class KeyCloakFilter extends GenericFilterBean {
     /**
      * Perform the authentication and updates the cache.
      *
-     * @param request  the request.
+     * @param request the request.
      * @param response the response.
      * @return the authentication object. Can be null if the user is not authenticated.
      */
-    protected Authentication authenticateAndUpdateCache(HttpServletRequest request, HttpServletResponse response) {
+    protected Authentication authenticateAndUpdateCache(
+            HttpServletRequest request, HttpServletResponse response) {
         // do some setup and create the authenticator
         KeycloakDeployment deployment = helper.getDeployment(request, response);
         RequestAuthenticator authenticator = helper.getAuthenticator(request, response, deployment);
@@ -141,7 +144,8 @@ public class KeyCloakFilter extends GenericFilterBean {
             } else {
                 entryPoint = new KeycloakAuthenticationEntryPoint(authenticator.getChallenge());
             }
-            RequestContextHolder.getRequestAttributes().setAttribute(KEYCLOAK_REDIRECT, entryPoint, 0);
+            RequestContextHolder.getRequestAttributes()
+                    .setAttribute(KEYCLOAK_REDIRECT, entryPoint, 0);
         } else {
             LOGGER.warn("Failed to authentication and to redirect the user.");
         }
@@ -165,22 +169,25 @@ public class KeyCloakFilter extends GenericFilterBean {
     }
 
     /**
-     * Performs the authentication. The method will check the cache before calling keycloak.
-     * If the token is expired, a new authentication is anyway issued and the cache updated.
+     * Performs the authentication. The method will check the cache before calling keycloak. If the
+     * token is expired, a new authentication is anyway issued and the cache updated.
      *
-     * @param request  the request.
+     * @param request the request.
      * @param response the response.
      * @return the authentication.
      */
-    protected Authentication authenticate(HttpServletRequest request, HttpServletResponse response) {
+    protected Authentication authenticate(
+            HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = null;
         String token = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
         if (token != null) {
             authentication = cache.get(token);
-            if (authentication != null && authentication.getDetails() instanceof KeycloakTokenDetails) {
+            if (authentication != null
+                    && authentication.getDetails() instanceof KeycloakTokenDetails) {
                 KeycloakTokenDetails details = (KeycloakTokenDetails) authentication.getDetails();
                 if (details.getExpiration().before(new Date())) {
-                    LOGGER.warn("Token has expired and the refresh token endpoint has not been called. The request will not be authorized by the keycloak filter");
+                    LOGGER.warn(
+                            "Token has expired and the refresh token endpoint has not been called. The request will not be authorized by the keycloak filter");
                     cache.removeEntry(details.getAccessToken());
                     authentication = null;
                 }
@@ -193,5 +200,4 @@ public class KeyCloakFilter extends GenericFilterBean {
         }
         return authentication;
     }
-
 }

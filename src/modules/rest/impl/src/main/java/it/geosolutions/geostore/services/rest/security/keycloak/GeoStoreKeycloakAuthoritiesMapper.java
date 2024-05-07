@@ -31,20 +31,21 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.*;
-
 /**
- * A granted authorities mapper aware of the difference that there is in GeoStore between Role and Groups.
+ * A granted authorities mapper aware of the difference that there is in GeoStore between Role and
+ * Groups.
  */
 public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapper {
 
     private static final String ROLE_PREFIX = "ROLE_";
-    private final static Logger LOGGER = LogManager.getLogger(GeoStoreKeycloakAuthoritiesMapper.class);
+    private static final Logger LOGGER =
+            LogManager.getLogger(GeoStoreKeycloakAuthoritiesMapper.class);
     private final Map<String, String> roleMappings;
     private final Map<String, String> groupMappings;
     private Set<UserGroup> groups;
@@ -52,8 +53,10 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
     private boolean dropUnmapped = false;
     private int idCounter;
 
-
-    GeoStoreKeycloakAuthoritiesMapper(Map<String, String> roleMappings, Map<String, String> groupMappings, boolean dropUnmapped) {
+    GeoStoreKeycloakAuthoritiesMapper(
+            Map<String, String> roleMappings,
+            Map<String, String> groupMappings,
+            boolean dropUnmapped) {
         this.roleMappings = roleMappings;
         this.groupMappings = groupMappings;
         if (LOGGER.isDebugEnabled() && roleMappings != null)
@@ -63,9 +66,9 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
     }
 
     @Override
-    public Collection<? extends GrantedAuthority> mapAuthorities(Collection<? extends GrantedAuthority> authorities) {
-        HashSet<GrantedAuthority> mapped = new HashSet<>(
-                authorities.size());
+    public Collection<? extends GrantedAuthority> mapAuthorities(
+            Collection<? extends GrantedAuthority> authorities) {
+        HashSet<GrantedAuthority> mapped = new HashSet<>(authorities.size());
         for (GrantedAuthority authority : authorities) {
             GrantedAuthority newAuthority = mapAuthority(authority.getAuthority());
             if (newAuthority != null) mapped.add(newAuthority);
@@ -78,7 +81,9 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
             defRoleStr = "ROLE_" + def.name();
         }
         String finalDefRoleStr = defRoleStr;
-        if (defRoleStr != null && !mapped.stream().anyMatch(ga -> ga.getAuthority().equalsIgnoreCase(finalDefRoleStr))) {
+        if (defRoleStr != null
+                && !mapped.stream()
+                        .anyMatch(ga -> ga.getAuthority().equalsIgnoreCase(finalDefRoleStr))) {
             GrantedAuthority ga = new SimpleGrantedAuthority(defRoleStr);
             mapped.add(ga);
         }
@@ -111,12 +116,9 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         if (authName == null) {
             // if not a role then is a group.
             authName = name;
-            if (groupMappings != null)
-                authName = groupMappings.get(authName);
-            if (authName == null && !dropUnmapped)
-                authName = name;
-            if (authName != null)
-                addGroup(authName);
+            if (groupMappings != null) authName = groupMappings.get(authName);
+            if (authName == null && !dropUnmapped) authName = name;
+            if (authName != null) addGroup(authName);
         }
         return authName;
     }
@@ -132,7 +134,12 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
                 if (getRole() == null || role.ordinal() < getRole().ordinal()) setRole(role);
                 result = ROLE_PREFIX + result;
             } catch (Exception e) {
-                String message = "The value " + result + " set to match role " + name + " is not a valid Role. You should use one of ADMIN,USER,GUEST";
+                String message =
+                        "The value "
+                                + result
+                                + " set to match role "
+                                + name
+                                + " is not a valid Role. You should use one of ADMIN,USER,GUEST";
                 LOGGER.error(message, e);
                 throw new RuntimeException(message);
             }
@@ -158,17 +165,13 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         return result;
     }
 
-    /**
-     * @return the found UserGroups.
-     */
+    /** @return the found UserGroups. */
     public Set<UserGroup> getGroups() {
         if (groups == null) return new HashSet<>();
         return groups;
     }
 
-    /**
-     * @return the found role.
-     */
+    /** @return the found role. */
     Role getRole() {
         return role;
     }

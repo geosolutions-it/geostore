@@ -41,15 +41,14 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import javax.ws.rs.core.SecurityContext;
+import org.apache.commons.lang.NotImplementedException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTUserServiceImpl.
@@ -59,13 +58,11 @@ import java.util.Set;
  */
 public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserService {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTUserServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(RESTUserServiceImpl.class);
 
     private UserService userService;
 
-    /**
-     * @param userService the userService to set
-     */
+    /** @param userService the userService to set */
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
@@ -88,16 +85,15 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             // Parsing UserAttributes list
             //
             List<UserAttribute> usAttribute = user.getAttribute();
-            //persist the user first
+            // persist the user first
             if (usAttribute != null) {
                 user.setAttribute(null);
             }
             id = userService.insert(user);
-            //insert attributes after user creation
+            // insert attributes after user creation
             if (usAttribute != null) {
                 userService.updateAttributes(id, usAttribute);
             }
-
 
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
@@ -177,7 +173,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 }
             }
             if (userUpdated) {
-                //attributes where updated before
+                // attributes where updated before
                 old.setAttribute(null);
                 id = userService.update(old);
                 return id;
@@ -229,7 +225,8 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         User ret = new User();
         ret.setId(authUser.getId());
         ret.setName(authUser.getName());
-        // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
+        // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the
+        // server!
         ret.setRole(authUser.getRole());
         ret.setEnabled(authUser.isEnabled());
         ret.setGroups(removeReservedGroups(authUser.getGroups()));
@@ -282,7 +279,13 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups(), false);
+                RESTUser restUser =
+                        new RESTUser(
+                                user.getId(),
+                                user.getName(),
+                                user.getRole(),
+                                user.getGroups(),
+                                false);
                 restUSERList.add(restUser);
             }
 
@@ -323,7 +326,8 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 ret = new User();
                 ret.setId(authUser.getId());
                 ret.setName(authUser.getName());
-                // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out of the server!
+                // ret.setPassword(authUser.getPassword()); // NO! password should not be sent out
+                // of the server!
                 ret.setRole(authUser.getRole());
                 ret.setGroups(authUser.getGroups());
                 if (includeAttributes) {
@@ -339,8 +343,13 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
     }
 
     @Override
-    public UserList getUserList(SecurityContext sc, String nameLike, Integer page, Integer entries,
-                                boolean includeAttributes) throws BadRequestWebEx {
+    public UserList getUserList(
+            SecurityContext sc,
+            String nameLike,
+            Integer page,
+            Integer entries,
+            boolean includeAttributes)
+            throws BadRequestWebEx {
 
         nameLike = nameLike.replaceAll("[*]", "%");
 
@@ -352,7 +361,13 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
-                RESTUser restUser = new RESTUser(user.getId(), user.getName(), user.getRole(), user.getGroups(), false);
+                RESTUser restUser =
+                        new RESTUser(
+                                user.getId(),
+                                user.getName(),
+                                user.getRole(),
+                                user.getGroups(),
+                                false);
                 restUSERList.add(restUser);
             }
 

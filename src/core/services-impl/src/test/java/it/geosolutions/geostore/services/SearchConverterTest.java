@@ -19,13 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
-import javax.xml.bind.JAXB;
-
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -33,29 +26,29 @@ import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
-
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import javax.xml.bind.JAXB;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * Class SearchConverterTest.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class SearchConverterTest extends ServiceTestBase {
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
+    public static void setUpClass() throws Exception {}
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
+    public static void tearDownClass() throws Exception {}
 
-    public SearchConverterTest() {
-    }
+    public SearchConverterTest() {}
 
     @Test
     public void testFilterConverter() throws Exception {
@@ -113,7 +106,8 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<ShortResource> resources = resourceService.getResources(searchFilter, buildFakeAdminUser());
+            List<ShortResource> resources =
+                    resourceService.getResources(searchFilter, buildFakeAdminUser());
             assertEquals(1, resources.size());
         }
 
@@ -125,35 +119,70 @@ public class SearchConverterTest extends ServiceTestBase {
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<ShortResource> resources = resourceService.getResources(searchFilter, buildFakeAdminUser());
+            List<ShortResource> resources =
+                    resourceService.getResources(searchFilter, buildFakeAdminUser());
             assertEquals(2, resources.size());
         }
     }
 
     private static StringReader getFilterConverterFilterAND() {
-        String xmlFilter = "<AND>" + "<FIELD>" + "<field>NAME</field>"
-                + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                + "<AND>" + "<ATTRIBUTE>" + "<name>attr1</name>"
-                + "<operator>EQUAL_TO</operator>" + "<type>STRING</type>"
-                + "<value>value2</value>" + "</ATTRIBUTE>" + "<ATTRIBUTE>"
-                + "<name>attr2</name>" + "<operator>GREATER_THAN</operator>"
-                + "<type>NUMBER</type>" + "<value>1.0</value>" + "</ATTRIBUTE>" + "</AND>"
-                + "</AND>";
+        String xmlFilter =
+                "<AND>"
+                        + "<FIELD>"
+                        + "<field>NAME</field>"
+                        + "<operator>LIKE</operator>"
+                        + "<value>%resource%</value>"
+                        + "</FIELD>"
+                        + "<AND>"
+                        + "<ATTRIBUTE>"
+                        + "<name>attr1</name>"
+                        + "<operator>EQUAL_TO</operator>"
+                        + "<type>STRING</type>"
+                        + "<value>value2</value>"
+                        + "</ATTRIBUTE>"
+                        + "<ATTRIBUTE>"
+                        + "<name>attr2</name>"
+                        + "<operator>GREATER_THAN</operator>"
+                        + "<type>NUMBER</type>"
+                        + "<value>1.0</value>"
+                        + "</ATTRIBUTE>"
+                        + "</AND>"
+                        + "</AND>";
 
         return new StringReader(xmlFilter);
     }
 
     private static StringReader getFilterConverterFilterANDOR() {
-        String xmlFilter = "<AND>" + "<FIELD>" + "<field>NAME</field>"
-                + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                + "<AND>" + "<ATTRIBUTE>" + "<name>attr2</name>"
-                + "<operator>GREATER_THAN</operator>" + "<type>NUMBER</type>"
-                + "<value>1.0</value>" + "</ATTRIBUTE>" + "<OR>" + "<ATTRIBUTE>"
-                + "<name>attr1</name>" + "<operator>EQUAL_TO</operator>"
-                + "<type>STRING</type>" + "<value>value2</value>" + "</ATTRIBUTE>"
-                + "<ATTRIBUTE>" + "<name>attr1</name>" + "<operator>EQUAL_TO</operator>"
-                + "<type>STRING</type>" + "<value>value3</value>" + "</ATTRIBUTE>" + "</OR>"
-                + "</AND>" + "</AND>";
+        String xmlFilter =
+                "<AND>"
+                        + "<FIELD>"
+                        + "<field>NAME</field>"
+                        + "<operator>LIKE</operator>"
+                        + "<value>%resource%</value>"
+                        + "</FIELD>"
+                        + "<AND>"
+                        + "<ATTRIBUTE>"
+                        + "<name>attr2</name>"
+                        + "<operator>GREATER_THAN</operator>"
+                        + "<type>NUMBER</type>"
+                        + "<value>1.0</value>"
+                        + "</ATTRIBUTE>"
+                        + "<OR>"
+                        + "<ATTRIBUTE>"
+                        + "<name>attr1</name>"
+                        + "<operator>EQUAL_TO</operator>"
+                        + "<type>STRING</type>"
+                        + "<value>value2</value>"
+                        + "</ATTRIBUTE>"
+                        + "<ATTRIBUTE>"
+                        + "<name>attr1</name>"
+                        + "<operator>EQUAL_TO</operator>"
+                        + "<type>STRING</type>"
+                        + "<value>value3</value>"
+                        + "</ATTRIBUTE>"
+                        + "</OR>"
+                        + "</AND>"
+                        + "</AND>";
 
         return new StringReader(xmlFilter);
     }
@@ -215,18 +244,28 @@ public class SearchConverterTest extends ServiceTestBase {
         // Search with paging, filter excluding Data
         //
         {
-            String xmlFilter = "<AND>" + "<FIELD>" + "<field>METADATA</field>"
-                    + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                    + "<ATTRIBUTE>" + "<name>attr1</name>" + "<operator>LIKE</operator>"
-                    + "<type>STRING</type>" + "<value>%value%</value>" + "</ATTRIBUTE>" + "</AND>";
+            String xmlFilter =
+                    "<AND>"
+                            + "<FIELD>"
+                            + "<field>METADATA</field>"
+                            + "<operator>LIKE</operator>"
+                            + "<value>%resource%</value>"
+                            + "</FIELD>"
+                            + "<ATTRIBUTE>"
+                            + "<name>attr1</name>"
+                            + "<operator>LIKE</operator>"
+                            + "<type>STRING</type>"
+                            + "<value>%value%</value>"
+                            + "</ATTRIBUTE>"
+                            + "</AND>";
 
             StringReader reader = new StringReader(xmlFilter);
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-
-
-            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, false, buildFakeAdminUser());
+            List<Resource> resources =
+                    resourceService.getResources(
+                            searchFilter, 0, 5, true, false, buildFakeAdminUser());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);
@@ -241,16 +280,28 @@ public class SearchConverterTest extends ServiceTestBase {
         // Search with paging, filter excluding attributes
         //
         {
-            String xmlFilter = "<AND>" + "<FIELD>" + "<field>METADATA</field>"
-                    + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                    + "<ATTRIBUTE>" + "<name>attr1</name>" + "<operator>LIKE</operator>"
-                    + "<type>STRING</type>" + "<value>%value%</value>" + "</ATTRIBUTE>" + "</AND>";
+            String xmlFilter =
+                    "<AND>"
+                            + "<FIELD>"
+                            + "<field>METADATA</field>"
+                            + "<operator>LIKE</operator>"
+                            + "<value>%resource%</value>"
+                            + "</FIELD>"
+                            + "<ATTRIBUTE>"
+                            + "<name>attr1</name>"
+                            + "<operator>LIKE</operator>"
+                            + "<type>STRING</type>"
+                            + "<value>%value%</value>"
+                            + "</ATTRIBUTE>"
+                            + "</AND>";
 
             StringReader reader = new StringReader(xmlFilter);
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, false, true, buildFakeAdminUser());
+            List<Resource> resources =
+                    resourceService.getResources(
+                            searchFilter, 0, 5, false, true, buildFakeAdminUser());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);
@@ -263,16 +314,28 @@ public class SearchConverterTest extends ServiceTestBase {
         // Search with paging, filter
         //
         {
-            String xmlFilter = "<AND>" + "<FIELD>" + "<field>METADATA</field>"
-                    + "<operator>LIKE</operator>" + "<value>%resource%</value>" + "</FIELD>"
-                    + "<ATTRIBUTE>" + "<name>attr1</name>" + "<operator>LIKE</operator>"
-                    + "<type>STRING</type>" + "<value>%value%</value>" + "</ATTRIBUTE>" + "</AND>";
+            String xmlFilter =
+                    "<AND>"
+                            + "<FIELD>"
+                            + "<field>METADATA</field>"
+                            + "<operator>LIKE</operator>"
+                            + "<value>%resource%</value>"
+                            + "</FIELD>"
+                            + "<ATTRIBUTE>"
+                            + "<name>attr1</name>"
+                            + "<operator>LIKE</operator>"
+                            + "<type>STRING</type>"
+                            + "<value>%value%</value>"
+                            + "</ATTRIBUTE>"
+                            + "</AND>";
 
             StringReader reader = new StringReader(xmlFilter);
             AndFilter searchFilter = JAXB.unmarshal(reader, AndFilter.class);
             assertNotNull(searchFilter);
 
-            List<Resource> resources = resourceService.getResources(searchFilter, 0, 5, true, true, buildFakeAdminUser());
+            List<Resource> resources =
+                    resourceService.getResources(
+                            searchFilter, 0, 5, true, true, buildFakeAdminUser());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);

@@ -20,12 +20,6 @@
 
 package it.geosolutions.geostore.core.dao;
 
-import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import it.geosolutions.geostore.core.dao.impl.ExternalSecurityDAOImpl;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -33,11 +27,16 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import java.util.List;
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Class BaseDAOTest
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -54,7 +53,7 @@ public abstract class BaseDAOTest extends TestCase {
     protected static CategoryDAO categoryDAO;
 
     protected static SecurityDAO securityDAO;
-    
+
     protected static SecurityDAO externalSecurityDAO;
 
     protected static UserAttributeDAO userAttributeDAO;
@@ -70,8 +69,8 @@ public abstract class BaseDAOTest extends TestCase {
 
         synchronized (BaseDAOTest.class) {
             if (ctx == null) {
-                String[] paths = { "applicationContext.xml"
-                // ,"applicationContext-test.xml"
+                String[] paths = {"applicationContext.xml"
+                    // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
@@ -160,8 +159,8 @@ public abstract class BaseDAOTest extends TestCase {
             assertTrue("UserAttribute not removed", ret);
         }
 
-        assertEquals("UserAttribute have not been properly deleted", 0,
-                userAttributeDAO.count(null));
+        assertEquals(
+                "UserAttribute have not been properly deleted", 0, userAttributeDAO.count(null));
     }
 
     protected void removeAllStoredData() {
@@ -196,5 +195,4 @@ public abstract class BaseDAOTest extends TestCase {
 
         assertEquals("DataType have not been properly deleted", 0, attributeDAO.count(null));
     }
-
 }

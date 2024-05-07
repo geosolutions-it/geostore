@@ -27,13 +27,12 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 public final class AuditingOutputTest extends AuditingTestsBase {
 
@@ -48,16 +47,23 @@ public final class AuditingOutputTest extends AuditingTestsBase {
         offerMessage(auditingOutput, outputFile, message1);
         AuditingTestsUtils.checkFileExistsWithContent(outputFile, contentWithoutEnd(message1));
         offerMessage(auditingOutput, outputFile, message2);
-        AuditingTestsUtils.checkFileExistsWithContent(outputFile, contentWithoutEnd(message1, message2));
+        AuditingTestsUtils.checkFileExistsWithContent(
+                outputFile, contentWithoutEnd(message1, message2));
         offerMessage(auditingOutput, outputFile, message3);
-        File rolledFile = new File(OUTPUT_DIRECTORY,
-                String.format("audit-geostore-%s-1.txt", auditingOutput.getAuditingFilesManager().getCurrentDayTag()));
+        File rolledFile =
+                new File(
+                        OUTPUT_DIRECTORY,
+                        String.format(
+                                "audit-geostore-%s-1.txt",
+                                auditingOutput.getAuditingFilesManager().getCurrentDayTag()));
         AuditingTestsUtils.waitFileExists(rolledFile, 5000);
         AuditingTestsUtils.checkFileExistsWithContent(outputFile, "*START*");
-        AuditingTestsUtils.checkFileExistsWithContent(rolledFile, contentWithEnd(message1, message2, message3));
+        AuditingTestsUtils.checkFileExistsWithContent(
+                rolledFile, contentWithEnd(message1, message2, message3));
     }
 
-    private void offerMessage(AuditingOutput auditingOutput, File outputFile, Map<String, String> message)
+    private void offerMessage(
+            AuditingOutput auditingOutput, File outputFile, Map<String, String> message)
             throws InterruptedException {
         long checksum = AuditingTestsUtils.checksum(outputFile);
         auditingOutput.offerMessage(copy(message));
@@ -81,7 +87,8 @@ public final class AuditingOutputTest extends AuditingTestsBase {
         message.put(AuditInfo.ERROR_MESSAGE.getKey(), "ERROR_MESSAGE" + "-" + label);
         message.put(AuditInfo.FAILED.getKey(), "FAILED" + "-" + label);
         message.put(AuditInfo.RESPONSE_STATUS_CODE.getKey(), "RESPONSE_STATUS_CODE" + "-" + label);
-        message.put(AuditInfo.RESPONSE_CONTENT_TYPE.getKey(), "RESPONSE_CONTENT_TYPE" + "-" + label);
+        message.put(
+                AuditInfo.RESPONSE_CONTENT_TYPE.getKey(), "RESPONSE_CONTENT_TYPE" + "-" + label);
         message.put(AuditInfo.RESPONSE_LENGTH.getKey(), "RESPONSE_LENGTH" + "-" + label);
         message.put(AuditInfo.START_TIME.getKey(), "START_TIME" + "-" + label);
         message.put(AuditInfo.END_TIME.getKey(), "END_TIME" + "-" + label);

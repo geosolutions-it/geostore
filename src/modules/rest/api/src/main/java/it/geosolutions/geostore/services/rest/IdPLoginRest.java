@@ -29,41 +29,41 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
-import org.springframework.security.access.annotation.Secured;
-
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
+import org.springframework.security.access.annotation.Secured;
 
-/**
- * Base interface providing entry points to login using on an external Identity provider.
- */
+/** Base interface providing entry points to login using on an external Identity provider. */
 public interface IdPLoginRest {
 
     @GET
     @Path("/{provider}/login")
-    @Secured({"ROLE_USER","ROLE_ADMIN","ROLE_ANONYMOUS"})
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
     void login(@PathParam("provider") String provider) throws NotFoundWebEx;
 
     @GET
     @Path("/{provider}/callback")
-    @Secured({"ROLE_USER","ROLE_ADMIN","ROLE_ANONYMOUS"})
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
     Response callback(@PathParam("provider") String provider) throws NotFoundWebEx;
 
     @GET
     @Path("/{provider}/tokens")
-    @Secured({"ROLE_USER","ROLE_ADMIN","ROLE_ANONYMOUS"})
-    SessionToken getTokensByTokenIdentifier(@PathParam("provider") String provider, @QueryParam("identifier") String tokenIdentifier) throws NotFoundWebEx;
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    SessionToken getTokensByTokenIdentifier(
+            @PathParam("provider") String provider,
+            @QueryParam("identifier") String tokenIdentifier)
+            throws NotFoundWebEx;
 
     /**
      * Registers an IdP loginService with a key equal to the provider name value.
-     * @param providerName the provider name to which is associated the {@link IdPLoginService} instance.
-     * @param service the {@link IdPLoginService} instance to resgister and associate to the provider name value.
+     *
+     * @param providerName the provider name to which is associated the {@link IdPLoginService}
+     *     instance.
+     * @param service the {@link IdPLoginService} instance to resgister and associate to the
+     *     provider name value.
      */
-    void registerService(String providerName,IdPLoginService service);
-
-
-    }
+    void registerService(String providerName, IdPLoginService service);
+}

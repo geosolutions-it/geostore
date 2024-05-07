@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -29,46 +29,35 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.services.dto.ShortResource;
-
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * Class ShortResourceList.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @XmlRootElement(name = "ResourceList")
 public class ShortResourceList {
 
     private List<ShortResource> list;
 
-    public ShortResourceList() {
+    public ShortResourceList() {}
 
-    }
-
-    /**
-     * @param list
-     */
+    /** @param list */
     public ShortResourceList(List<ShortResource> list) {
         this.list = list;
     }
 
-    /**
-     * @return List<ShortResource>
-     */
+    /** @return List<ShortResource> */
     @XmlElement(name = "Resource")
     public List<ShortResource> getList() {
         return list;
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public void setList(List<ShortResource> list) {
         this.list = list;
     }
@@ -77,5 +66,4 @@ public class ShortResourceList {
     public boolean isEmpty() {
         return list == null || list.isEmpty();
     }
-
 }

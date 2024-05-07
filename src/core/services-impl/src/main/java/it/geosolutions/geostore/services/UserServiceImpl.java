@@ -19,6 +19,8 @@
  */
 package it.geosolutions.geostore.services;
 
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
@@ -30,23 +32,18 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.Search;
-
 /**
  * Class UserServiceImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
@@ -60,30 +57,24 @@ public class UserServiceImpl implements UserService {
 
     private UserGroupDAO userGroupDAO;
 
-    /**
-     * @param userGroupDAO the userGroupDAO to set
-     */
+    /** @param userGroupDAO the userGroupDAO to set */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }
 
-    /**
-     * @param userAttributeDAO the userAttributeDAO to set
-     */
+    /** @param userAttributeDAO the userAttributeDAO to set */
     public void setUserAttributeDAO(UserAttributeDAO userAttributeDAO) {
         this.userAttributeDAO = userAttributeDAO;
     }
 
-    /**
-     * @param userDAO the userDAO to set
-     */
+    /** @param userDAO the userDAO to set */
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#insert(it.geosolutions.geostore.core.model.User)
      */
     @Override
@@ -95,7 +86,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new BadRequestServiceEx("User type must be specified !");
         }
-        if(!UserReservedNames.isAllowedName(user.getName())){
+        if (!UserReservedNames.isAllowedName(user.getName())) {
             throw new BadRequestServiceEx("User name '" + user.getName() + "' is not allowed...");
         }
 
@@ -112,7 +103,7 @@ public class UserServiceImpl implements UserService {
         List<String> groupNames = new ArrayList<String>();
         List<UserGroup> existingGroups = new ArrayList<UserGroup>();
         if (groups != null && groups.size() > 0) {
-            for(UserGroup group : groups){
+            for (UserGroup group : groups) {
                 String groupName = group.getGroupName();
                 groupNames.add(groupName);
                 if (StringUtils.isEmpty(groupName)) {
@@ -128,18 +119,22 @@ public class UserServiceImpl implements UserService {
             existingGroups = userGroupDAO.search(searchCriteria);
 
             if (existingGroups != null && groups.size() != existingGroups.size()) {
-                throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
-            }            
+                throw new NotFoundServiceEx(
+                        "At least one User group not found; review the groups associated to the user you want to insert"
+                                + user.getId());
+            }
         }
         // Special Usergroup EVERYONE management
         Search search = new Search();
         search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
         List<UserGroup> ugEveryone = userGroupDAO.search(search);
-        if(ugEveryone == null || ugEveryone.size() != 1){
-            // Only log the error at ERROR level and avoid to block the user creation... 
-            LOGGER.error("No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '" + user.getName() + "'");
-        }
-        else{
+        if (ugEveryone == null || ugEveryone.size() != 1) {
+            // Only log the error at ERROR level and avoid to block the user creation...
+            LOGGER.error(
+                    "No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '"
+                            + user.getName()
+                            + "'");
+        } else {
             existingGroups.add(ugEveryone.get(0));
         }
         u.setGroups(new HashSet<UserGroup>(existingGroups));
@@ -163,7 +158,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#update(it.geosolutions.geostore.core.model.User)
      */
     @Override
@@ -171,13 +166,13 @@ public class UserServiceImpl implements UserService {
         User orig = get(user.getId());
 
         if (orig == null) {
-        	orig = get(user.getName());
-        	user.setId(orig.getId());
+            orig = get(user.getName());
+            user.setId(orig.getId());
         }
-        
+
         if (orig == null) {
-    		throw new NotFoundServiceEx("User not found " + user.getId());
-    	}
+            throw new NotFoundServiceEx("User not found " + user.getId());
+        }
 
         //
         // Checking User Group
@@ -186,7 +181,7 @@ public class UserServiceImpl implements UserService {
         List<String> groupNames = new ArrayList<String>();
         Set<UserGroup> existingGroups = new HashSet<UserGroup>();
         if (groups != null && groups.size() > 0) {
-            for(UserGroup group : groups){
+            for (UserGroup group : groups) {
                 String groupName = group.getGroupName();
                 groupNames.add(groupName);
                 if (StringUtils.isEmpty(groupName)) {
@@ -199,27 +194,32 @@ public class UserServiceImpl implements UserService {
             Search searchCriteria = new Search(UserGroup.class);
             searchCriteria.addFilterIn("groupName", groupNames);
 
-            existingGroups = GroupReservedNames.checkReservedGroups(userGroupDAO.search(searchCriteria));
+            existingGroups =
+                    GroupReservedNames.checkReservedGroups(userGroupDAO.search(searchCriteria));
 
-            if (existingGroups == null || (existingGroups != null && groups.size() != existingGroups.size())) {
-                throw new NotFoundServiceEx("At least one User group not found; review the groups associated to the user you want to insert" + user.getId());
+            if (existingGroups == null
+                    || (existingGroups != null && groups.size() != existingGroups.size())) {
+                throw new NotFoundServiceEx(
+                        "At least one User group not found; review the groups associated to the user you want to insert"
+                                + user.getId());
             }
-           
         }
         // Special Usergroup EVERYONE management
         Search search = new Search();
         search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
         List<UserGroup> ugEveryone = userGroupDAO.search(search);
-        if(ugEveryone == null || ugEveryone.size() != 1){
-            // Only log the error at ERROR level and avoid to block the user creation... 
-            LOGGER.error("No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '" + user.getName() + "'");
-        }
-        else{
+        if (ugEveryone == null || ugEveryone.size() != 1) {
+            // Only log the error at ERROR level and avoid to block the user creation...
+            LOGGER.error(
+                    "No UserGroup EVERYONE found, or more than 1 results has been found... skip the EVERYONE group associations for user '"
+                            + user.getName()
+                            + "'");
+        } else {
             existingGroups.add(ugEveryone.get(0));
         }
         user.getGroups().clear();
         user.getGroups().addAll(existingGroups);
-        
+
         userDAO.merge(user);
 
         return orig.getId();
@@ -227,7 +227,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#updateAttributes(long, java.util.List)
      */
     @Override
@@ -260,7 +260,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#get(long)
      */
     @Override
@@ -272,7 +272,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#get(java.lang.String)
      */
     @Override
@@ -291,7 +291,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#delete(long)
      */
     @Override
@@ -301,7 +301,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -327,12 +327,13 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public List<User> getAll(Integer page, Integer entries, String nameLike,
-            boolean includeAttributes) throws BadRequestServiceEx {
+    public List<User> getAll(
+            Integer page, Integer entries, String nameLike, boolean includeAttributes)
+            throws BadRequestServiceEx {
 
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together.");
@@ -386,7 +387,7 @@ public class UserServiceImpl implements UserService {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.UserService#getCount(java.lang.String)
      */
     @Override
@@ -408,14 +409,14 @@ public class UserServiceImpl implements UserService {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting Reserved Users... ");
         }
-        
+
         User u = new User();
         u.setName(UserReservedNames.GUEST.userName());
         u.setRole(Role.GUEST);
         Search search = new Search();
         search.addFilterEqual("groupName", GroupReservedNames.EVERYONE.groupName());
         List<UserGroup> userGroup = userGroupDAO.search(search);
-        if(userGroup.size() != 1){
+        if (userGroup.size() != 1) {
             LOGGER.warn("More than EVERYONE group is found...");
         }
         u.setGroups(new HashSet<UserGroup>(userGroup));
@@ -428,17 +429,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Collection<User> getByAttribute(UserAttribute attribute) {
-        
+
         Search searchCriteria = new Search(UserAttribute.class);
         searchCriteria.addFilterEqual("name", attribute.getName());
         searchCriteria.addFilterEqual("value", attribute.getValue());
         searchCriteria.addFetch("user");
 
         List<UserAttribute> attributes = userAttributeDAO.search(searchCriteria);
-        
+
         Set<User> users = new HashSet<User>();
-        for(UserAttribute userAttr : attributes) {
-            if(userAttr.getUser() != null) {
+        for (UserAttribute userAttr : attributes) {
+            if (userAttr.getUser() != null) {
                 users.add(userAttr.getUser());
             }
         }

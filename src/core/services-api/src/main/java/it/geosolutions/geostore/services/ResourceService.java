@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -39,16 +39,15 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.List;
 
 /**
  * Interafce ResourceService.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
-public interface ResourceService extends SecurityService{
+public interface ResourceService extends SecurityService {
 
     // ==========================================================================
     // Basic operations
@@ -59,15 +58,16 @@ public interface ResourceService extends SecurityService{
      * @return long
      * @throws BadRequestServiceEx
      * @throws NotFoundServiceEx
-     * @throws DuplicatedResourceNameServiceEx 
+     * @throws DuplicatedResourceNameServiceEx
      */
-    long insert(Resource resource) throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx;
+    long insert(Resource resource)
+            throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx;
 
     /**
      * @param resource
      * @return long
      * @throws NotFoundServiceEx
-     * @throws DuplicatedResourceNameServiceEx 
+     * @throws DuplicatedResourceNameServiceEx
      */
     long update(Resource resource) throws NotFoundServiceEx, DuplicatedResourceNameServiceEx;
 
@@ -114,7 +114,6 @@ public interface ResourceService extends SecurityService{
     /**
      * @param nameLike
      * @return long
-     *
      * @deprecated count should be done on a per-user basis
      */
     @Deprecated
@@ -125,7 +124,6 @@ public interface ResourceService extends SecurityService{
      * @return long
      * @throws InternalErrorServiceEx
      * @throws BadRequestServiceEx
-     *
      * @deprecated count should be done on a per-user basis
      */
     @Deprecated
@@ -179,8 +177,9 @@ public interface ResourceService extends SecurityService{
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
-    List<ShortResource> getResources(SearchFilter filter, Integer page, Integer entries,
-            User authUser) throws BadRequestServiceEx, InternalErrorServiceEx;
+    List<ShortResource> getResources(
+            SearchFilter filter, Integer page, Integer entries, User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
      * @param filter
@@ -192,8 +191,13 @@ public interface ResourceService extends SecurityService{
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
-    List<Resource> getResources(SearchFilter filter, Integer page, Integer entries,
-            boolean includeAttributes, boolean includeData, User authUser)
+    List<Resource> getResources(
+            SearchFilter filter,
+            Integer page,
+            Integer entries,
+            boolean includeAttributes,
+            boolean includeData,
+            User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
@@ -205,36 +209,35 @@ public interface ResourceService extends SecurityService{
     public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
-
     /**
      * Returns the list of security rules for the resource.
+     *
      * @param id
      * @return
      */
     public List<SecurityRule> getSecurityRules(long id)
-    		throws BadRequestServiceEx, InternalErrorServiceEx;
-    
+            throws BadRequestServiceEx, InternalErrorServiceEx;
+
     /**
      * Replaces the list of security rules for the given resource.
-     * 
+     *
      * @param id
      * @param rules
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
-     * @throws NotFoundServiceEx 
+     * @throws NotFoundServiceEx
      */
     public void updateSecurityRules(long id, List<SecurityRule> rules)
-    		throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx;
-    
-    
+            throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx;
+
     /**
      * Get filter count by filter and user
+     *
      * @param filter
      * @param user
      * @return resources' count that the user has access
-     * @throws InternalErrorServiceEx 
+     * @throws InternalErrorServiceEx
      * @throws BadRequestServiceEx
-     *
      * @deprecated rename into count()
      */
     @Deprecated
@@ -243,16 +246,16 @@ public interface ResourceService extends SecurityService{
 
     /**
      * Get filter count by nameLike and user
+     *
      * @param nameLike
      * @param user
      * @return resources' count that the user has access
-     * @throws BadRequestServiceEx 
+     * @throws BadRequestServiceEx
      * @deprecated rename into count()
      */
     @Deprecated
-    long getCountByFilterAndUser(String nameLike, User user)
-            throws BadRequestServiceEx;
+    long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx;
 
     long insertAttribute(long id, String name, String value, DataType type)
-        throws InternalErrorServiceEx;
+            throws InternalErrorServiceEx;
 }

@@ -27,7 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.UserSessionService;
@@ -39,18 +38,17 @@ import org.springframework.security.core.Authentication;
 
 /**
  * Token based authentication filter that looks for the token in a user session service.
- * <p>
- * The attribute name is configurable (defaults to UUID).
+ *
+ * <p>The attribute name is configurable (defaults to UUID).
  *
  * @author Lorenzo Natali
  */
 public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter {
 
-    private final static Logger LOGGER = LogManager.getLogger(SessionTokenAuthenticationFilter.class);
-    @Autowired
-    UserSessionService userSessionService;
-    @Autowired
-    UserService userService;
+    private static final Logger LOGGER =
+            LogManager.getLogger(SessionTokenAuthenticationFilter.class);
+    @Autowired UserSessionService userSessionService;
+    @Autowired UserService userService;
     private boolean validateUserFromService = true;
 
     @Override
@@ -71,7 +69,11 @@ public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter 
                     try {
                         user = userService.get(ud.getName());
                     } catch (NotFoundServiceEx e) {
-                        LOGGER.error("User " + ud.getName() + " not found on the database because of an exception", e);
+                        LOGGER.error(
+                                "User "
+                                        + ud.getName()
+                                        + " not found on the database because of an exception",
+                                e);
                     }
                 }
             } else {
@@ -80,12 +82,12 @@ public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter 
             if (user != null) {
                 return createAuthenticationForUser(user);
             } else {
-                LOGGER.error("User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
+                LOGGER.error(
+                        "User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
             }
         }
         return null;
     }
-
 
     public UserSessionService getUserSessionService() {
         return userSessionService;
@@ -103,15 +105,11 @@ public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter 
         this.userService = userService;
     }
 
-
     public boolean isValidateUserFromService() {
         return validateUserFromService;
     }
 
-
     public void setValidateUserFromService(boolean validateUserFromService) {
         this.validateUserFromService = validateUserFromService;
     }
-
-
 }

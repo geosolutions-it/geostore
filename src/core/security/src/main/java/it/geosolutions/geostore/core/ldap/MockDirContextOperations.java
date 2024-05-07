@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.SortedSet;
-
 import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.Name;
@@ -17,13 +16,12 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-
 import org.springframework.ldap.core.DirContextOperations;
 
-public class MockDirContextOperations implements DirContextOperations{
+public class MockDirContextOperations implements DirContextOperations {
 
-    private Map<String, String> ldapAttributes = new HashMap<String,String>();
-    
+    private Map<String, String> ldapAttributes = new HashMap<String, String>();
+
     public Map<String, String> getLdapAttributes() {
         return ldapAttributes;
     }
@@ -31,13 +29,13 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void bind(Name name, Object obj, Attributes attrs) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void bind(String name, Object obj, Attributes attrs) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -103,37 +101,37 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void modifyAttributes(Name name, ModificationItem[] mods) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void modifyAttributes(String name, ModificationItem[] mods) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void modifyAttributes(Name name, int mod_op, Attributes attrs) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void modifyAttributes(String name, int mod_op, Attributes attrs) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void rebind(Name name, Object obj, Attributes attrs) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void rebind(String name, Object obj, Attributes attrs) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -151,15 +149,17 @@ public class MockDirContextOperations implements DirContextOperations{
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(Name name, Attributes matchingAttributes,
-            String[] attributesToReturn) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            Name name, Attributes matchingAttributes, String[] attributesToReturn)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(String name, Attributes matchingAttributes,
-            String[] attributesToReturn) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            String name, Attributes matchingAttributes, String[] attributesToReturn)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -179,15 +179,17 @@ public class MockDirContextOperations implements DirContextOperations{
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(Name name, String filterExpr,
-            Object[] filterArgs, SearchControls cons) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(String name, String filterExpr,
-            Object[] filterArgs, SearchControls cons) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            String name, String filterExpr, Object[] filterArgs, SearchControls cons)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -201,19 +203,19 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void bind(Name name, Object obj) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void bind(String name, Object obj) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void close() throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -243,13 +245,13 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void destroySubcontext(Name name) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void destroySubcontext(String name) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -321,13 +323,13 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void rebind(Name name, Object obj) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void rebind(String name, Object obj) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -339,25 +341,25 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void rename(Name oldName, Name newName) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void rename(String oldName, String newName) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void unbind(Name name) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void unbind(String name) throws NamingException {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -392,43 +394,43 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void setAttributeValue(String name, Object value) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void setAttributeValues(String name, Object[] values) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void setAttributeValues(String name, Object[] values, boolean orderMatters) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void addAttributeValue(String name, Object value) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void addAttributeValue(String name, Object value, boolean addIfDuplicateExists) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void removeAttributeValue(String name, Object value) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void update() {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -458,7 +460,7 @@ public class MockDirContextOperations implements DirContextOperations{
     @Override
     public void setDn(Name dn) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -489,5 +491,4 @@ public class MockDirContextOperations implements DirContextOperations{
         // TODO Auto-generated method stub
         return false;
     }
-
 }

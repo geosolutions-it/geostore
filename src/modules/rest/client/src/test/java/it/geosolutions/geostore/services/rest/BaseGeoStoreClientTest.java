@@ -19,6 +19,9 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import static org.junit.Assert.*;
+import static org.junit.Assume.*;
+
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -42,38 +45,29 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import static org.junit.Assume.*;
-import static org.junit.Assert.*;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
-abstract public class BaseGeoStoreClientTest {
+/** @author ETj (etj at geo-solutions.it) */
+public abstract class BaseGeoStoreClientTest {
 
-    private final static Logger LOGGER = LogManager.getLogger(BaseGeoStoreClientTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(BaseGeoStoreClientTest.class);
 
     protected static final String GEOSTORE_REST_URL = "http://localhost:9191/geostore/rest";
 
     protected GeoStoreClient client;
     protected AdministratorGeoStoreClient adminClient;
 
-    public BaseGeoStoreClientTest() {
-    }
+    public BaseGeoStoreClientTest() {}
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
+    public static void setUpClass() throws Exception {}
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
+    public static void tearDownClass() throws Exception {}
 
     @Before
     public void before() throws Exception {
@@ -166,8 +160,7 @@ abstract public class BaseGeoStoreClientTest {
         }
     }
 
-    protected void removeAllGroups() 
-    {
+    protected void removeAllGroups() {
         UserGroupList userGroups = adminClient.getUserGroups(0, 1000, false);
 
         for (RESTUserGroup group : userGroups) {
@@ -176,13 +169,12 @@ abstract public class BaseGeoStoreClientTest {
         }
     }
 
-    protected void removeAllUsers()
-    {
+    protected void removeAllUsers() {
         UserList users = adminClient.getUsers();
 
         for (RESTUser user : users) {
             LOGGER.info("Found user " + user + " . Deleting...");
-            if(user.getName().equals("admin")) {
+            if (user.getName().equals("admin")) {
                 LOGGER.info("Skipping main admin");
                 continue;
             }
@@ -208,27 +200,24 @@ abstract public class BaseGeoStoreClientTest {
             throw new RuntimeException("Unexpected exception: " + ex.getMessage(), ex);
         }
     }
-    
-    protected long createUser(String name, Role role, String pw, UserGroup ...group)
-    {
+
+    protected long createUser(String name, Role role, String pw, UserGroup... group) {
         User user = new User();
         user.setName(name);
         user.setRole(role);
         user.setNewPassword(pw);
-        if(group != null) {
+        if (group != null) {
             user.setGroups(new HashSet(Arrays.asList(group)));
         }
 
         return adminClient.insert(user);
     }
 
-    protected UserGroup createUserGroup(String name)
-    {
+    protected UserGroup createUserGroup(String name) {
         UserGroup g1 = new UserGroup();
         g1.setGroupName(name);
         long id = adminClient.insertUserGroup(g1);
         g1.setId(id);
         return g1;
     }
-
 }

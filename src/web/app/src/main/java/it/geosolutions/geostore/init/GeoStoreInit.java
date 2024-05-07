@@ -1,19 +1,19 @@
 /*
  *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
- * 
+ *
  *  GPLv3 + Classpath exception
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -36,59 +36,48 @@ import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
-
 import java.io.File;
 import java.util.List;
-
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class GeoStoreInit implements InitializingBean {
 
-    private final static Logger LOGGER = LogManager.getLogger(GeoStoreInit.class);
+    private static final Logger LOGGER = LogManager.getLogger(GeoStoreInit.class);
 
     protected UserService userService;
 
     protected CategoryService categoryService;
 
     protected UserGroupService userGroupService;
-    
+
     protected File userListInitFile = null;
 
     protected File categoryListInitFile = null;
-    
+
     protected File userGroupListInitFile = null;
 
-    /**
-     * The password encoder to be set as default
-     */
+    /** The password encoder to be set as default */
     protected GeoStorePasswordEncoder passwordEncoder = null;
-    /**
-     * If set to true, the recoding of the password is automatic
-     */
+    /** If set to true, the recoding of the password is automatic */
     protected boolean allowPasswordRecoding = false;
 
-	@Override
+    @Override
     public void afterPropertiesSet() throws Exception {
 
         LOGGER.info("===== Starting GeoStore services =====");
-        //initialize password encoding
+        // initialize password encoding
         initPasswordEncoding();
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
             LOGGER.warn("No category found.");
             if (categoryListInitFile != null) {
                 LOGGER.warn("Initializing categories from file " + categoryListInitFile);
-                initCategories(categoryListInitFile);	
+                initCategories(categoryListInitFile);
             } else {
                 LOGGER.info("No category initializer defined.");
             }
@@ -107,9 +96,8 @@ public class GeoStoreInit implements InitializingBean {
             }
         } else {
             LOGGER.info("UsersGroup already in db: " + userGroupCnt);
-            
         }
-        
+
         long userCnt = userService.getCount(null);
         if (userCnt == 0) {
             LOGGER.warn("No user found.");
@@ -123,57 +111,64 @@ public class GeoStoreInit implements InitializingBean {
             LOGGER.info("Users already in db: " + userCnt);
         }
     }
-    
-    private void initPasswordEncoding(){
-    	LOGGER.info("=== Set up the security system   ====");
-    	LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
-        
-    	PwEncoder.setEncoder(this.passwordEncoder);
-    	//check and convert passwords
-    	try {
-			List<User> users = userService.getAll(0, 1);
-			if(users != null && users.size()>0){
-				//check password encription of the first user availabe
-				boolean responsible = this.passwordEncoder.isResponsibleForEncoding(users.get(0).getPassword());
-				
-				//if the current password encoder is the responsible for the encoding of the password 
-				//we suppose the conversion is already happended
-				if(responsible) return;
-				LOGGER.warn("=======================================================================================");
-				LOGGER.warn("   WARNING: USERS PASSWORDS ARE NOT SYNCRONIZED WITH THE CONFIGURED PASSWORD ENCODER   ");
-				LOGGER.warn("=======================================================================================");
-				//check if the password is old legacy, so GeoStoreAESEncoder is the responsible for the encoding
-				GeoStoreAESEncoder e = new GeoStoreAESEncoder();
-				boolean isLegacy = e.isResponsibleForEncoding(users.get(0).getPassword());
-				if(isLegacy){
-					if (!allowPasswordRecoding){
-						LOGGER.warn("To convert old passwords to new ones use geostoreInitializer.allowPasswordRecoding=true");
-						return;
-					}
-					LOGGER.info("Starting password conversion...");
-					for(User u : userService.getAll(null, null)){
-						String p = u.getPassword();
-						if (e.isResponsibleForEncoding(p)){
-							String dec = e.decode(p);
-							String enc = this.passwordEncoder.encodePassword(dec.toCharArray(), null);
-							u.setPassword(enc);
-							try {
-								userService.update(u);
-								LOGGER.info("UPDATED USER PASSWORD for the user:"+u.getName());
-							} catch (NotFoundServiceEx e1) {
-								LOGGER.error("===> ERROR updating user password for user" + u.getName() );
-								
-							}
-						}
-					}
-					LOGGER.info("Password conversion finished!");
-				}
-				
-			}
-		} catch (BadRequestServiceEx e) {
-			//error getting users is not a problem at this stage.
-			//e.printStackTrace();
-		}
+
+    private void initPasswordEncoding() {
+        LOGGER.info("=== Set up the security system   ====");
+        LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
+
+        PwEncoder.setEncoder(this.passwordEncoder);
+        // check and convert passwords
+        try {
+            List<User> users = userService.getAll(0, 1);
+            if (users != null && users.size() > 0) {
+                // check password encription of the first user availabe
+                boolean responsible =
+                        this.passwordEncoder.isResponsibleForEncoding(users.get(0).getPassword());
+
+                // if the current password encoder is the responsible for the encoding of the
+                // password
+                // we suppose the conversion is already happended
+                if (responsible) return;
+                LOGGER.warn(
+                        "=======================================================================================");
+                LOGGER.warn(
+                        "   WARNING: USERS PASSWORDS ARE NOT SYNCRONIZED WITH THE CONFIGURED PASSWORD ENCODER   ");
+                LOGGER.warn(
+                        "=======================================================================================");
+                // check if the password is old legacy, so GeoStoreAESEncoder is the responsible for
+                // the encoding
+                GeoStoreAESEncoder e = new GeoStoreAESEncoder();
+                boolean isLegacy = e.isResponsibleForEncoding(users.get(0).getPassword());
+                if (isLegacy) {
+                    if (!allowPasswordRecoding) {
+                        LOGGER.warn(
+                                "To convert old passwords to new ones use geostoreInitializer.allowPasswordRecoding=true");
+                        return;
+                    }
+                    LOGGER.info("Starting password conversion...");
+                    for (User u : userService.getAll(null, null)) {
+                        String p = u.getPassword();
+                        if (e.isResponsibleForEncoding(p)) {
+                            String dec = e.decode(p);
+                            String enc =
+                                    this.passwordEncoder.encodePassword(dec.toCharArray(), null);
+                            u.setPassword(enc);
+                            try {
+                                userService.update(u);
+                                LOGGER.info("UPDATED USER PASSWORD for the user:" + u.getName());
+                            } catch (NotFoundServiceEx e1) {
+                                LOGGER.error(
+                                        "===> ERROR updating user password for user" + u.getName());
+                            }
+                        }
+                    }
+                    LOGGER.info("Password conversion finished!");
+                }
+            }
+        } catch (BadRequestServiceEx e) {
+            // error getting users is not a problem at this stage.
+            // e.printStackTrace();
+        }
     }
 
     private void initCategories(File file) {
@@ -203,7 +198,6 @@ public class GeoStoreInit implements InitializingBean {
 
             throw new RuntimeException("Error while initting categories.");
         }
-
     }
 
     private void initUsers(File file) {
@@ -236,7 +230,7 @@ public class GeoStoreInit implements InitializingBean {
             throw new RuntimeException("Error while initting users.");
         }
     }
-    
+
     private void initUsersGroup(File file) throws NotFoundServiceEx, BadRequestServiceEx {
         try {
             userGroupService.insertSpecialUsersGroups();
@@ -247,11 +241,11 @@ public class GeoStoreInit implements InitializingBean {
                 UserGroup ug = new UserGroup();
                 ug.setGroupName(userGroup.getGroupName());
                 ug.setDescription(userGroup.getDescription());
-                try{
-                userGroupService.insert(ug);
-                }
-                catch(ReservedUserGroupNameEx e){
-                    // If  a reserved username is in the init usergroup file log the exception and skip this insertion
+                try {
+                    userGroupService.insert(ug);
+                } catch (ReservedUserGroupNameEx e) {
+                    // If  a reserved username is in the init usergroup file log the exception and
+                    // skip this insertion
                     LOGGER.warn(e.getMessage());
                 }
             }
@@ -280,8 +274,11 @@ public class GeoStoreInit implements InitializingBean {
         allClasses.add(InitUserList.class);
 
         if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Initializing JAXBContext with " + allClasses.size() + " classes "
-                    + allClasses);
+            LOGGER.debug(
+                    "Initializing JAXBContext with "
+                            + allClasses.size()
+                            + " classes "
+                            + allClasses);
 
         try {
             return JAXBContext.newInstance(allClasses.toArray(new Class[allClasses.size()]));
@@ -300,7 +297,7 @@ public class GeoStoreInit implements InitializingBean {
     public void setCategoryListInitFile(File categoryListInitFile) {
         this.categoryListInitFile = categoryListInitFile;
     }
-    
+
     public void setUserGroupListInitFile(File userGroupListInitFile) {
         this.userGroupListInitFile = userGroupListInitFile;
     }
@@ -314,29 +311,27 @@ public class GeoStoreInit implements InitializingBean {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
-    
 
     public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
-    
+
     // ==========================================================================
-    
+
     public GeoStorePasswordEncoder getPasswordEncoder() {
-		return passwordEncoder;
-	}
+        return passwordEncoder;
+    }
 
-	public void setPasswordEncoder(GeoStorePasswordEncoder passwordEncoder) {
-		this.passwordEncoder = passwordEncoder;
-	}
+    public void setPasswordEncoder(GeoStorePasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
-	// ===========================================================================
-	public boolean isAllowPasswordRecoding() {
-		return allowPasswordRecoding;
-	}
+    // ===========================================================================
+    public boolean isAllowPasswordRecoding() {
+        return allowPasswordRecoding;
+    }
 
-	public void setAllowPasswordRecoding(boolean allowPasswordRecoding) {
-		this.allowPasswordRecoding = allowPasswordRecoding;
-	}
-
+    public void setAllowPasswordRecoding(boolean allowPasswordRecoding) {
+        this.allowPasswordRecoding = allowPasswordRecoding;
+    }
 }

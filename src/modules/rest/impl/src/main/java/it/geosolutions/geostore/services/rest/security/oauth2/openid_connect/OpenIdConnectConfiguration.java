@@ -29,12 +29,11 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import java.util.Collections;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-
-import java.util.Collections;
 
 public class OpenIdConnectConfiguration extends OAuth2Configuration {
     String jwkURI;
@@ -60,9 +59,9 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     }
 
     /**
-     * If true, the client secret will be sent to the token endpoint.
-     * This is useful for clients that are not capable of keeping the client secret confidential.
-     * ref.: https://tools.ietf.org/html/rfc6749#section-2.3.1
+     * If true, the client secret will be sent to the token endpoint. This is useful for clients
+     * that are not capable of keeping the client secret confidential. ref.:
+     * https://tools.ietf.org/html/rfc6749#section-2.3.1
      *
      * @return boolean
      */
@@ -83,8 +82,9 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     }
 
     /**
-     * Enables the use of Authorization Code Flow with Proof Key for Code Exchange (PKCE) for the authorization endpoint.
-     * ref.: https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce
+     * Enables the use of Authorization Code Flow with Proof Key for Code Exchange (PKCE) for the
+     * authorization endpoint. ref.:
+     * https://auth0.com/docs/get-started/authentication-and-authorization-flow/authorization-code-flow-with-pkce
      *
      * @return the authorization endpoint.
      * @return boolean
@@ -112,7 +112,9 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
             if (idToken != null) params.put("id_token_hint", Collections.singletonList(idToken));
             if (StringUtils.hasText(getPostLogoutRedirectUri()))
-                params.put("post_logout_redirect_uri", Collections.singletonList(getPostLogoutRedirectUri()));
+                params.put(
+                        "post_logout_redirect_uri",
+                        Collections.singletonList(getPostLogoutRedirectUri()));
             params.put("token", Collections.singletonList(token));
             result = new Endpoint(HttpMethod.GET, appendParameters(params, uri));
         }

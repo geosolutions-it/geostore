@@ -37,5 +37,4 @@ public class SpelMapper implements GroupMapper {
             this.name = name;
         }
     }
-
 }

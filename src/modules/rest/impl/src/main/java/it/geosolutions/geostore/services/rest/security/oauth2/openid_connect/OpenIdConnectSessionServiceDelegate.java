@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSecurityConfiguration.CONF_BEAN_NAME;
+
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
@@ -34,14 +36,11 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServi
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 
-import static it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSecurityConfiguration.CONF_BEAN_NAME;
-
-/**
- * OpenID Connect implementation of the {@link OAuth2SessionServiceDelegate}.
- */
+/** OpenID Connect implementation of the {@link OAuth2SessionServiceDelegate}. */
 public class OpenIdConnectSessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
-    public OpenIdConnectSessionServiceDelegate(RESTSessionService restSessionService, UserService userService) {
+    public OpenIdConnectSessionServiceDelegate(
+            RESTSessionService restSessionService, UserService userService) {
         super(restSessionService, "oidc", userService);
     }
 
@@ -54,5 +53,4 @@ public class OpenIdConnectSessionServiceDelegate extends OAuth2SessionServiceDel
     protected OAuth2RestTemplate restTemplate() {
         return GeoStoreContext.bean("oidcOpenIdRestTemplate", OAuth2RestTemplate.class);
     }
-
 }

@@ -16,13 +16,11 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-import org.junit.Test;
-
 import static org.junit.Assert.*;
 
-/**
- * @author Emanuele Tajariol (etj at geo-solutions.it)
- */
+import org.junit.Test;
+
+/** @author Emanuele Tajariol (etj at geo-solutions.it) */
 public class DataURIDecoderTest {
 
     @Test
@@ -83,6 +81,4 @@ public class DataURIDecoderTest {
 
         assertEquals("qwe/asd", dud.getNormalizedMediatype());
     }
-
-
 }

@@ -27,22 +27,17 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher;
 
+import java.util.Collections;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
 import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.client.token.RequestEnhancer;
 import org.springframework.util.MultiValueMap;
 
-import java.util.Collections;
-
-/**
- * This class is used to add to Token Requests the client_secret in the query string.
- */
+/** This class is used to add to Token Requests the client_secret in the query string. */
 public class ClientSecretRequestEnhancer implements RequestEnhancer {
 
-    /**
-     * {@code client_secret} - used in Token Request.
-     */
+    /** {@code client_secret} - used in Token Request. */
     public static final String CLIENT_SECRET = "client_secret";
 
     @Override

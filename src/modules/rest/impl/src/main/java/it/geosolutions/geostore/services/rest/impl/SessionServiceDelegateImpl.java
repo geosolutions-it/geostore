@@ -1,5 +1,7 @@
 package it.geosolutions.geostore.services.rest.impl;
 
+import static it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl.BEARER_TYPE;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.dto.UserSession;
@@ -9,27 +11,23 @@ import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import static it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl.BEARER_TYPE;
-
 public class SessionServiceDelegateImpl implements SessionServiceDelegate {
 
     public static final String DEFAULT_NAME = "DEFAULT";
-    @Autowired
-    private UserSessionService userSessionService;
+    @Autowired private UserSessionService userSessionService;
 
     public SessionServiceDelegateImpl(RESTSessionService restSessionService) {
         restSessionService.registerDelegate(DEFAULT_NAME, this);
     }
 
-    public SessionServiceDelegateImpl() {
-    }
-
+    public SessionServiceDelegateImpl() {}
 
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
         UserSession sessionToken = userSessionService.refreshSession(accessToken, refreshToken);
         if (sessionToken == null) {
-            throw new ForbiddenErrorWebEx("Refresh token was not provided or session is already expired.");
+            throw new ForbiddenErrorWebEx(
+                    "Refresh token was not provided or session is already expired.");
         }
         SessionToken token = new SessionToken();
         token.setAccessToken(accessToken);
@@ -58,7 +56,8 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
         if (userSessionService != null) {
             details = userSessionService.getUserData(sessionId);
             if (details != null && refresh && autorefresh) {
-                userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
+                userSessionService.refreshSession(
+                        sessionId, userSessionService.getRefreshToken(sessionId));
             }
         }
         return details;

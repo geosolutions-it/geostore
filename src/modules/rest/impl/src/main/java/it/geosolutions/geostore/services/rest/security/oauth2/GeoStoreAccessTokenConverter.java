@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import java.io.Serializable;
+import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
@@ -36,11 +38,9 @@ import org.springframework.security.oauth2.provider.token.DefaultAccessTokenConv
 import org.springframework.security.oauth2.provider.token.DefaultUserAuthenticationConverter;
 import org.springframework.security.oauth2.provider.token.UserAuthenticationConverter;
 
-import java.io.Serializable;
-import java.util.*;
-
 /**
- * Extends the spring security DefaultAccessTokenConverter to customize the creation of the Authentication object.
+ * Extends the spring security DefaultAccessTokenConverter to customize the creation of the
+ * Authentication object.
  */
 public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
 
@@ -48,8 +48,7 @@ public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
     // For oauth2, the result of the "token check" endpoint.
     // This is attached to the request's extensions once it's been retrieved.
     public static String ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
-    protected static Logger LOGGER =
-            LogManager.getLogger(GeoStoreAccessTokenConverter.class);
+    protected static Logger LOGGER = LogManager.getLogger(GeoStoreAccessTokenConverter.class);
     protected UserAuthenticationConverter userTokenConverter;
 
     public GeoStoreAccessTokenConverter() {

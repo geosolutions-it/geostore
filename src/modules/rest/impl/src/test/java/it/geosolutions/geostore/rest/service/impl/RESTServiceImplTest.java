@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
+import static org.junit.Assert.*;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
@@ -31,21 +32,18 @@ import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.impl.RESTServiceImpl;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-
-import static org.junit.Assert.*;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 /**
- * This test checks that the resourceAccessRead and resourceAccessWrite
- * methods properly check and return expected canEdit and canWrite for a mock SecurityService.
+ * This test checks that the resourceAccessRead and resourceAccessWrite methods properly check and
+ * return expected canEdit and canWrite for a mock SecurityService.
  *
  * @author Lorenzo Natali, GeoSolutions S.a.s.
  */
@@ -58,7 +56,8 @@ public class RESTServiceImplTest {
     UserGroup everyone;
     UserGroup extGroup;
 
-    private SecurityRule createSecurityRule(long id, User user, UserGroup group, boolean canRead, boolean canWrite) {
+    private SecurityRule createSecurityRule(
+            long id, User user, UserGroup group, boolean canRead, boolean canWrite) {
         SecurityRule sr = new SecurityRule();
         sr.setId(id);
         sr.setUser(user);
@@ -93,7 +92,6 @@ public class RESTServiceImplTest {
         groups.add(group);
         user.setGroups(groups);
         user.setGroups(groups);
-
     }
 
     @Test
@@ -121,7 +119,6 @@ public class RESTServiceImplTest {
 
         assertTrue(restService.resourceAccessRead(user, 1));
         assertTrue(restService.resourceAccessWrite(user, 1));
-
     }
 
     @Test
@@ -161,7 +158,8 @@ public class RESTServiceImplTest {
         groupSecurityRules.add(createSecurityRule(1, null, group, false, false));
 
         List<SecurityRule> userSecurityRules = new ArrayList<SecurityRule>();
-        userSecurityRules.add(createSecurityRule(1, null, group, true, false)); // this should be skipped
+        userSecurityRules.add(
+                createSecurityRule(1, null, group, true, false)); // this should be skipped
         userSecurityRules.add(createSecurityRule(1, user, null, true, true));
         securityService.setGroupSecurityRules(groupSecurityRules);
         securityService.setUserSecurityRules(userSecurityRules);
@@ -174,11 +172,14 @@ public class RESTServiceImplTest {
     public void testGuestHasEveryoneGroup() {
         Principal principal = restService.createGuestPrincipal();
         assertTrue(principal instanceof UsernamePasswordAuthenticationToken);
-        UsernamePasswordAuthenticationToken userPrincipal = (UsernamePasswordAuthenticationToken) principal;
+        UsernamePasswordAuthenticationToken userPrincipal =
+                (UsernamePasswordAuthenticationToken) principal;
         assertTrue(userPrincipal.getPrincipal() instanceof User);
         User user = (User) userPrincipal.getPrincipal();
         assertEquals(1, user.getGroups().size());
-        assertEquals(GroupReservedNames.EVERYONE.groupName(), user.getGroups().iterator().next().getGroupName());
+        assertEquals(
+                GroupReservedNames.EVERYONE.groupName(),
+                user.getGroups().iterator().next().getGroupName());
     }
 
     private class TestUserService implements UserService {
@@ -219,8 +220,9 @@ public class RESTServiceImplTest {
         }
 
         @Override
-        public List<User> getAll(Integer page, Integer entries, String nameLike,
-                                 boolean includeAttributes) throws BadRequestServiceEx {
+        public List<User> getAll(
+                Integer page, Integer entries, String nameLike, boolean includeAttributes)
+                throws BadRequestServiceEx {
             // TODO Auto-generated method stub
             return null;
         }
@@ -255,7 +257,6 @@ public class RESTServiceImplTest {
             // TODO Auto-generated method stub
             return null;
         }
-
     }
 
     private class TestSecurityService implements SecurityService {
@@ -279,7 +280,6 @@ public class RESTServiceImplTest {
         public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long entityId) {
             return groupSecurityRules;
         }
-
     }
 
     private class TESTRESTServiceImpl extends RESTServiceImpl {
@@ -294,6 +294,4 @@ public class RESTServiceImplTest {
             securityService = s;
         }
     }
-
-
 }

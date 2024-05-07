@@ -28,19 +28,15 @@
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
+import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
 import org.keycloak.enums.TokenStore;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 
-import java.util.Map;
-
-/**
- * KeyCloak Configuration.
- */
+/** KeyCloak Configuration. */
 public class KeyCloakConfiguration extends IdPConfiguration {
-
 
     private String jsonConfig;
 
@@ -54,9 +50,7 @@ public class KeyCloakConfiguration extends IdPConfiguration {
 
     private boolean dropUnmapped = false;
 
-    /**
-     * @return the JSON config, obtained at client configuration time from Keycloak.
-     */
+    /** @return the JSON config, obtained at client configuration time from Keycloak. */
     public String getJsonConfig() {
         return jsonConfig;
     }
@@ -69,8 +63,9 @@ public class KeyCloakConfiguration extends IdPConfiguration {
     public void setJsonConfig(String jsonConfig) {
         this.jsonConfig = jsonConfig;
         if (config != null && StringUtils.isNotBlank(this.jsonConfig)) {
-            config = KeycloakDeploymentBuilder.loadAdapterConfig(
-                    IOUtils.toInputStream(getJsonConfig()));
+            config =
+                    KeycloakDeploymentBuilder.loadAdapterConfig(
+                            IOUtils.toInputStream(getJsonConfig()));
         }
     }
 
@@ -119,8 +114,7 @@ public class KeyCloakConfiguration extends IdPConfiguration {
     public AdapterConfig readAdapterConfig() {
         String jsonConfig = getJsonConfig();
         if (config == null && StringUtils.isNotBlank(jsonConfig)) {
-            config = KeycloakDeploymentBuilder.loadAdapterConfig(
-                    IOUtils.toInputStream(jsonConfig));
+            config = KeycloakDeploymentBuilder.loadAdapterConfig(IOUtils.toInputStream(jsonConfig));
             config.setTokenStore(TokenStore.COOKIE.name());
         }
         return config;

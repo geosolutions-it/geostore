@@ -20,22 +20,16 @@
 package it.geosolutions.geostore.util;
 
 import java.util.List;
-
-import it.geosolutions.geostore.util.CategorizedCircularBuffer;
-
 import junit.framework.TestCase;
-
 import org.junit.Test;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class CategorizedCircularBufferTest extends TestCase {
 
     @Test
     public void testAdd() {
-        CategorizedCircularBuffer<String, Long> ccb = new CategorizedCircularBuffer<String, Long>(4);
+        CategorizedCircularBuffer<String, Long> ccb =
+                new CategorizedCircularBuffer<String, Long>(4);
 
         ccb.add(1L, "e0");
         assertEquals(1, ccb.size());
@@ -65,7 +59,8 @@ public class CategorizedCircularBufferTest extends TestCase {
 
     @Test
     public void testSubList() {
-        CategorizedCircularBuffer<String, Long> ccb = new CategorizedCircularBuffer<String, Long>(4);
+        CategorizedCircularBuffer<String, Long> ccb =
+                new CategorizedCircularBuffer<String, Long>(4);
 
         ccb.add(0L, "e0"); // 3
         ccb.add(1L, "e2"); // 2
@@ -104,7 +99,8 @@ public class CategorizedCircularBufferTest extends TestCase {
 
     @Test
     public void testSubListByKey() {
-        CategorizedCircularBuffer<String, Long> ccb = new CategorizedCircularBuffer<String, Long>(6);
+        CategorizedCircularBuffer<String, Long> ccb =
+                new CategorizedCircularBuffer<String, Long>(6);
 
         ccb.add(1L, "e0"); // 5 ibk2
         ccb.add(2L, "e1"); // 4

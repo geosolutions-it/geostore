@@ -1,7 +1,6 @@
 package it.geosolutions.geostore.core.ldap;
 
 import java.util.Iterator;
-
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 
@@ -23,8 +22,7 @@ public class IterableNamingEnumeration<T> implements NamingEnumeration<T> {
     }
 
     @Override
-    public void close() throws NamingException {
-    }
+    public void close() throws NamingException {}
 
     @Override
     public boolean hasMoreElements() {

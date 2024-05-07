@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
+
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
@@ -39,11 +41,7 @@ import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResour
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
-
-/**
- * Configuration class for OAuth2 Google client.
- */
+/** Configuration class for OAuth2 Google client. */
 @Configuration("googleSecConfig")
 @EnableOAuth2Client
 public class OAuthGoogleSecurityConfiguration extends OAuth2GeoStoreSecurityConfiguration {
@@ -64,9 +62,7 @@ public class OAuthGoogleSecurityConfiguration extends OAuth2GeoStoreSecurityConf
         return new GoogleOAuth2Configuration();
     }
 
-    /**
-     * Must have "session" scope
-     */
+    /** Must have "session" scope */
     @Override
     @Bean(value = "googleOpenIdRestTemplate")
     @Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -76,7 +72,8 @@ public class OAuthGoogleSecurityConfiguration extends OAuth2GeoStoreSecurityConf
 
     @Bean
     public OpenIdFilter googleOpenIdFilter() {
-        return new OpenIdFilter(googleTokenServices(), oauth2RestTemplate(), configuration(), oAuth2Cache());
+        return new OpenIdFilter(
+                googleTokenServices(), oauth2RestTemplate(), configuration(), oAuth2Cache());
     }
 
     @Bean
@@ -88,5 +85,4 @@ public class OAuthGoogleSecurityConfiguration extends OAuth2GeoStoreSecurityConf
     public TokenAuthenticationCache oAuth2Cache() {
         return new TokenAuthenticationCache();
     }
-
 }

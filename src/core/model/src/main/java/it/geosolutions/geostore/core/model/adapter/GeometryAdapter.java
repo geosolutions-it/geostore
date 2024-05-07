@@ -28,18 +28,16 @@
  */
 package it.geosolutions.geostore.core.model.adapter;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.io.ParseException;
 import com.vividsolutions.jts.io.WKTReader;
 import com.vividsolutions.jts.io.WKTWriter;
+import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 /**
  * The Class GeometryAdapter.
- * 
+ *
  * @param <G> the generic type
- * 
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 public class GeometryAdapter<G extends Geometry> extends XmlAdapter<String, G> {

@@ -35,27 +35,22 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.ws.rs.core.SecurityContext;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.ws.rs.core.SecurityContext;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-/**
- * @author DamianoG
- */
+/** @author DamianoG */
 public class RESTUserGroupServiceImpl implements RESTUserGroupService {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTUserGroupServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(RESTUserGroupServiceImpl.class);
 
     private UserGroupService userGroupService;
     private UserService userService;
 
-    /**
-     * @param userGroupService
-     */
+    /** @param userGroupService */
     public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }
@@ -83,12 +78,12 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
             group.setDescription(userGroup.getDescription());
             group.setEnabled(true);
             List<UserGroupAttribute> ugAttrs = userGroup.getAttributes();
-            //persist the user first
+            // persist the user first
             if (ugAttrs != null) {
                 userGroup.setAttributes(null);
             }
             id = userGroupService.insert(group);
-            //insert attributes after user creation
+            // insert attributes after user creation
             if (ugAttrs != null) {
                 userGroupService.updateAttributes(id, ugAttrs);
             }
@@ -96,7 +91,6 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
             throw new BadRequestWebEx(e.getMessage());
         }
         return id;
-
     }
 
     /*
@@ -125,7 +119,9 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
         try {
             UserGroup g = userGroupService.get(id);
             Collection<User> users = userService.getByGroup(g);
-            RESTUserGroup group = new RESTUserGroup(g.getId(), g.getGroupName(), new HashSet<>(users), g.getDescription());
+            RESTUserGroup group =
+                    new RESTUserGroup(
+                            g.getId(), g.getGroupName(), new HashSet<>(users), g.getDescription());
             if (includeAttributes) group.setAttributes(g.getAttributes());
             return group;
         } catch (BadRequestServiceEx e) {
@@ -137,9 +133,11 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserGroupService#assignUserGroup(javax.ws.rs.core.SecurityContext, long, long)
      */
     @Override
-    public void assignUserGroup(SecurityContext sc, long userId, long groupId) throws NotFoundWebEx {
+    public void assignUserGroup(SecurityContext sc, long userId, long groupId)
+            throws NotFoundWebEx {
         if (userId < 0 || groupId < 0) {
-            throw new BadRequestWebEx("The user group or user id you provide is < 0... not good...");
+            throw new BadRequestWebEx(
+                    "The user group or user id you provide is < 0... not good...");
         }
         try {
             userGroupService.assignUserGroup(userId, groupId);
@@ -149,9 +147,11 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
     }
 
     @Override
-    public void deassignUserGroup(SecurityContext sc, long userId, long groupId) throws NotFoundWebEx {
+    public void deassignUserGroup(SecurityContext sc, long userId, long groupId)
+            throws NotFoundWebEx {
         if (userId < 0 || groupId < 0) {
-            throw new BadRequestWebEx("The user group or user id you provide is < 0... not good...");
+            throw new BadRequestWebEx(
+                    "The user group or user id you provide is < 0... not good...");
         }
         try {
             userGroupService.deassignUserGroup(userId, groupId);
@@ -164,15 +164,22 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
      * @see it.geosolutions.geostore.services.rest.RESTUserGroupService#getAll(javax.ws.rs.core.SecurityContext, java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public UserGroupList getAll(SecurityContext sc, Integer page, Integer entries, boolean all, boolean includeUsers)
+    public UserGroupList getAll(
+            SecurityContext sc, Integer page, Integer entries, boolean all, boolean includeUsers)
             throws BadRequestWebEx {
         try {
             List<UserGroup> returnList = userGroupService.getAll(page, entries);
             List<RESTUserGroup> ugl = new ArrayList<>(returnList.size());
             for (UserGroup ug : returnList) {
                 if (all || GroupReservedNames.isAllowedName(ug.getGroupName())) {
-                    Collection<User> users = includeUsers ? userService.getByGroup(ug) : new HashSet<User>();
-                    RESTUserGroup rug = new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet<>(users), ug.getDescription());
+                    Collection<User> users =
+                            includeUsers ? userService.getByGroup(ug) : new HashSet<User>();
+                    RESTUserGroup rug =
+                            new RESTUserGroup(
+                                    ug.getId(),
+                                    ug.getGroupName(),
+                                    new HashSet<>(users),
+                                    ug.getDescription());
                     ugl.add(rug);
                 }
             }
@@ -187,8 +194,13 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
      * @see it.geosolutions.geostore.services.rest.RESTUserGroupService#updateSecurityRules(it.geosolutions.geostore.core.model.UserGroup, java.util.List, boolean, boolean)
      */
     @Override
-    public ShortResourceList updateSecurityRules(SecurityContext sc, ShortResourceList resourcesToSet, Long groupId,
-                                                 Boolean canRead, Boolean canWrite) throws BadRequestWebEx, NotFoundWebEx {
+    public ShortResourceList updateSecurityRules(
+            SecurityContext sc,
+            ShortResourceList resourcesToSet,
+            Long groupId,
+            Boolean canRead,
+            Boolean canWrite)
+            throws BadRequestWebEx, NotFoundWebEx {
         List<ShortResource> srll = new ArrayList<ShortResource>();
         if (groupId == null || groupId < 0) {
             throw new BadRequestWebEx("The groupId is null or less than 0...");
@@ -200,7 +212,8 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
         List<Long> slOnlyIds = new ArrayList<Long>();
         for (ShortResource sr : sl) {
             if (sr.getId() < 0) {
-                throw new BadRequestWebEx("One or more ids in resource set is less than 0... check the resources list.");
+                throw new BadRequestWebEx(
+                        "One or more ids in resource set is less than 0... check the resources list.");
             }
             slOnlyIds.add(sr.getId());
         }
@@ -240,25 +253,28 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
 
     private UserGroup updateGroupObject(RESTUserGroup newGroup, UserGroup old) {
         String name = newGroup.getGroupName();
-        if (name != null && !name.trim().isEmpty())
-            old.setGroupName(name);
+        if (name != null && !name.trim().isEmpty()) old.setGroupName(name);
 
         String description = newGroup.getDescription();
-        if (description != null && !description.trim().isEmpty())
-            old.setDescription(description);
+        if (description != null && !description.trim().isEmpty()) old.setDescription(description);
 
         UserList users = newGroup.getRestUsers();
         if (users != null && users.getList() != null && !users.getList().isEmpty()) {
-            old.setUsers(users.getList().stream().map(u -> {
-                User user = new User();
-                user.setId(u.getId());
-                return user;
-            }).collect(Collectors.toList()));
+            old.setUsers(
+                    users.getList().stream()
+                            .map(
+                                    u -> {
+                                        User user = new User();
+                                        user.setId(u.getId());
+                                        return user;
+                                    })
+                            .collect(Collectors.toList()));
         }
         return old;
     }
 
-    private void updateAttributes(RESTUserGroup newGroup, UserGroup oldGroup) throws NotFoundServiceEx {
+    private void updateAttributes(RESTUserGroup newGroup, UserGroup oldGroup)
+            throws NotFoundServiceEx {
         List<UserGroupAttribute> attributes = newGroup.getAttributes();
         List<UserGroupAttribute> newList = Collections.emptyList();
         if (attributes != null && !attributes.isEmpty()) {
@@ -283,19 +299,23 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
         RESTUserGroup result = null;
         if (ug != null) {
             Collection<User> users = userService.getByGroup(ug);
-            result = new RESTUserGroup(ug.getId(), ug.getGroupName(), new HashSet(users), ug.getDescription());
+            result =
+                    new RESTUserGroup(
+                            ug.getId(), ug.getGroupName(), new HashSet(users), ug.getDescription());
             if (includeAttributes) result.setAttributes(ug.getAttributes());
         }
         return result;
     }
 
     @Override
-    public UserGroupList getByAttribute(SecurityContext sc, String name, String value, boolean ignoreCase) {
+    public UserGroupList getByAttribute(
+            SecurityContext sc, String name, String value, boolean ignoreCase) {
         return getGroups(name, Collections.singletonList(value), ignoreCase);
     }
 
     @Override
-    public UserGroupList getByAttribute(SecurityContext sc, String name, List<String> values, boolean ignoreCase) {
+    public UserGroupList getByAttribute(
+            SecurityContext sc, String name, List<String> values, boolean ignoreCase) {
         return getGroups(name, values, ignoreCase);
     }
 
@@ -304,15 +324,14 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
         UserGroupList groupList;
         if (groups != null && !groups.isEmpty()) {
             Stream<UserGroup> groupStream = groups.stream();
-            List<RESTUserGroup> restGroups = groupStream
-                    .map(g -> new RESTUserGroup(g, Collections.emptySet()))
-                    .collect(Collectors.toList());
+            List<RESTUserGroup> restGroups =
+                    groupStream
+                            .map(g -> new RESTUserGroup(g, Collections.emptySet()))
+                            .collect(Collectors.toList());
             groupList = new UserGroupList(restGroups);
         } else {
             groupList = new UserGroupList();
         }
         return groupList;
     }
-
-
 }

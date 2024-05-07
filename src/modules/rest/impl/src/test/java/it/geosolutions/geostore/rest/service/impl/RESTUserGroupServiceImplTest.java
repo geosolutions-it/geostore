@@ -27,12 +27,11 @@ import it.geosolutions.geostore.services.rest.impl.RESTUserGroupServiceImpl;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
+import java.util.List;
+import javax.ws.rs.core.SecurityContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import javax.ws.rs.core.SecurityContext;
-import java.util.List;
 
 /**
  * Class ResourceServiceImplTest.
@@ -58,12 +57,12 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
 
     @Test
     public void testGetAllWithUsers() throws Exception {
-        // create some sample users 
+        // create some sample users
         long adminID = createUser("admin", Role.ADMIN, "admin");
         long userID = createUser("user", Role.USER, "user");
 
         // create a some sample usergroup
-        createUserGroup("group", new long[]{adminID, userID});
+        createUserGroup("group", new long[] {adminID, userID});
         // create security context for the request
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 
@@ -77,12 +76,12 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
 
     @Test
     public void testGetAllWithoutUsers() throws Exception {
-        // create some sample users 
+        // create some sample users
         long adminID = createUser("admin", Role.ADMIN, "admin");
         long userID = createUser("user", Role.USER, "user");
 
         // create a some sample usergroup
-        createUserGroup("group", new long[]{adminID, userID});
+        createUserGroup("group", new long[] {adminID, userID});
         // create security context for the request
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 

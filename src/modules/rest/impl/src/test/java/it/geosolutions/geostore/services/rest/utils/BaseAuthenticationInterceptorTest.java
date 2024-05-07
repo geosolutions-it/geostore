@@ -20,6 +20,10 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.services.UserService;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
@@ -27,11 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Ignore;
-
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Test for AuthenticationInterceptors. It use a mocked user service and a mocked message
@@ -55,10 +54,11 @@ public abstract class BaseAuthenticationInterceptorTest {
      *
      * @param username for the authorization policy
      * @param password for the authorization policy
-     * @param headers  for the request
+     * @param headers for the request
      * @return Message to be handled
      */
-    protected Message getMockedMessage(String username, String password, Map<String, String> headers) {
+    protected Message getMockedMessage(
+            String username, String password, Map<String, String> headers) {
         MessageImpl messageImpl = new MessageImpl();
         AuthorizationPolicy policy = new AuthorizationPolicy();
         policy.setUserName(username);
@@ -75,5 +75,4 @@ public abstract class BaseAuthenticationInterceptorTest {
         messageImpl.put(AuthorizationPolicy.class, policy);
         return messageImpl;
     }
-
 }

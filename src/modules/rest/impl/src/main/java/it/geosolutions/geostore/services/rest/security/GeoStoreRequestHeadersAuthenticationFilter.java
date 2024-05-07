@@ -27,23 +27,19 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import org.springframework.security.core.context.SecurityContextHolder;
-
-import javax.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * Authentication filter for preauthentication through
- * request headers.
- * <p>
- * An header for username and one for credentials/password (optional)
- * are supported.
- * <p>
- * Automatic new user creation is supported, and in the case of user creation,
- * attributes mapping from headers is supported through a userMapper of type
- * MapExpressionUserMapper.
+ * Authentication filter for preauthentication through request headers.
+ *
+ * <p>An header for username and one for credentials/password (optional) are supported.
+ *
+ * <p>Automatic new user creation is supported, and in the case of user creation, attributes mapping
+ * from headers is supported through a userMapper of type MapExpressionUserMapper.
  *
  * @author Mauro Bartolomeoli
  */
@@ -71,9 +67,9 @@ public class GeoStoreRequestHeadersAuthenticationFilter extends GeoStoreAuthenti
                 }
             }
             // create auth object with given user / credentials / attributes
-            SecurityContextHolder.getContext().setAuthentication(
-                    createAuthenticationForUser(userName, credentials, getHeadersMap(req))
-            );
+            SecurityContextHolder.getContext()
+                    .setAuthentication(
+                            createAuthenticationForUser(userName, credentials, getHeadersMap(req)));
         }
     }
 
@@ -97,6 +93,4 @@ public class GeoStoreRequestHeadersAuthenticationFilter extends GeoStoreAuthenti
         // create  a good SpEL identifier
         return headerName.replaceAll("[^a-zA-Z0-9_$]", "_");
     }
-
-
 }

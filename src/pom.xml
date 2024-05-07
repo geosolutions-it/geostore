@@ -34,35 +34,6 @@
 
     <name>GeoStore - 0 Server Root</name>
 
-    <profiles>
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <modules>
-                <module>core</module>
-                <module>modules</module>
-                <module>web</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>all</id>
-            <modules>
-                <module>core</module>
-                <module>modules</module>
-                <module>web</module>
-                <module>cli</module>
-            </modules>
-        </profile>
-        <profile>
-            <id>cli</id>
-            <modules>
-                <module>cli</module>
-            </modules>
-        </profile>
-    </profiles>
-
     <properties>
         <main-prefix>geostore</main-prefix>
         <cxf-version>3.5.7</cxf-version>
@@ -150,6 +121,14 @@
         <jetty.version>6.1.14</jetty.version>
         <jstl.version>1.2</jstl.version>
         <json-lib.version>2.4.2-geoserver</json-lib.version>
+        <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
+        <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+        <qa>true</qa>
+        <lint>deprecation</lint>
+        <spotbugs-maven-pligin>3.1.12.2</spotbugs-maven-pligin>
+        <pmd.version>6.42.0</pmd.version>
+        <errorProneFlags/>
+        <errorProne.version>2.18.0</errorProne.version>
     </properties>
 
     <ciManagement>
@@ -1212,5 +1191,163 @@
             </releases>
         </pluginRepository>
     </pluginRepositories>
+
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>core</module>
+                <module>modules</module>
+                <module>web</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>all</id>
+            <modules>
+                <module>core</module>
+                <module>modules</module>
+                <module>web</module>
+                <module>cli</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>cli</id>
+            <modules>
+                <module>cli</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>pmd</id>
+            <activation>
+                <property>
+                    <name>qa</name>
+                    <value>!false</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-pmd-plugin</artifactId>
+                        <version>${maven-pmd-plugin.version}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>net.sourceforge.pmd</groupId>
+                                <artifactId>pmd-core</artifactId>
+                                <version>${pmd.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>net.sourceforge.pmd</groupId>
+                                <artifactId>pmd-java</artifactId>
+                                <version>${pmd.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>net.sourceforge.pmd</groupId>
+                                <artifactId>pmd-javascript</artifactId>
+                                <version>${pmd.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>net.sourceforge.pmd</groupId>
+                                <artifactId>pmd-jsp</artifactId>
+                                <version>${pmd.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <rulesets>
+                                <ruleset>${geostore.basedir}/qa/pmd-ruleset.xml</ruleset>
+                            </rulesets>
+                            <failurePriority>3</failurePriority>
+                            <minimumPriority>3</minimumPriority>
+                            <verbose>true</verbose>
+                            <printFailingErrors>true</printFailingErrors>
+                            <excludeRoots>
+                                <excludeRoot>target/generated-sources</excludeRoot>
+                            </excludeRoots>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <!-- profile>
+            <id>errorprone</id>
+            <activation>
+                <property>
+                    <name>qa</name>
+                    <value>!false</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>${maven-compiler-plugin.version}</version>
+                        <configuration>
+                            <fork>false</fork>
+                            <compilerArgs>
+                                <arg>-XDcompilePolicy=simple</arg>
+                                <arg>-Xplugin:ErrorProne
+                                    -XepExcludedPaths:${project.build.directory}/generated-sources/.* ${errorProneFlags}
+                                </arg>
+                                <arg>-Xlint:${lint}</arg>
+                                <arg>-Xmaxwarns</arg>
+                                <arg>1000</arg>
+                            </compilerArgs>
+                            <annotationProcessorPaths>
+                                <path>
+                                    <groupId>com.google.errorprone</groupId>
+                                    <artifactId>error_prone_core</artifactId>
+                                    <version>${errorProne.version}</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile -->
+        <profile>
+            <id>spotbugs</id>
+            <activation>
+                <property>
+                    <name>qa</name>
+                    <value>!false</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <version>${spotbugs-maven-pligin}</version>
+                        <configuration>
+                            <effort>More</effort>
+                            <!--threshold>High</threshold-->
+                            <xmlOutput>true</xmlOutput>
+                            <maxRank>15</maxRank>
+                            <excludeFilterFile>${geostore.basedir}/qa/spotbugs-exclude.xml</excludeFilterFile>
+                            <jvmArgs>-XX:+TieredCompilation -XX:TieredStopAtLevel=1</jvmArgs>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
 </project>

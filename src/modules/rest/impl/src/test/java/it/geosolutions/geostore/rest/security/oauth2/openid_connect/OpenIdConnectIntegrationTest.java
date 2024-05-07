@@ -27,6 +27,10 @@
  */
 package it.geosolutions.geostore.rest.security.oauth2.openid_connect;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.junit.Assert.assertEquals;
+
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
@@ -38,6 +42,8 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectFilter;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSecurityConfiguration;
+import java.io.IOException;
+import javax.servlet.ServletException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -52,13 +58,6 @@ import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-
-import javax.servlet.ServletException;
-import java.io.IOException;
-
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertEquals;
 
 public class OpenIdConnectIntegrationTest {
 
@@ -101,12 +100,15 @@ public class OpenIdConnectIntegrationTest {
                                         .withHeader(
                                                 "Content-Type", MediaType.APPLICATION_JSON_VALUE)
                                         .withBodyFile("token_response.json")));
-        openIdConnectService.stubFor(any(urlPathEqualTo("/userinfo")).willReturn(
-                aResponse()
-                        .withStatus(200)
-                        .withHeader(
-                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
-                        .withBodyFile("userinfo.json"))); // disallow query parameters
+        openIdConnectService.stubFor(
+                any(urlPathEqualTo("/userinfo"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBodyFile(
+                                                "userinfo.json"))); // disallow query parameters
     }
 
     @Before
@@ -129,25 +131,30 @@ public class OpenIdConnectIntegrationTest {
         configuration.setScopes("openId,email");
         configuration.setSendClientSecret(true);
         this.configuration = configuration;
-        OpenIdConnectSecurityConfiguration securityConfiguration = new OpenIdConnectSecurityConfiguration() {
+        OpenIdConnectSecurityConfiguration securityConfiguration =
+                new OpenIdConnectSecurityConfiguration() {
 
-            @Override
-            protected GeoStoreOAuthRestTemplate restTemplate() {
-                return new GeoStoreOAuthRestTemplate(resourceDetails(), new DefaultOAuth2ClientContext(new DefaultAccessTokenRequest()), configuration());
-            }
+                    @Override
+                    protected GeoStoreOAuthRestTemplate restTemplate() {
+                        return new GeoStoreOAuthRestTemplate(
+                                resourceDetails(),
+                                new DefaultOAuth2ClientContext(new DefaultAccessTokenRequest()),
+                                configuration());
+                    }
 
-            @Override
-            public OAuth2Configuration configuration() {
-                return configuration;
-            }
-        };
+                    @Override
+                    public OAuth2Configuration configuration() {
+                        return configuration;
+                    }
+                };
         GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
-        this.filter = new OpenIdConnectFilter(
-                securityConfiguration.oidcTokenServices(),
-                restTemplate,
-                configuration,
-                securityConfiguration.oidcCache(),
-                securityConfiguration.openIdConnectBearerTokenValidator());
+        this.filter =
+                new OpenIdConnectFilter(
+                        securityConfiguration.oidcTokenServices(),
+                        restTemplate,
+                        configuration,
+                        securityConfiguration.oidcCache(),
+                        securityConfiguration.openIdConnectBearerTokenValidator());
     }
 
     @After
@@ -172,7 +179,10 @@ public class OpenIdConnectIntegrationTest {
         request.setParameter("authorization_code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate.getOAuth2ClientContext().getAccessTokenRequest().setAuthorizationCode(CODE);
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -188,7 +198,10 @@ public class OpenIdConnectIntegrationTest {
         request.setParameter("authorization_code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate.getOAuth2ClientContext().getAccessTokenRequest().setAuthorizationCode(CODE);
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

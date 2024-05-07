@@ -28,33 +28,23 @@
 
 package it.geosolutions.geostore.core.dao.impl;
 
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
-
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
 import javax.persistence.NoResultException;
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.ISearch;
-import com.googlecode.genericdao.search.Search;
-import it.geosolutions.geostore.core.model.enums.Role;
-
 /**
  * Class ResourceDAOImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
@@ -65,7 +55,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
@@ -86,7 +76,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
@@ -96,7 +86,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
      */
     @Override
@@ -122,7 +112,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
@@ -133,7 +123,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
@@ -145,7 +135,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -155,7 +145,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -166,7 +156,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
@@ -174,19 +164,18 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
         return super.removeById(id);
     }
 
-
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.core.dao.ResourceDAO#findResources(java.util.List)
      */
     @Override
     public List<Resource> findResources(List<Long> resourcesIds) {
         Search search = new Search(Resource.class);
-        Filter filter = Filter.in("id", resourcesIds); 
+        Filter filter = Filter.in("id", resourcesIds);
         search.addFilter(filter);
         List<Resource> resourceToSet = super.search(search);
-        //Initialize Lazy collection
-        for(Resource resource : resourceToSet){
-            if(!Hibernate.isInitialized(resource.getSecurity())){
+        // Initialize Lazy collection
+        for (Resource resource : resourceToSet) {
+            if (!Hibernate.isInitialized(resource.getSecurity())) {
                 Hibernate.initialize(resource.getSecurity());
             }
         }
@@ -197,8 +186,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
      * @see it.geosolutions.geostore.core.dao.ResourceDAO#findByName(java.lang.String)
      */
     @Override
-    public Resource findByName(String resourceName)
-    {
+    public Resource findByName(String resourceName) {
         Search searchCriteria = new Search(Resource.class);
         Filter filter = Filter.equal("name", resourceName);
         searchCriteria.addFilter(filter);
@@ -208,7 +196,8 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
         try {
             foundResource = super.searchUnique(searchCriteria);
         } catch (NoResultException ex) {
-            // I ignore the exception and return null on purpose, mimicking the behavior of ResourceDAO#find(java.lang.Long)
+            // I ignore the exception and return null on purpose, mimicking the behavior of
+            // ResourceDAO#find(java.lang.Long)
             foundResource = null;
         }
 
@@ -216,8 +205,7 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
     }
 
     @Override
-    public List<String> findResourceNamesMatchingPattern(String pattern)
-    {
+    public List<String> findResourceNamesMatchingPattern(String pattern) {
         Search searchCriteria = new Search(Resource.class);
         searchCriteria.addField("name");
         searchCriteria.addFilterLike("name", pattern);
@@ -227,5 +215,4 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
         return resourceNames;
     }
-
 }

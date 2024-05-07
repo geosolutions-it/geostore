@@ -19,57 +19,51 @@
  */
 package it.geosolutions.geostore.core.model.enums;
 
-import java.util.ArrayList;
+import it.geosolutions.geostore.core.model.UserGroup;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import it.geosolutions.geostore.core.model.UserGroup;
-
-/**
- * @author DamianoG
- *
- */
+/** @author DamianoG */
 public enum GroupReservedNames {
-    EVERYONE ("everyone");
-    
+    EVERYONE("everyone");
+
     private final String groupNameToPersist;
-    
-    GroupReservedNames(String groupNameToPersist){
+
+    GroupReservedNames(String groupNameToPersist) {
         this.groupNameToPersist = groupNameToPersist;
     }
-    
+
     public String groupName() {
         return groupNameToPersist;
     }
-    
+
     /**
-     * Given a candidate groupName this method checks if the name is allowed.
-     * This enum holds the list of reserved names. A groupname is not allowed if it matches ignoring the case
-     * at least one of the reserved names.
-     * 
+     * Given a candidate groupName this method checks if the name is allowed. This enum holds the
+     * list of reserved names. A groupname is not allowed if it matches ignoring the case at least
+     * one of the reserved names.
+     *
      * @param groupNameToCheck
      * @return
      */
-    public static boolean isAllowedName(String groupNameToCheck){
-        if(EVERYONE.groupName().equalsIgnoreCase(groupNameToCheck)){
+    public static boolean isAllowedName(String groupNameToCheck) {
+        if (EVERYONE.groupName().equalsIgnoreCase(groupNameToCheck)) {
             return false;
         }
         return true;
     }
-    
+
     /**
      * Utility method to remove Reserved group (for example EVERYONE) from a group list
-     * 
+     *
      * @param groups
      * @return
      */
     public static Set<UserGroup> checkReservedGroups(Collection<UserGroup> groups) {
         Set<UserGroup> result = new HashSet<UserGroup>();
-        for(UserGroup ug : groups){
-            if(GroupReservedNames.isAllowedName(ug.getGroupName())){
-            	result.add(ug);
+        for (UserGroup ug : groups) {
+            if (GroupReservedNames.isAllowedName(ug.getGroupName())) {
+                result.add(ug);
             }
         }
         return result;

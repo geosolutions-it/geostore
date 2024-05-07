@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -31,45 +31,34 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.Category;
 import java.util.Collections;
 import java.util.Iterator;
-
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class CategoryList.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @XmlRootElement(name = "CategoryList")
 public class CategoryList implements Iterable<Category> {
 
     private List<Category> list;
 
-    public CategoryList() {
+    public CategoryList() {}
 
-    }
-
-    /**
-     * @param list
-     */
+    /** @param list */
     public CategoryList(List<Category> list) {
         this.list = list;
     }
 
-    /**
-     * @return List<Category>
-     */
+    /** @return List<Category> */
     @XmlElement(name = "Category")
     public List<Category> getList() {
         return list;
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public void setList(List<Category> list) {
         this.list = list;
     }
@@ -78,5 +67,4 @@ public class CategoryList implements Iterable<Category> {
     public Iterator<Category> iterator() {
         return list == null ? Collections.EMPTY_LIST.iterator() : list.iterator();
     }
-
 }

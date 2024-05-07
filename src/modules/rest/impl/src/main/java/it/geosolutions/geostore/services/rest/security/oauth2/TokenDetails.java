@@ -30,12 +30,12 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import java.io.Serializable;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 
-import java.io.Serializable;
-
 /**
- * Holds the token details. Instances of this class are meant to be stored into the SecurityContext along with the corresponding Authentication instance.
+ * Holds the token details. Instances of this class are meant to be stored into the SecurityContext
+ * along with the corresponding Authentication instance.
  */
 public class TokenDetails implements Serializable {
     private final String idToken;
@@ -45,7 +45,7 @@ public class TokenDetails implements Serializable {
 
     /**
      * @param accessToken the accessToken instance.
-     * @param idToken     the JWT idToken
+     * @param idToken the JWT idToken
      */
     public TokenDetails(OAuth2AccessToken accessToken, String idToken, String provider) {
         this.idToken = idToken;
@@ -60,30 +60,25 @@ public class TokenDetails implements Serializable {
      * Get a claim by name from the idToken.
      *
      * @param claimName the name of the claim to retrieve.
-     * @param binding   the Class to which convert the claim value.
-     * @param <T>       the type of the claim value.
+     * @param binding the Class to which convert the claim value.
+     * @param <T> the type of the claim value.
      * @return the claim value.
      */
     public <T> T getClaim(String claimName, Class<T> binding) {
         T result = null;
         if (decodedJWT != null) {
             Claim claim = decodedJWT.getClaim(claimName);
-            if (claim != null)
-                result = claim.as(binding);
+            if (claim != null) result = claim.as(binding);
         }
         return result;
     }
 
-    /**
-     * @return the JWT idToken.
-     */
+    /** @return the JWT idToken. */
     public String getIdToken() {
         return idToken;
     }
 
-    /**
-     * @return the OAuth2AccessToken instance.
-     */
+    /** @return the OAuth2AccessToken instance. */
     public OAuth2AccessToken getAccessToken() {
         return accessToken;
     }

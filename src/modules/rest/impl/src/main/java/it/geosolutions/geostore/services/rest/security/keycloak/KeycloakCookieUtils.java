@@ -32,29 +32,37 @@ import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.common.util.KeycloakUriBuilder;
 import org.keycloak.constants.AdapterConstants;
 
-
-/**
- * Utility class that provides method to update the Keycloak Adapter cookie.
- */
+/** Utility class that provides method to update the Keycloak Adapter cookie. */
 class KeycloakCookieUtils {
 
     private static final String SEPARATOR = "___";
 
-    static void setTokenCookie(KeycloakDeployment deployment, HttpFacade facade, KeycloakTokenDetails tokenDetails) {
+    static void setTokenCookie(
+            KeycloakDeployment deployment, HttpFacade facade, KeycloakTokenDetails tokenDetails) {
         String accessToken = tokenDetails.getAccessToken();
         String idToken = tokenDetails.getIdToken();
         String refreshToken = tokenDetails.getRefreshToken();
-        String cookie = accessToken + SEPARATOR +
-                idToken + SEPARATOR +
-                refreshToken;
+        String cookie = accessToken + SEPARATOR + idToken + SEPARATOR + refreshToken;
 
         String cookiePath = getCookiePath(deployment, facade);
-        // forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do it for us.
-        facade.getResponse().setCookie(AdapterConstants.KEYCLOAK_ADAPTER_STATE_COOKIE, cookie, cookiePath, null, 0, deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
+        // forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do
+        // it for us.
+        facade.getResponse()
+                .setCookie(
+                        AdapterConstants.KEYCLOAK_ADAPTER_STATE_COOKIE,
+                        cookie,
+                        cookiePath,
+                        null,
+                        0,
+                        deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()),
+                        true);
     }
 
     static String getCookiePath(KeycloakDeployment deployment, HttpFacade facade) {
-        String path = deployment.getAdapterStateCookiePath() == null ? "" : deployment.getAdapterStateCookiePath().trim();
+        String path =
+                deployment.getAdapterStateCookiePath() == null
+                        ? ""
+                        : deployment.getAdapterStateCookiePath().trim();
         if (path.startsWith("/")) {
             return path;
         }

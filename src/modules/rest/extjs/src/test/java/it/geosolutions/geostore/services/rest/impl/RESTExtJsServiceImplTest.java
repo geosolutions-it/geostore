@@ -17,6 +17,8 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
+import static org.junit.Assert.*;
+
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -25,6 +27,11 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -32,17 +39,7 @@ import net.sf.json.JSONSerializer;
 import org.junit.Before;
 import org.junit.Test;
 
-import javax.ws.rs.core.SecurityContext;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.junit.Assert.*;
-
-/**
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
     private final RESTExtJsServiceImpl restExtJsService;
@@ -151,7 +148,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
         {
             SecurityContext sc = new SimpleSecurityContext(u0);
-            String response = restExtJsService.getResourcesByCategory(sc, CAT_NAME, "*", 0, 10, false, false);
+            String response =
+                    restExtJsService.getResourcesByCategory(sc, CAT_NAME, "*", 0, 10, false, false);
 
             System.out.println("JSON for u0 " + response);
 
@@ -162,7 +160,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             SecurityContext sc = new SimpleSecurityContext(u1);
-            String response = restExtJsService.getResourcesByCategory(sc, CAT_NAME, "*", 0, 10, false, false);
+            String response =
+                    restExtJsService.getResourcesByCategory(sc, CAT_NAME, "*", 0, 10, false, false);
 
             System.out.println("JSON for u1 " + response);
 
@@ -171,7 +170,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(10, result.returnedCount);
         }
     }
-
 
     @Test
     public void testGetAllResources_iLike() throws Exception {
@@ -192,7 +190,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         restCreateResource(RES_NAME + " in another category", "x", CAT1_NAME, u0, true);
 
-        restCreateResource("just an extra resource we shouldn't care about", "x", CAT0_NAME, u0, true);
+        restCreateResource(
+                "just an extra resource we shouldn't care about", "x", CAT0_NAME, u0, true);
 
         {
             SecurityContext sc = new SimpleSecurityContext(u0);
@@ -207,7 +206,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             SecurityContext sc = new SimpleSecurityContext(u0);
-            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
+            String response =
+                    restExtJsService.getResourcesByCategory(
+                            sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
 
             System.out.println("JSON " + response);
 
@@ -299,7 +300,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         restCreateResource(RES_NAME + " in another category", "x", CAT1_NAME, u0, rules, false);
 
-        restCreateResource("just an extra resource we shouldn't care about", "x", CAT0_NAME, u0, rules, true);
+        restCreateResource(
+                "just an extra resource we shouldn't care about", "x", CAT0_NAME, u0, rules, true);
 
         {
             // ADMIN
@@ -336,7 +338,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             // OWNER
             SecurityContext sc = new SimpleSecurityContext(u0);
-            String response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
+            String response =
+                    restExtJsService.getResourcesByCategory(
+                            sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
 
             System.out.println("JSON " + response);
 
@@ -346,7 +350,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             // READER
             sc = new SimpleSecurityContext(u1);
-            response = restExtJsService.getResourcesByCategory(sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
+            response =
+                    restExtJsService.getResourcesByCategory(
+                            sc, CAT0_NAME, "*mIxEd*", null, 0, 1000, false, false);
 
             System.out.println("JSON " + response);
 

@@ -27,11 +27,8 @@ package it.geosolutions.geostore.services.rest.client.model;
  *
  */
 
-
 import it.geosolutions.geostore.core.model.UserGroup;
-
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
@@ -40,7 +37,6 @@ import javax.xml.bind.annotation.XmlTransient;
  * Class ExtGroupList.
  *
  * @author Mirco Bertelli (mirco.bertelli at geo-solutions.it)
- *
  */
 @XmlRootElement(name = "ExtGroupList")
 public class ExtGroupList {
@@ -49,44 +45,32 @@ public class ExtGroupList {
 
     private List<UserGroup> list;
 
-    public ExtGroupList() {
+    public ExtGroupList() {}
 
-    }
-
-    /**
-     * @param list
-     */
+    /** @param list */
     public ExtGroupList(long count, List<UserGroup> list) {
         this.count = count;
         this.list = list;
     }
 
-    /**
-     * @return the count
-     */
+    /** @return the count */
     @XmlElement(name = "GroupCount")
     public long getCount() {
         return count;
     }
 
-    /**
-     * @param count the count to set
-     */
+    /** @param count the count to set */
     public void setCount(long count) {
         this.count = count;
     }
 
-    /**
-     * @return List<ShortResource>
-     */
+    /** @return List<ShortResource> */
     @XmlElement(name = "Group")
     public List<UserGroup> getList() {
         return list;
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public void setList(List<UserGroup> list) {
         this.list = list;
     }

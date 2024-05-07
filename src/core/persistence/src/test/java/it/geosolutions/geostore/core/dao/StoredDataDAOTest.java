@@ -23,14 +23,12 @@ package it.geosolutions.geostore.core.dao;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
-
 import java.util.Date;
-
 import org.junit.Test;
 
 /**
  * Class StoredDataDAOTest
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -141,8 +139,7 @@ public class StoredDataDAOTest extends BaseDAOTest {
             assertNotNull("Can't retrieve data", loaded);
             assertEquals(CAPACITY, loaded.getData().length());
         }
-
     }
-    //TODO missing tests for stored data security methods
+    // TODO missing tests for stored data security methods
 
 }

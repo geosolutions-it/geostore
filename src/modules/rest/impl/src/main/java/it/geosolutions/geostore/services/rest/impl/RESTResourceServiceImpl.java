@@ -46,13 +46,12 @@ import it.geosolutions.geostore.services.rest.RESTResourceService;
 import it.geosolutions.geostore.services.rest.exception.*;
 import it.geosolutions.geostore.services.rest.model.*;
 import it.geosolutions.geostore.services.rest.utils.Convert;
+import java.util.ArrayList;
+import java.util.List;
+import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import javax.ws.rs.core.SecurityContext;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Class RESTResourceServiceImpl.
@@ -63,13 +62,11 @@ import java.util.List;
  */
 public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTResourceService {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTResourceServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(RESTResourceServiceImpl.class);
 
     private ResourceService resourceService;
 
-    /**
-     * @param resourceService
-     */
+    /** @param resourceService */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
@@ -89,10 +86,8 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      */
     @Override
     public long insert(SecurityContext sc, RESTResource resource) {
-        if (resource == null)
-            throw new BadRequestWebEx("Resource is null");
-        if (resource.getId() != null)
-            throw new BadRequestWebEx("Id should be null");
+        if (resource == null) throw new BadRequestWebEx("Resource is null");
+        if (resource.getId() != null) throw new BadRequestWebEx("Id should be null");
         if (resource.getCategory() == null)
             throw new BadRequestWebEx("Category should be not null");
 
@@ -100,11 +95,12 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         // This list holds the security rules for this resources
         // By default, when a resource is inserted, 2 rules are created :
-        // - one is related to the User that inserts the rule 
+        // - one is related to the User that inserts the rule
         // - the other one is related to its group
         List<SecurityRule> securities = new ArrayList<>();
 
-        // User Security rule: the user that insert the resource (the "owner") is allowed to Read and Write the resources
+        // User Security rule: the user that insert the resource (the "owner") is allowed to Read
+        // and Write the resources
         SecurityRule userSecurityRule = new SecurityRule();
         userSecurityRule.setCanRead(true);
         userSecurityRule.setCanWrite(true);
@@ -126,34 +122,41 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     }
 
     /**
-     * Updates a resource. Name, Description and Metadata will be replaced if not null.<br/>
-     * Category can not be changed; category element may exist in the input resource provided it is the same as in the original resource.<br/>
-     * Attribute list will be updated only if it exists in the input resource.<br/>
-     * <p/>
-     * TODO: attribute list behaviour should be checked: read comments in source.
+     * Updates a resource. Name, Description and Metadata will be replaced if not null.<br>
+     * Category can not be changed; category element may exist in the input resource provided it is
+     * the same as in the original resource.<br>
+     * Attribute list will be updated only if it exists in the input resource.<br>
      *
-     * @see it.geosolutions.geostore.services.rest.RESTResourceService#update(long, it.geosolutions.geostore.core.model.Resource)
+     * <p>TODO: attribute list behaviour should be checked: read comments in source.
+     *
+     * @see it.geosolutions.geostore.services.rest.RESTResourceService#update(long,
+     *     it.geosolutions.geostore.core.model.Resource)
      */
     @Override
-    public long update(SecurityContext sc, long id, RESTResource resource) throws NotFoundWebEx,
-            BadRequestWebEx {
+    public long update(SecurityContext sc, long id, RESTResource resource)
+            throws NotFoundWebEx, BadRequestWebEx {
         try {
-            if (resource == null)
-                throw new BadRequestWebEx("Resource is null");
+            if (resource == null) throw new BadRequestWebEx("Resource is null");
             resource.setId(id);
 
             Resource old = resourceService.get(id);
-            if (old == null)
-                throw new NotFoundWebEx("Resource not found");
+            if (old == null) throw new NotFoundWebEx("Resource not found");
 
             if (resource.getCategory() != null) {
                 RESTCategory newrc = resource.getCategory();
                 Category oldrc = old.getCategory();
                 if ((newrc.getId() != null && !newrc.getId().equals(oldrc.getId()))
                         || (newrc.getName() != null && !newrc.getName().equals(oldrc.getName()))) {
-                    LOGGER.info("Trying to change category old(" + oldrc.getId() + ":"
-                            + oldrc.getName() + ") new(" + newrc.getId() + ":" + newrc.getName()
-                            + ")");
+                    LOGGER.info(
+                            "Trying to change category old("
+                                    + oldrc.getId()
+                                    + ":"
+                                    + oldrc.getName()
+                                    + ") new("
+                                    + newrc.getId()
+                                    + ":"
+                                    + newrc.getName()
+                                    + ")");
                     throw new BadRequestWebEx("Can't change resource category");
                 }
             }
@@ -168,12 +171,9 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             if (canUpdate) {
                 if (resource.getDescription() != null)
                     old.setDescription(resource.getDescription());
-                if (resource.getName() != null)
-                    old.setName(resource.getName());
-                if (resource.getMetadata() != null)
-                    old.setMetadata(resource.getMetadata());
-                if (resource.getCreator() != null)
-                    old.setCreator(resource.getCreator());
+                if (resource.getName() != null) old.setName(resource.getName());
+                if (resource.getMetadata() != null) old.setMetadata(resource.getMetadata());
+                if (resource.getCreator() != null) old.setCreator(resource.getCreator());
                 old.setEditor(authUser.getName());
                 old.setAdvertised(resource.isAdvertised());
 
@@ -195,14 +195,13 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
                 } else {
                     if (LOGGER.isDebugEnabled())
                         LOGGER.debug("Attribute list is " + resource.getAttribute().size());
-                    List<Attribute> attributes = Convert.convertAttributeList(resource
-                            .getAttribute());
+                    List<Attribute> attributes =
+                            Convert.convertAttributeList(resource.getAttribute());
                     resourceService.updateAttributes(id, attributes);
                 }
 
                 return id;
-            } else
-                throw new ForbiddenErrorWebEx("Can't update resource");
+            } else throw new ForbiddenErrorWebEx("Can't update resource");
 
         } catch (NotFoundServiceEx ex) {
             LOGGER.warn("Resource not found (" + id + "): " + ex.getMessage(), ex);
@@ -226,10 +225,8 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         if (canDelete) {
             boolean ret = resourceService.delete(id);
-            if (!ret)
-                throw new NotFoundWebEx("Resource not found");
-        } else
-            throw new ForbiddenErrorWebEx("This user cannot delete this resource !");
+            if (!ret) throw new NotFoundWebEx("Resource not found");
+        } else throw new ForbiddenErrorWebEx("This user cannot delete this resource !");
     }
 
     /*
@@ -238,17 +235,15 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#delete(long)
      */
     @Override
-    public void deleteResources(SecurityContext sc, SearchFilter filter) throws BadRequestWebEx,
-            InternalErrorWebEx {
+    public void deleteResources(SecurityContext sc, SearchFilter filter)
+            throws BadRequestWebEx, InternalErrorWebEx {
         try {
             resourceService.deleteResources(filter);
         } catch (BadRequestServiceEx e) {
-            if (LOGGER.isEnabled(Level.ERROR))
-                LOGGER.error(e.getMessage());
+            if (LOGGER.isEnabled(Level.ERROR)) LOGGER.error(e.getMessage());
             throw new BadRequestWebEx(e.getMessage());
         } catch (InternalErrorServiceEx e) {
-            if (LOGGER.isEnabled(Level.ERROR))
-                LOGGER.error(e.getMessage());
+            if (LOGGER.isEnabled(Level.ERROR)) LOGGER.error(e.getMessage());
             throw new InternalErrorWebEx(e.getMessage());
         }
     }
@@ -267,30 +262,26 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         }
 
         if (fullResource) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Retrieving a full resource");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Retrieving a full resource");
             List<Resource> resourcesFull;
             try {
-                SearchFilter filter = new FieldFilter(BaseField.ID, Long.toString(id),
-                        SearchOperator.EQUAL_TO);
+                SearchFilter filter =
+                        new FieldFilter(BaseField.ID, Long.toString(id), SearchOperator.EQUAL_TO);
                 resourcesFull = resourceService.getResourcesFull(filter, authUser);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
                 throw new InternalErrorWebEx("Internal error");
             }
-            if (resourcesFull.isEmpty())
-                throw new NotFoundWebEx("Resource not found");
+            if (resourcesFull.isEmpty()) throw new NotFoundWebEx("Resource not found");
 
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("DATA is " + resourcesFull.get(0).getData());
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("DATA is " + resourcesFull.get(0).getData());
 
             return resourcesFull.get(0);
         } else {
 
             Resource ret = resourceService.get(id);
 
-            if (ret == null)
-                throw new NotFoundWebEx("Resource not found");
+            if (ret == null) throw new NotFoundWebEx("Resource not found");
 
             // CHECKME
             if (ret.getData() != null) {
@@ -308,13 +299,15 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#getList(java.lang.String, java.lang.Integer, java.lang.Integer)
      */
     @Override
-    public ShortResourceList getList(SecurityContext sc, String nameLike, Integer page,
-                                     Integer entries) throws BadRequestWebEx {
+    public ShortResourceList getList(
+            SecurityContext sc, String nameLike, Integer page, Integer entries)
+            throws BadRequestWebEx {
         User authUser = extractAuthUser(sc);
         nameLike = nameLike.replaceAll("[*]", "%");
 
         try {
-            return new ShortResourceList(resourceService.getList(nameLike, page, entries, authUser));
+            return new ShortResourceList(
+                    resourceService.getList(nameLike, page, entries, authUser));
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
@@ -371,8 +364,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     @Override
     public ShortAttributeList getAttributes(SecurityContext sc, long id) throws NotFoundWebEx {
         Resource resource = resourceService.get(id);
-        if (resource == null)
-            throw new NotFoundWebEx("Resource not found");
+        if (resource == null) throw new NotFoundWebEx("Resource not found");
 
         //
         // Authorization check.
@@ -387,7 +379,6 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             throw new ForbiddenErrorWebEx(
                     "This user cannot read this resource so neither its attributes!");
         }
-
     }
 
     /*
@@ -398,8 +389,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     @Override
     public String getAttribute(SecurityContext sc, long id, String name) throws NotFoundWebEx {
         Resource resource = resourceService.get(id);
-        if (resource == null)
-            throw new NotFoundWebEx("Resource not found");
+        if (resource == null) throw new NotFoundWebEx("Resource not found");
 
         //
         // Authorization check.
@@ -411,8 +401,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         if (canRead) {
             ShortAttribute shAttribute = resourceService.getAttribute(id, name);
 
-            if (shAttribute == null)
-                throw new NotFoundWebEx("Resource attribute not found");
+            if (shAttribute == null) throw new NotFoundWebEx("Resource attribute not found");
 
             return shAttribute.getValue();
         } else {
@@ -427,11 +416,11 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String,it.geosolutions.geostore.core.model.enums.DataType)
      */
     @Override
-    public long updateAttribute(SecurityContext sc, long id, String name, String value, DataType type)
+    public long updateAttribute(
+            SecurityContext sc, long id, String name, String value, DataType type)
             throws NotFoundWebEx, InternalErrorWebEx {
         Resource resource = resourceService.get(id);
-        if (resource == null)
-            throw new NotFoundWebEx("Resource not found");
+        if (resource == null) throw new NotFoundWebEx("Resource not found");
 
         //
         // Authorization check.
@@ -444,15 +433,16 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
             if (canUpdate) {
                 ShortAttribute a = resourceService.getAttribute(id, name);
-                //if the attribute exists, will be updated
+                // if the attribute exists, will be updated
                 if (a != null) {
                     attributeId = resourceService.updateAttribute(id, name, value);
                 } else {
-                    //create the attribute if missing
+                    // create the attribute if missing
                     if (type != null) {
                         attributeId = resourceService.insertAttribute(id, name, value, type);
                     } else {
-                        attributeId = resourceService.insertAttribute(id, name, value, DataType.STRING);
+                        attributeId =
+                                resourceService.insertAttribute(id, name, value, DataType.STRING);
                     }
                 }
             } else {
@@ -481,7 +471,8 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     public long updateAttribute(SecurityContext sc, long id, RESTAttribute content) {
         if (content != null && content.getName() != null) {
             // TODO: type
-            return updateAttribute(sc, id, content.getName(), content.getValue(), content.getType());
+            return updateAttribute(
+                    sc, id, content.getName(), content.getValue(), content.getType());
         }
         throw new BadRequestWebEx("missing attribute content or attribute name in request");
     }
@@ -498,12 +489,10 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         try {
             return new ShortResourceList(resourceService.getResources(filter, authUser));
         } catch (BadRequestServiceEx e) {
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info(e.getMessage());
+            if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
             throw new BadRequestWebEx(e.getMessage());
         } catch (InternalErrorServiceEx e) {
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info(e.getMessage());
+            if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
             throw new InternalErrorWebEx(e.getMessage());
         }
     }
@@ -515,25 +504,29 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      * it.geosolutions.geostore.services.dto.search.SearchFilter, java.lang.Integer, java.lang.Integer, boolean, boolean)
      */
     @Override
-    public ResourceList getResourcesList(SecurityContext sc, Integer page, Integer entries,
-                                         boolean includeAttributes, boolean includeData, SearchFilter filter) {
+    public ResourceList getResourcesList(
+            SecurityContext sc,
+            Integer page,
+            Integer entries,
+            boolean includeAttributes,
+            boolean includeData,
+            SearchFilter filter) {
         User authUser = extractAuthUser(sc);
         try {
-            return new ResourceList(resourceService.getResources(filter, page, entries, includeAttributes, includeData, authUser));
+            return new ResourceList(
+                    resourceService.getResources(
+                            filter, page, entries, includeAttributes, includeData, authUser));
         } catch (BadRequestServiceEx e) {
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info(e.getMessage());
+            if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
             throw new BadRequestWebEx(e.getMessage());
         } catch (InternalErrorServiceEx e) {
-            if (LOGGER.isInfoEnabled())
-                LOGGER.info(e.getMessage());
+            if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
             throw new InternalErrorWebEx(e.getMessage());
         }
     }
 
     @Override
-    public void updateSecurityRules(SecurityContext sc, long id,
-                                    SecurityRuleList securityRules) {
+    public void updateSecurityRules(SecurityContext sc, long id, SecurityRuleList securityRules) {
         //
         // Authorization check.
         //
@@ -543,26 +536,24 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         if (canWrite) {
             ShortAttribute owner = resourceService.getAttribute(id, "owner");
-            if ((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
+            if ((authUser.getRole() == Role.ADMIN)
+                    || (owner == null)
+                    || (owner.getValue().equals(authUser.getName()))) {
                 try {
-                    resourceService.updateSecurityRules(id, Convert
-                            .convertSecurityRuleList(securityRules.getList(), id));
+                    resourceService.updateSecurityRules(
+                            id, Convert.convertSecurityRuleList(securityRules.getList(), id));
                 } catch (BadRequestServiceEx e) {
-                    if (LOGGER.isInfoEnabled())
-                        LOGGER.info(e.getMessage());
+                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
                     throw new BadRequestWebEx(e.getMessage());
                 } catch (InternalErrorServiceEx e) {
-                    if (LOGGER.isInfoEnabled())
-                        LOGGER.info(e.getMessage());
+                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
                     throw new InternalErrorWebEx(e.getMessage());
                 } catch (NotFoundServiceEx e) {
-                    if (LOGGER.isInfoEnabled())
-                        LOGGER.info(e.getMessage());
+                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
                     throw new NotFoundWebEx(e.getMessage());
                 }
             } else {
-                throw new ForbiddenErrorWebEx(
-                        "This user cannot update this resource permissions!");
+                throw new ForbiddenErrorWebEx("This user cannot update this resource permissions!");
             }
         } else {
             throw new ForbiddenErrorWebEx(
@@ -581,26 +572,24 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         if (canRead) {
             ShortAttribute owner = resourceService.getAttribute(id, "owner");
-            if ((authUser.getRole() == Role.ADMIN) || (owner == null) || (owner.getValue().equals(authUser.getName()))) {
+            if ((authUser.getRole() == Role.ADMIN)
+                    || (owner == null)
+                    || (owner.getValue().equals(authUser.getName()))) {
                 try {
                     return new SecurityRuleList(resourceService.getSecurityRules(id));
                 } catch (BadRequestServiceEx e) {
-                    if (LOGGER.isInfoEnabled())
-                        LOGGER.info(e.getMessage());
+                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
                     throw new BadRequestWebEx(e.getMessage());
                 } catch (InternalErrorServiceEx e) {
-                    if (LOGGER.isInfoEnabled())
-                        LOGGER.info(e.getMessage());
+                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
                     throw new InternalErrorWebEx(e.getMessage());
                 }
             } else {
-                throw new ForbiddenErrorWebEx(
-                        "This user cannot read this resource permissions!");
+                throw new ForbiddenErrorWebEx("This user cannot read this resource permissions!");
             }
         } else {
             throw new ForbiddenErrorWebEx(
                     "This user cannot read this resource so neither its permissions!");
         }
     }
-
 }

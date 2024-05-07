@@ -26,23 +26,20 @@ import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
-import org.apache.commons.collections.CollectionUtils;
-
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.collections.CollectionUtils;
 
-/**
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class Convert {
 
     public static Resource convertResource(RESTResource resource) {
         Category category = new Category();
         if (resource.getCategory().getName() != null)
             category.setName(resource.getCategory().getName());
-        if (resource.getCategory().getId() != null)
-            category.setId(resource.getCategory().getId());
+        if (resource.getCategory().getId() != null) category.setId(resource.getCategory().getId());
 
         Resource r = new Resource();
         r.setDescription(resource.getDescription());
@@ -90,7 +87,8 @@ public class Convert {
         switch (ret.getType()) {
             case DATE:
                 try {
-                    ret.setDateValue(Attribute.DATE_FORMAT.parse(shattr.getValue()));
+                    ret.setDateValue(
+                            new SimpleDateFormat(Attribute.DATE_FORMAT).parse(shattr.getValue()));
                 } catch (ParseException e) {
                     throw new BadRequestWebEx("Error parsing attribute date value " + shattr);
                 }
@@ -152,5 +150,4 @@ public class Convert {
         }
         return rules;
     }
-
 }

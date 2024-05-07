@@ -32,20 +32,16 @@ import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
-
+import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
 
-/**
- * This class provides authentication entry point to login using an OAuth2 provider.
- */
+/** This class provides authentication entry point to login using an OAuth2 provider. */
 public class IdPLoginRestImpl implements IdPLoginRest {
 
     private final Map<String, IdPLoginService> services = new HashMap<>();
-
 
     @Override
     public void login(String provider) {
@@ -58,11 +54,13 @@ public class IdPLoginRestImpl implements IdPLoginRest {
     @Override
     public Response callback(String provider) throws NotFoundWebEx {
         IdPLoginService service = services.get(provider);
-        return service.doInternalRedirect(OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider);
+        return service.doInternalRedirect(
+                OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider);
     }
 
     @Override
-    public SessionToken getTokensByTokenIdentifier(String provider, String tokenIdentifier) throws NotFoundWebEx {
+    public SessionToken getTokensByTokenIdentifier(String provider, String tokenIdentifier)
+            throws NotFoundWebEx {
         return services.get(provider).getTokenByIdentifier(provider, tokenIdentifier);
     }
 

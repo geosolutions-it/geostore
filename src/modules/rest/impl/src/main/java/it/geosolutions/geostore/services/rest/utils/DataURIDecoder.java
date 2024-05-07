@@ -23,13 +23,12 @@ package it.geosolutions.geostore.services.rest.utils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Emanuele Tajariol (etj at geo-solutions.it)
- */
+/** @author Emanuele Tajariol (etj at geo-solutions.it) */
 public class DataURIDecoder {
-    public final static String DEFAULT_MEDIA_TYPE = "text/plain";
-    public final static String DEFAULT_CHARSET = "US-ASCII";
-    final String DATA_URI_REGEX = "data:((?<mediatype>(?<mime>\\w+)/(?<extension>\\w+));)?(charset=(?<charset>[\\w\\s]+);)?(?<encoding>\\w+)?";
+    public static final String DEFAULT_MEDIA_TYPE = "text/plain";
+    public static final String DEFAULT_CHARSET = "US-ASCII";
+    final String DATA_URI_REGEX =
+            "data:((?<mediatype>(?<mime>\\w+)/(?<extension>\\w+));)?(charset=(?<charset>[\\w\\s]+);)?(?<encoding>\\w+)?";
     private final boolean valid;
 
     private String mediatype;

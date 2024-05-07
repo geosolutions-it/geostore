@@ -5,7 +5,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -31,16 +31,14 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.util.List;
 
 /**
  * Interafce CategoryService.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
-public interface CategoryService extends SecurityService{
+public interface CategoryService extends SecurityService {
 
     /**
      * @param category
@@ -89,5 +87,4 @@ public interface CategoryService extends SecurityService{
      * @return long
      */
     long getCount(String nameLike);
-
 }

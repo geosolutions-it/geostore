@@ -30,16 +30,16 @@ package it.geosolutions.geostore.services.rest.security.oauth2.google;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.*;
 
-/**
- * Google OAuth2 filter implementation.
- */
+/** Google OAuth2 filter implementation. */
 public class OpenIdFilter extends OAuth2GeoStoreAuthenticationFilter {
 
-
-    public OpenIdFilter(GeoStoreRemoteTokenServices tokenServices, GeoStoreOAuthRestTemplate oAuth2RestOperations, OAuth2Configuration configuration, TokenAuthenticationCache cache) {
+    public OpenIdFilter(
+            GeoStoreRemoteTokenServices tokenServices,
+            GeoStoreOAuthRestTemplate oAuth2RestOperations,
+            OAuth2Configuration configuration,
+            TokenAuthenticationCache cache) {
         super(tokenServices, oAuth2RestOperations, configuration, cache);
         if (configuration.getDiscoveryUrl() != null && !"".equals(configuration.getDiscoveryUrl()))
             new DiscoveryClient(configuration.getDiscoveryUrl()).autofill(configuration);
     }
-
 }

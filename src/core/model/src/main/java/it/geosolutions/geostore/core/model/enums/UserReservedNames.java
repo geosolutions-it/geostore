@@ -19,34 +19,30 @@
  */
 package it.geosolutions.geostore.core.model.enums;
 
-/**
- * @author DamianoG
- *
- */
+/** @author DamianoG */
 public enum UserReservedNames {
-    
-    GUEST ("guest");
-    
+    GUEST("guest");
+
     private final String userNameToPersist;
-    
-    UserReservedNames(String userNameToPersist){
+
+    UserReservedNames(String userNameToPersist) {
         this.userNameToPersist = userNameToPersist;
     }
-    
-    public String userName(){
+
+    public String userName() {
         return userNameToPersist;
     }
-    
+
     /**
-     * Given a candidate userName this method checks if the name is allowed.
-     * This enum holds the list of reserved names. A username is not allowed if it matches ignoring the case
-     * at least one of the reserved names.
-     * 
+     * Given a candidate userName this method checks if the name is allowed. This enum holds the
+     * list of reserved names. A username is not allowed if it matches ignoring the case at least
+     * one of the reserved names.
+     *
      * @param groupNameToCheck
      * @return
      */
-    public static boolean isAllowedName(String groupNameToCheck){
-        if(GUEST.userName().equalsIgnoreCase(groupNameToCheck)){
+    public static boolean isAllowedName(String groupNameToCheck) {
+        if (GUEST.userName().equalsIgnoreCase(groupNameToCheck)) {
             return false;
         }
         return true;

@@ -29,11 +29,9 @@
 package it.geosolutions.geostore.core.model;
 
 import it.geosolutions.geostore.core.model.enums.Role;
-
 import java.io.Serializable;
 import java.util.List;
 import java.util.Set;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -42,10 +40,9 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
-import javax.persistence.ForeignKey;
-import javax.persistence.Index;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -54,40 +51,34 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
 
 /**
  * Class User.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "User")
-@Table(name = "gs_user", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) }, indexes = {
-        @Index(name = "idx_user_name", columnList = "name"),
-        @Index(name = "idx_user_password", columnList = "user_password"),
-        @Index(name = "idx_user_role", columnList = "user_role")
-})
-//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
+@Table(
+        name = "gs_user",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})},
+        indexes = {
+            @Index(name = "idx_user_name", columnList = "name"),
+            @Index(name = "idx_user_password", columnList = "user_password"),
+            @Index(name = "idx_user_role", columnList = "user_role")
+        })
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
 @XmlRootElement(name = "User")
 public class User implements Serializable {
 
-    /**
-     * The Constant serialVersionUID.
-     */
+    /** The Constant serialVersionUID. */
     private static final long serialVersionUID = -138056245004697133L;
 
-    /**
-     * The id.
-     */
-    @Id
-    @GeneratedValue
-    private Long id;
+    /** The id. */
+    @Id @GeneratedValue private Long id;
 
     @Column(nullable = false, updatable = false, length = 255)
     private String name;
@@ -99,8 +90,7 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-
-    public User(){};
+    public User() {};
 
     public User(User user) {
         this.id = user.id;
@@ -132,176 +122,148 @@ public class User implements Serializable {
     private List<SecurityRule> security;
 
     @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(name = "gs_usergroup_members", 
-        joinColumns = { @JoinColumn(name = "user_id", nullable = false, updatable = false) },
-        inverseJoinColumns = { @JoinColumn(name = "group_id", nullable = false, updatable = false) })
+    @JoinTable(
+            name = "gs_usergroup_members",
+            joinColumns = {@JoinColumn(name = "user_id", nullable = false, updatable = false)},
+            inverseJoinColumns = {
+                @JoinColumn(name = "group_id", nullable = false, updatable = false)
+            })
     private Set<UserGroup> groups;
 
-    @Type(type="yes_no")
-    @Column(nullable = false,updatable =true)
-	private boolean enabled=true;
+    @Type(type = "yes_no")
+    @Column(nullable = false, updatable = true)
+    private boolean enabled = true;
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     // @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the group
-     */
+    /** @return the group */
     @XmlElementWrapper
-    @XmlElement(name="group")
+    @XmlElement(name = "group")
     public Set<UserGroup> getGroups() {
         return groups;
     }
 
-    /**
-     * @param group the group to set
-     */
+    /** @param group the group to set */
     public void setGroups(Set<UserGroup> groups) {
         this.groups = groups;
     }
 
-    /**
-     * @return true if the group with id groupId was associated with the user and was removed.
-     */
+    /** @return true if the group with id groupId was associated with the user and was removed. */
     public boolean removeGroup(long groupId) {
-        if(groups != null) {
+        if (groups != null) {
             for (UserGroup group : groups) {
-                if(groupId == group.getId()) {
+                if (groupId == group.getId()) {
                     return groups.remove(group);
                 }
             }
         }
-        
+
         return false;
     }
 
-    /**
-     * @return the security
-     */
+    /** @return the security */
     @XmlTransient
     public List<SecurityRule> getSecurity() {
         return security;
     }
 
-    /**
-     * @param security the security to set
-     */
+    /** @param security the security to set */
     public void setSecurity(List<SecurityRule> security) {
         this.security = security;
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the password
-     */
+    /** @return the password */
     @XmlTransient
     public String getPassword() {
         return password;
     }
 
     /**
-     * <STRONG>DON'T USE THIS METHOD</STRONG> <BR>
-     * You will probably break the password by using this method. <BR>
+     * <STRONG>DON'T USE THIS METHOD</STRONG> <br>
+     * You will probably break the password by using this method. <br>
      * Please use the {@link setNewPassword()} method instead.
-     * 
+     *
      * @param password the password to set
      */
     public void setPassword(String password) {
         this.password = password;
     }
 
-    /**
-     * @return the newPassword
-     */
+    /** @return the newPassword */
     public String getNewPassword() {
         return newPassword;
     }
 
     /**
-     * Set the cleartext password. <BR>
-     * Before being persisted, the password will be automatically encoded, and will be accessible with {@link getPassword()}.
-     * <P>
-     * Please note that this is NOT a persisted field
-     * 
+     * Set the cleartext password. <br>
+     * Before being persisted, the password will be automatically encoded, and will be accessible
+     * with {@link getPassword()}.
+     *
+     * <p>Please note that this is NOT a persisted field
+     *
      * @param newPassword the cleartext newPassword
      */
     public void setNewPassword(String newPassword) {
         this.newPassword = newPassword;
     }
 
-    /**
-     * @return the attribute
-     */
+    /** @return the attribute */
     public List<UserAttribute> getAttribute() {
         return attribute;
     }
 
-    /**
-     * @param attribute the attribute to set
-     */
+    /** @param attribute the attribute to set */
     public void setAttribute(List<UserAttribute> attribute) {
         this.attribute = attribute;
     }
 
-    /**
-     * 
-     * @return the enabled flag
-     */
+    /** @return the enabled flag */
     public boolean isEnabled() {
-		return enabled;
-	}
+        return enabled;
+    }
 
     /**
      * set enabled flag
+     *
      * @param enabled
      */
-	public void setEnabled(boolean enabled) {
-		this.enabled = enabled;
-	}
-	
-    /**
-     * @return the role
-     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    /** @return the role */
     public Role getRole() {
         return role;
     }
 
-    /**
-     * @param role the role to set
-     */
+    /** @param role the role to set */
     public void setRole(Role role) {
         this.role = role;
     }
-    
+
     /**
-     * A trusted user is not validated through the database.
-     * Used when we want to externalize user authentication and we get the user from the external source.
-     * 
+     * A trusted user is not validated through the database. Used when we want to externalize user
+     * authentication and we get the user from the external source.
+     *
      * @return
      */
     @XmlTransient
@@ -353,7 +315,7 @@ public class User implements Serializable {
         final int prime = 31;
         int result = 1;
         result = (prime * result) + ((attribute == null) ? 0 : attribute.hashCode());
-        //result = (prime * result) + ((groups == null) ? 0 : groups.hashCode());
+        // result = (prime * result) + ((groups == null) ? 0 : groups.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result) + ((password == null) ? 0 : password.hashCode());

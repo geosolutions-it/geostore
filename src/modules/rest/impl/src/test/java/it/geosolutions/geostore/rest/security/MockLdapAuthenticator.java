@@ -11,5 +11,4 @@ public class MockLdapAuthenticator implements LdapAuthenticator {
     public DirContextOperations authenticate(Authentication authentication) {
         return new MockDirContextOperations();
     }
-
 }

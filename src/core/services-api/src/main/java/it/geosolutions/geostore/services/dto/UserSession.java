@@ -30,42 +30,37 @@ package it.geosolutions.geostore.services.dto;
 import it.geosolutions.geostore.core.model.User;
 
 /**
- * Basic interface for a UserSession.
- * The session has a unique identifier, contains user data and allows for
- * expiration check.
- * 
+ * Basic interface for a UserSession. The session has a unique identifier, contains user data and
+ * allows for expiration check.
+ *
  * @author Mauro Bartolomeoli
  * @author Lorenzo Natali
  */
 public interface UserSession {
-	
-	public void setId(String id);
-    
+
+    public void setId(String id);
+
     public String getId();
-    
+
     public void setUser(User user);
-    
+
     public User getUser();
-    
+
     public void setRefreshToken(String refreshToken);
-    
+
     public String getRefreshToken();
 
     void setExpirationInterval(long expirationInterval);
 
-	long getExpirationInterval();
-    
-	/**
-	 * Check if the token has expired
-	 * @return true if it is expired
-	 */
-    public boolean isExpired();
-    
-    
-    /**
-     * Update expirationDate
-     * adding expiration time (in seconds)
-     */
-    public void refresh();
+    long getExpirationInterval();
 
+    /**
+     * Check if the token has expired
+     *
+     * @return true if it is expired
+     */
+    public boolean isExpired();
+
+    /** Update expirationDate adding expiration time (in seconds) */
+    public void refresh();
 }

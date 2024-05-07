@@ -1,5 +1,6 @@
 package it.geosolutions.geostore.core.model;
 
+import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ForeignKey;
@@ -9,24 +10,21 @@ import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-import java.io.Serializable;
 
-@Entity(name="UserGroupAttribute")
-@Table(name="gs_user_group_attribute", indexes = {
-        @Index(name = "idx_user_group_attr_name", columnList = "name"),
-        @Index(name = "idx_user_group_attr_text", columnList = "string"),
-        @Index(name= "idx_attr_user_group", columnList = "usergroup_id")
+@Entity(name = "UserGroupAttribute")
+@Table(
+        name = "gs_user_group_attribute",
+        indexes = {
+            @Index(name = "idx_user_group_attr_name", columnList = "name"),
+            @Index(name = "idx_user_group_attr_text", columnList = "string"),
+            @Index(name = "idx_attr_user_group", columnList = "usergroup_id")
         })
-
 @XmlRootElement(name = "UserGroupAttribute")
 public class UserGroupAttribute implements Serializable {
 
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
 
     @Column(name = "name", nullable = false, updatable = true)
     private String name;
@@ -35,65 +33,49 @@ public class UserGroupAttribute implements Serializable {
     private String value;
 
     @ManyToOne(optional = false)
-    @JoinColumn(foreignKey=@ForeignKey(name="fk_ugattrib_user_group"))
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_ugattrib_user_group"))
     private UserGroup userGroup;
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the value
-     */
+    /** @return the value */
     public String getValue() {
         return value;
     }
 
-    /**
-     * @param value the value to set
-     */
+    /** @param value the value to set */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /**
-     * @return the user
-     */
+    /** @return the user */
     @XmlTransient
     public UserGroup getUserGroup() {
         return userGroup;
     }
 
-    /**
-     * @param userGroup the userGroup to set
-     */
+    /** @param userGroup the userGroup to set */
     public void setUserGroup(UserGroup userGroup) {
-        this.userGroup = userGroup ;
+        this.userGroup = userGroup;
     }
 
     /*
@@ -185,5 +167,4 @@ public class UserGroupAttribute implements Serializable {
 
         return true;
     }
-
 }

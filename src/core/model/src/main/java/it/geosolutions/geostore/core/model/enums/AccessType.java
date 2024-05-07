@@ -31,8 +31,8 @@ package it.geosolutions.geostore.core.model.enums;
 
 /**
  * Class AccessType
- * 
- * The Enum AccessType.
+ *
+ * <p>The Enum AccessType.
  */
 public enum AccessType {
 

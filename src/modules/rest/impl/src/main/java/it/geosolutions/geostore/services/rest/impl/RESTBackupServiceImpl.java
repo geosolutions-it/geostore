@@ -48,21 +48,18 @@ import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCa
 import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.utils.Convert;
+import java.util.List;
+import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.ws.rs.core.SecurityContext;
-import java.util.List;
-
-/**
- *
- */
+/** */
 public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackupService {
 
-    private final static Logger LOGGER = LogManager.getLogger(RESTBackupServiceImpl.class);
-    private final static long MAX_RESOURCES_FOR_QUICK_BACKUP = 100L;
+    private static final Logger LOGGER = LogManager.getLogger(RESTBackupServiceImpl.class);
+    private static final long MAX_RESOURCES_FOR_QUICK_BACKUP = 100L;
     private CategoryService categoryService;
     private ResourceService resourceService;
 
@@ -85,8 +82,7 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
     @Override
     public RESTQuickBackup quickBackup(SecurityContext sc) throws BadRequestServiceEx {
 
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("quickBackup()");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("quickBackup()");
 
         if (resourceService.getCount(null) > MAX_RESOURCES_FOR_QUICK_BACKUP)
             throw new BadRequestServiceEx("Too many resources for a quick backup");
@@ -109,8 +105,7 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
 
     @Override
     public String quickRestore(SecurityContext sc, RESTQuickBackup backup) {
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("quickRestore()");
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("quickRestore()");
 
         try {
 
@@ -136,8 +131,8 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
         }
     }
 
-    private void quickRestoreCategory(RESTBackupCategory rbc) throws BadRequestServiceEx,
-            NotFoundServiceEx, DuplicatedResourceNameServiceEx {
+    private void quickRestoreCategory(RESTBackupCategory rbc)
+            throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx {
         LOGGER.info("Restoring category: " + rbc.getName());
         Category cat = rbc2cat(rbc);
         long catId = categoryService.insert(cat);
@@ -145,10 +140,18 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
 
         for (RESTBackupResource rbr : rbc.getResources()) {
             if (LOGGER.isInfoEnabled()) {
-                int attnum = (rbr != null && rbr.getResource() != null && rbr.getResource()
-                        .getAttribute() != null) ? rbr.getResource().getAttribute().size() : -1;
-                LOGGER.info("Restoring resource: " + cat.getName() + ":"
-                        + rbr.getResource().getName() + " (" + attnum + " attrs)");
+                int attnum =
+                        (rbr != null
+                                        && rbr.getResource() != null
+                                        && rbr.getResource().getAttribute() != null)
+                                ? rbr.getResource().getAttribute().size()
+                                : -1;
+                assert rbr != null;
+                LOGGER.info(
+                        "Restoring resource: {}:{} ({} attrs)",
+                        cat.getName(),
+                        rbr.getResource().getName(),
+                        attnum);
             }
             Resource res = rbr2res(rbr, catId);
             resourceService.insert(res);
@@ -162,8 +165,8 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
         return ret;
     }
 
-    private RESTBackupCategory createCategory(Category category) throws BadRequestServiceEx,
-            InternalErrorServiceEx {
+    private RESTBackupCategory createCategory(Category category)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
         LOGGER.info("Packing category " + category.getName());
 
         RESTBackupCategory ret = new RESTBackupCategory();
@@ -196,8 +199,7 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
         ret.setEditor(resource.getEditor());
         ret.setAdvertised(resource.isAdvertised());
 
-        if (resource.getData() != null)
-            ret.setData(resource.getData().getData());
+        if (resource.getData() != null) ret.setData(resource.getData().getData());
         if (CollectionUtils.isNotEmpty(resource.getAttribute()))
             ret.setAttribute(Convert.convertToShortAttributeList(resource.getAttribute()));
         return ret;
@@ -220,5 +222,4 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
     protected SecurityService getSecurityService() {
         throw new NotImplementedException("This method is not implemented yet...");
     }
-
 }

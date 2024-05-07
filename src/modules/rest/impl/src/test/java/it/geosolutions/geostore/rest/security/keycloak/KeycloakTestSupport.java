@@ -16,7 +16,6 @@ public abstract class KeycloakTestSupport {
     public static final String APP_URL = "/app";
     public static final String AUTH_URL = "https://cas.core.maui.mda.ca:8040/auth";
 
-
     // some pre-generated data from keycloak that should work until the year 2037
     public static final String PUBLIC_KEY =
             "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzkRIC4ow7QqXed+4WICpF5gU2AqXrKT2lPBZOyG6NETv7X"

@@ -20,11 +20,10 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.enums.Role;
+import java.security.Principal;
 import org.apache.cxf.security.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.security.Principal;
 
 /**
  * Class GeoStoreSecurityContext.
@@ -34,13 +33,11 @@ import java.security.Principal;
  */
 public class GeoStoreSecurityContext implements SecurityContext {
 
-    private final static Logger LOGGER = LogManager.getLogger(GeoStoreSecurityContext.class);
+    private static final Logger LOGGER = LogManager.getLogger(GeoStoreSecurityContext.class);
 
     private GeoStorePrincipal principal;
 
-    /**
-     * @param principal
-     */
+    /** @param principal */
     public void setPrincipal(GeoStorePrincipal principal) {
         this.principal = principal;
     }
@@ -70,11 +67,8 @@ public class GeoStoreSecurityContext implements SecurityContext {
         if (Role.GUEST.name().equals(role)) {
             return principal.isGuest();
         } else {
-            if (principal.isGuest())
-                return false;
-            else
-                return principal.getUser().getRole().name().equals(role);
+            if (principal.isGuest()) return false;
+            else return principal.getUser().getRole().name().equals(role);
         }
     }
-
 }

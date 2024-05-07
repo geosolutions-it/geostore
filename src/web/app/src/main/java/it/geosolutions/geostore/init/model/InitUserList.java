@@ -36,37 +36,28 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class UserList.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
- * 
  */
 @XmlRootElement(name = "InitUserList")
 public class InitUserList implements Iterable<User> {
 
     private List<User> list;
 
-    public InitUserList() {
+    public InitUserList() {}
 
-    }
-
-    /**
-     * @param list
-     */
+    /** @param list */
     public InitUserList(List<User> list) {
         this.list = list;
     }
 
-    /**
-     * @return List<Category>
-     */
+    /** @return List<Category> */
     @XmlElement(name = "User")
     public List<User> getList() {
         return list;
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public void setList(List<User> list) {
         this.list = list;
     }
@@ -75,5 +66,4 @@ public class InitUserList implements Iterable<User> {
     public Iterator<User> iterator() {
         return list == null ? Collections.EMPTY_LIST.iterator() : list.iterator();
     }
-
 }

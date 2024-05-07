@@ -29,54 +29,47 @@ package it.geosolutions.geostore.core.security;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
 import org.springframework.expression.Expression;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 /**
- * Implementation of UserMapper that maps attributes from a generic object
- * to GeoStore User attributes. Mappings are expressed using SpEL expressions.
- * 
- * Inherited classes should add their propertyAccessor implementations to the evaluationContext.
- * 
- * @author Mauro Bartolomeoli
+ * Implementation of UserMapper that maps attributes from a generic object to GeoStore User
+ * attributes. Mappings are expressed using SpEL expressions.
  *
+ * <p>Inherited classes should add their propertyAccessor implementations to the evaluationContext.
+ *
+ * @author Mauro Bartolomeoli
  */
 public abstract class ExpressionUserMapper implements UserMapper {
     Map<String, String> attributeMappings;
-    
+
     public static SpelExpressionParser parser = new SpelExpressionParser();
-    
+
     protected StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
-    
-    
 
     /**
-     * 
-     * @param attributeMappings maps attribute names to SpEL expressions (using a UserDetailsWithAttributes
-     * source)
+     * @param attributeMappings maps attribute names to SpEL expressions (using a
+     *     UserDetailsWithAttributes source)
      */
     public ExpressionUserMapper(Map<String, String> attributeMappings) {
         this.attributeMappings = attributeMappings;
     }
-    
+
     @Override
     /**
      * If details is a UserDetailsWithAttributes object, its attributes are mapped to User
-     * attributes.
-     * Each mapping is an SpEL expression using the UserDetailsWithAttributes as a source.
-     * 
+     * attributes. Each mapping is an SpEL expression using the UserDetailsWithAttributes as a
+     * source.
      */
     public void mapUser(Object details, User user) {
         List<UserAttribute> attributes = new ArrayList<UserAttribute>();
         details = preProcessDetails(details);
-        for(String attributeName : attributeMappings.keySet()) {
-            
+        for (String attributeName : attributeMappings.keySet()) {
+
             Expression exp = parser.parseExpression(attributeMappings.get(attributeName));
             UserAttribute userAttribute = new UserAttribute();
             userAttribute.setName(attributeName);
@@ -85,11 +78,9 @@ public abstract class ExpressionUserMapper implements UserMapper {
             attributes.add(userAttribute);
         }
         user.setAttribute(attributes);
-        
     }
 
     protected Object preProcessDetails(Object details) {
         return details;
     }
-
 }

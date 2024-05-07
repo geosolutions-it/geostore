@@ -27,12 +27,18 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
+import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
+
 import com.googlecode.genericdao.search.ISearch;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
+import java.util.*;
+import java.util.stream.Collectors;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.keycloak.admin.client.Keycloak;
@@ -42,20 +48,13 @@ import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.http.HttpStatus;
 
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.core.Response;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
-
 /**
- * Keycloak implementation for a {@link UserDAO}.
- * Supports basic search operations. Currently it doesn't support querying and updating by id.
+ * Keycloak implementation for a {@link UserDAO}. Supports basic search operations. Currently it
+ * doesn't support querying and updating by id.
  */
 public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
 
-    private final static Logger LOGGER = LogManager.getLogger(KeycloakUserDAO.class);
+    private static final Logger LOGGER = LogManager.getLogger(KeycloakUserDAO.class);
 
     public KeycloakUserDAO(KeycloakAdminClientConfiguration adminClientConfiguration) {
         super(adminClientConfiguration);
@@ -149,17 +148,24 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
             if (query.isExact())
                 userRepresentations = ur.search(query.getUserName(), query.getExact());
             else if (query.getGroupName() != null)
-                userRepresentations = getRolesResource(keycloak).get(query.getGroupName()).getRoleUserMembers(query.getStartIndex(), query.getMaxResults());
+                userRepresentations =
+                        getRolesResource(keycloak)
+                                .get(query.getGroupName())
+                                .getRoleUserMembers(query.getStartIndex(), query.getMaxResults());
             else
-                userRepresentations = ur.search(
-                        query.getUserName(),
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        search.getPage(), search.getMaxResults(), query.getEnabled(), false);
+                userRepresentations =
+                        ur.search(
+                                query.getUserName(),
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                null,
+                                search.getPage(),
+                                search.getMaxResults(),
+                                query.getEnabled(),
+                                false);
             if (userRepresentations == null) userRepresentations = new ArrayList<>();
             if ((userRepresentations.isEmpty()) && isByUsername(query)) {
                 UserResource resource = ur.get(query.getUserName());
@@ -178,7 +184,8 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
     }
 
     private boolean isGuest(KeycloakQuery query) {
-        return query.getUserName() != null && UserReservedNames.GUEST.name().equals(query.getUserName());
+        return query.getUserName() != null
+                && UserReservedNames.GUEST.name().equals(query.getUserName());
     }
 
     private User createGUESTUser(long id) {
@@ -197,7 +204,6 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
         return user;
     }
 
-
     private boolean isByUsername(KeycloakQuery query) {
         return query.isExact() && query.getUserName() != null;
     }
@@ -213,15 +219,21 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
             Integer count;
             if (query.getExact() != null && query.getExact().booleanValue())
                 count = ur.count(null, null, null, null, query.getUserName());
-            else count = ur.search(
-                    query.getUserName(),
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    search.getPage(), search.getMaxResults(), query.getEnabled(), true).size();
+            else
+                count =
+                        ur.search(
+                                        query.getUserName(),
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        null,
+                                        search.getPage(),
+                                        search.getMaxResults(),
+                                        query.getEnabled(),
+                                        true)
+                                .size();
             return count.intValue();
         } catch (NotFoundException e) {
             LOGGER.warn("No users were found", e);
@@ -251,7 +263,8 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
         return userList;
     }
 
-    private List<User> toUsers(Collection<UserRepresentation> userRepresentations, UsersResource ur, boolean isGuest) {
+    private List<User> toUsers(
+            Collection<UserRepresentation> userRepresentations, UsersResource ur, boolean isGuest) {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Converting UserRepresentation to User");
         }
@@ -265,7 +278,10 @@ public class KeycloakUserDAO extends BaseKeycloakDAO implements UserDAO {
             user.setEnabled(representation.isEnabled());
             user.setTrusted(true);
             GeoStoreKeycloakAuthoritiesMapper mapper = getAuthoritiesMapper();
-            List<String> roles = ur.get(representation.getId()).roles().realmLevel().listEffective().stream().map(m -> m.getName()).collect(Collectors.toList());
+            List<String> roles =
+                    ur.get(representation.getId()).roles().realmLevel().listEffective().stream()
+                            .map(m -> m.getName())
+                            .collect(Collectors.toList());
             mapper.mapAuthorities(roles);
             user.setRole(mapper.getRole());
             Set<UserGroup> groups = mapper.getGroups();

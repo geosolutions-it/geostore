@@ -31,8 +31,7 @@ import org.apache.logging.log4j.Logger;
 
 final class LogUtils {
 
-    private LogUtils() {
-    }
+    private LogUtils() {}
 
     static void info(Logger logger, String formattedMessage, Object... messageArguments) {
         if (logger.isInfoEnabled()) {
@@ -46,7 +45,11 @@ final class LogUtils {
         }
     }
 
-    static void error(Logger logger, Throwable exception, String formattedMessage, Object... messageArguments) {
+    static void error(
+            Logger logger,
+            Throwable exception,
+            String formattedMessage,
+            Object... messageArguments) {
         logger.error(String.format(formattedMessage, messageArguments), exception);
     }
 

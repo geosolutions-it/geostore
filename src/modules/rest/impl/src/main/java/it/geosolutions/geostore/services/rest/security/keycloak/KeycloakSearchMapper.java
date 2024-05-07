@@ -27,21 +27,19 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
+import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
+
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERYONE;
-
-/**
- * Class responsible to map a Search to a KeycloakQuery.
- */
+/** Class responsible to map a Search to a KeycloakQuery. */
 class KeycloakSearchMapper {
 
-    private static final List<Integer> SUPPORTED_OPERATORS = Arrays.asList(Filter.OP_AND, Filter.OP_EQUAL, Filter.OP_ILIKE, Filter.OP_NOT_EQUAL);
+    private static final List<Integer> SUPPORTED_OPERATORS =
+            Arrays.asList(Filter.OP_AND, Filter.OP_EQUAL, Filter.OP_ILIKE, Filter.OP_NOT_EQUAL);
 
     /**
      * Convert the ISearch to a keycloak query.
@@ -53,13 +51,14 @@ class KeycloakSearchMapper {
         KeycloakQuery query = new KeycloakQuery();
         search = getNestedSearch(search);
         List<Filter> filters = search.getFilters();
-        boolean allSupported = filters.stream().allMatch(f -> SUPPORTED_OPERATORS.contains(f.getOperator()));
+        boolean allSupported =
+                filters.stream().allMatch(f -> SUPPORTED_OPERATORS.contains(f.getOperator()));
         if (!allSupported) {
-            throw new UnsupportedOperationException("Keycloak DAO cannot filter for more then one value");
+            throw new UnsupportedOperationException(
+                    "Keycloak DAO cannot filter for more then one value");
         }
         if (!filters.isEmpty()) {
-            for (Filter filter : filters)
-                processFilter(query, filter);
+            for (Filter filter : filters) processFilter(query, filter);
         }
         Integer page = search.getPage();
         Integer maxRes = search.getMaxResults();
@@ -68,19 +67,20 @@ class KeycloakSearchMapper {
             if (startIndex > 0) startIndex++;
             if (maxRes != null) query.setStartIndex(startIndex);
         }
-        if (maxRes > -1)
-            query.setMaxResults(maxRes);
+        if (maxRes > -1) query.setMaxResults(maxRes);
         return query;
     }
 
     private void processFilter(KeycloakQuery query, Filter filter) {
         if (filter.getOperator() == Filter.OP_AND) return;
-        else if (filter.getOperator() == Filter.OP_EQUAL)
-            query.setExact(true);
-        else if (filter.getOperator() != Filter.OP_ILIKE && filter.getOperator() != Filter.OP_NOT_EQUAL)
-            throw new UnsupportedOperationException("Keycloak DAO supports only EQUAL and LIKE operators");
+        else if (filter.getOperator() == Filter.OP_EQUAL) query.setExact(true);
+        else if (filter.getOperator() != Filter.OP_ILIKE
+                && filter.getOperator() != Filter.OP_NOT_EQUAL)
+            throw new UnsupportedOperationException(
+                    "Keycloak DAO supports only EQUAL and LIKE operators");
 
-        if (filter.getOperator() == Filter.OP_NOT_EQUAL && filter.getValue().toString().equalsIgnoreCase(EVERYONE.groupName()))
+        if (filter.getOperator() == Filter.OP_NOT_EQUAL
+                && filter.getValue().toString().equalsIgnoreCase(EVERYONE.groupName()))
             query.setSkipEveryBodyGroup(true);
         else {
             String property = filter.getProperty().toUpperCase();
@@ -107,8 +107,8 @@ class KeycloakSearchMapper {
     }
 
     /**
-     * If the given search has filters working on nested objects,
-     * replaces them with the nested filter.
+     * If the given search has filters working on nested objects, replaces them with the nested
+     * filter.
      *
      * @param search
      * @return
@@ -147,6 +147,4 @@ class KeycloakSearchMapper {
         ENABLED,
         NOT_FOUND
     }
-
-
 }

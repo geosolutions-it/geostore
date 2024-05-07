@@ -29,6 +29,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
+import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpMethod;
@@ -37,18 +38,17 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.Collections;
-
 /**
- * This class represents the geostore configuration for an OAuth2/OpenId provider.
- * An OAuth2Configuration bean should be provided for each OAuth2 provider. The bean id has to be
+ * This class represents the geostore configuration for an OAuth2/OpenId provider. An
+ * OAuth2Configuration bean should be provided for each OAuth2 provider. The bean id has to be
  * {providerName}OAuth2Config.
  */
 public class OAuth2Configuration extends IdPConfiguration {
 
     public static final String CONFIG_NAME_SUFFIX = "OAuth2Config";
     public static final String CONFIGURATION_NAME = "CONFIGURATION_NAME";
-    private final static Logger LOGGER = LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+    private static final Logger LOGGER =
+            LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
     protected String clientId;
     protected String clientSecret;
     protected String accessTokenUri;
@@ -65,7 +65,8 @@ public class OAuth2Configuration extends IdPConfiguration {
     protected String groupsClaim;
 
     /**
-     * Get an authentication entry point instance meant to handle redirect to the authorization page.
+     * Get an authentication entry point instance meant to handle redirect to the authorization
+     * page.
      *
      * @return the authentication entry point.
      */
@@ -82,7 +83,7 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the authorization uri completed with the various query strings.
      */
     public String buildLoginUri() {
-        return buildLoginUri(null, new String[]{});
+        return buildLoginUri(null, new String[] {});
     }
 
     /**
@@ -92,12 +93,13 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the authorization uri completed with the various query strings.
      */
     public String buildLoginUri(String accessType) {
-        return buildLoginUri(accessType, new String[]{});
+        return buildLoginUri(accessType, new String[] {});
     }
 
     /**
-     * @param accessType       the access type request param value. Can be null.
-     * @param additionalScopes additional scopes aren't set at from geostore-ovr.properties. Can be null.
+     * @param accessType the access type request param value. Can be null.
+     * @param additionalScopes additional scopes aren't set at from geostore-ovr.properties. Can be
+     *     null.
      * @return the
      */
     public String buildLoginUri(String accessType, String... additionalScopes) {
@@ -113,12 +115,11 @@ public class OAuth2Configuration extends IdPConfiguration {
         for (String s : additionalScopes) {
             loginUri.append("%20").append(s);
         }
-        loginUri.append("&")
-                .append("redirect_uri=")
-                .append(getRedirectUri());
+        loginUri.append("&").append("redirect_uri=").append(getRedirectUri());
         if (accessType != null) loginUri.append("&").append("access_type=").append(accessType);
         String finalUrl = loginUri.toString();
-        if (LOGGER.isDebugEnabled()) LOGGER.info("Going to request authorization to this endpoint " + finalUrl);
+        if (LOGGER.isDebugEnabled())
+            LOGGER.info("Going to request authorization to this endpoint " + finalUrl);
         return finalUrl;
     }
 
@@ -139,21 +140,19 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public String buildRefreshTokenURI(String accessType) {
         final StringBuilder refreshUri = new StringBuilder(getAccessTokenUri());
-        refreshUri.append("?")
+        refreshUri
+                .append("?")
                 .append("&")
                 .append("client_id=")
                 .append(getClientId())
                 .append("&")
                 .append("scope=")
                 .append(getScopes().replace(",", "%20"));
-        if (accessType != null)
-            refreshUri.append("&").append("access_type=").append(accessType);
+        if (accessType != null) refreshUri.append("&").append("access_type=").append(accessType);
         return refreshUri.toString();
     }
 
-    /**
-     * @return the clientId.
-     */
+    /** @return the clientId. */
     public String getClientId() {
         return clientId;
     }
@@ -167,9 +166,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.clientId = cliendId;
     }
 
-    /**
-     * @return the client secret.
-     */
+    /** @return the client secret. */
     public String getClientSecret() {
         return clientSecret;
     }
@@ -183,9 +180,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.clientSecret = clientSecret;
     }
 
-    /**
-     * @return the access token uri
-     */
+    /** @return the access token uri */
     public String getAccessTokenUri() {
         return accessTokenUri;
     }
@@ -199,9 +194,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.accessTokenUri = accessTokenUri;
     }
 
-    /**
-     * @return the authorization URI.
-     */
+    /** @return the authorization URI. */
     public String getAuthorizationUri() {
         return authorizationUri;
     }
@@ -215,9 +208,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.authorizationUri = authorizationUri;
     }
 
-    /**
-     * @return the check token endpoint URL.
-     */
+    /** @return the check token endpoint URL. */
     public String getCheckTokenEndpointUrl() {
         return checkTokenEndpointUrl;
     }
@@ -231,9 +222,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.checkTokenEndpointUrl = checkTokenEndpointUrl;
     }
 
-    /**
-     * @return the logout URI.
-     */
+    /** @return the logout URI. */
     public String getLogoutUri() {
         return logoutUri;
     }
@@ -265,9 +254,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.scopes = scopes;
     }
 
-    /**
-     * @return the id Token URI.
-     */
+    /** @return the id Token URI. */
     public String getIdTokenUri() {
         return idTokenUri;
     }
@@ -281,9 +268,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.idTokenUri = idTokenUri;
     }
 
-    /**
-     * @return the Discovery URL.
-     */
+    /** @return the Discovery URL. */
     public String getDiscoveryUrl() {
         return discoveryUrl;
     }
@@ -298,18 +283,19 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
-     * Check if the configuration is valid or not. Is considered invalid if either one of client id, secret,
-     * authorization, accessToke Uri was not provided.
+     * Check if the configuration is valid or not. Is considered invalid if either one of client id,
+     * secret, authorization, accessToke Uri was not provided.
      *
      * @return
      */
     public boolean isInvalid() {
-        return clientId == null || clientSecret == null || authorizationUri == null || accessTokenUri == null;
+        return clientId == null
+                || clientSecret == null
+                || authorizationUri == null
+                || accessTokenUri == null;
     }
 
-    /**
-     * @return the revoke endpoint.
-     */
+    /** @return the revoke endpoint. */
     public String getRevokeEndpoint() {
         return revokeEndpoint;
     }
@@ -336,7 +322,7 @@ public class OAuth2Configuration extends IdPConfiguration {
      * Append the request params to the URL.
      *
      * @param params the request params.
-     * @param url    the url.
+     * @param url the url.
      * @return the complete url.
      */
     protected String appendParameters(MultiValueMap<String, String> params, String url) {
@@ -377,9 +363,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         return result;
     }
 
-    /**
-     * @return true if redirect to authorization is active always. False otherwise.
-     */
+    /** @return true if redirect to authorization is active always. False otherwise. */
     public boolean isEnableRedirectEntryPoint() {
         return enableRedirectEntryPoint;
     }
@@ -430,9 +414,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.rolesClaim = rolesClaim;
     }
 
-    /**
-     * @return the groups claim name.
-     */
+    /** @return the groups claim name. */
     public String getGroupsClaim() {
         return groupsClaim;
     }
@@ -446,9 +428,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.groupsClaim = groupsClaim;
     }
 
-    /**
-     * Class the represent and endpoint with a HTTP method.
-     */
+    /** Class the represent and endpoint with a HTTP method. */
     public static class Endpoint {
 
         private String url;
@@ -460,9 +440,7 @@ public class OAuth2Configuration extends IdPConfiguration {
             this.url = url;
         }
 
-        /**
-         * @return the url.
-         */
+        /** @return the url. */
         public String getUrl() {
             return url;
         }
@@ -476,9 +454,7 @@ public class OAuth2Configuration extends IdPConfiguration {
             this.url = url;
         }
 
-        /**
-         * @return the HttpMethod.
-         */
+        /** @return the HttpMethod. */
         public HttpMethod getMethod() {
             return method;
         }

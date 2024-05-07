@@ -24,22 +24,20 @@ import com.googlecode.genericdao.search.Field;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Sort;
-
 import java.util.List;
 
-/**
- * A wrapper for an ISearch. It is meant to provide the callerContext as a Class.
- */
+/** A wrapper for an ISearch. It is meant to provide the callerContext as a Class. */
 public class GeoStoreISearchWrapper implements ISearch {
 
     private ISearch delegate;
 
     private Class<?> callerContext;
 
-    public GeoStoreISearchWrapper(ISearch delegate, Class<?> callerContext){
-        this.delegate=delegate;
+    public GeoStoreISearchWrapper(ISearch delegate, Class<?> callerContext) {
+        this.delegate = delegate;
         this.callerContext = callerContext;
     }
+
     @Override
     public int getFirstResult() {
         return delegate.getFirstResult();
@@ -95,9 +93,7 @@ public class GeoStoreISearchWrapper implements ISearch {
         return delegate.getResultMode();
     }
 
-    /**
-     * @return the caller context if present, null otherwise.
-     */
+    /** @return the caller context if present, null otherwise. */
     public Class<?> getCallerContext() {
         return callerContext;
     }

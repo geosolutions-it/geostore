@@ -27,10 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -39,6 +35,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 final class AuditingFilesManager {
 
@@ -79,7 +78,7 @@ final class AuditingFilesManager {
     }
 
     void makeOutputFileExists() {
-        if(!outputFile.exists()) {
+        if (!outputFile.exists()) {
             createOutputFile();
         }
     }
@@ -95,7 +94,8 @@ final class AuditingFilesManager {
             try {
                 FileUtils.forceMkdir(outputDirectory);
             } catch (Exception exception) {
-                throw new AuditingException(exception, "Error creating output directory '%s'.", outputDirectory);
+                throw new AuditingException(
+                        exception, "Error creating output directory '%s'.", outputDirectory);
             }
         }
     }
@@ -111,23 +111,34 @@ final class AuditingFilesManager {
     private void updateCurrentDay() {
         String dayTag = dateFormat.format(new Date());
         if (currentDayTag == null || !currentDayTag.equals(dayTag)) {
-            LogUtils.debug(logger, "Current day '%s' will be updates to '%s'.", currentDayTag, dayTag);
+            LogUtils.debug(
+                    logger, "Current day '%s' will be updates to '%s'.", currentDayTag, dayTag);
             currentDayTag = dayTag;
-            filePattern = Pattern.compile("audit-geostore-" + currentDayTag + "-(\\d+)\\." + fileExtension + "$");
+            filePattern =
+                    Pattern.compile(
+                            "audit-geostore-" + currentDayTag + "-(\\d+)\\." + fileExtension + "$");
         }
     }
 
     private String getRollinFileName(int nextRollingValue) {
-        return String.format("audit-geostore-%s-%d.%s", currentDayTag, nextRollingValue, fileExtension);
+        return String.format(
+                "audit-geostore-%s-%d.%s", currentDayTag, nextRollingValue, fileExtension);
     }
 
     private void moveOutputFile(File rollingFile) {
-        LogUtils.info(logger, "Rolling output file '%s' to '%s'.", outputFile.getPath(), rollingFile.getPath());
+        LogUtils.info(
+                logger,
+                "Rolling output file '%s' to '%s'.",
+                outputFile.getPath(),
+                rollingFile.getPath());
         try {
             FileUtils.moveFile(outputFile, rollingFile);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error moving output file '%s' to rolling file '%s'.",
-                    outputFile.getPath(), rollingFile.getPath());
+            throw new AuditingException(
+                    exception,
+                    "Error moving output file '%s' to rolling file '%s'.",
+                    outputFile.getPath(),
+                    rollingFile.getPath());
         }
     }
 
@@ -136,7 +147,8 @@ final class AuditingFilesManager {
             LogUtils.info(logger, "Creating output file '%s'.", outputFile.getPath());
             FileUtils.touch(outputFile);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error creating output file '%s'.", outputFile.getPath());
+            throw new AuditingException(
+                    exception, "Error creating output file '%s'.", outputFile.getPath());
         }
     }
 
@@ -147,7 +159,11 @@ final class AuditingFilesManager {
             Collections.sort(rollingValues);
             nextRollingValue = rollingValues.get(rollingValues.size() - 1) + 1;
         }
-        LogUtils.debug(logger, "Next rolling value for day '%s' will be '%d'.", currentDayTag, nextRollingValue);
+        LogUtils.debug(
+                logger,
+                "Next rolling value for day '%s' will be '%d'.",
+                currentDayTag,
+                nextRollingValue);
         return nextRollingValue;
     }
 
@@ -166,9 +182,11 @@ final class AuditingFilesManager {
     private String[] listOutputDirectoryFiles() {
         String[] files = outputDirectory.list();
         if (files == null) {
-            throw new AuditingException("Error listing files of output directory '%s'.", outputDirectory);
+            throw new AuditingException(
+                    "Error listing files of output directory '%s'.", outputDirectory);
         }
-        LogUtils.debug(logger, "Output directory current files: %s.", LogUtils.arrayToString(files));
+        LogUtils.debug(
+                logger, "Output directory current files: %s.", LogUtils.arrayToString(files));
         return files;
     }
 }

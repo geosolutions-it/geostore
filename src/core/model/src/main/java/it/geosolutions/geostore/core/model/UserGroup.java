@@ -43,22 +43,19 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
-
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Type;
 
 /**
  * Class Group.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @Entity(name = "UserGroup")
-@Table(name = "gs_usergroup", uniqueConstraints = { @UniqueConstraint(columnNames = { "groupName" }) }, indexes = {
-        @Index(name = "idx_usergroup_name", columnList = "groupName")
-})
-//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_usergroup")
+@Table(
+        name = "gs_usergroup",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"groupName"})},
+        indexes = {@Index(name = "idx_usergroup_name", columnList = "groupName")})
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_usergroup")
 @XmlRootElement(name = "UserGroup")
 public class UserGroup implements Serializable {
 
@@ -66,32 +63,29 @@ public class UserGroup implements Serializable {
     private static final long serialVersionUID = 6065837305601115748L;
 
     /** The id. */
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
 
     @Column(nullable = false, updatable = false, length = 255)
     private String groupName;
 
     @Column(nullable = true, updatable = true, length = 255)
     private String description;
-    
+
     /*
      * Only To allow the CASCADING operation
      */
-    @OneToMany(mappedBy = "group",
-            cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "group", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
-    @Type(type="yes_no")
-    @Column(nullable = false,updatable =true)
-    private boolean enabled=true;
-    
+    @Type(type = "yes_no")
+    @Column(nullable = false, updatable = true)
+    private boolean enabled = true;
+
     private transient List<User> users = new ArrayList<User>();
 
     @OneToMany(mappedBy = "userGroup", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<UserGroupAttribute> attributes;
-    
+
     @XmlTransient
     public List<User> getUsers() {
         return users;
@@ -99,105 +93,83 @@ public class UserGroup implements Serializable {
 
     /**
      * Users belonging to this UserGroup.
-     * 
+     *
      * @param users
      */
     public void setUsers(List<User> users) {
         this.users = users;
     }
 
-    /**
-     * 
-     * @return the enabled flag
-     */
+    /** @return the enabled flag */
     public boolean isEnabled() {
         return enabled;
     }
 
     /**
      * set enabled flag
+     *
      * @param enabled
      */
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }
 
-    /**
-     * @return the id
-     */
-    //@XmlTransient
+    /** @return the id */
+    // @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the groupName
-     */
+    /** @return the groupName */
     public String getGroupName() {
         return groupName;
     }
 
-    /**
-     * @param groupName the groupName to set
-     */
+    /** @param groupName the groupName to set */
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
 
-    /**
-     * @return the security
-     */
+    /** @return the security */
     @XmlTransient
     public List<SecurityRule> getSecurity() {
         return security;
     }
 
-    /**
-     * @param security the security to set
-     */
+    /** @param security the security to set */
     public void setSecurity(List<SecurityRule> security) {
         this.security = security;
     }
 
-    /**
-     * @return the description
-     */
+    /** @return the description */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * @param description the description to set
-     */
+    /** @param description the description to set */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /**
-     * @return the attribute
-     */
+    /** @return the attribute */
     @XmlTransient
     public List<UserGroupAttribute> getAttributes() {
         return attributes;
     }
 
-    /**
-     * @param attributes the attribute to set
-     */
+    /** @param attributes the attribute to set */
     public void setAttributes(List<UserGroupAttribute> attributes) {
         this.attributes = attributes;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#toString()
      */
     @Override
@@ -221,7 +193,7 @@ public class UserGroup implements Serializable {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -238,7 +210,7 @@ public class UserGroup implements Serializable {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -286,5 +258,4 @@ public class UserGroup implements Serializable {
 
         return true;
     }
-
 }

@@ -23,14 +23,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * @author DamianoG
- * 
- */
+/** @author DamianoG */
 @XmlRootElement(name = "UserGroupList")
 public class UserGroupList implements Iterable<RESTUserGroup> {
 
@@ -40,30 +36,23 @@ public class UserGroupList implements Iterable<RESTUserGroup> {
         this.list = new ArrayList<RESTUserGroup>();
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public UserGroupList(List<RESTUserGroup> list) {
         super();
-        if(list != null){
+        if (list != null) {
             this.list = list;
-        }
-        else{
+        } else {
             this.list = new ArrayList<RESTUserGroup>();
         }
     }
 
-    /**
-     * @return the userGroup
-     */
+    /** @return the userGroup */
     @XmlElement(name = "UserGroup")
     public List<RESTUserGroup> getUserGroupList() {
         return list;
     }
 
-    /**
-     * @param userGroup the userGroup to set
-     */
+    /** @param userGroup the userGroup to set */
     public void setUserGroupList(List<RESTUserGroup> userGroup) {
         this.list = userGroup;
     }

@@ -1,9 +1,9 @@
 package it.geosolutions.geostore.rest.security.keycloak;
 
+import static org.junit.Assert.assertNull;
+
 import it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakConfiguration;
 import org.junit.Test;
-
-import static org.junit.Assert.assertNull;
 
 public class KeyCloakConfigurationTest {
 
@@ -12,5 +12,4 @@ public class KeyCloakConfigurationTest {
         KeyCloakConfiguration configuration = new KeyCloakConfiguration();
         assertNull(configuration.readAdapterConfig());
     }
-
 }

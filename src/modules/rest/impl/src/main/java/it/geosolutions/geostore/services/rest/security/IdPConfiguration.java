@@ -21,9 +21,9 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected Role authenticatedDefaultRole;
 
-
     /**
-     * @return true if the filter to which this configuration object refers is enabled. False otherwise.
+     * @return true if the filter to which this configuration object refers is enabled. False
+     *     otherwise.
      */
     public boolean isEnabled() {
         return enabled;
@@ -38,10 +38,9 @@ public abstract class IdPConfiguration implements BeanNameAware {
         this.enabled = enabled;
     }
 
-
     /**
-     * @return true if the logged in user should be created on the db if not present.
-     * False otherwise.
+     * @return true if the logged in user should be created on the db if not present. False
+     *     otherwise.
      */
     public boolean isAutoCreateUser() {
         return autoCreateUser;
@@ -76,7 +75,7 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     /**
      * @return The internal redirect uri: the endpoint to which the client is redirected after the
-     * callback endpoint is invoked.
+     *     callback endpoint is invoked.
      */
     public String getInternalRedirectUri() {
         return internalRedirectUri;
@@ -91,9 +90,7 @@ public abstract class IdPConfiguration implements BeanNameAware {
         this.internalRedirectUri = internalRedirectUri;
     }
 
-    /**
-     * @return the redirect URI.
-     */
+    /** @return the redirect URI. */
     public String getRedirectUri() {
         return redirectUri;
     }
@@ -116,5 +113,4 @@ public abstract class IdPConfiguration implements BeanNameAware {
         if (StringUtils.isNotBlank(authenticatedDefaultRole))
             this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
     }
-
 }
