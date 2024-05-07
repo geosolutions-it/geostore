@@ -118,7 +118,7 @@
         <freemarker.version>2.3.20</freemarker.version>
         <apacheds-all.version>1.5.5</apacheds-all.version>
         <shared-ldap.version>0.9.16</shared-ldap.version>
-        <jetty.version>6.1.14</jetty.version>
+        <jetty.version>6.1.23</jetty.version>
         <jstl.version>1.2</jstl.version>
         <json-lib.version>2.4.2-geoserver</json-lib.version>
         <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
