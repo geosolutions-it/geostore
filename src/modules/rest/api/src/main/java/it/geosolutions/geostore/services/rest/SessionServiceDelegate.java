@@ -43,7 +43,7 @@ public interface SessionServiceDelegate {
     /**
      * Do the logout.
      *
-     * @param accessToken the current session token.
+     * @param sessionId the current session token.
      */
-    void doLogout(String accessToken);
+    void doLogout(String sessionId);
 }

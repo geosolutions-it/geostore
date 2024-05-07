@@ -36,12 +36,11 @@ import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 /**
@@ -49,9 +48,6 @@ import org.springframework.web.context.request.RequestContextHolder;
  * IdPLoginRest};
  */
 public class OpenIdConnectLoginService extends Oauth2LoginService {
-
-    private static final Logger LOGGER =
-            LogManager.getLogger(OpenIdConnectLoginService.class.getName());
 
     public OpenIdConnectLoginService(IdPLoginRest loginRest) {
         loginRest.registerService("oidc", this);
@@ -68,7 +64,10 @@ public class OpenIdConnectLoginService extends Oauth2LoginService {
             HttpServletRequest request, HttpServletResponse response, String provider) {
         String token = getAccessToken();
         String refreshToken = getRefreshAccessToken();
-        if (token == null && SecurityContextHolder.getContext() != null) {
+        RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
+        if (token == null
+                && SecurityContextHolder.getContext() != null
+                && requestAttributes != null) {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null
                     && auth.getDetails() != null
@@ -77,31 +76,28 @@ public class OpenIdConnectLoginService extends Oauth2LoginService {
                 OAuth2AccessToken accessTokenDetails = tokenDetails.getAccessToken();
                 if (accessTokenDetails != null) {
                     token = accessTokenDetails.getValue();
-                    RequestContextHolder.getRequestAttributes()
-                            .setAttribute(ACCESS_TOKEN_PARAM, accessTokenDetails, 0);
-                    RequestContextHolder.getRequestAttributes()
-                            .setAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, token, 0);
+                    requestAttributes.setAttribute(ACCESS_TOKEN_PARAM, accessTokenDetails, 0);
+                    requestAttributes.setAttribute(
+                            OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, token, 0);
                     if (accessTokenDetails.getRefreshToken().getValue() != null) {
                         refreshToken = accessTokenDetails.getRefreshToken().getValue();
-                        RequestContextHolder.getRequestAttributes()
-                                .setAttribute(
-                                        REFRESH_TOKEN_PARAM,
-                                        accessTokenDetails.getRefreshToken().getValue(),
-                                        0);
+                        requestAttributes.setAttribute(
+                                REFRESH_TOKEN_PARAM,
+                                accessTokenDetails.getRefreshToken().getValue(),
+                                0);
                     }
                 }
                 if (tokenDetails.getIdToken() != null) {
-                    RequestContextHolder.getRequestAttributes()
-                            .setAttribute(ID_TOKEN_PARAM, tokenDetails.getIdToken(), 0);
-                    RequestContextHolder.getRequestAttributes()
-                            .setAttribute(
-                                    OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE,
-                                    tokenDetails.getIdToken(),
-                                    0);
+                    requestAttributes.setAttribute(ID_TOKEN_PARAM, tokenDetails.getIdToken(), 0);
+                    requestAttributes.setAttribute(
+                            OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE,
+                            tokenDetails.getIdToken(),
+                            0);
                 }
             }
         }
-        RequestContextHolder.getRequestAttributes().setAttribute(PROVIDER_KEY, provider, 0);
+        assert requestAttributes != null;
+        requestAttributes.setAttribute(PROVIDER_KEY, provider, 0);
         return buildCallbackResponse(token, refreshToken, provider);
     }
 }

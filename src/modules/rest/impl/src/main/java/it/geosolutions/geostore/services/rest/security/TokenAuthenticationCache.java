@@ -91,7 +91,8 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
                         (OAuth2Configuration) context.getBean(tokenDetails.getProvider());
                 if (expiring.getExpiration().after(new Date())) {
                     OAuth2Configuration.Endpoint revokeEndpoint =
-                            configuration.buildRevokeEndpoint(expiring.getValue());
+                            configuration.buildRevokeEndpoint(
+                                    expiring.getValue(), accessToken.getValue(), configuration);
                     if (revokeEndpoint != null) {
                         RestTemplate template = new RestTemplate();
                         ResponseEntity<String> responseEntity =
@@ -102,8 +103,8 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
                                         String.class);
                         if (responseEntity.getStatusCode().value() != 200) {
                             LOGGER.error(
-                                    "Error while revoking authorization. Error is: "
-                                            + responseEntity.getBody());
+                                    "Error while revoking authorization. Error is: {}",
+                                    responseEntity.getBody());
                         }
                     }
                 }
@@ -123,7 +124,7 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
 
     /**
      * Put an Authentication instance identified by an accessToken value. If the passed
-     * Authentication instance those not have a refresh token and we have an old one that has, the
+     * Authentication instance does not have a refresh token, and we have an old one that has, the
      * refresh Token is set to the new instance.
      *
      * @param accessToken the access token identifying the instance to update

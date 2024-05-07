@@ -30,6 +30,8 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import java.util.Collections;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -104,19 +106,30 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
      * @return the logout endpoint.
      */
     @Override
-    public Endpoint buildLogoutEndpoint(String token) {
+    public Endpoint buildLogoutEndpoint(
+            String token, String accessToken, OAuth2Configuration configuration) {
         Endpoint result = null;
         String uri = getLogoutUri();
-        String idToken = OAuth2Utils.getIdToken();
+        String idToken = OAuth2Utils.getIdToken() != null ? OAuth2Utils.getIdToken() : accessToken;
         if (uri != null) {
+            HttpHeaders headers = new HttpHeaders();
+
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            if (idToken != null) params.put("id_token_hint", Collections.singletonList(idToken));
+            if (idToken != null) {
+                params.put("token_type_hint", Collections.singletonList("id_token"));
+                headers.set("Authorization", "Bearer " + idToken);
+            }
             if (StringUtils.hasText(getPostLogoutRedirectUri()))
                 params.put(
                         "post_logout_redirect_uri",
                         Collections.singletonList(getPostLogoutRedirectUri()));
-            params.put("token", Collections.singletonList(token));
+            getLogoutRequestParams(token, clientId, params);
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity =
+                    new HttpEntity<>(null, headers);
+
             result = new Endpoint(HttpMethod.GET, appendParameters(params, uri));
+            result.setRequestEntity(requestEntity);
         }
         return result;
     }

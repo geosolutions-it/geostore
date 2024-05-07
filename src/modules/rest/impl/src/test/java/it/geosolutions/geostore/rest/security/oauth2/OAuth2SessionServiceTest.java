@@ -29,8 +29,7 @@ package it.geosolutions.geostore.rest.security.oauth2;
 
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 import it.geosolutions.geostore.services.rest.RESTSessionService;
@@ -69,6 +68,7 @@ public class OAuth2SessionServiceTest {
     public void testLogout() {
         GoogleOAuth2Configuration configuration = new GoogleOAuth2Configuration();
         configuration.setIdTokenUri("https://www.googleapis.com/oauth2/v3/certs");
+        configuration.setRevokeEndpoint("http://google.foo");
         PreAuthenticatedAuthenticationToken authenticationToken =
                 new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
         OAuth2AccessToken accessToken = new DefaultOAuth2AccessToken(ACCESS_TOKEN);
@@ -115,6 +115,7 @@ public class OAuth2SessionServiceTest {
             // start the test
             sessionService.removeSession();
             assertEquals(response.getStatus(), HttpStatus.OK_200);
+            // if the end-session URI is null, the session won't be invalidated
             assertNull(SecurityContextHolder.getContext().getAuthentication());
             assertNull(request.getUserPrincipal());
         }

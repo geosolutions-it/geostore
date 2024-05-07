@@ -32,7 +32,10 @@ import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -331,20 +334,44 @@ public class OAuth2Configuration extends IdPConfiguration {
         return builder.build().toUriString();
     }
 
+    protected static void getLogoutRequestParams(
+            String token, String clientId, MultiValueMap<String, String> params) {
+        params.put("token", Collections.singletonList(token));
+        if (clientId != null && !clientId.isEmpty()) {
+            params.put("client_id", Collections.singletonList(clientId));
+        }
+    }
+
     /**
      * Build the revoke endpoint.
      *
      * @param token the access_token to revoke.
      * @return the revoke endpoint.
      */
-    public Endpoint buildRevokeEndpoint(String token) {
+    public Endpoint buildRevokeEndpoint(
+            String token, String accessToken, OAuth2Configuration configuration) {
         Endpoint result = null;
         if (revokeEndpoint != null) {
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.put("token", Collections.singletonList(token));
-            result = new Endpoint(HttpMethod.POST, appendParameters(params, revokeEndpoint));
+            HttpHeaders headers = getHttpHeaders(accessToken, configuration);
+
+            MultiValueMap<String, String> bodyParams = new LinkedMultiValueMap<>();
+            bodyParams.add("token", token);
+            bodyParams.add("client_id", clientId);
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity =
+                    new HttpEntity<>(bodyParams, headers);
+
+            result = new Endpoint(HttpMethod.POST, revokeEndpoint);
+            result.setRequestEntity(requestEntity);
         }
         return result;
+    }
+
+    private static HttpHeaders getHttpHeaders(
+            String accessToken, OAuth2Configuration configuration) {
+        HttpHeaders headers = getHeaders(accessToken, configuration);
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        return headers;
     }
 
     /**
@@ -353,14 +380,37 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @param token the current access_token.
      * @return the logout endpoint.
      */
-    public Endpoint buildLogoutEndpoint(String token) {
+    public Endpoint buildLogoutEndpoint(
+            String token, String accessToken, OAuth2Configuration configuration) {
         Endpoint result = null;
         if (logoutUri != null) {
+            HttpHeaders headers = getHeaders(accessToken, configuration);
+
             MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            params.put("token", Collections.singletonList(token));
+            getLogoutRequestParams(token, clientId, params);
+
+            HttpEntity<MultiValueMap<String, String>> requestEntity =
+                    new HttpEntity<>(null, headers);
+
             result = new Endpoint(HttpMethod.GET, appendParameters(params, logoutUri));
+            result.setRequestEntity(requestEntity);
         }
         return result;
+    }
+
+    private static HttpHeaders getHeaders(String accessToken, OAuth2Configuration configuration) {
+        HttpHeaders headers = new HttpHeaders();
+        if (configuration != null
+                && configuration.clientId != null
+                && configuration.clientSecret != null)
+            headers.setBasicAuth(
+                    configuration.clientId,
+                    configuration
+                            .clientSecret); // Set client ID and client secret for authentication
+        else if (accessToken != null) {
+            headers.set("Authorization", "Bearer " + accessToken);
+        }
+        return headers;
     }
 
     /** @return true if redirect to authorization is active always. False otherwise. */
@@ -383,7 +433,7 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the principal key.
      */
     public String getPrincipalKey() {
-        if (principalKey == null || "".equals(principalKey)) return "email";
+        if (principalKey == null || principalKey.isEmpty()) return "email";
         return principalKey;
     }
 
@@ -428,12 +478,14 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.groupsClaim = groupsClaim;
     }
 
-    /** Class the represent and endpoint with a HTTP method. */
+    /** Class the representing and endpoint with a HTTP method. */
     public static class Endpoint {
 
         private String url;
 
         private HttpMethod method;
+
+        private HttpEntity<?> requestEntity;
 
         public Endpoint(HttpMethod method, String url) {
             this.method = method;
@@ -466,6 +518,16 @@ public class OAuth2Configuration extends IdPConfiguration {
          */
         public void setMethod(HttpMethod method) {
             this.method = method;
+        }
+
+        /** @return */
+        public HttpEntity<?> getRequestEntity() {
+            return requestEntity;
+        }
+
+        /** @param requestEntity */
+        public void setRequestEntity(HttpEntity<?> requestEntity) {
+            this.requestEntity = requestEntity;
         }
     }
 }
