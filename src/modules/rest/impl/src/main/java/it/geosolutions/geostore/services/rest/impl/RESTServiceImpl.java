@@ -55,7 +55,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 /**
  * Class RESTServiceImpl.
  *
- * <p>This is the super class for each RESTServices implementation
+ * <p>This is the superclass for each RESTServices implementation
  *
  * @author ETj (etj at geo-solutions.it)
  * @author DamianoG
@@ -95,18 +95,16 @@ public abstract class RESTServiceImpl {
         else {
             Principal principal = sc.getUserPrincipal();
             if (principal == null) {
-                // If I'm here I'm sure that the service is running is allowed for the
+                // If I'm here, I'm sure that the service is running is allowed for the
                 // unauthenticated users
-                // due to service-based authorization step that uses annotations on services
-                // declaration (seee module geostore-rest-api).
+                // due to a service-based authorization step that uses annotations on services
+                // declaration (see module geostore-rest-api).
                 // So I'm going to create a Principal to be used during resources-based
                 // authorization.
                 principal = createGuestPrincipal();
             }
             if (!(principal instanceof Authentication)) {
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Mismatching auth principal");
-                }
+                logMismatchedPrincipal();
                 throw new InternalErrorWebEx(
                         "Mismatching auth principal (" + principal.getClass() + ")");
             }
@@ -143,19 +141,23 @@ public abstract class RESTServiceImpl {
 
                 return user;
             }
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Mismatching auth principal");
-            }
+            logMismatchedPrincipal();
             throw new InternalErrorWebEx("Mismatching auth principal (not a GeoStore User)");
         }
     }
 
+    private static void logMismatchedPrincipal() {
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Mismatching auth principal");
+        }
+    }
+
     /**
-     * This operation is responsible for check if a resource is accessible to an user to perform
-     * WRITE operations (update/delete). this operation must checks first if the user has the right
+     * This operation is responsible for check if a resource is accessible to a user to perform
+     * WRITE operations (update/delete). This operation must check first if the user has the right
      * permissions then, if not, check if its group is allowed.
      *
-     * @param resource
+     * @param resourceId
      * @return boolean
      */
     public boolean resourceAccessWrite(User authUser, long resourceId) {
@@ -169,10 +171,10 @@ public abstract class RESTServiceImpl {
             List<SecurityRule> userSecurityRules =
                     getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
 
-            if (userSecurityRules != null && userSecurityRules.size() > 0) {
+            if (userSecurityRules != null && !userSecurityRules.isEmpty()) {
                 for (SecurityRule sr : userSecurityRules) {
-                    // the getUserSecurityRules returns all rules instead of user rules. So the user
-                    // name check is necessary until problem with DAO is solved
+                    // The getUserSecurityRules returns all rules instead of user rules.
+                    // So the username check is necessary until a problem with DAO is solved
                     if (sr.isCanWrite()
                             && sr.getUser() != null
                             && sr.getUser().getName().equals(authUser.getName())) {
@@ -182,11 +184,11 @@ public abstract class RESTServiceImpl {
             }
 
             List<String> groupNames = extratcGroupNames(authUser.getGroups());
-            if (groupNames != null && groupNames.size() > 0) {
+            if (!groupNames.isEmpty()) {
                 List<SecurityRule> groupSecurityRules =
                         getSecurityService().getGroupSecurityRule(groupNames, resourceId);
 
-                if (groupSecurityRules != null && groupSecurityRules.size() > 0) {
+                if (groupSecurityRules != null && !groupSecurityRules.isEmpty()) {
                     // Check if at least one user group has write permission
                     for (SecurityRule sr : groupSecurityRules) {
                         if (sr.isCanWrite()) {
@@ -201,10 +203,10 @@ public abstract class RESTServiceImpl {
 
     /**
      * This operation is responsible for check if a resource is accessible to an user to perform
-     * READ operations. this operation must checks first if the user has the right permissions then,
+     * READ operations. This operation must check first if the user has the right permissions then,
      * if not, check if its group is allowed.
      *
-     * @param resource
+     * @param resourceId
      * @return boolean
      */
     public boolean resourceAccessRead(User authUser, long resourceId) {
@@ -218,9 +220,9 @@ public abstract class RESTServiceImpl {
             List<SecurityRule> userSecurityRules =
                     getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
 
-            if (userSecurityRules != null && userSecurityRules.size() > 0) {
-                // the getUserSecurityRules returns all rules instead of user rules. So the user
-                // name check is necessary until problem with DAO is solved
+            if (userSecurityRules != null && !userSecurityRules.isEmpty()) {
+                // The getUserSecurityRules returns all rules instead of user rules.
+                // So the username check is necessary until a problem with DAO is solved
                 for (SecurityRule sr : userSecurityRules) {
                     if (sr.isCanRead()
                             && sr.getUser() != null
@@ -231,11 +233,11 @@ public abstract class RESTServiceImpl {
             }
 
             List<String> groupNames = extratcGroupNames(authUser.getGroups());
-            if (groupNames != null && groupNames.size() > 0) {
+            if (!groupNames.isEmpty()) {
                 List<SecurityRule> groupSecurityRules =
                         getSecurityService().getGroupSecurityRule(groupNames, resourceId);
 
-                if (groupSecurityRules != null && groupSecurityRules.size() > 0) {
+                if (groupSecurityRules != null && !groupSecurityRules.isEmpty()) {
                     // Check if at least one user group has read permission
                     for (SecurityRule sr : groupSecurityRules) {
                         if (sr.isCanRead()) {
@@ -271,7 +273,7 @@ public abstract class RESTServiceImpl {
         }
 
         List<String> groupNames = extratcGroupNames(authUser.getGroups());
-        if (groupNames != null && groupNames.size() > 0) {
+        if (!groupNames.isEmpty()) {
             List<SecurityRule> groupSecurityRules =
                     getSecurityService().getGroupSecurityRule(groupNames, resourceId);
 
@@ -318,8 +320,7 @@ public abstract class RESTServiceImpl {
         everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
         groups.add(everyoneGroup);
         guest.setGroups(groups);
-        Principal principal = new UsernamePasswordAuthenticationToken(guest, "", authorities);
-        return principal;
+        return new UsernamePasswordAuthenticationToken(guest, "", authorities);
     }
 
     protected static class ResourceAuth {
