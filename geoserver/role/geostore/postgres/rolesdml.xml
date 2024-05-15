@@ -80,7 +80,7 @@
 
 
   <entry key="grouproles.rolesForGroup">
-	SELECT DISTINCT replace(g.groupname, ' ', '_'),'GEOSTORE' as parent  FROM gs_user u JOIN gs_usergroup_members m ON u.id = m.user_id JOIN  gs_usergroup g on m.group_id = g.id WHERE g.groupname = ? 
+	SELECT DISTINCT replace(g.groupname, ' ', '_'),'GEOSTORE' as parent  FROM gs_usergroup WHERE gs_usergroup.groupname = ? 
   </entry>
   <!-- The group roles don't distinguish between spaces and underscores -->
   <entry key="grouproles.groupsForRole">
