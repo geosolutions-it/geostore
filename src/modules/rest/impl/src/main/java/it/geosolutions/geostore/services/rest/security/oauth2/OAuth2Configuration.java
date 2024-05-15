@@ -58,6 +58,7 @@ public class OAuth2Configuration extends IdPConfiguration {
     protected String authorizationUri;
     protected String checkTokenEndpointUrl;
     protected String logoutUri;
+    protected boolean globalLogoutEnabled = false;
     protected String scopes;
     protected String idTokenUri;
     protected String discoveryUrl;
@@ -122,7 +123,7 @@ public class OAuth2Configuration extends IdPConfiguration {
         if (accessType != null) loginUri.append("&").append("access_type=").append(accessType);
         String finalUrl = loginUri.toString();
         if (LOGGER.isDebugEnabled())
-            LOGGER.info("Going to request authorization to this endpoint " + finalUrl);
+            LOGGER.info("Going to request authorization to this endpoint {}", finalUrl);
         return finalUrl;
     }
 
@@ -237,6 +238,20 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public void setLogoutUri(String logoutUri) {
         this.logoutUri = logoutUri;
+    }
+
+    /** @return */
+    public boolean isGlobalLogoutEnabled() {
+        return globalLogoutEnabled;
+    }
+
+    /**
+     * Set th
+     *
+     * @param globalLogoutEnabled
+     */
+    public void setGlobalLogoutEnabled(boolean globalLogoutEnabled) {
+        this.globalLogoutEnabled = globalLogoutEnabled;
     }
 
     /**

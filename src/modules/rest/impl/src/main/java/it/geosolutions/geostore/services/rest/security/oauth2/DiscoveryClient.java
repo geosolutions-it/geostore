@@ -92,6 +92,7 @@ public class DiscoveryClient {
     public void autofill(OAuth2Configuration conf) {
         if (location != null) {
             Map response = restTemplate.getForObject(this.location, Map.class);
+            assert response != null;
             Optional.ofNullable(response.get(getAuthorizationEndpointAttrName()))
                     .ifPresent(uri -> conf.setAuthorizationUri((String) uri));
             Optional.ofNullable(response.get(getTokenEndpointAttrName()))

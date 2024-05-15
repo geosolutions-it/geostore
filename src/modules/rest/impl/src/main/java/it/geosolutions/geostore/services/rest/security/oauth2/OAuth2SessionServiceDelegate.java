@@ -322,7 +322,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         OAuth2Configuration configuration = configuration();
         if (configuration != null && configuration.isEnabled()) {
             if (token != null && accessToken != null) {
-                doLogoutInternal(token, configuration, accessToken);
+                if (configuration.isGlobalLogoutEnabled())
+                    doLogoutInternal(token, configuration, accessToken);
                 if (configuration.getRevokeEndpoint() != null) clearSession(restTemplate, request);
             } else {
                 if (LOGGER.isDebugEnabled())
