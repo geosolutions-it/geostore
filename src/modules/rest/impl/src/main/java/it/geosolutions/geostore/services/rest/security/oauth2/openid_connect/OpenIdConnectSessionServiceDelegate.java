@@ -27,7 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
-
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
