@@ -39,19 +39,15 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequest;
-import org.springframework.http.converter.FormHttpMessageConverter;
+import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
@@ -64,8 +60,8 @@ import org.springframework.security.web.authentication.preauth.PreAuthenticatedA
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpMessageConverterExtractor;
-import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.RequestContextHolder;
 
 /** Abstract implementation of an OAuth2 SessionServiceDelegate. */
 public abstract class OAuth2SessionServiceDelegate implements SessionServiceDelegate {
@@ -76,7 +72,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     /**
      * @param restSessionService the session service to which register this delegate.
-     * @param delegateName this delegate name eg. google or github etc...
+     * @param delegateName this delegate name eg. google or GitHub etc...
      */
     public OAuth2SessionServiceDelegate(
             RESTSessionService restSessionService, String delegateName, UserService userService) {
@@ -98,12 +94,21 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         Date fiveMinutesFromNow = fiveMinutesFromNow();
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
-        if ((expiresIn == null || fiveMinutesFromNow.after(expiresIn)) && refreshToken != null) {
-            if (LOGGER.isDebugEnabled()) LOGGER.info("Going to refresh the token.");
-            sessionToken = doRefresh(refreshToken, accessToken, configuration);
+        if (configuration != null && configuration.isEnabled()) {
+            if ((expiresIn == null || fiveMinutesFromNow.after(expiresIn))
+                    && refreshToken != null) {
+                if (LOGGER.isDebugEnabled()) LOGGER.info("Going to refresh the token.");
+                try {
+                    sessionToken = doRefresh(refreshToken, accessToken, configuration);
+                    if (sessionToken == null)
+                        sessionToken =
+                                sessionToken(
+                                        accessToken, refreshToken, currentToken.getExpiration());
+                } catch (NullPointerException npe) {
+                    LOGGER.error("Current configuration wasn't correctly initialized.");
+                }
+            }
         }
-        if (sessionToken == null)
-            sessionToken = sessionToken(accessToken, refreshToken, currentToken.getExpiration());
         return sessionToken;
     }
 
@@ -118,30 +123,48 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     protected SessionToken doRefresh(
             String refreshToken, String accessToken, OAuth2Configuration configuration) {
         SessionToken sessionToken = null;
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "refresh_token");
-        form.add("refresh_token", refreshToken);
-        form.add("client_secret", configuration.getClientSecret());
+
         RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        OAuth2AccessToken newToken =
-                restTemplate.execute(
-                        configuration.buildRefreshTokenURI(),
-                        HttpMethod.POST,
-                        new RefreshTokenRequestCallback(form, headers),
-                        tokenExtractor());
+        HttpHeaders headers = getHttpHeaders(accessToken, configuration);
+
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("grant_type", "refresh_token");
+        requestBody.add("refresh_token", refreshToken);
+        requestBody.add("client_secret", configuration.getClientSecret());
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity =
+                new HttpEntity<>(requestBody, headers);
+
+        OAuth2AccessToken newToken = null;
+        try {
+            newToken =
+                    restTemplate
+                            .exchange(
+                                    configuration
+                                            .buildRefreshTokenURI(), // Use exchange method for POST
+                                    // request
+                                    HttpMethod.POST,
+                                    requestEntity, // Include request body
+                                    OAuth2AccessToken.class)
+                            .getBody();
+        } catch (Exception ex) {
+            LOGGER.error("Error trying to obtain a refresh token.", ex);
+        }
+
         if (newToken != null && newToken.getValue() != null) {
-            String refreshed = newToken.getValue();
             // update the Authentication
             updateAuthToken(accessToken, newToken, refreshToken, configuration);
-            sessionToken = sessionToken(refreshed, refreshToken, newToken.getExpiration());
+            sessionToken =
+                    sessionToken(newToken.getValue(), refreshToken, newToken.getExpiration());
+        } else if (accessToken != null) {
+            // update the Authentication
+            sessionToken = sessionToken(accessToken, refreshToken, null);
         } else {
-            // the refresh token was invalid. lets clear the session and send a remote logout.
-            // then redirects to the login entry point.
+            // the refresh token was invalid. let's clear the session and send a remote logout.
+            // then redirect to the login entry point.
             LOGGER.info(
-                    "Unable to refresh the token. The following request was performed: "
-                            + configuration.buildRefreshTokenURI("offline")
-                            + ". Redirecting to login.");
+                    "Unable to refresh the token. The following request was performed: {}. Redirecting to login.",
+                    configuration.buildRefreshTokenURI("offline"));
             doLogout(null);
             try {
                 getResponse()
@@ -157,9 +180,26 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         return sessionToken;
     }
 
+    private static HttpHeaders getHttpHeaders(
+            String accessToken, OAuth2Configuration configuration) {
+        HttpHeaders headers = new HttpHeaders();
+        if (configuration != null
+                && configuration.clientId != null
+                && configuration.clientSecret != null)
+            headers.setBasicAuth(
+                    configuration.clientId,
+                    configuration
+                            .clientSecret); // Set client ID and client secret for authentication
+        else if (accessToken != null) {
+            headers.set("Authorization", "Bearer " + accessToken);
+        }
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED); // Set content type
+        return headers;
+    }
+
     private SessionToken sessionToken(String accessToken, String refreshToken, Date expires) {
         SessionToken sessionToken = new SessionToken();
-        sessionToken.setExpires(Long.valueOf(expires.getTime()));
+        if (expires != null) sessionToken.setExpires(expires.getTime());
         sessionToken.setAccessToken(accessToken);
         sessionToken.setRefreshToken(refreshToken);
         sessionToken.setTokenType("bearer");
@@ -215,40 +255,85 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             result = details.getAccessToken();
         }
         if (result == null) {
-            OAuth2ClientContext context =
-                    GeoStoreContext.bean(OAuth2RestTemplate.class).getOAuth2ClientContext();
-            if (context != null) result = context.getAccessToken();
+            OAuth2RestTemplate oAuth2RestTemplate = restTemplate();
+            if (oAuth2RestTemplate != null) {
+                OAuth2ClientContext context = oAuth2RestTemplate.getOAuth2ClientContext();
+                if (context != null) result = context.getAccessToken();
+            }
         }
         if (result == null) result = new DefaultOAuth2AccessToken(accessToken);
         return result;
     }
 
     @Override
-    public void doLogout(String accessToken) {
+    public void doLogout(String sessionId) {
         HttpServletRequest request = getRequest();
         HttpServletResponse response = getResponse();
         OAuth2RestTemplate restTemplate = restTemplate();
-        if (accessToken == null)
-            accessToken = OAuth2Utils.getParameterValue(ACCESS_TOKEN_PARAM, request);
-        TokenAuthenticationCache cache = cache();
-        Authentication authentication = cache.get(accessToken);
-        OAuth2AccessToken token = null;
-        TokenDetails tokenDetails = getTokenDetails(authentication);
-        if (tokenDetails != null) token = tokenDetails.getAccessToken();
-        cache.removeEntry(accessToken);
-        if (token == null) token = restTemplate.getOAuth2ClientContext().getAccessToken();
-        if (token != null) {
-            OAuth2Configuration configuration = configuration();
-            doLogoutInternal(token, configuration);
-            clearSession(restTemplate, request);
-        } else {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.info("Unable to retrieve access token. Remote logout was not executed.");
+
+        String token = null;
+        String accessToken = null;
+        if (sessionId != null) {
+            TokenAuthenticationCache cache = cache();
+            Authentication authentication = cache.get(sessionId);
+            TokenDetails tokenDetails = getTokenDetails(authentication);
+            if (tokenDetails != null) {
+                token = tokenDetails.getIdToken();
+                accessToken = tokenDetails.getAccessToken().getValue();
+            }
+            cache.removeEntry(sessionId);
         }
-        if (request != null && response != null) clearCookies(request, response);
+
+        if (token == null) {
+            if (restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
+                token =
+                        restTemplate
+                                .getOAuth2ClientContext()
+                                .getAccessToken()
+                                .getRefreshToken()
+                                .getValue();
+            }
+            if (token == null) {
+                token = OAuth2Utils.getParameterValue(REFRESH_TOKEN_PARAM, request);
+            }
+            if (token == null) {
+                token =
+                        (String)
+                                RequestContextHolder.getRequestAttributes()
+                                        .getAttribute(REFRESH_TOKEN_PARAM, 0);
+            }
+        }
+
+        if (accessToken == null) {
+            if (restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
+                accessToken = restTemplate.getOAuth2ClientContext().getAccessToken().getValue();
+            }
+            if (accessToken == null) {
+                accessToken = OAuth2Utils.getParameterValue(ACCESS_TOKEN_PARAM, request);
+            }
+            if (accessToken == null) {
+                accessToken =
+                        (String)
+                                RequestContextHolder.getRequestAttributes()
+                                        .getAttribute(ACCESS_TOKEN_PARAM, 0);
+            }
+        }
+
+        OAuth2Configuration configuration = configuration();
+        if (configuration != null && configuration.isEnabled()) {
+            if (token != null && accessToken != null) {
+                if (configuration.isGlobalLogoutEnabled())
+                    doLogoutInternal(token, configuration, accessToken);
+                if (configuration.getRevokeEndpoint() != null) clearSession(restTemplate, request);
+            } else {
+                if (LOGGER.isDebugEnabled())
+                    LOGGER.info("Unable to retrieve access token. Remote logout was not executed.");
+            }
+            if (response != null) clearCookies(request, response);
+        }
     }
 
-    // clears any state Spring OAuth2 object might preserve.
+    // clears any state a Spring OAuth2 object might preserve.
     private void clearSession(OAuth2RestTemplate restTemplate, HttpServletRequest request) {
         final AccessTokenRequest accessTokenRequest =
                 restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
@@ -274,52 +359,64 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * @param token the access token.
      * @param configuration the OAuth2Configuration
      */
-    protected void doLogoutInternal(OAuth2AccessToken token, OAuth2Configuration configuration) {
-        String tokenValue =
-                token.getRefreshToken() != null
-                        ? token.getRefreshToken().getValue()
-                        : token.getValue();
+    protected void doLogoutInternal(
+            Object token, OAuth2Configuration configuration, String accessToken) {
+        String tokenValue = null;
+        if (token instanceof OAuth2AccessToken) {
+            tokenValue =
+                    ((OAuth2AccessToken) token).getRefreshToken() != null
+                            ? ((OAuth2AccessToken) token).getRefreshToken().getValue()
+                            : ((OAuth2AccessToken) token).getValue();
+        } else if (token instanceof String) {
+            tokenValue = (String) token;
+        }
         if (configuration.getRevokeEndpoint() != null && tokenValue != null) {
             if (LOGGER.isDebugEnabled()) LOGGER.info("Performing remote logout");
-            callRevokeEndpoint(tokenValue, configuration.getRevokeEndpoint());
-            callRemoteLogout(token.getValue(), configuration.getLogoutUri());
+            callRevokeEndpoint(tokenValue, accessToken);
+            callRemoteLogout(tokenValue, accessToken);
         }
     }
 
-    protected void callRevokeEndpoint(String token, String revokeEndpointUrl) {
+    protected void callRevokeEndpoint(String token, String accessToken) {
         OAuth2Configuration configuration = configuration();
-        OAuth2Configuration.Endpoint revokeEndpoint = configuration.buildRevokeEndpoint(token);
-        if (revokeEndpoint != null) {
-            RestTemplate template = new RestTemplate();
-            ResponseEntity<String> responseEntity =
-                    template.exchange(
-                            revokeEndpoint.getUrl(),
-                            revokeEndpoint.getMethod(),
-                            null,
-                            String.class);
-            if (responseEntity.getStatusCode().value() != 200) {
-                LOGGER.error(
-                        "Error while revoking authorization. Error is: "
-                                + responseEntity.getBody());
+        if (configuration != null && configuration.isEnabled()) {
+            OAuth2Configuration.Endpoint revokeEndpoint =
+                    configuration.buildRevokeEndpoint(token, accessToken, configuration);
+            if (revokeEndpoint != null) {
+                RestTemplate template = new RestTemplate();
+                try {
+                    ResponseEntity<String> responseEntity =
+                            template.exchange(
+                                    revokeEndpoint.getUrl(),
+                                    revokeEndpoint.getMethod(),
+                                    revokeEndpoint.getRequestEntity(),
+                                    String.class);
+                    if (responseEntity.getStatusCode().value() != 200) {
+                        logRevokeErrors(responseEntity.getBody());
+                    }
+                } catch (Exception e) {
+                    logRevokeErrors(e);
+                }
             }
         }
     }
 
-    protected void callRemoteLogout(String token, String logoutUri) {
+    protected void callRemoteLogout(String token, String accessToken) {
         OAuth2Configuration configuration = configuration();
-        OAuth2Configuration.Endpoint logoutEndpoint = configuration.buildLogoutEndpoint(token);
-        if (logoutEndpoint != null) {
-            RestTemplate template = new RestTemplate();
-            ResponseEntity<String> responseEntity =
-                    template.exchange(
-                            logoutEndpoint.getUrl(),
-                            logoutEndpoint.getMethod(),
-                            null,
-                            String.class);
-            if (responseEntity.getStatusCode().value() != 200) {
-                LOGGER.error(
-                        "Error while revoking authorization. Error is: "
-                                + responseEntity.getBody());
+        if (configuration != null && configuration.isEnabled()) {
+            OAuth2Configuration.Endpoint logoutEndpoint =
+                    configuration.buildLogoutEndpoint(token, accessToken, configuration);
+            if (logoutEndpoint != null) {
+                RestTemplate template = new RestTemplate();
+                ResponseEntity<String> responseEntity =
+                        template.exchange(
+                                logoutEndpoint.getUrl(),
+                                logoutEndpoint.getMethod(),
+                                logoutEndpoint.getRequestEntity(),
+                                String.class);
+                if (responseEntity.getStatusCode().value() != 200) {
+                    logRevokeErrors(responseEntity.getBody());
+                }
             }
         }
     }
@@ -353,16 +450,20 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      *
      * @return the OAuth2Configuration.
      */
-    protected abstract OAuth2Configuration configuration();
+    protected OAuth2Configuration configuration() {
+        Map<String, OAuth2Configuration> configurations =
+                GeoStoreContext.beans(OAuth2Configuration.class);
+        if (configurations != null) {
+            Optional<OAuth2Configuration> enabledConfig =
+                    configurations.values().stream()
+                            .filter(OAuth2Configuration::isEnabled)
+                            .findFirst();
 
-    /**
-     * Get an OAuth2Configuration by bean name.
-     *
-     * @param configBeanName the bean name.
-     * @return the config bean.
-     */
-    protected OAuth2Configuration configuration(String configBeanName) {
-        return GeoStoreContext.bean(configBeanName, OAuth2Configuration.class);
+            if (enabledConfig.isPresent()) {
+                return enabledConfig.get();
+            }
+        }
+        return null;
     }
 
     protected HttpMessageConverterExtractor<OAuth2AccessToken> tokenExtractor() {
@@ -404,30 +505,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         return null;
     }
 
-    /** A RequestCallback used when performing a refresh token request. */
-    protected class RefreshTokenRequestCallback implements RequestCallback {
-
-        private final MultiValueMap<String, String> form;
-
-        private final HttpHeaders headers;
-
-        private RefreshTokenRequestCallback(
-                MultiValueMap<String, String> form, HttpHeaders headers) {
-            this.form = form;
-            this.headers = headers;
-        }
-
-        public void doWithRequest(ClientHttpRequest request) throws IOException {
-            request.getHeaders().putAll(this.headers);
-            request.getHeaders()
-                    .setAccept(
-                            Arrays.asList(
-                                    MediaType.APPLICATION_JSON,
-                                    MediaType.TEXT_XML,
-                                    MediaType.TEXT_PLAIN,
-                                    MediaType.APPLICATION_FORM_URLENCODED));
-            new FormHttpMessageConverter()
-                    .write(this.form, MediaType.APPLICATION_FORM_URLENCODED, request);
-        }
+    private static void logRevokeErrors(Object cause) {
+        LOGGER.error("Error while revoking authorization. Error is: {}", cause);
     }
 }

@@ -38,8 +38,8 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
     }
 
     @Override
-    public void doLogout(String accessToken) {
-        userSessionService.removeSession(accessToken);
+    public void doLogout(String sessionId) {
+        userSessionService.removeSession(sessionId);
     }
 
     /**

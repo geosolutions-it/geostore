@@ -29,8 +29,7 @@ package it.geosolutions.geostore.rest.security.oauth2;
 
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
 
 import it.geosolutions.geostore.services.rest.RESTSessionService;
@@ -44,6 +43,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessi
 import it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.util.ArrayList;
+import java.util.HashMap;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -68,7 +68,9 @@ public class OAuth2SessionServiceTest {
     @Test
     public void testLogout() {
         GoogleOAuth2Configuration configuration = new GoogleOAuth2Configuration();
+        configuration.setEnabled(true);
         configuration.setIdTokenUri("https://www.googleapis.com/oauth2/v3/certs");
+        configuration.setRevokeEndpoint("http://google.foo");
         PreAuthenticatedAuthenticationToken authenticationToken =
                 new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
         OAuth2AccessToken accessToken = new DefaultOAuth2AccessToken(ACCESS_TOKEN);
@@ -85,7 +87,12 @@ public class OAuth2SessionServiceTest {
                         new DefaultOAuth2ClientContext(),
                         configuration);
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+        HashMap<Object, Object> configurations = new HashMap<>();
+        configurations.put("googleOAuth2Config", configuration);
         try (MockedStatic<GeoStoreContext> utilities = Mockito.mockStatic(GeoStoreContext.class)) {
+            utilities
+                    .when(() -> GeoStoreContext.beans(OAuth2Configuration.class))
+                    .thenReturn(configurations);
             utilities
                     .when(
                             () ->
@@ -115,6 +122,7 @@ public class OAuth2SessionServiceTest {
             // start the test
             sessionService.removeSession();
             assertEquals(response.getStatus(), HttpStatus.OK_200);
+            // if the end-session URI is null, the session won't be invalidated
             assertNull(SecurityContextHolder.getContext().getAuthentication());
             assertNull(request.getUserPrincipal());
         }

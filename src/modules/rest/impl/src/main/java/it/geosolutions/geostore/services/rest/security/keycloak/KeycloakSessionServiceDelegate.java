@@ -135,7 +135,7 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
     }
 
     @Override
-    public void doLogout(String accessToken) {
+    public void doLogout(String sessionId) {
         HttpServletRequest request = OAuth2Utils.getRequest();
         HttpServletResponse response = OAuth2Utils.getResponse();
         KeyCloakHelper helper = GeoStoreContext.bean(KeyCloakHelper.class);
@@ -167,7 +167,7 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
         AdapterTokenStore tokenStore =
                 factory.createAdapterTokenStore(deployment, getRequest(), getResponse());
         if (tokenStore != null) tokenStore.logout();
-        internalLogout(accessToken, request, response);
+        internalLogout(sessionId, request, response);
     }
 
     private void internalLogout(

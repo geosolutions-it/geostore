@@ -27,11 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.google;
 
-import static it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration.CONF_BEAN_NAME;
-
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
-import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
@@ -42,11 +39,6 @@ public class GoogleSessionServiceDelegate extends OAuth2SessionServiceDelegate {
     public GoogleSessionServiceDelegate(
             RESTSessionService restSessionService, UserService userService) {
         super(restSessionService, "google", userService);
-    }
-
-    @Override
-    protected OAuth2Configuration configuration() {
-        return configuration(CONF_BEAN_NAME);
     }
 
     @Override
