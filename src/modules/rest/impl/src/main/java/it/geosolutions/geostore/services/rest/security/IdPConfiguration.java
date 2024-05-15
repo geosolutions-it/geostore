@@ -39,7 +39,7 @@ public abstract class IdPConfiguration implements BeanNameAware {
     }
 
     /**
-     * @return true if the logged in user should be created on the db if not present. False
+     * @return true if the logged-in user should be created on the db if not present. False
      *     otherwise.
      */
     public boolean isAutoCreateUser() {

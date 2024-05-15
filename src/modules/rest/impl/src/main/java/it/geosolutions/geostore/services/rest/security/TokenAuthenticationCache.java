@@ -89,22 +89,24 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
                 ExpiringOAuth2RefreshToken expiring = (ExpiringOAuth2RefreshToken) refreshToken;
                 OAuth2Configuration configuration =
                         (OAuth2Configuration) context.getBean(tokenDetails.getProvider());
-                if (expiring.getExpiration().after(new Date())) {
-                    OAuth2Configuration.Endpoint revokeEndpoint =
-                            configuration.buildRevokeEndpoint(
-                                    expiring.getValue(), accessToken.getValue(), configuration);
-                    if (revokeEndpoint != null) {
-                        RestTemplate template = new RestTemplate();
-                        ResponseEntity<String> responseEntity =
-                                template.exchange(
-                                        revokeEndpoint.getUrl(),
-                                        revokeEndpoint.getMethod(),
-                                        null,
-                                        String.class);
-                        if (responseEntity.getStatusCode().value() != 200) {
-                            LOGGER.error(
-                                    "Error while revoking authorization. Error is: {}",
-                                    responseEntity.getBody());
+                if (configuration != null && configuration.isEnabled()) {
+                    if (expiring.getExpiration().after(new Date())) {
+                        OAuth2Configuration.Endpoint revokeEndpoint =
+                                configuration.buildRevokeEndpoint(
+                                        expiring.getValue(), accessToken.getValue(), configuration);
+                        if (revokeEndpoint != null) {
+                            RestTemplate template = new RestTemplate();
+                            ResponseEntity<String> responseEntity =
+                                    template.exchange(
+                                            revokeEndpoint.getUrl(),
+                                            revokeEndpoint.getMethod(),
+                                            null,
+                                            String.class);
+                            if (responseEntity.getStatusCode().value() != 200) {
+                                LOGGER.error(
+                                        "Error while revoking authorization. Error is: {}",
+                                        responseEntity.getBody());
+                            }
                         }
                     }
                 }

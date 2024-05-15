@@ -1,5 +1,6 @@
 package it.geosolutions.geostore.services.rest.utils;
 
+import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -16,6 +17,16 @@ public class GeoStoreContext implements ApplicationContextAware {
      * <p>This context is used by methods such as {@link #bean(String)}, {@link #bean(Class)}.
      */
     static ApplicationContext context;
+
+    public static <T> Map<String, T> beans(Class<T> clazz) {
+        Map<String, T> result = null;
+        try {
+            if (context != null) result = context.getBeansOfType(clazz);
+        } catch (Exception e) {
+            LOGGER.error("Error while retrieving the bean of type {}", clazz.getSimpleName(), e);
+        }
+        return result;
+    }
 
     public static <T> T bean(Class<T> clazz) {
         T result = null;
