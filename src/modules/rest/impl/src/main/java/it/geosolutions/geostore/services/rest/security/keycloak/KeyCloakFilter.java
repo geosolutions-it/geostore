@@ -29,12 +29,13 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
 import static it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService.KEYCLOAK_REDIRECT;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
-import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.REFRESH_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getResponse;
 
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
 import java.util.Date;
 import javax.servlet.FilterChain;
@@ -48,6 +49,8 @@ import org.apache.logging.log4j.Logger;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.RequestAuthenticator;
 import org.keycloak.adapters.spi.AuthOutcome;
+import org.keycloak.adapters.spi.HttpFacade;
+import org.keycloak.adapters.springsecurity.facade.SimpleHttpFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -160,10 +163,16 @@ public class KeyCloakFilter extends GenericFilterBean {
     protected void updateCache(Authentication authentication) {
         Object details = authentication.getDetails();
         if (details instanceof KeycloakTokenDetails) {
+            KeyCloakHelper helper = GeoStoreContext.bean(KeyCloakHelper.class);
             KeycloakTokenDetails keycloakDetails = (KeycloakTokenDetails) details;
             String accessToken = keycloakDetails.getAccessToken();
             if (accessToken != null) {
                 cache.putCacheEntry(accessToken, authentication);
+                if (helper != null) {
+                    HttpFacade facade = new SimpleHttpFacade(getRequest(), getResponse());
+                    KeycloakDeployment deployment = helper.getDeployment(facade);
+                    KeycloakCookieUtils.setTokenCookie(deployment, facade, keycloakDetails);
+                }
             }
         }
     }
