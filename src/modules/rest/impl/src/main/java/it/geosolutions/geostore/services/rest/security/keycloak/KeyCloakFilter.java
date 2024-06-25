@@ -38,6 +38,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Objects;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
@@ -55,6 +56,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -62,6 +64,7 @@ import org.springframework.web.filter.GenericFilterBean;
  * Keycloak Authentication Filter. Manage the logic to authenticate a user against a keycloak
  * server.
  */
+@SuppressWarnings("PMD.UnusedLocalVariable")
 public class KeyCloakFilter extends GenericFilterBean {
 
     private static final Logger LOGGER = LogManager.getLogger(KeyCloakFilter.class);
@@ -147,8 +150,8 @@ public class KeyCloakFilter extends GenericFilterBean {
             } else {
                 entryPoint = new KeycloakAuthenticationEntryPoint(authenticator.getChallenge());
             }
-            RequestContextHolder.getRequestAttributes()
-                    .setAttribute(KEYCLOAK_REDIRECT, entryPoint, 0);
+            Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                    .setAttribute(KEYCLOAK_REDIRECT, entryPoint, RequestAttributes.SCOPE_REQUEST);
         } else {
             LOGGER.warn("Failed to authentication and to redirect the user.");
         }
