@@ -2,14 +2,12 @@ package it.geosolutions.geostore.rest.security.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
-import java.util.Arrays;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.http.MediaType;
@@ -45,7 +43,6 @@ public class DiscoveryClientTest {
         DiscoveryClient discoveryClient =
                 new DiscoveryClient(authService + "/.well-known/openid-configuration");
         OAuth2Configuration configuration = new OAuth2Configuration();
-        configuration.setScopes("openid,groups");
         discoveryClient.autofill(configuration);
         assertEquals("https://oauth2.googleapis.com/token", configuration.getAccessTokenUri());
         assertEquals(
@@ -56,15 +53,6 @@ public class DiscoveryClientTest {
                 "https://openidconnect.googleapis.com/v1/userinfo",
                 configuration.getCheckTokenEndpointUrl());
         assertEquals("https://www.googleapis.com/oauth2/v3/certs", configuration.getIdTokenUri());
-        // Split the strings into arrays
-        String[] expectedScopes = "openid,groups".split(",");
-        String[] actualScopes = configuration.getScopes().split(",");
-
-        // Sort the arrays
-        Arrays.sort(expectedScopes);
-        Arrays.sort(actualScopes);
-
-        // Compare the sorted arrays
-        assertArrayEquals("The scopes match", expectedScopes, actualScopes);
+        assertEquals("openid,email,profile", configuration.getScopes());
     }
 }
