@@ -45,7 +45,7 @@ class KeycloakCookieUtils {
         String cookie = accessToken + SEPARATOR + idToken + SEPARATOR + refreshToken;
 
         String cookiePath = getCookiePath(deployment, facade);
-        // forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do
+        // Forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do
         // it for us.
         facade.getResponse()
                 .setCookie(
