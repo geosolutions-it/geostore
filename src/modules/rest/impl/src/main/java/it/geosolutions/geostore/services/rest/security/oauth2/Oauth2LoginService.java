@@ -43,11 +43,11 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             HttpServletRequest request, HttpServletResponse response, String provider) {
         String token = getAccessToken();
         String refreshToken = getRefreshAccessToken();
-        return buildCallbackResponse(token, refreshToken, provider);
+        return buildCallbackResponse(response, token, refreshToken, provider);
     }
 
     protected Response.ResponseBuilder getCallbackResponseBuilder(
-            String token, String refreshToken, String provider) {
+            HttpServletResponse response, String token, String refreshToken, String provider) {
         Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
         LOGGER.info("Callback Provider: {}", provider);
@@ -84,7 +84,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                                                 + e.getMessage());
             }
         } else {
-            LOGGER.error("No access token found on callback request.");
+            LOGGER.error("No access token found on callback request: {}", response.getStatus());
             result =
                     Response.status(Response.Status.INTERNAL_SERVER_ERROR)
                             .entity("No access token found.");
@@ -104,8 +104,10 @@ public abstract class Oauth2LoginService implements IdPLoginService {
         return GeoStoreContext.bean(TokenStorage.class);
     }
 
-    protected Response buildCallbackResponse(String token, String refreshToken, String provider) {
-        Response.ResponseBuilder result = getCallbackResponseBuilder(token, refreshToken, provider);
+    protected Response buildCallbackResponse(
+            HttpServletResponse response, String token, String refreshToken, String provider) {
+        Response.ResponseBuilder result =
+                getCallbackResponseBuilder(response, token, refreshToken, provider);
         return result.build();
     }
 

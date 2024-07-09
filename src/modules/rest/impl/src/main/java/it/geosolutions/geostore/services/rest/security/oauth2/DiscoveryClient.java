@@ -108,19 +108,14 @@ public class DiscoveryClient {
                                 s -> {
                                     @SuppressWarnings("unchecked")
                                     List<String> scopes = (List<String>) s;
-
-                                    // Get existing scopes from conf and split into a Set
-                                    Set<String> mergedScopes = new HashSet<>();
-                                    mergedScopes.addAll(Arrays.asList(conf.getScopes().split(",")));
-
-                                    // Add new scopes from the response to the set
-                                    mergedScopes.addAll(scopes);
-
-                                    // Update the configuration with the merged scopes
-                                    conf.setScopes(String.join(",", mergedScopes));
+                                    conf.setScopes(collectScopes(scopes));
                                 });
             }
         }
+    }
+
+    private String collectScopes(List<String> scopes) {
+        return String.join(",", scopes);
     }
 
     protected String getUserinfoEndpointAttrName() {
