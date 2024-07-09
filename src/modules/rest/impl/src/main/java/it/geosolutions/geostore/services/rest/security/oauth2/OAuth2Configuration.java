@@ -30,6 +30,8 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import java.util.Collections;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
@@ -67,6 +69,8 @@ public class OAuth2Configuration extends IdPConfiguration {
     protected String principalKey;
     protected String rolesClaim;
     protected String groupsClaim;
+    protected Map<String, String> roleMappings;
+    protected Map<String, String> groupMappings;
 
     /**
      * Get an authentication entry point instance meant to handle redirect to the authorization
@@ -493,6 +497,22 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.groupsClaim = groupsClaim;
     }
 
+    public Map<String, String> getRoleMappings() {
+        return roleMappings;
+    }
+
+    public void setRoleMappings(String roleMappings) {
+        this.roleMappings = toMap(roleMappings);
+    }
+
+    public Map<String, String> getGroupMappings() {
+        return groupMappings;
+    }
+
+    public void setGroupMappings(String groupMappings) {
+        this.groupMappings = toMap(groupMappings);
+    }
+
     /** Class the representing and endpoint with a HTTP method. */
     public static class Endpoint {
 
@@ -544,5 +564,18 @@ public class OAuth2Configuration extends IdPConfiguration {
         public void setRequestEntity(HttpEntity<?> requestEntity) {
             this.requestEntity = requestEntity;
         }
+    }
+
+    private Map<String, String> toMap(String mappings) {
+        if (mappings != null) {
+            String[] keyValues = mappings.split(",");
+            Map<String, String> map = new AuthoritiesMappings(keyValues.length);
+            for (String keyValue : keyValues) {
+                String[] keyValueAr = keyValue.split(":");
+                map.put(keyValueAr[0], keyValueAr[1]);
+            }
+            return map;
+        }
+        return null;
     }
 }

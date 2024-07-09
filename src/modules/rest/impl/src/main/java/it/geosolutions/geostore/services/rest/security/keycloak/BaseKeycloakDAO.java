@@ -93,7 +93,7 @@ public abstract class BaseKeycloakDAO {
     /**
      * Get an authorities mapper instance.
      *
-     * @return the authorities mapper.
+     * @return the authorities' mapper.
      */
     protected GeoStoreKeycloakAuthoritiesMapper getAuthoritiesMapper() {
         KeyCloakConfiguration configuration = GeoStoreContext.bean(KeyCloakConfiguration.class);

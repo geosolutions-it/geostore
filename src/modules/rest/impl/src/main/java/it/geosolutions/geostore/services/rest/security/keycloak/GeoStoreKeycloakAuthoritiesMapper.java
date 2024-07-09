@@ -82,8 +82,8 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         }
         String finalDefRoleStr = defRoleStr;
         if (defRoleStr != null
-                && !mapped.stream()
-                        .anyMatch(ga -> ga.getAuthority().equalsIgnoreCase(finalDefRoleStr))) {
+                && mapped.stream()
+                        .noneMatch(ga -> ga.getAuthority().equalsIgnoreCase(finalDefRoleStr))) {
             GrantedAuthority ga = new SimpleGrantedAuthority(defRoleStr);
             mapped.add(ga);
         }
@@ -185,7 +185,7 @@ public class GeoStoreKeycloakAuthoritiesMapper implements GrantedAuthoritiesMapp
         if (this.groups == null) this.groups = new HashSet<>();
         UserGroup userGroup = new UserGroup();
         userGroup.setGroupName(groupName);
-        userGroup.setId(Long.valueOf(idCounter));
+        userGroup.setId((long) idCounter);
         idCounter++;
         userGroup.setEnabled(true);
         this.groups.add(userGroup);

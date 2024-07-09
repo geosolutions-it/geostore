@@ -27,8 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.keycloak;
 
-import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
-import java.util.Map;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
@@ -36,17 +35,13 @@ import org.keycloak.enums.TokenStore;
 import org.keycloak.representations.adapters.config.AdapterConfig;
 
 /** KeyCloak Configuration. */
-public class KeyCloakConfiguration extends IdPConfiguration {
+public class KeyCloakConfiguration extends OAuth2Configuration {
 
     private String jsonConfig;
 
     private AdapterConfig config;
 
     private Boolean forceConfiguredRedirectURI;
-
-    private Map<String, String> roleMappings;
-
-    private Map<String, String> groupMappings;
 
     private boolean dropUnmapped = false;
 
@@ -67,35 +62,6 @@ public class KeyCloakConfiguration extends IdPConfiguration {
                     KeycloakDeploymentBuilder.loadAdapterConfig(
                             IOUtils.toInputStream(getJsonConfig()));
         }
-    }
-
-    private Map<String, String> toMap(String mappings) {
-        if (mappings != null) {
-            String[] keyValues = mappings.split(",");
-            Map<String, String> map = new AuthoritiesMappings(keyValues.length);
-            for (String keyValue : keyValues) {
-                String[] keyValueAr = keyValue.split(":");
-                map.put(keyValueAr[0], keyValueAr[1]);
-            }
-            return map;
-        }
-        return null;
-    }
-
-    public Map<String, String> getRoleMappings() {
-        return roleMappings;
-    }
-
-    public void setRoleMappings(String roleMappings) {
-        this.roleMappings = toMap(roleMappings);
-    }
-
-    public Map<String, String> getGroupMappings() {
-        return groupMappings;
-    }
-
-    public void setGroupMappings(String groupMappings) {
-        this.groupMappings = toMap(groupMappings);
     }
 
     public boolean isDropUnmapped() {

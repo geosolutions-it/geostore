@@ -25,11 +25,11 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-package it.geosolutions.geostore.services.rest.security.keycloak;
+package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import java.util.HashMap;
 
-/** Case insensitive map for RoleMappings used by Keycloak classes. */
+/** Case-insensitive map for RoleMappings used by Keycloak classes. */
 class AuthoritiesMappings extends HashMap<String, String> {
 
     AuthoritiesMappings(int initialCapacity) {
