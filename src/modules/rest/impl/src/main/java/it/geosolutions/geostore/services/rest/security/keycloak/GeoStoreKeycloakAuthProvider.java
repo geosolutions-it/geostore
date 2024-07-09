@@ -88,8 +88,8 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
     }
 
     @Override
-    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-
+    public Authentication authenticate(Authentication authentication)
+            throws AuthenticationException {
         KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) authentication;
         OidcKeycloakAccount account = token.getAccount();
         KeycloakSecurityContext context = account.getKeycloakSecurityContext();
@@ -130,7 +130,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         User user = retrieveUser(username, "", grantedAuthoritiesMapper,keycloakGroups);
         addEveryOne(user.getGroups());
         if (user.getRole() == null) {
-            // no role get the one configured to be default for authenticated users.
+            // no role gets the one configured to be default for authenticated users.
             Role defRole = configuration.getAuthenticatedDefaultRole();
             user.setRole(defRole);
         }
