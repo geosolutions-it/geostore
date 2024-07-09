@@ -51,8 +51,18 @@ class KeycloakCookieUtils {
                 .append(refreshToken).toString();
 
         String cookiePath = getCookiePath(deployment, facade);
-        // forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do it for us.
-        facade.getResponse().setCookie(AdapterConstants.KEYCLOAK_ADAPTER_STATE_COOKIE, cookie, cookiePath, null, 0, deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()), true);
+
+        // Forces the expiration of the old keycloak cookie after refresh token. Keycloak doesn't do
+        // it for us.
+        facade.getResponse()
+                .setCookie(
+                        AdapterConstants.KEYCLOAK_ADAPTER_STATE_COOKIE,
+                        cookie,
+                        cookiePath,
+                        null,
+                        0,
+                        deployment.getSslRequired().isRequired(facade.getRequest().getRemoteAddr()),
+                        true);
     }
 
     static String getCookiePath(KeycloakDeployment deployment, HttpFacade facade) {
