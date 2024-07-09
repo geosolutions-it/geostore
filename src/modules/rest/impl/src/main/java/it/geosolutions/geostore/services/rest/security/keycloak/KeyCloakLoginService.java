@@ -30,26 +30,26 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.oauth2.Oauth2LoginService;
 
+import java.io.IOException;
+import java.util.Objects;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
-import java.io.IOException;
-
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getAccessToken;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.getRefreshAccessToken;
 
 /**
- * Keycloak implementation for a LoginService.
- * Since keycloak redirects to the url from which the call to the authorization page was issued
- * no internal redirect is really performed here.
+ * Keycloak implementation for a LoginService. Since keycloak redirects to the url from which the
+ * call to the authorization page was issued, no internal redirect is really performed here.
  */
 public class KeyCloakLoginService extends Oauth2LoginService {
 
@@ -64,16 +64,25 @@ public class KeyCloakLoginService extends Oauth2LoginService {
 
     @Override
     public void doLogin(HttpServletRequest request, HttpServletResponse response, String provider) {
-        AuthenticationEntryPoint challenge = (AuthenticationEntryPoint) RequestContextHolder.getRequestAttributes()
-                .getAttribute(KEYCLOAK_REDIRECT, 0);
-        if (challenge != null) {
+        KeycloakTokenDetails details = getDetails();
+        boolean attempInternalRedirect = (details != null && details.getAccessToken() != null);
+
+        AuthenticationEntryPoint challenge =
+                (AuthenticationEntryPoint)
+                        Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                .getAttribute(KEYCLOAK_REDIRECT, RequestAttributes.SCOPE_REQUEST);
+        if (challenge == null) attempInternalRedirect = true;
+        else if (!attempInternalRedirect) {
             try {
                 challenge.commence(request, response, null);
+                attempInternalRedirect = false;
             } catch (Exception e) {
                 LOGGER.error("Error while redirecting to Keycloak authorization.", e);
                 throw new RuntimeException(e);
             }
-        } else {
+        }
+
+        if (attempInternalRedirect) {
             try {
                 response.sendRedirect(configuration(provider).getInternalRedirectUri());
             } catch (IOException e) {
