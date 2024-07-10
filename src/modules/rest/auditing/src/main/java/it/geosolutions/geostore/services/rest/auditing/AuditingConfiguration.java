@@ -27,16 +27,16 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 final class AuditingConfiguration {
 
-    private static final Logger LOGGER = Logger.getLogger(AuditingConfiguration.class);
+    private static final Logger LOGGER = LogManager.getLogger(AuditingConfiguration.class);
 
     static final String CONFIGURATION_PATH = "GEOSTORE_AUDITING_CONF";
 
@@ -112,7 +112,8 @@ final class AuditingConfiguration {
         long candidateConfigurationFileChecksum = checksum(candidateConfigurationFile);
         if (configurationFile.compareTo(candidateConfigurationFile) != 0
                 || configurationFileChecksum != candidateConfigurationFileChecksum) {
-            return new AuditingConfiguration(candidateConfigurationFile, candidateConfigurationFileChecksum);
+            return new AuditingConfiguration(
+                    candidateConfigurationFile, candidateConfigurationFileChecksum);
         }
         return null;
     }
@@ -121,7 +122,8 @@ final class AuditingConfiguration {
         try {
             return FileUtils.checksumCRC32(file);
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error computing checksum of file '%s'.", file.getPath());
+            throw new AuditingException(
+                    exception, "Error computing checksum of file '%s'.", file.getPath());
         }
     }
 
@@ -136,20 +138,22 @@ final class AuditingConfiguration {
         }
         File configurationFile = new File(configurationFilePath);
         if (!configurationFile.exists()) {
-            throw new AuditingException("Configuration file '%s' does not exists.", configurationFile.getPath());
+            throw new AuditingException(
+                    "Configuration file '%s' does not exists.", configurationFile.getPath());
         }
         return configurationFile;
     }
 
     private Properties readProperties() {
-        try {
-            FileInputStream input = new FileInputStream(configurationFile);
+        try (FileInputStream input = new FileInputStream(configurationFile)) {
             Properties properties = new Properties();
             properties.load(input);
             input.close();
             return properties;
         } catch (Exception exception) {
-            throw new AuditingException(exception, "Error reading properties from configuration file '%s'.",
+            throw new AuditingException(
+                    exception,
+                    "Error reading properties from configuration file '%s'.",
                     configurationFile.getPath());
         }
     }

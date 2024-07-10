@@ -19,23 +19,23 @@
  */
 package it.geosolutions.geostore.core.dao;
 
-import java.util.List;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import java.util.List;
 
 /**
  * Interface SecurityDAO.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
-    /**
-     * Add security filtering in order to filter out resources the user has not read access to
-     */
+    /** Add security filtering in order to filter out resources the user has not read access to */
     void addReadSecurityConstraints(Search searchCriteria, User user);
-    
+
+    /** Add security filtering in order to filter out resources hidden the user */
+    void addAdvertisedSecurityConstraints(Search searchCriteria, User user);
+
     /**
      * @param userName
      * @param resourceId
@@ -44,8 +44,7 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
     public List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
 
     /**
-     *
-     * @param userName
+     * @param groupNames
      * @param resourceId
      * @return
      */

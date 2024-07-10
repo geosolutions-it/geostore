@@ -19,6 +19,14 @@
  */
 package it.geosolutions.geostore.core.dao.ldap.impl;
 
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
+import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
+import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,45 +37,35 @@ import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.support.AbstractContextMapper;
 
-import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.ISearch;
-import it.geosolutions.geostore.core.dao.UserGroupDAO;
-import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
-
 /**
- * Class UserGroupDAOImpl.
- * LDAP (read-only) implementation of UserGroupDAO.
- * Allows fetching UserGroup from an LDAP repository.
- * 
+ * Class UserGroupDAOImpl. LDAP (read-only) implementation of UserGroupDAO. Allows fetching
+ * UserGroup from an LDAP repository.
+ *
  * @author Mauro Bartolomeoli (mauro.bartolomeoli at geo-solutions.it)
  */
-public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
-    
+public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
 
     private boolean addEveryOneGroup = false;
     private String memberAttribute = "member";
     private UserDAOImpl userDAO = null;
-    
+
     public UserGroupDAOImpl(ContextSource contextSource) {
         super(contextSource);
     }
-    
+
     public String getMemberAttribute() {
         return memberAttribute;
     }
 
     /**
-     * LDAP Attribute containing the list of members of a group.
-     * A multi-valued attribute. Each value should identify a user, either through its DN or simple name.
-     * 
+     * LDAP Attribute containing the list of members of a group. A multi-valued attribute. Each
+     * value should identify a user, either through its DN or simple name.
+     *
      * @param memberAttribute
      */
     public void setMemberAttribute(String memberAttribute) {
         this.memberAttribute = memberAttribute;
     }
-
-
 
     public void setUserDAO(UserDAOImpl userDAO) {
         if (this.userDAO == null) {
@@ -82,7 +80,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /**
      * Add everyOne group to search results.
-     * 
+     *
      * @param addEveryOneGroup
      */
     public void setAddEveryOneGroup(boolean addEveryOneGroup) {
@@ -91,7 +89,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
@@ -101,20 +99,17 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
     public List<UserGroup> findAll() {
-        return addEveryOne(
-            ldapSearch(baseFilter, new NullDirContextProcessor()),
-            null
-        );
+        return addEveryOne(ldapSearch(baseFilter, new NullDirContextProcessor(), null), null);
     }
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
      */
     @Override
@@ -124,9 +119,21 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
         return null;
     }
 
+    @Override
+    public UserGroup findByName(String name) {
+        Search searchCriteria = new Search(UserGroup.class);
+        searchCriteria.addFilterEqual(nameAttribute, name);
+        UserGroup result = null;
+        List<UserGroup> existingGroups = search(searchCriteria);
+        if (existingGroups.size() > 0) {
+            result = existingGroups.get(0);
+        }
+        return result;
+    }
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
@@ -141,13 +148,14 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
             filter = getLdapFilter(search, getPropertyMapper());
         }
         return addEveryOne(
-            ldapSearch(combineFilters(baseFilter, filter), getProcessorForSearch(search)),
-            search
-        );
+                ldapSearch(
+                        combineFilters(baseFilter, filter), getProcessorForSearch(search), search),
+                search);
     }
-    
+
     /**
      * Maps group properties to LDAP properties.
+     *
      * @return
      */
     public Map<String, Object> getPropertyMapper() {
@@ -157,41 +165,52 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
         return mapper;
     }
 
-    protected List<UserGroup> ldapSearch(String filter, DirContextProcessor processor) {
+    protected List<UserGroup> ldapSearch(
+            String filter, DirContextProcessor processor, final ISearch search) {
         SearchControls controls = new SearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        return template.search(searchBase, filter, controls, new AbstractContextMapper() {
-            int counter = 1;
-            @Override
-            protected UserGroup doMapFromContext(DirContextOperations ctx) {
-                UserGroup group = new UserGroup();
-                group.setId((long)counter++); // TODO: optionally map an attribute to the id
-                group.setEnabled(true);
-                group.setGroupName(ctx.getStringAttribute(nameAttribute));
-                group.setDescription(ctx.getStringAttribute(descriptionAttribute));
-                // if we bind users to groups through member attribute on groups, we fill the users list here
-                if (!"".equals(memberAttribute) && userDAO != null && ctx.getStringAttributes(memberAttribute) != null) {
-                    for(String member : ctx.getStringAttributes(memberAttribute)) {
-                        group.getUsers().add(userDAO.createMemberUser(member));
+        return template.search(
+                searchBase,
+                filter,
+                controls,
+                new AbstractContextMapper() {
+                    int counter = 1;
+
+                    @Override
+                    protected UserGroup doMapFromContext(DirContextOperations ctx) {
+                        UserGroup group = new UserGroup();
+                        group.setId(
+                                (long) counter++); // TODO: optionally map an attribute to the id
+                        group.setEnabled(true);
+                        group.setGroupName(ctx.getStringAttribute(nameAttribute));
+                        group.setDescription(ctx.getStringAttribute(descriptionAttribute));
+                        // if we bind users to groups through member attribute on groups, we fill
+                        // the users list here
+                        if (!"".equals(memberAttribute) && userDAO != null && loadUsers(search)) {
+                            String[] memberAttrs = ctx.getStringAttributes(memberAttribute);
+                            if (memberAttrs != null && memberAttrs.length > 0) {
+                                for (String member : memberAttrs) {
+                                    group.getUsers().add(userDAO.createMemberUser(member));
+                                }
+                            }
+                        }
+                        return group;
                     }
-                }
-                return group;
-            }
-            
-        }, processor);
+                },
+                processor);
     }
 
     /**
      * Add the everyOne group to the LDAP returned list.
-     * 
+     *
      * @param groups
-     * @param filters
+     * @param search
      * @return
      */
     private List<UserGroup> addEveryOne(List<UserGroup> groups, ISearch search) {
         UserGroup everyoneGroup = new UserGroup();
         everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
-        everyoneGroup.setId((long)(groups.size() + 1));
+        everyoneGroup.setId((long) (groups.size() + 1));
         everyoneGroup.setEnabled(true);
         if (search == null || matchFilters(everyoneGroup, search)) {
             boolean everyoneFound = false;
@@ -209,9 +228,9 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /**
      * Returns true if the group matches the given filters.
-     * 
+     *
      * @param group
-     * @param filters
+     * @param search
      * @return
      */
     protected boolean matchFilters(UserGroup group, ISearch search) {
@@ -221,7 +240,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
@@ -231,7 +250,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -241,7 +260,7 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
@@ -260,4 +279,12 @@ public class UserGroupDAOImpl  extends LdapBaseDAOImpl implements UserGroupDAO {
         return search(search).size();
     }
 
+    protected boolean loadUsers(ISearch search) {
+        if (search instanceof GeoStoreISearchWrapper) {
+            GeoStoreISearchWrapper wrapper = (GeoStoreISearchWrapper) search;
+            Class<?> clazz = wrapper.getCallerContext();
+            if (clazz != null && UserDAO.class.isAssignableFrom(clazz)) return false;
+        }
+        return true;
+    }
 }

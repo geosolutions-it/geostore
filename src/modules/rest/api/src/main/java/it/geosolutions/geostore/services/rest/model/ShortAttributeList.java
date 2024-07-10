@@ -5,7 +5,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -29,47 +29,35 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.services.dto.ShortAttribute;
-
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class ShortAttributeList.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @XmlRootElement(name = "AttributeList")
 public class ShortAttributeList {
 
     private List<ShortAttribute> list;
 
-    public ShortAttributeList() {
+    public ShortAttributeList() {}
 
-    }
-
-    /**
-     * @param list
-     */
+    /** @param list */
     public ShortAttributeList(List<ShortAttribute> list) {
         this.list = list;
     }
 
-    /**
-     * @return List<ShortResource>
-     */
+    /** @return List<ShortResource> */
     @XmlElement(name = "Attribute")
     public List<ShortAttribute> getList() {
         return list;
     }
 
-    /**
-     * @param list
-     */
+    /** @param list */
     public void setList(List<ShortAttribute> list) {
         this.list = list;
     }
-
 }

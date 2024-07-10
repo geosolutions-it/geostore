@@ -19,31 +19,27 @@
  */
 package it.geosolutions.geostore.services;
 
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.StoredData;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.StoredData;
-
 /**
  * Class StoredDataServiceImplTest.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public class StoredDataServiceImplTest extends ServiceTestBase {
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
+    public static void setUpClass() throws Exception {}
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
+    public static void tearDownClass() throws Exception {}
 
-    public StoredDataServiceImplTest() {
-    }
+    public StoredDataServiceImplTest() {}
 
     @Test
     public void testInsertDeleteData() throws Exception {

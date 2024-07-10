@@ -27,7 +27,7 @@
 	<import resource="classpath:META-INF/cxf/cxf.xml" />
 	<!-- import resource="classpath*:META-INF/cxf/cxf-*.xml" / -->
 	<!-- import resource="classpath:META-INF/cxf/cxf-servlet.xml" / -->
-	<import resource="classpath:META-INF/cxf/cxf-extension-jaxrs-binding.xml" />
+	<!--import resource="classpath:META-INF/cxf/cxf-extension-jaxrs-binding.xml" /-->
 	<import resource="classpath:META-INF/cxf/cxf-extension-http-jetty.xml" /> 
 
 	<!-- === SEC ======================================================== -->
@@ -234,7 +234,7 @@
 	<!-- === CXF Providers ================================================== -->
 	<!-- ==================================================================== -->
 	<bean id="jaxbXmlProvider" class="org.apache.cxf.jaxrs.provider.JAXBElementProvider" />
-	<bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.JSONProvider" />
+	<bean id="jsonProvider" class="org.apache.cxf.jaxrs.provider.json.JSONProvider" />
 	<bean id="jaxbContextResolver"
 		class="it.geosolutions.geostore.services.rest.utils.JAXBContextResolver" />
 

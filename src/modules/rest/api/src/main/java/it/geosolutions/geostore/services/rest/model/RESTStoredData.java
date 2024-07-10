@@ -5,7 +5,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -29,14 +29,12 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import java.io.Serializable;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class RESTStoredData.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @XmlRootElement(name = "StoredData")
 public class RESTStoredData implements Serializable {
@@ -49,51 +47,37 @@ public class RESTStoredData implements Serializable {
 
     private String data;
 
-    /**
-     * Instantiates a new instance.
-     */
-    public RESTStoredData() {
+    /** Instantiates a new instance. */
+    public RESTStoredData() {}
 
-    }
-
-    /**
-     * Instantiates a new instance.
-     */
+    /** Instantiates a new instance. */
     public RESTStoredData(String data) {
         this.data = data;
     }
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(long id) {
         this.id = id;
     }
 
-    /**
-     * @return the data
-     */
+    /** @return the data */
     public String getData() {
         return data;
     }
 
-    /**
-     * @param data the data to set
-     */
+    /** @param data the data to set */
     public void setData(String data) {
         this.data = data;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#toString()
      */
     @Override
@@ -103,11 +87,9 @@ public class RESTStoredData implements Serializable {
 
         builder.append("id=").append(id).append(", ");
 
-        if (data != null)
-            builder.append("data=").append(data);
+        if (data != null) builder.append("data=").append(data);
 
         builder.append(']');
         return builder.toString();
     }
-
 }

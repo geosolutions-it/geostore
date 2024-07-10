@@ -30,10 +30,11 @@ package it.geosolutions.geostore.core.model.enums;
 
 /**
  * Enum Role.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public enum Role {
-    ADMIN, USER, GUEST
+    ADMIN,
+    USER,
+    GUEST
 }

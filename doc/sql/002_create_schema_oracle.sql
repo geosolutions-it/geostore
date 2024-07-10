@@ -26,6 +26,9 @@
         metadata varchar2(4000 char),
         name varchar2(255 char) not null,
         category_id number(19,0) not null,
+        creator varchar2(255 char),
+        editor varchar2(255 char),
+        advertised bool not null default true,
         primary key (id),
         unique (name)
     );
@@ -70,6 +73,14 @@
         user_id number(19,0) not null,
         primary key (id),
         unique (name, user_id)
+    );
+
+    create table gs_user_group_attribute (
+              id number(19,0) not null,
+              name varchar2(255 char) not null,
+              string varchar2(255 char),
+              userGroup_id number(19,0) not null,
+              primary key (id)
     );
 
     create table gs_usergroup (
@@ -190,6 +201,14 @@
         add constraint fk_uattrib_user 
         foreign key (user_id) 
         references gs_user;
+
+    create index idx_user_group_attr_name on gs_user_group_attribute (name);
+
+    create index idx_user_group_attr_text on gs_user_group_attribute (string);
+
+    create index idx_attr_user_group on gs_user_group_attribute (userGroup_id);
+
+    alter table gs_user_group_attribute add constraint fk_ugattrib_user_group foreign key (userGroup_id) references gs_usergroup;
 
     create index idx_usergroup_name on gs_usergroup (groupName);
 

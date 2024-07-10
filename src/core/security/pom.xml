@@ -18,13 +18,14 @@
  You should have received a copy of the GNU General Public License
  along with this program.  If not, see <http://www.gnu.org/licenses />.
  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-     <parent>
+    <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>1.7-SNAPSHOT</version>
+        <version>2.2-SNAPSHOT</version>
     </parent>
 
     <artifactId>geostore-security</artifactId>
@@ -34,7 +35,7 @@
     <dependencies>
 
         <!-- ================================================================-->
-       	<!-- APACHE COMMONS -->
+        <!-- APACHE COMMONS -->
         <!-- ================================================================-->
         <dependency>
             <groupId>commons-lang</groupId>
@@ -55,25 +56,17 @@
             <artifactId>commons-dbcp</artifactId>
         </dependency>
         <dependency>
-			<groupId>commons-io</groupId>
-			<artifactId>commons-io</artifactId>
-		</dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+        </dependency>
 
 
         <!-- ================================================================-->
         <!-- 4J UTILS -->
         <!-- ================================================================-->
         <dependency>
-            <groupId>dom4j</groupId>
-            <artifactId>dom4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
         </dependency>
 
         <!-- ================================================================-->
@@ -90,28 +83,32 @@
             <artifactId>spring-context</artifactId>
         </dependency>
 
-		<!-- =========================================================== -->
-		<!--     SPRING SECURITY                                         -->
-		<!-- =========================================================== -->
+        <!-- =========================================================== -->
+        <!--     SPRING SECURITY                                         -->
+        <!-- =========================================================== -->
         <!-- for security module and encriptyion -->
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-crypto</artifactId>
-		</dependency>
         <dependency>
-	      <groupId>org.jasypt</groupId>
-	      <artifactId>jasypt</artifactId>
-	   </dependency>
-	   <dependency>
-             <groupId>org.springframework.security</groupId>
-             <artifactId>spring-security-ldap</artifactId>
-       </dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jasypt</groupId>
+            <artifactId>jasypt-acegisecurity</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.acegisecurity</groupId>
+            <artifactId>acegi-security-tiger</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-ldap</artifactId>
+        </dependency>
 
-    <!-- Apache Commons -->
+        <!-- Apache Commons -->
         <dependency>
             <groupId>commons-beanutils</groupId>
             <artifactId>commons-beanutils</artifactId>
@@ -121,25 +118,24 @@
             <groupId>jdom</groupId>
             <artifactId>jdom</artifactId>
         </dependency>
-    <!-- JUnit -->
+        <!-- JUnit -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-    <!-- JSON -->
-    <dependency>
-         <groupId>net.sf.json-lib</groupId>
-         <artifactId>json-lib</artifactId>
-         <version>2.4</version>
-         <classifier>jdk15</classifier>
-     </dependency>
-    <!-- GeoStore modules -->
-    <dependency>
-        <groupId>it.geosolutions.geostore</groupId>
-        <artifactId>geostore-model</artifactId>
-    </dependency>
-    </dependencies>
+        <!-- JSON -->
+        <dependency>
+            <groupId>net.sf.json-lib</groupId>
+            <artifactId>json-lib</artifactId>
+        </dependency>
 
+        <!-- GeoStore modules -->
+        <dependency>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-model</artifactId>
+        </dependency>
+
+    </dependencies>
 
 </project>

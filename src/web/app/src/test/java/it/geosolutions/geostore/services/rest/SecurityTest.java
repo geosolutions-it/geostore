@@ -16,13 +16,11 @@
  */
 package it.geosolutions.geostore.services.rest;
 
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.services.rest.impl.RESTCategoryServiceImpl;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
-
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.rest.impl.RESTCategoryServiceImpl;
-
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.junit.Test;
@@ -31,35 +29,31 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
 
-/**
- * @author Alessio
- * 
- */
+/** @author Alessio */
 public class SecurityTest extends BaseAuthenticationTest {
 
-    private final static String ENDPOINT_ADDRESS = "http://localhost:9000/rest/categories";
+    private static final String ENDPOINT_ADDRESS = "http://localhost:9000/rest/categories";
 
-    private final static String WADL_ADDRESS = ENDPOINT_ADDRESS + "?_wadl&_type=xml";
+    private static final String WADL_ADDRESS = ENDPOINT_ADDRESS + "?_wadl&_type=xml";
 
-    
     private boolean serverStarted = false;
 
     @Override
     protected void setUp() throws Exception {
-        
-        if(!portIsBusy("localhost", 33389) && !portIsBusy("localhost", 9000)) {
+
+        if (!portIsBusy("localhost", 33389) && !portIsBusy("localhost", 9000)) {
             try {
                 super.setUp();
                 serverStarted = true;
-            } catch(Exception e) {
-                
+            } catch (Exception e) {
+
             }
         }
     }
-    
+
     /**
      * Checks if a network host / port is already occupied.
-     * 
+     *
      * @param host
      * @param port
      * @return
@@ -96,7 +90,7 @@ public class SecurityTest extends BaseAuthenticationTest {
 
     @Test
     public void testSuite() {
-        if(serverStarted) {
+        if (serverStarted) {
             springAuthenticationTest();
             webClientAccessTest();
             proxyAccessTest();
@@ -109,30 +103,30 @@ public class SecurityTest extends BaseAuthenticationTest {
         assertNotNull(SecurityContextHolder.getContext());
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
 
-        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
         authentication.getName();
 
         assertEquals("admin", authentication.getCredentials());
 
         Object principal = authentication.getPrincipal();
         assertNotNull(principal);
-        
-        if (principal instanceof User) {
-        	User user = (User) principal;
-        	
-        	assertEquals("admin", user.getName());
-        } else if (principal instanceof LdapUserDetailsImpl) {
-        	LdapUserDetailsImpl userDetails = (LdapUserDetailsImpl) principal;
 
-        	assertEquals("uid=admin,ou=people,dc=geosolutions,dc=it", userDetails.getDn());
+        if (principal instanceof User) {
+            User user = (User) principal;
+
+            assertEquals("admin", user.getName());
+        } else if (principal instanceof LdapUserDetailsImpl) {
+            LdapUserDetailsImpl userDetails = (LdapUserDetailsImpl) principal;
+
+            assertEquals("uid=admin,ou=people,dc=geosolutions,dc=it", userDetails.getDn());
         }
-        
+
         assertEquals(authentication.getAuthorities().size(), 1);
 
         for (GrantedAuthority authority : authentication.getAuthorities()) {
             assertEquals("ROLE_ADMIN", authority.getAuthority());
         }
-
     }
 
     // protected void testHTTPClientAccess() {
@@ -178,8 +172,8 @@ public class SecurityTest extends BaseAuthenticationTest {
 
     protected void proxyAccessTest() {
         doAutoLogin("admin", "admin", null);
-        RESTCategoryServiceImpl client = JAXRSClientFactory.create(ENDPOINT_ADDRESS,
-                RESTCategoryServiceImpl.class);
+        RESTCategoryServiceImpl client =
+                JAXRSClientFactory.create(ENDPOINT_ADDRESS, RESTCategoryServiceImpl.class);
 
         assertNotNull(client);
 

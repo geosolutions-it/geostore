@@ -28,16 +28,17 @@
  */
 package it.geosolutions.geostore.core.model;
 
+import com.sun.xml.bind.CycleRecoverable;
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -45,55 +46,61 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import com.sun.xml.bind.CycleRecoverable;
-
-import javax.xml.bind.annotation.XmlElementWrapper;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Index;
-
 /**
  * Class Resource.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Resource")
-@Table(name = "gs_resource", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
+@Table(
+        name = "gs_resource",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})},
+        indexes = {
+            @Index(name = "idx_resource_name", columnList = "name"),
+            @Index(name = "idx_resource_description", columnList = "description"),
+            @Index(name = "idx_resource_creation", columnList = "creation"),
+            @Index(name = "idx_resource_update", columnList = "lastUpdate"),
+            @Index(name = "idx_resource_metadata", columnList = "metadata"),
+            @Index(name = "idx_resource_advertised", columnList = "advertised"),
+            @Index(name = "idx_resource_category", columnList = "category_id")
+        })
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
 @XmlRootElement(name = "Resource")
 public class Resource implements Serializable, CycleRecoverable {
 
     private static final long serialVersionUID = 4852100679788007328L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
 
     @Column(nullable = false, updatable = true)
-    @Index(name = "idx_resource_name")
     private String name;
 
     @Column(nullable = true, updatable = true, length = 10000)
-    @Index(name = "idx_resource_description")
     private String description;
 
     @Column(nullable = false, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
-    @Index(name = "idx_resource_creation")
     private Date creation;
 
     @Column(nullable = true, updatable = true)
     @Temporal(TemporalType.TIMESTAMP)
-    @Index(name = "idx_resource_update")
     private Date lastUpdate;
 
+    @Column(nullable = true, updatable = true)
+    private String creator;
+
+    @Column(nullable = true, updatable = true)
+    private String editor;
+
+    @Column(nullable = true, updatable = true, columnDefinition = "bool default true")
+    private Boolean advertised = true;
+
     @Column(nullable = true, updatable = true, length = 30000)
-    @Index(name = "idx_resource_metadata")
     private String metadata;
 
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
@@ -103,8 +110,7 @@ public class Resource implements Serializable, CycleRecoverable {
     private StoredData data;
 
     @ManyToOne(optional = false)
-    @Index(name = "idx_resource_category")
-    @ForeignKey(name = "fk_resource_category")
+    // @ForeignKey(name = "fk_resource_category")
     private Category category;
 
     /*
@@ -113,147 +119,137 @@ public class Resource implements Serializable, CycleRecoverable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the description
-     */
+    /** @return the description */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * @param description the description to set
-     */
+    /** @param description the description to set */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /**
-     * @return the creation
-     */
+    /** @return the creation */
     public Date getCreation() {
         return creation;
     }
 
-    /**
-     * @param creation the creation to set
-     */
+    /** @param creation the creation to set */
     public void setCreation(Date creation) {
         this.creation = creation;
     }
 
-    /**
-     * @return the lastUpdate
-     */
+    /** @return the lastUpdate */
     public Date getLastUpdate() {
         return lastUpdate;
     }
 
-    /**
-     * @param lastUpdate the lastUpdate to set
-     */
+    /** @param lastUpdate the lastUpdate to set */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
-    /**
-     * @return the metadata
-     */
+    /** @return the advertised */
+    public Boolean isAdvertised() {
+        return advertised;
+    }
+
+    /** @param advertised the advertised to set */
+    public void setAdvertised(Boolean advertised) {
+        this.advertised = advertised;
+    }
+
+    /** @return the metadata */
     public String getMetadata() {
         return metadata;
     }
 
-    /**
-     * @param metadata the metadata to set
-     */
+    /** @param metadata the metadata to set */
     public void setMetadata(String metadata) {
         this.metadata = metadata;
     }
 
-    /**
-     * @return the attribute
-     */
+    /** @return the attribute */
     @XmlElementWrapper(name = "Attributes")
     public List<Attribute> getAttribute() {
         return attribute;
     }
 
-    /**
-     * @param attribute the attribute to set
-     */
+    /** @param attribute the attribute to set */
     public void setAttribute(List<Attribute> attribute) {
         this.attribute = attribute;
     }
 
-    /**
-     * @return the data
-     */
+    /** @return the data */
     // @XmlTransient
     public StoredData getData() {
         return data;
     }
 
-    /**
-     * @param data the data to set
-     */
+    /** @param data the data to set */
     public void setData(StoredData data) {
         this.data = data;
     }
 
-    /**
-     * @return the category
-     */
+    /** @return the category */
     public Category getCategory() {
         return category;
     }
 
-    /**
-     * @param category the category to set
-     */
+    /** @param category the category to set */
     public void setCategory(Category category) {
         this.category = category;
     }
 
-    /**
-     * @return the security
-     */
+    /** @return the security */
     @XmlTransient
     public List<SecurityRule> getSecurity() {
         return security;
     }
 
-    /**
-     * @param security the security to set
-     */
+    /** @param security the security to set */
     public void setSecurity(List<SecurityRule> security) {
         this.security = security;
+    }
+
+    /** @return the creator username */
+    public String getCreator() {
+        return creator;
+    }
+
+    /** @param creator the creator username */
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    /** @return the editor username */
+    public String getEditor() {
+        return editor;
+    }
+
+    /** @param editor the creator username */
+    public void setEditor(String editor) {
+        this.editor = editor;
     }
 
     /*
@@ -290,17 +286,32 @@ public class Resource implements Serializable, CycleRecoverable {
 
         if (attribute != null) {
             builder.append(", ");
-            builder.append("attribute=").append(attribute.toString());
+            builder.append("attribute=").append(attribute);
         }
 
         if (data != null) {
             builder.append(", ");
-            builder.append("data=").append(data.toString());
+            builder.append("data=").append(data);
         }
 
         if (category != null) {
             builder.append(", ");
-            builder.append("category=").append(category.toString());
+            builder.append("category=").append(category);
+        }
+
+        if (creator != null) {
+            builder.append(", ");
+            builder.append("creator=").append(creator);
+        }
+
+        if (editor != null) {
+            builder.append(", ");
+            builder.append("editor=").append(editor);
+        }
+
+        if (advertised != null) {
+            builder.append(", ");
+            builder.append("advertised=").append(advertised);
         }
 
         builder.append(']');
@@ -325,6 +336,9 @@ public class Resource implements Serializable, CycleRecoverable {
         result = (prime * result) + ((metadata == null) ? 0 : metadata.hashCode());
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result) + ((security == null) ? 0 : security.hashCode());
+        result = (prime * result) + ((creator == null) ? 0 : creator.hashCode());
+        result = (prime * result) + ((editor == null) ? 0 : editor.hashCode());
+        result = (prime * result) + ((advertised == null) ? 0 : advertised.hashCode());
 
         return result;
     }
@@ -394,6 +408,13 @@ public class Resource implements Serializable, CycleRecoverable {
         } else if (!lastUpdate.equals(other.lastUpdate)) {
             return false;
         }
+        if (advertised == null) {
+            if (other.advertised != null) {
+                return false;
+            }
+        } else if (!advertised.equals(other.advertised)) {
+            return false;
+        }
         if (metadata == null) {
             if (other.metadata != null) {
                 return false;
@@ -409,10 +430,18 @@ public class Resource implements Serializable, CycleRecoverable {
             return false;
         }
         if (security == null) {
-            if (other.security != null) {
-                return false;
-            }
+            return other.security == null;
         } else if (!security.equals(other.security)) {
+            return false;
+        }
+        if (creator == null) {
+            return other.creator == null;
+        } else if (!creator.equals(other.creator)) {
+            return false;
+        }
+        if (editor == null) {
+            return other.editor == null;
+        } else if (!editor.equals(other.editor)) {
             return false;
         }
 
@@ -428,10 +457,13 @@ public class Resource implements Serializable, CycleRecoverable {
         r.setCreation(this.creation);
         r.setDescription(this.description);
         r.setLastUpdate(this.lastUpdate);
+        r.setAdvertised(this.advertised);
         r.setMetadata(this.metadata);
         r.setName(this.name);
         r.setAttribute(null);
         r.setData(null);
+        r.setCreator(this.creator);
+        r.setEditor(this.editor);
 
         return r;
     }

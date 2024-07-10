@@ -23,10 +23,10 @@ import it.geosolutions.geostore.core.model.UserGroup;
 
 /**
  * Interface UserGroupDAO.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public interface UserGroupDAO extends RestrictedGenericDAO<UserGroup> {
 
+    UserGroup findByName(String name);
 }

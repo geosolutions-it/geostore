@@ -27,9 +27,17 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Map;
+import javax.servlet.http.HttpServletRequest;
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
@@ -38,23 +46,15 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.security.core.Authentication;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 public final class AuditInfoExtractorTest extends AuditingTestsBase {
 
     private static HttpServletRequest getHttpServletRequest() {
         HttpServletRequest httpServletRequest = Mockito.mock(HttpServletRequest.class);
         Mockito.when(httpServletRequest.getRemoteAddr()).thenReturn("127.0.0.1");
         Mockito.when(httpServletRequest.getRemoteHost()).thenReturn("127.0.0.1");
-        Mockito.when(httpServletRequest.getRemoteUser()).
-                thenReturn("User[id=2, name=admin, group=[UserGroup[id=1, groupName=everyone]], role=ADMIN]");
+        Mockito.when(httpServletRequest.getRemoteUser())
+                .thenReturn(
+                        "User[id=2, name=admin, group=[UserGroup[id=1, groupName=everyone]], role=ADMIN]");
         Mockito.when(httpServletRequest.getServerName()).thenReturn("localhost");
         UserGroup userGroup = Mockito.mock(UserGroup.class);
         Mockito.when(userGroup.getGroupName()).thenReturn("everyone");
@@ -81,7 +81,8 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         Mockito.when(inMessage.get(Message.BASE_PATH)).thenReturn("/geostore/users");
         Mockito.when(inMessage.get(Message.QUERY_STRING)).thenReturn(null);
         HttpServletRequest httpServletRequest = getHttpServletRequest();
-        Mockito.when(inMessage.get(AbstractHTTPDestination.HTTP_REQUEST)).thenReturn(httpServletRequest);
+        Mockito.when(inMessage.get(AbstractHTTPDestination.HTTP_REQUEST))
+                .thenReturn(httpServletRequest);
         InputStream inputStream = getInputStream("body-content");
         Mockito.when(inMessage.getContent(InputStream.class)).thenReturn(inputStream);
         return inMessage;
@@ -90,7 +91,8 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
     private static Message getOutSuccessMessage() {
         Message outSuccessMessage = Mockito.mock(Message.class);
         Mockito.when(outSuccessMessage.get(Message.RESPONSE_CODE)).thenReturn("200");
-        Mockito.when(outSuccessMessage.get(Message.CONTENT_TYPE)).thenReturn("application/octet-stream");
+        Mockito.when(outSuccessMessage.get(Message.CONTENT_TYPE))
+                .thenReturn("application/octet-stream");
         Exchange exchange = Mockito.mock(Exchange.class);
         Mockito.when(exchange.get(AuditInfo.RESPONSE_LENGTH.getKey())).thenReturn(150);
         Mockito.when(outSuccessMessage.getExchange()).thenReturn(exchange);
@@ -99,15 +101,17 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
 
     private static CachedOutputStream getCacheOutputStream() {
         CachedOutputStream outputStream = Mockito.mock(CachedOutputStream.class);
-        Mockito.when(outputStream.size()).thenReturn(100);
+        Mockito.when(outputStream.size()).thenReturn(100L);
         return outputStream;
     }
 
     private static Message getOutFaultMessage() {
         Message outFaultMessage = Mockito.mock(Message.class);
-        Mockito.when(outFaultMessage.getContent(Exception.class)).thenReturn(new Exception("exception-message"));
+        Mockito.when(outFaultMessage.getContent(Exception.class))
+                .thenReturn(new Exception("exception-message"));
         Mockito.when(outFaultMessage.get(Message.RESPONSE_CODE)).thenReturn("500");
-        Mockito.when(outFaultMessage.get(Message.CONTENT_TYPE)).thenReturn("application/octet-stream");
+        Mockito.when(outFaultMessage.get(Message.CONTENT_TYPE))
+                .thenReturn("application/octet-stream");
         CachedOutputStream outputStream = getCacheOutputStream();
         Mockito.when(outFaultMessage.getContent(OutputStream.class)).thenReturn(outputStream);
         return outFaultMessage;
@@ -126,7 +130,9 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         Map<String, String> auditInfo = AuditInfoExtractor.extract(message);
         assertEquals(auditInfo.size(), 18);
         assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
-        assertEquals(auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()), "application/octet-stream");
+        assertEquals(
+                auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()),
+                "application/octet-stream");
         assertEquals(auditInfo.get(AuditInfo.HTTP_METHOD.getKey()), "GET");
         assertEquals(auditInfo.get(AuditInfo.BODY_AS_STRING.getKey()), "body-content");
         assertEquals(auditInfo.get(AuditInfo.USER_ROLE.getKey()), "ADMIN");
@@ -140,10 +146,12 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         assertEquals(auditInfo.get(AuditInfo.PATH.getKey()), "users/user/15");
         assertEquals(auditInfo.get(AuditInfo.USER_NAME.getKey()), "admin");
         assertEquals(auditInfo.get(AuditInfo.REMOTE_ADDR.getKey()), "127.0.0.1");
-        assertEquals(auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
+        assertEquals(
+                auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
                 "User[id=2, name=admin, group=[UserGroup[id=1, groupName=everyone]], role=ADMIN]");
         assertNotNull(auditInfo.get(AuditInfo.END_TIME.getKey()));
-        assertEquals(Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
+        assertEquals(
+                Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
                 Long.parseLong(auditInfo.get(AuditInfo.END_TIME.getKey())) - 1000);
     }
 
@@ -160,7 +168,9 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         Map<String, String> auditInfo = AuditInfoExtractor.extract(message);
         assertEquals(auditInfo.size(), 20);
         assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
-        assertEquals(auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()), "application/octet-stream");
+        assertEquals(
+                auditInfo.get(AuditInfo.RESPONSE_CONTENT_TYPE.getKey()),
+                "application/octet-stream");
         assertEquals(auditInfo.get(AuditInfo.HTTP_METHOD.getKey()), "GET");
         assertEquals(auditInfo.get(AuditInfo.BODY_AS_STRING.getKey()), "body-content");
         assertEquals(auditInfo.get(AuditInfo.USER_ROLE.getKey()), "ADMIN");
@@ -174,12 +184,14 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         assertEquals(auditInfo.get(AuditInfo.PATH.getKey()), "users/user/15");
         assertEquals(auditInfo.get(AuditInfo.USER_NAME.getKey()), "admin");
         assertEquals(auditInfo.get(AuditInfo.REMOTE_ADDR.getKey()), "127.0.0.1");
-        assertEquals(auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
+        assertEquals(
+                auditInfo.get(AuditInfo.REMOTE_USER.getKey()),
                 "User[id=2, name=admin, group=[UserGroup[id=1, groupName=everyone]], role=ADMIN]");
         assertEquals(auditInfo.get(AuditInfo.ERROR_MESSAGE.getKey()), "exception-message");
         assertEquals(auditInfo.get(AuditInfo.FAILED.getKey()), "true");
         assertNotNull(auditInfo.get(AuditInfo.END_TIME.getKey()));
-        assertEquals(Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
+        assertEquals(
+                Long.parseLong(auditInfo.get(AuditInfo.TOTAL_TIME.getKey())),
                 Long.parseLong(auditInfo.get(AuditInfo.END_TIME.getKey())) - 1000);
     }
 }

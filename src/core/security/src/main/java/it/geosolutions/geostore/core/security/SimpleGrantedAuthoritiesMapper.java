@@ -32,20 +32,25 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 /**
- * Map based implementation of GrantedAuthoritiesMapper.
- *  *  
- * @author Mauro Bartolomeoli
+ * Map based implementation of GrantedAuthoritiesMapper. *
  *
+ * @author Mauro Bartolomeoli
  */
 public class SimpleGrantedAuthoritiesMapper implements GrantedAuthoritiesMapper {
 
-    private Map<String, String> mappings = new HashMap<String, String>();
-    
+    private Map<String, String> mappings = new HashMap<>();
+
+    /** Do not consider authorities that do not exist in the mapping */
+    private boolean dropUnmapped = false;
+
+    private static final Log logger = LogFactory.getLog(SimpleGrantedAuthoritiesMapper.class);
+
     public SimpleGrantedAuthoritiesMapper(Map<String, String> mappings) {
         super();
         this.mappings = mappings;
@@ -54,18 +59,35 @@ public class SimpleGrantedAuthoritiesMapper implements GrantedAuthoritiesMapper 
     @Override
     public Collection<? extends GrantedAuthority> mapAuthorities(
             Collection<? extends GrantedAuthority> authorities) {
-        if(mappings.isEmpty()) {
+        if (mappings.isEmpty()) {
             return authorities;
         }
-        List<GrantedAuthority> result = new ArrayList<GrantedAuthority>();
-        for(GrantedAuthority authority : authorities) {
-            if(mappings.containsKey(authority.getAuthority())) {
-                result.add(new GrantedAuthorityImpl(mappings.get(authority.getAuthority())));
+
+        List<GrantedAuthority> result = new ArrayList<>();
+
+        for (GrantedAuthority authority : authorities) {
+            String src = authority.getAuthority();
+            if (mappings.containsKey(src)) {
+                String dst = mappings.get(authority.getAuthority());
+                result.add(new SimpleGrantedAuthority(dst));
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Mapping authority: " + src + " --> " + dst);
+                }
+            } else if (dropUnmapped) {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Dropping unmapped authority: " + src);
+                }
             } else {
                 result.add(authority);
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Adding unmapped authority: " + src);
+                }
             }
         }
         return result;
     }
 
+    public void setDropUnmapped(boolean dropUnmapped) {
+        this.dropUnmapped = dropUnmapped;
+    }
 }

@@ -28,72 +28,64 @@
 package it.geosolutions.geostore.core.security;
 
 import java.util.Map;
-
+import net.sf.json.JSONObject;
 import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
 
-import net.sf.json.JSONObject;
-
-
 /**
  * Maps user attributes for a JSON object.
- * 
- * @author Geo
  *
+ * @author Geo
  */
 public class JSONExpressionUserMapper extends ExpressionUserMapper {
 
-    
     public JSONExpressionUserMapper(Map<String, String> attributeMappings) {
         super(attributeMappings);
-        // property accessor for JSONObject attributes (read only)
-        evaluationContext.addPropertyAccessor(new PropertyAccessor() {
+        // property accessor for JSONObject attributes (read-only)
+        evaluationContext.addPropertyAccessor(
+                new PropertyAccessor() {
 
-            @Override
-            public void write(EvaluationContext ctx, Object target, String name, Object value)
-                    throws AccessException {
+                    @Override
+                    public void write(
+                            EvaluationContext ctx, Object target, String name, Object value)
+                            throws AccessException {}
 
-            }
+                    @Override
+                    public TypedValue read(EvaluationContext ctx, Object target, String name)
+                            throws AccessException {
+                        if (target instanceof JSONObject) {
+                            JSONObject details = (JSONObject) target;
+                            return new TypedValue(details.get(name));
+                        }
+                        return null;
+                    }
 
-            @Override
-            public TypedValue read(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                if (target instanceof JSONObject) {
-                    JSONObject details = (JSONObject) target;
-                    return new TypedValue(details.get(name));
-                }
-                return null;
-            }
+                    @Override
+                    public Class[] getSpecificTargetClasses() {
+                        return new Class[] {JSONObject.class};
+                    }
 
-            @Override
-            public Class[] getSpecificTargetClasses() {
-                return new Class[] { JSONObject.class };
-            }
+                    @Override
+                    public boolean canWrite(EvaluationContext ctx, Object target, String name)
+                            throws AccessException {
+                        return false;
+                    }
 
-            @Override
-            public boolean canWrite(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                return false;
-            }
-
-            @Override
-            public boolean canRead(EvaluationContext ctx, Object target, String name)
-                    throws AccessException {
-                return target instanceof JSONObject;
-            }
-        });
+                    @Override
+                    public boolean canRead(EvaluationContext ctx, Object target, String name)
+                            throws AccessException {
+                        return target instanceof JSONObject;
+                    }
+                });
     }
 
     @Override
     protected Object preProcessDetails(Object details) {
-        if(details instanceof String) {
-            details = JSONObject.fromObject((String)details);
+        if (details instanceof String) {
+            details = JSONObject.fromObject(details);
         }
         return super.preProcessDetails(details);
     }
-
-    
-    
 }

@@ -23,12 +23,11 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * Enum SearchOperator.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 @XmlType
 public enum SearchOperator {
-
     GREATER_THAN_OR_EQUAL_TO,
     GREATER_THAN,
 

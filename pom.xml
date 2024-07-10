@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>it.geosolutions</groupId>
     <artifactId>geostore</artifactId>
-    <version>1.7-SNAPSHOT</version>
+    <version>2.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -63,8 +64,8 @@
     <scm>
         <url>https://github.com/geosolutions-it/geostore</url>
         <connection>scm:git:git@github.com:geosolutions-it/geostore.git</connection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <ciManagement>
         <system>jenkins</system>
@@ -95,10 +96,20 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.0.2</version>
+                <version>3.10.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <encoding>utf8</encoding>
+                    <source>8</source>
+                    <target>8</target>
+                    <debug>true</debug>
+                    <encoding>UTF-8</encoding>
+                    <!--
+                        On the win32 build box the compiler oom's due to the compiler accumulating
+                        too many classes in the permanent generation, similar to GEOT-2462
+                    -->
+                    <fork>true</fork>
+                    <meminitial>128M</meminitial>
+                    <maxmem>1512M</maxmem>
                 </configuration>
             </plugin>
 
@@ -166,6 +177,59 @@
                 </configuration>
             </plugin>
 
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>9.0.9</version>
+                <configuration>
+                    <skip>true</skip>
+                    <!-- <nvdApiKey>******-****-****-****-*********</nvdApiKey> -->
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.coveo</groupId>
+                <artifactId>fmt-maven-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <verbose>false</verbose>
+                    <filesNamePattern>.*\.java</filesNamePattern>
+                    <skip>false</skip>
+                    <style>aosp</style>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.commonjava.maven.plugins</groupId>
+                <artifactId>directory-maven-plugin</artifactId>
+                <version>0.3.1</version>
+                <executions>
+                    <execution>
+                        <id>directories</id>
+                        <goals>
+                            <goal>highest-basedir</goal>
+                        </goals>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <property>geostore.basedir</property>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
 
         <extensions>
@@ -180,7 +244,6 @@
 
     <reporting>
         <plugins>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -192,15 +255,8 @@
                     </links>
                 </configuration>
             </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                <version>2.7</version>
-            </plugin>
         </plugins>
     </reporting>
-
 
     <modules>
         <module>src</module>

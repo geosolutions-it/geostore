@@ -23,10 +23,7 @@ import it.geosolutions.geostore.core.model.Attribute;
 
 /**
  * Interface AttributeDAO. Public interface to define operations on DataType
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
-public interface AttributeDAO extends RestrictedGenericDAO<Attribute> {
-
-}
+public interface AttributeDAO extends RestrictedGenericDAO<Attribute> {}

@@ -22,30 +22,28 @@ package it.geosolutions.geostore.core.dao.impl;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
-
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
-
-import org.apache.log4j.Logger;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class CategoryDAOImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
 public class CategoryDAOImpl extends BaseDAO<Category, Long> implements CategoryDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(CategoryDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(CategoryDAOImpl.class);
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
@@ -59,7 +57,7 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
@@ -69,7 +67,7 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
@@ -80,7 +78,7 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
@@ -90,7 +88,7 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -100,7 +98,7 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
@@ -110,7 +108,7 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.core.dao.CategoryDAO#findUserSecurityRule(java.lang.String, long)
      */
     @Override
@@ -118,10 +116,12 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
         Search searchCriteria = new Search(Category.class);
         searchCriteria.addField("security");
 
-        Filter securityFilter = Filter.some(
-                "security",
-                Filter.and(Filter.equal("category.id", categoryId),
-                        Filter.equal("user.name", userName)));
+        Filter securityFilter =
+                Filter.some(
+                        "security",
+                        Filter.and(
+                                Filter.equal("category.id", categoryId),
+                                Filter.equal("user.name", userName)));
         searchCriteria.addFilter(securityFilter);
 
         return super.search(searchCriteria);
@@ -135,13 +135,14 @@ public class CategoryDAOImpl extends BaseDAO<Category, Long> implements Category
         Search searchCriteria = new Search(Category.class);
         searchCriteria.addField("security");
 
-        Filter securityFilter = Filter.some(
-                "security",
-                Filter.and(Filter.equal("category.id", categoryId),
-                        Filter.equal("user.groups.groupName", userGroups)));
+        Filter securityFilter =
+                Filter.some(
+                        "security",
+                        Filter.and(
+                                Filter.equal("category.id", categoryId),
+                                Filter.equal("user.groups.groupName", userGroups)));
         searchCriteria.addFilter(securityFilter);
 
         return super.search(searchCriteria);
     }
-
 }

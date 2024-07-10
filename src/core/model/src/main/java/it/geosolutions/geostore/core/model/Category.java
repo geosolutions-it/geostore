@@ -30,43 +30,39 @@ package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
 import java.util.List;
-
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Index;
-
 /**
  * Class Category.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
 @Entity(name = "Category")
-@Table(name = "gs_category", uniqueConstraints = { @UniqueConstraint(columnNames = { "name" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
+@Table(
+        name = "gs_category",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})},
+        indexes = {@Index(name = "idx_category_type", columnList = "name")})
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
 @XmlRootElement(name = "Category")
 public class Category implements Serializable {
 
     private static final long serialVersionUID = -6161770040532770363L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
 
     @Column(name = "name", nullable = false, updatable = false)
-    @Index(name = "idx_category_type")
     private String name;
 
     /*
@@ -81,31 +77,23 @@ public class Category implements Serializable {
     // @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     // private List<SecurityRule> security;
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the resource
-     */
+    /** @return the resource */
     @XmlTransient
     public List<Resource> getResource() {
         return resource;
     }
 
-    /**
-     * @param resource the resource to set
-     */
+    /** @param resource the resource to set */
     public void setResource(List<Resource> resource) {
         this.resource = resource;
     }
@@ -125,16 +113,12 @@ public class Category implements Serializable {
     // this.security = security;
     // }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }

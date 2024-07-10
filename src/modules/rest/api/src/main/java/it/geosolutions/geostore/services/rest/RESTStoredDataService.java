@@ -21,7 +21,6 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -35,13 +34,12 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
-
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTStoredDataService.Operations on {@link StoredData StoredData}s.
- * 
+ *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -55,17 +53,20 @@ public interface RESTStoredDataService {
      */
     @PUT
     @Path("/{id}")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.TEXT_PLAIN,
-            MediaType.APPLICATION_JSON })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Consumes({
+        MediaType.APPLICATION_XML,
+        MediaType.TEXT_XML,
+        MediaType.TEXT_PLAIN,
+        MediaType.APPLICATION_JSON
+    })
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
-    long update(@Context SecurityContext sc, @PathParam("id") long id,
-            @Multipart("data") String data) throws NotFoundWebEx;
+    @Secured({"ROLE_USER", "ROLE_ADMIN"})
+    long update(
+            @Context SecurityContext sc, @PathParam("id") long id, @Multipart("data") String data)
+            throws NotFoundWebEx;
 
-    /**
-     * @return StoredDataList
-     */
+    /** @return StoredDataList */
     // @GET
     // @Path("/")
     // @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
@@ -79,7 +80,7 @@ public interface RESTStoredDataService {
     @DELETE
     @Path("/{id}")
     // @RolesAllowed({ "ADMIN", "USER" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN" })
+    @Secured({"ROLE_USER", "ROLE_ADMIN"})
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
@@ -89,20 +90,20 @@ public interface RESTStoredDataService {
      */
     @GET
     @Path("/{id}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
     String get(@Context SecurityContext sc, @Context HttpHeaders headers, @PathParam("id") long id)
             throws NotFoundWebEx;
 
     @GET
     @Path("/{id}/raw")
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     Response getRaw(
-    		@Context SecurityContext sc,
-    		@Context HttpHeaders headers,
-    		@PathParam("id") long id,
-    		@QueryParam("decode") String decodeFormat
-                ) throws NotFoundWebEx;
-
+            @Context SecurityContext sc,
+            @Context HttpHeaders headers,
+            @PathParam("id") long id,
+            @QueryParam("decode") String decodeFormat)
+            throws NotFoundWebEx;
 }

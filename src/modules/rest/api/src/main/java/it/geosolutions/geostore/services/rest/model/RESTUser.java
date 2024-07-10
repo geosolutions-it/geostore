@@ -5,7 +5,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -17,7 +17,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -31,19 +31,16 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class RESTUser.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @XmlRootElement(name = "User")
 public class RESTUser implements Serializable {
@@ -59,20 +56,15 @@ public class RESTUser implements Serializable {
     private Role role;
 
     private List<String> groupsNames;
-    
-    public RESTUser() {
-    }
 
-    /**
-     * @param id
-     */
+    public RESTUser() {}
+
+    /** @param id */
     public RESTUser(Long id) {
         this.id = id;
     }
 
-    /**
-     * @param name
-     */
+    /** @param name */
     public RESTUser(String name) {
         this.name = name;
     }
@@ -88,74 +80,58 @@ public class RESTUser implements Serializable {
         this.name = name;
         this.role = role;
         groupsNames = new ArrayList<String>();
-        if(groups != null){
-            for(UserGroup ug : groups){
-                if(allGroups || GroupReservedNames.isAllowedName(ug.getGroupName())){
+        if (groups != null) {
+            for (UserGroup ug : groups) {
+                if (allGroups || GroupReservedNames.isAllowedName(ug.getGroupName())) {
                     groupsNames.add(ug.getGroupName());
                 }
             }
         }
     }
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the role
-     */
+    /** @return the role */
     public Role getRole() {
         return role;
     }
 
-    /**
-     * @param role the role to set
-     */
+    /** @param role the role to set */
     public void setRole(Role role) {
         this.role = role;
     }
-    
-    /**
-     * @return the groupsNames
-     */
+
+    /** @return the groupsNames */
     public List<String> getGroupsNames() {
         return groupsNames;
     }
 
-    /**
-     * @param groupsNames the groupsNames to set
-     */
+    /** @param groupsNames the groupsNames to set */
     public void setGroupsNames(List<String> groupsNames) {
         this.groupsNames = groupsNames;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#toString()
      */
     @Override
@@ -180,5 +156,4 @@ public class RESTUser implements Serializable {
         builder.append(']');
         return builder.toString();
     }
-
 }

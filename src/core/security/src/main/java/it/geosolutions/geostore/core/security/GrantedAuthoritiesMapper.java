@@ -28,18 +28,16 @@
 package it.geosolutions.geostore.core.security;
 
 import java.util.Collection;
-
 import org.springframework.security.core.GrantedAuthority;
 
 /**
- * Allows mapping authorities fetched from a Populator, following specific rules.
- * Each implementation will implement a different set of mapping rules.
- *  
- * @author Mauro Bartolomeoli
+ * Allows mapping authorities fetched from a Populator, following specific rules. Each
+ * implementation will implement a different set of mapping rules.
  *
+ * @author Mauro Bartolomeoli
  */
 public interface GrantedAuthoritiesMapper {
-    
+
     Collection<? extends GrantedAuthority> mapAuthorities(
             Collection<? extends GrantedAuthority> authorities);
 }

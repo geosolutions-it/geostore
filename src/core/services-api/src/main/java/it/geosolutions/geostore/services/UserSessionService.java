@@ -31,68 +31,66 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.dto.UserSession;
 
 /**
- * Basic interface for a UserSession service.
- * The service should allow registering new sessions, verifying them, removing and automatic expiring.
- * 
+ * Basic interface for a UserSession service. The service should allow registering new sessions,
+ * verifying them, removing and automatic expiring.
+ *
  * @author Mauro Bartolomeoli
  * @author Lorenzo Natali
  */
 public interface UserSessionService {
-	
-	/**
-	 * Gets user data for the given session id (if existing).
-	 * 
-	 * @param sessionId
-	 * @return
-	 */
+
+    /**
+     * Gets user data for the given session id (if existing).
+     *
+     * @param sessionId
+     * @return
+     */
     public User getUserData(String sessionId);
-    
-	/**
-	 * Gets refresh token for a given session id (if existing).
-	 * 
-	 * @param sessionId
-	 * @return
-	 */
+
+    /**
+     * Gets refresh token for a given session id (if existing).
+     *
+     * @param sessionId
+     * @return
+     */
     public String getRefreshToken(String sessionId);
-    
+
     /**
      * Refresh an expiring session by the given interval.
-     * 
+     *
      * @param sessionId
      */
     public UserSession refreshSession(String sessionId, String refreshToken);
-    
+
     /**
      * Register a new session. The session id is given.
-     * 
+     *
      * @param sessionId
      * @param session
      */
     public void registerNewSession(String sessionId, UserSession session);
-    
+
     /**
      * Register a new session. The session id is automatically created and returned.
-     * 
+     *
      * @param session
      * @return the generated session id
      */
     public String registerNewSession(UserSession session);
-    
+
     /**
      * Remove a session, given its id.
+     *
      * @param sessionId
      */
     public void removeSession(String sessionId);
-    
-    
-    /**
-     * Remove all the sessions.
-     */
+
+    /** Remove all the sessions. */
     public void removeAllSessions();
-    
+
     /**
      * Checks that owner is the user bound to the given sessionId.
-     * 
+     *
      * @param sessionId
      * @param owner
      * @return

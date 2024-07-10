@@ -1,18 +1,18 @@
 /*  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
- * 
+ *
  *  GPLv3 + Classpath exception
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -49,30 +49,25 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/**
- * 
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class FilterUnmarshalTest extends TestCase {
 
-    public FilterUnmarshalTest() {
-    }
+    public FilterUnmarshalTest() {}
 
     @BeforeClass
-    public static void setUpClass() throws Exception {
-    }
+    public static void setUpClass() throws Exception {}
 
     @AfterClass
-    public static void tearDownClass() throws Exception {
-    }
+    public static void tearDownClass() throws Exception {}
 
     @Test
     public void testGetContext() throws JDOMException, IOException {
-        SearchFilter searchFilter = new AndFilter(new FieldFilter(BaseField.NAME, "%",
-                SearchOperator.LIKE),
-                new CategoryFilter("theCategoryName", SearchOperator.EQUAL_TO),
-                new AttributeFilter("theLayerName", "layer", DataType.STRING,
-                        SearchOperator.EQUAL_TO));
+        SearchFilter searchFilter =
+                new AndFilter(
+                        new FieldFilter(BaseField.NAME, "%", SearchOperator.LIKE),
+                        new CategoryFilter("theCategoryName", SearchOperator.EQUAL_TO),
+                        new AttributeFilter(
+                                "theLayerName", "layer", DataType.STRING, SearchOperator.EQUAL_TO));
         StringWriter writer = new StringWriter();
         JAXB.marshal(searchFilter, writer);
         String xml = writer.toString();
@@ -97,11 +92,14 @@ public class FilterUnmarshalTest extends TestCase {
         rr.setId(42L);
         rr.setName("TestResource");
         rr.setDescription("This is a sample RESTResource");
+        rr.setAdvertised(true);
         rr.setCreation(new Date());
         rr.setLastUpdate(new Date());
         rr.setCategory(new RESTCategory("TestCategory"));
         rr.setData("Sample data content");
         rr.setMetadata("Sample metadata content");
+        rr.setCreator("User1");
+        rr.setEditor("User2");
 
         List<ShortAttribute> attr = new ArrayList<ShortAttribute>();
         attr.add(new ShortAttribute("attname1", "attvalue1", DataType.STRING));
@@ -139,7 +137,6 @@ public class FilterUnmarshalTest extends TestCase {
         String xml = writer.toString();
 
         System.out.println("Marshalled Backup is " + xml);
-
     }
 
     protected static RESTBackupResource createBKResource(String name, String catName) {
@@ -156,5 +153,4 @@ public class FilterUnmarshalTest extends TestCase {
         rr1.getAttribute().add(new ShortAttribute("att_x_" + name, "test", DataType.STRING));
         return rr1;
     }
-
 }

@@ -21,14 +21,6 @@ package it.geosolutions.geostore.util;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.Map;
-
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.AttributeFilter;
@@ -41,12 +33,18 @@ import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-
-import org.apache.log4j.Logger;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumMap;
+import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class SearchConverter.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
@@ -54,11 +52,11 @@ public class SearchConverter implements FilterVisitor {
 
     private static final Map<SearchOperator, Integer> ops_rest_trg;
 
-    private static final Logger LOGGER = Logger.getLogger(SearchConverter.class);
+    private static final Logger LOGGER = LogManager.getLogger(SearchConverter.class);
 
     static {
-        Map<SearchOperator, Integer> ops = new EnumMap<SearchOperator, Integer>(
-                SearchOperator.class);
+        Map<SearchOperator, Integer> ops =
+                new EnumMap<SearchOperator, Integer>(SearchOperator.class);
         ops.put(SearchOperator.EQUAL_TO, Filter.OP_EQUAL);
         ops.put(SearchOperator.GREATER_THAN_OR_EQUAL_TO, Filter.OP_GREATER_OR_EQUAL);
         ops.put(SearchOperator.GREATER_THAN, Filter.OP_GREATER_THAN);
@@ -78,8 +76,8 @@ public class SearchConverter implements FilterVisitor {
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
-    public static Search convert(SearchFilter filter) throws BadRequestServiceEx,
-            InternalErrorServiceEx {
+    public static Search convert(SearchFilter filter)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
         SearchConverter sc = new SearchConverter();
         filter.accept(sc);
 
@@ -95,8 +93,7 @@ public class SearchConverter implements FilterVisitor {
 
     private Filter trgFilter;
 
-    private SearchConverter() {
-    }
+    private SearchConverter() {}
 
     /*
      * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.AndFilter)
@@ -114,15 +111,17 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     * 
+     *
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
     @Override
     public void visit(AttributeFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
 
-        if ((filter.getType() != null) && (filter.getName() != null)
-                && (filter.getOperator() != null) && (filter.getValue() != null)) {
+        if ((filter.getType() != null)
+                && (filter.getName() != null)
+                && (filter.getOperator() != null)
+                && (filter.getValue() != null)) {
 
             Integer trg_op = ops_rest_trg.get(filter.getOperator());
 
@@ -134,39 +133,43 @@ public class SearchConverter implements FilterVisitor {
             Object value = null;
 
             switch (filter.getType()) {
-            case DATE:
-                fieldValueName = "dateValue";
+                case DATE:
+                    fieldValueName = "dateValue";
 
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
-                try {
-                    value = sdf.parse(filter.getValue());
-                } catch (ParseException e) {
-                    throw new InternalErrorServiceEx("Error parsing attribute date value");
-                }
+                    try {
+                        value = sdf.parse(filter.getValue());
+                    } catch (ParseException e) {
+                        throw new InternalErrorServiceEx("Error parsing attribute date value");
+                    }
 
-                break;
-            case NUMBER:
-                fieldValueName = "numberValue";
+                    break;
+                case NUMBER:
+                    fieldValueName = "numberValue";
 
-                try {
-                    value = Double.valueOf(filter.getValue());
-                } catch (NumberFormatException ex) {
-                    throw new InternalErrorServiceEx("Error parsing attribute number value");
-                }
+                    try {
+                        value = Double.valueOf(filter.getValue());
+                    } catch (NumberFormatException ex) {
+                        throw new InternalErrorServiceEx("Error parsing attribute number value");
+                    }
 
-                break;
-            case STRING:
-                fieldValueName = "textValue";
-                value = filter.getValue();
+                    break;
+                case STRING:
+                    fieldValueName = "textValue";
+                    value = filter.getValue();
 
-                break;
-            default:
-                throw new IllegalStateException("Unknown type " + filter.getType());
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown type " + filter.getType());
             }
 
-            trgFilter = Filter.some("attribute", Filter.and(Filter.equal("name", filter.getName()),
-                    new Filter(fieldValueName, value, trg_op)));
+            trgFilter =
+                    Filter.some(
+                            "attribute",
+                            Filter.and(
+                                    Filter.equal("name", filter.getName()),
+                                    new Filter(fieldValueName, value, trg_op)));
 
         } else {
             throw new BadRequestServiceEx("Bad payload. One or more field are missing");
@@ -175,7 +178,7 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     * 
+     *
      * @throws InternalErrorServiceEx
      */
     @SuppressWarnings("rawtypes")
@@ -218,7 +221,7 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     * 
+     *
      * @throws InternalErrorServiceEx
      */
     @Override

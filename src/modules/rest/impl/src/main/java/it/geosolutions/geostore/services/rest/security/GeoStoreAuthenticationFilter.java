@@ -33,80 +33,72 @@ import it.geosolutions.geostore.core.security.UserMapper;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.GrantedAuthorityImpl;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.filter.GenericFilterBean;
 
 /**
- * Base class for GeoStore authentication filters (based on
- * Spring Security filters).
- * Includes basic functionalities for authentication based on
- * external services, like:
- *  - automatic user creation / enabling
- *  - mapping of attributes on user creation
- * 
- * @author Mauro Bartolomeoli
+ * Base class for GeoStore authentication filters (based on Spring Security filters). Includes basic
+ * functionalities for authentication based on external services, like: - automatic user creation /
+ * enabling - mapping of attributes on user creation
  *
+ * @author Mauro Bartolomeoli
  */
 public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
 
-    private final static Logger LOGGER = Logger.getLogger(GeoStoreAuthenticationFilter.class);
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
-    
-    @Autowired
-    protected UserService userService;
-    
+    private static final Logger LOGGER = LogManager.getLogger(GeoStoreAuthenticationFilter.class);
+    @Autowired protected UserService userService;
+
     private boolean autoCreateUser = false;
 
     private boolean enableAutoCreatedUsers = true;
-    
+
     private UserMapper userMapper;
-    
+
     @Override
     public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
             throws IOException, ServletException {
-        if(req instanceof HttpServletRequest) {
+        if (req instanceof HttpServletRequest) {
             authenticate((HttpServletRequest) req);
         }
         chain.doFilter(req, resp);
     }
-    
 
     protected abstract void authenticate(HttpServletRequest req);
 
     /**
-     * Helper method that creates an Authentication object for the given
-     * userName and raw (service retrieved) user details object.
-     * 
-     * If autoCreateUser is true, creates unexisting users, before returning the
-     * authentication object.
-     * 
+     * Helper method that creates an Authentication object for the given userName and raw (service
+     * retrieved) user details object.
+     *
+     * <p>If autoCreateUser is true, creates unexisting users, before returning the authentication
+     * object.
+     *
      * @param userName
      * @param rawUser
      * @return
      */
-    protected Authentication createAuthenticationForUser(String userName, String credentials, Object rawUser) {
+    protected Authentication createAuthenticationForUser(
+            String userName, String credentials, Object rawUser) {
         User user = null;
         try {
             user = userService.get(userName);
         } catch (NotFoundServiceEx e) {
-            if(autoCreateUser) {
+            if (autoCreateUser) {
                 try {
                     user = createUser(userName, credentials, rawUser);
                 } catch (BadRequestServiceEx e1) {
@@ -117,27 +109,26 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
             } else {
                 LOGGER.error("User not found: " + userName, e);
             }
-            
         }
-        
+
         return createAuthenticationForUser(user);
     }
-    
+
     /**
-     * Creates a new user with the given
-     * userName and raw (service retrieved) user details object.
-     * 
-     * It uses the configured UserMapper to populate user attributes.
-     * 
-     * The user is assigned the USER role and no groups.
-     * 
+     * Creates a new user with the given userName and raw (service retrieved) user details object.
+     *
+     * <p>It uses the configured UserMapper to populate user attributes.
+     *
+     * <p>The user is assigned the USER role and no groups.
+     *
      * @param userName
      * @param rawUser
      * @return
      * @throws BadRequestServiceEx
      * @throws NotFoundServiceEx
      */
-    protected User createUser(String userName, String credentials, Object rawUser) throws BadRequestServiceEx, NotFoundServiceEx {
+    protected User createUser(String userName, String credentials, Object rawUser)
+            throws BadRequestServiceEx, NotFoundServiceEx {
         User user = new User();
 
         user.setName(userName);
@@ -147,7 +138,7 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
         Role role = Role.USER;
         user.setRole(role);
         user.setGroups(Collections.EMPTY_SET);
-        if(userMapper != null) {
+        if (userMapper != null) {
             userMapper.mapUser(rawUser, user);
         }
         if (userService != null) {
@@ -155,11 +146,11 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
         }
         return user;
     }
-        
+
     /**
-     * Helper method that creates an Authentication object for the given user,
-     * populating GrantedAuthority instances.
-     * 
+     * Helper method that creates an Authentication object for the given user, populating
+     * GrantedAuthority instances.
+     *
      * @param user
      * @return
      */
@@ -168,14 +159,14 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
             String role = user.getRole().toString();
 
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-            authorities.add(new GrantedAuthorityImpl("ROLE_" + role));
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
             return new UsernamePasswordAuthenticationToken(user, user.getPassword(), authorities);
         } else {
             LOGGER.error(USER_NOT_FOUND_MSG);
             return null;
         }
     }
-    
+
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
@@ -183,7 +174,7 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
     public void setUserMapper(UserMapper userMapper) {
         this.userMapper = userMapper;
     }
-    
+
     public void setAutoCreateUser(boolean autoCreateUser) {
         this.autoCreateUser = autoCreateUser;
     }
@@ -191,5 +182,4 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
     public void setEnableAutoCreatedUsers(boolean enableAutoCreatedUsers) {
         this.enableAutoCreatedUsers = enableAutoCreatedUsers;
     }
-    
 }

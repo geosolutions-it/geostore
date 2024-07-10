@@ -3,13 +3,12 @@ package it.geosolutions.geostore.core.security;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.springframework.security.core.GrantedAuthority;
 
 public class MockUserDetailsWithAttributes implements UserDetailsWithAttributes {
 
     Map<String, Object> attributes = new HashMap<String, Object>();
-    
+
     public Map<String, Object> getAttributes() {
         return attributes;
     }
@@ -60,5 +59,4 @@ public class MockUserDetailsWithAttributes implements UserDetailsWithAttributes 
     public Object getAttribute(String name) {
         return attributes.get(name);
     }
-
 }

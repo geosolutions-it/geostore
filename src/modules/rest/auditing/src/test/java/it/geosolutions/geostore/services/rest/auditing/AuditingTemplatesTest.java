@@ -27,17 +27,16 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import freemarker.template.TemplateException;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
+import freemarker.template.TemplateException;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 public final class AuditingTemplatesTest extends AuditingTestsBase {
 

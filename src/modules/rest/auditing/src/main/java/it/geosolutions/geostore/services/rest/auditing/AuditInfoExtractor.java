@@ -29,13 +29,6 @@ package it.geosolutions.geostore.services.rest.auditing;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
-import org.apache.cxf.io.CachedOutputStream;
-import org.apache.cxf.message.Message;
-import org.apache.cxf.transport.http.AbstractHTTPDestination;
-import org.apache.log4j.Logger;
-import org.springframework.security.core.Authentication;
-
-import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Principal;
@@ -44,15 +37,21 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.servlet.http.HttpServletRequest;
+import org.apache.cxf.io.CachedOutputStream;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.transport.http.AbstractHTTPDestination;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.security.core.Authentication;
 
 final class AuditInfoExtractor {
 
-    private static final Logger LOGGER = Logger.getLogger(AuditInfoExtractor.class);
+    private static final Logger LOGGER = LogManager.getLogger(AuditInfoExtractor.class);
 
     private static final Pattern geoStorePath = Pattern.compile("/geostore/(.*)");
 
-    private AuditInfoExtractor() {
-    }
+    private AuditInfoExtractor() {}
 
     static Map<String, String> extract(Message message) {
         Map<String, String> auditInfo = new HashMap<String, String>();
@@ -67,13 +66,10 @@ final class AuditInfoExtractor {
         return auditInfo;
     }
 
-    static Integer
-    getResponseLength(Message message) {
-        try {
-            CachedOutputStream outputStream = (CachedOutputStream) message.getContent(OutputStream.class);
-            if (outputStream != null) {
-                return outputStream.size();
-            }
+    static Long getResponseLength(Message message) {
+        try (CachedOutputStream outputStream =
+                (CachedOutputStream) message.getContent(OutputStream.class)) {
+            if (outputStream != null) return outputStream.size();
         } catch (Exception exception) {
             LogUtils.error(LOGGER, exception, "Error obtaining response length.");
         }
@@ -86,19 +82,36 @@ final class AuditInfoExtractor {
             return;
         }
         try {
-            auditInfo.put(AuditInfo.HTTP_METHOD.getKey(), safeToString(message.get(Message.HTTP_REQUEST_METHOD)));
-            auditInfo.put(AuditInfo.PATH.getKey(), removeGeoStore((String) message.get(Message.PATH_INFO)));
-            auditInfo.put(AuditInfo.BASE_PATH.getKey(), removeGeoStore((String) message.get(Message.BASE_PATH)));
-            auditInfo.put(AuditInfo.QUERY_STRING.getKey(), safeToString(message.get(Message.QUERY_STRING)));
-            HttpServletRequest httpServletRequest = (HttpServletRequest) message.get(AbstractHTTPDestination.HTTP_REQUEST);
-            auditInfo.put(AuditInfo.REMOTE_ADDR.getKey(), safeToString(httpServletRequest.getRemoteAddr()));
-            auditInfo.put(AuditInfo.REMOTE_HOST.getKey(), safeToString(httpServletRequest.getRemoteHost()));
-            auditInfo.put(AuditInfo.REMOTE_USER.getKey(), safeToString(httpServletRequest.getRemoteUser()));
-            auditInfo.put(AuditInfo.HOST.getKey(), safeToString(httpServletRequest.getServerName()));
+            auditInfo.put(
+                    AuditInfo.HTTP_METHOD.getKey(),
+                    safeToString(message.get(Message.HTTP_REQUEST_METHOD)));
+            auditInfo.put(
+                    AuditInfo.PATH.getKey(),
+                    removeGeoStore((String) message.get(Message.PATH_INFO)));
+            auditInfo.put(
+                    AuditInfo.BASE_PATH.getKey(),
+                    removeGeoStore((String) message.get(Message.BASE_PATH)));
+            auditInfo.put(
+                    AuditInfo.QUERY_STRING.getKey(),
+                    safeToString(message.get(Message.QUERY_STRING)));
+            HttpServletRequest httpServletRequest =
+                    (HttpServletRequest) message.get(AbstractHTTPDestination.HTTP_REQUEST);
+            auditInfo.put(
+                    AuditInfo.REMOTE_ADDR.getKey(),
+                    safeToString(httpServletRequest.getRemoteAddr()));
+            auditInfo.put(
+                    AuditInfo.REMOTE_HOST.getKey(),
+                    safeToString(httpServletRequest.getRemoteHost()));
+            auditInfo.put(
+                    AuditInfo.REMOTE_USER.getKey(),
+                    safeToString(httpServletRequest.getRemoteUser()));
+            auditInfo.put(
+                    AuditInfo.HOST.getKey(), safeToString(httpServletRequest.getServerName()));
             fillAuthInfo(auditInfo, httpServletRequest);
-            auditInfo.put(AuditInfo.BODY_AS_STRING.getKey(), getPaylod(message));
+            auditInfo.put(AuditInfo.BODY_AS_STRING.getKey(), getPayload(message));
         } catch (Exception exception) {
-            LogUtils.error(LOGGER, exception, "Error obtaining auditing information for input message.");
+            LogUtils.error(
+                    LOGGER, exception, "Error obtaining auditing information for input message.");
         }
     }
 
@@ -106,9 +119,14 @@ final class AuditInfoExtractor {
         if (message == null) {
             return;
         }
-        auditInfo.put(AuditInfo.RESPONSE_STATUS_CODE.getKey(), safeToString(message.get(Message.RESPONSE_CODE)));
-        auditInfo.put(AuditInfo.RESPONSE_CONTENT_TYPE.getKey(), safeToString(message.get(Message.CONTENT_TYPE)));
-        auditInfo.put(AuditInfo.RESPONSE_LENGTH.getKey(),
+        auditInfo.put(
+                AuditInfo.RESPONSE_STATUS_CODE.getKey(),
+                safeToString(message.get(Message.RESPONSE_CODE)));
+        auditInfo.put(
+                AuditInfo.RESPONSE_CONTENT_TYPE.getKey(),
+                safeToString(message.get(Message.CONTENT_TYPE)));
+        auditInfo.put(
+                AuditInfo.RESPONSE_LENGTH.getKey(),
                 safeToString(message.getExchange().get(AuditInfo.RESPONSE_LENGTH.getKey())));
     }
 
@@ -123,9 +141,13 @@ final class AuditInfoExtractor {
         } else {
             auditInfo.put(AuditInfo.ERROR_MESSAGE.getKey(), "");
         }
-        auditInfo.put(AuditInfo.RESPONSE_CONTENT_TYPE.getKey(), safeToString(message.get(Message.CONTENT_TYPE)));
+        auditInfo.put(
+                AuditInfo.RESPONSE_CONTENT_TYPE.getKey(),
+                safeToString(message.get(Message.CONTENT_TYPE)));
         auditInfo.put(AuditInfo.RESPONSE_LENGTH.getKey(), safeToString(getResponseLength(message)));
-        auditInfo.put(AuditInfo.RESPONSE_STATUS_CODE.getKey(), safeToString(safeToString(message.get(Message.RESPONSE_CODE))));
+        auditInfo.put(
+                AuditInfo.RESPONSE_STATUS_CODE.getKey(),
+                safeToString(safeToString(message.get(Message.RESPONSE_CODE))));
     }
 
     private static void handleTime(Map<String, String> auditInfo, Object startTimeObject) {
@@ -146,12 +168,11 @@ final class AuditInfoExtractor {
         return value.toString();
     }
 
-    private static String getPaylod(Message message) {
-        InputStream inputStream = message.getContent(InputStream.class);
-        if (inputStream == null) {
-            return "";
-        }
-        try {
+    private static String getPayload(Message message) {
+        try (InputStream inputStream = message.getContent(InputStream.class)) {
+            if (inputStream == null) {
+                return "";
+            }
             return inputStream.toString();
         } catch (Exception exception) {
             LogUtils.error(LOGGER, exception, "Error reading payload.");
@@ -159,7 +180,8 @@ final class AuditInfoExtractor {
         return "";
     }
 
-    private static void fillAuthInfo(Map<String, String> info, HttpServletRequest httpServletRequest) {
+    private static void fillAuthInfo(
+            Map<String, String> info, HttpServletRequest httpServletRequest) {
         Principal userPrincipal = httpServletRequest.getUserPrincipal();
         String userName = "";
         String userRole = "";

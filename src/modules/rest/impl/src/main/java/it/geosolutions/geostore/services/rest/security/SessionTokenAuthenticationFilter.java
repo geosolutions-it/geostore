@@ -27,94 +27,89 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import org.apache.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 
 /**
  * Token based authentication filter that looks for the token in a user session service.
- * 
- * The attribute name is configurable (defaults to UUID).
- * 
- * @author Lorenzo Natali
  *
+ * <p>The attribute name is configurable (defaults to UUID).
+ *
+ * @author Lorenzo Natali
  */
 public class SessionTokenAuthenticationFilter extends TokenAuthenticationFilter {
-    
-    private final static Logger LOGGER = Logger.getLogger(SessionTokenAuthenticationFilter.class);
-    
-    private boolean validateUserFromService = true; 
-    
-    @Autowired
-    UserSessionService userSessionService;
 
-	@Autowired
-    UserService userService;
+    private static final Logger LOGGER =
+            LogManager.getLogger(SessionTokenAuthenticationFilter.class);
+    @Autowired UserSessionService userSessionService;
+    @Autowired UserService userService;
+    private boolean validateUserFromService = true;
 
     @Override
     protected Authentication checkToken(String token) {
-    	if (userSessionService == null) {
-    		return null;
-    	}
-    	User ud = userSessionService.getUserData(token);
-    	if(ud != null) {
-    	    User user = null;
-    	    if (validateUserFromService) {
-    	        // we search user by id first, if available
-    			if(ud.getId() != null) {
-    				user = userService.get((Long) ud.getId());
-    			}
-    			// then by name if no id is available or the service cannot search by id (e.g. LDAP)
-    			if (user == null && ud.getName() != null){
-    				try {
-    					user = userService.get(ud.getName());
-    				} catch (NotFoundServiceEx e) {
-    					LOGGER.error("User " + ud.getName() + " not found on the database because of an exception", e);
-    				}  
-    			}
-    	    } else {
-    	        user = ud;
-    	    }
-    	    if (user != null) {
+        if (userSessionService == null) {
+            return null;
+        }
+        User ud = userSessionService.getUserData(token);
+        if (ud != null) {
+            User user = null;
+            if (validateUserFromService) {
+                // we search user by id first, if available
+                if (ud.getId() != null) {
+                    user = userService.get(ud.getId());
+                }
+                // then by name if no id is available or the service cannot search by id (e.g. LDAP)
+                if (user == null && ud.getName() != null) {
+                    try {
+                        user = userService.get(ud.getName());
+                    } catch (NotFoundServiceEx e) {
+                        LOGGER.error(
+                                "User "
+                                        + ud.getName()
+                                        + " not found on the database because of an exception",
+                                e);
+                    }
+                }
+            } else {
+                user = ud;
+            }
+            if (user != null) {
                 return createAuthenticationForUser(user);
             } else {
-            	LOGGER.error("User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
+                LOGGER.error(
+                        "User login success, but couldn't retrieve  a session. Probably auth user and  and userService are out of sync.");
             }
-    	}
+        }
         return null;
     }
 
+    public UserSessionService getUserSessionService() {
+        return userSessionService;
+    }
 
-	public UserSessionService getUserSessionService() {
-		return userSessionService;
-	}
+    public void setUserSessionService(UserSessionService userSessionService) {
+        this.userSessionService = userSessionService;
+    }
 
-	public void setUserSessionService(UserSessionService userSessionService) {
-		this.userSessionService = userSessionService;
-	}
+    public UserService getUserService() {
+        return userService;
+    }
 
-	public UserService getUserService() {
-		return userService;
-	}
-
-	public void setUserService(UserService userService) {
-		this.userService = userService;
-	}
-
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
 
     public boolean isValidateUserFromService() {
         return validateUserFromService;
     }
 
-
     public void setValidateUserFromService(boolean validateUserFromService) {
         this.validateUserFromService = validateUserFromService;
     }
-	
-	
 }

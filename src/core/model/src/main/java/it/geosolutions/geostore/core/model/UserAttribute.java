@@ -29,108 +29,89 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-import org.hibernate.annotations.Index;
-
 /**
  * Class Attribute.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @Entity(name = "UserAttribute")
-@Table(name = "gs_user_attribute", uniqueConstraints = { @UniqueConstraint(columnNames = { "name",
-        "user_id" }) })
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
+@Table(
+        name = "gs_user_attribute",
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "user_id"})},
+        indexes = {
+            @Index(name = "idx_user_attribute_name", columnList = "name"),
+            @Index(name = "idx_user_attribute_text", columnList = "string"),
+            @Index(name = "idx_attribute_user", columnList = "user_id")
+        })
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
 @XmlRootElement(name = "UserAttribute")
 public class UserAttribute implements Serializable {
 
     private static final long serialVersionUID = 8215714782335367731L;
 
-    @Id
-    @GeneratedValue
-    private Long id;
+    @Id @GeneratedValue private Long id;
 
     @Column(name = "name", nullable = false, updatable = true)
-    @Index(name = "idx_user_attribute_name")
     private String name;
 
     @Column(name = "string", nullable = true, updatable = true)
-    @Index(name = "idx_user_attribute_text")
     private String value;
 
     @ManyToOne(optional = false)
-    @Index(name = "idx_attribute_user")
-    @ForeignKey(name = "fk_uattrib_user")
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_uattrib_user"))
     private User user;
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the name to set
-     */
+    /** @param name the name to set */
     public void setName(String name) {
         this.name = name;
     }
 
-    /**
-     * @return the value
-     */
+    /** @return the value */
     public String getValue() {
         return value;
     }
 
-    /**
-     * @param value the value to set
-     */
+    /** @param value the value to set */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /**
-     * @return the user
-     */
+    /** @return the user */
     @XmlTransient
     public User getUser() {
         return user;
     }
 
-    /**
-     * @param user the user to set
-     */
+    /** @param user the user to set */
     public void setUser(User user) {
         this.user = user;
     }

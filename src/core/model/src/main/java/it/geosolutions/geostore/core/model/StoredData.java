@@ -28,61 +28,49 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.ForeignKey;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.ForeignKey;
-
 /**
  * Class StoredData.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 @Entity(name = "StoreData")
 @Table(name = "gs_stored_data")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_stored_data")
+// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_stored_data")
 @XmlRootElement(name = "StoredData")
 public class StoredData implements Serializable {
 
     private static final long serialVersionUID = -2584592064221812813L;
 
-    @Id
-    private Long id;
+    @Id private Long id;
 
     @Column(name = "stored_data", nullable = false, updatable = true, length = 10000000)
     private String data;
 
     @OneToOne(optional = false)
-    @ForeignKey(name = "fk_data_resource")
+    @JoinColumn(foreignKey = @ForeignKey(name = "fk_data_resource"))
     private Resource resource;
 
-    /**
-     * Instantiates a new instance.
-     */
-    public StoredData() {
-    }
+    /** Instantiates a new instance. */
+    public StoredData() {}
 
-    /**
-     * @return the id
-     */
+    /** @return the id */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(long id) {
         this.id = id;
     }
@@ -95,17 +83,13 @@ public class StoredData implements Serializable {
         this.data = data;
     }
 
-    /**
-     * @return the resource
-     */
+    /** @return the resource */
     @XmlTransient
     public Resource getResource() {
         return resource;
     }
 
-    /**
-     * @param resource the resource to set
-     */
+    /** @param resource the resource to set */
     public void setResource(Resource resource) {
         this.resource = resource;
     }

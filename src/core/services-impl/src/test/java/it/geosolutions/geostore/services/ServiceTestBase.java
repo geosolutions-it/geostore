@@ -19,12 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.log4j.Logger;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -33,18 +27,22 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import java.util.List;
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 /**
  * Class ServiceTestBase.
- * 
+ *
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class ServiceTestBase extends TestCase {
 
@@ -55,23 +53,21 @@ public class ServiceTestBase extends TestCase {
     protected static CategoryService categoryService;
 
     protected static UserService userService;
-    
+
     protected static UserGroupService userGroupService;
-    
+
     protected static ResourceDAO resourceDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
 
-    protected final Logger LOGGER = Logger.getLogger(getClass());
+    protected final Logger LOGGER = LogManager.getLogger(getClass());
 
-    /**
-     *
-     */
+    /** */
     public ServiceTestBase() {
         synchronized (ServiceTestBase.class) {
             if (ctx == null) {
-                String[] paths = { "classpath*:applicationContext.xml"
-                // ,"applicationContext-test.xml"
+                String[] paths = {"classpath*:applicationContext.xml"
+                    // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
@@ -95,9 +91,7 @@ public class ServiceTestBase extends TestCase {
         removeAll();
     }
 
-    /**
-     *
-     */
+    /** */
     public void testCheckServices() {
         assertNotNull(storedDataService);
         assertNotNull(resourceService);
@@ -121,24 +115,22 @@ public class ServiceTestBase extends TestCase {
 
     /**
      * @throws BadRequestServiceEx
-     * @throws NotFoundServiceEx 
+     * @throws NotFoundServiceEx
      */
     private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
         List<UserGroup> list = userGroupService.getAll(null, null);
         for (UserGroup item : list) {
             LOGGER.info("Removing User: " + item.getGroupName());
-
-            boolean ret = userGroupService.delete(item.getId());
-            assertTrue("Group not removed", ret);
+            if (GroupReservedNames.isAllowedName(item.getGroupName())) {
+                boolean ret = userGroupService.delete(item.getId());
+                assertTrue("Group not removed", ret);
+            }
         }
-
+        boolean res = userGroupService.removeSpecialUsersGroups();
         assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
     }
 
-    
-    /**
-     * @throws BadRequestServiceEx
-     */
+    /** @throws BadRequestServiceEx */
     private void removeAllUser() throws BadRequestServiceEx {
         List<User> list = userService.getAll(null, null);
         for (User item : list) {
@@ -151,9 +143,7 @@ public class ServiceTestBase extends TestCase {
         assertEquals("User have not been properly deleted", 0, userService.getCount(null));
     }
 
-    /**
-     * @throws BadRequestServiceEx
-     */
+    /** @throws BadRequestServiceEx */
     private void removeAllCategory() throws BadRequestServiceEx {
         List<Category> list = categoryService.getAll(null, null);
         for (Category item : list) {
@@ -166,9 +156,7 @@ public class ServiceTestBase extends TestCase {
         assertEquals("Category have not been properly deleted", 0, categoryService.getCount(null));
     }
 
-    /**
-     * @throws NotFoundServiceEx
-     */
+    /** @throws NotFoundServiceEx */
     protected void removeAllStoredData() throws NotFoundServiceEx {
         List<StoredData> list = storedDataService.getAll();
         for (StoredData item : list) {
@@ -179,10 +167,7 @@ public class ServiceTestBase extends TestCase {
         }
     }
 
-    /**
-     * @throws BadRequestServiceEx
-     * 
-     */
+    /** @throws BadRequestServiceEx */
     private void removeAllResource() throws BadRequestServiceEx {
         List<ShortResource> list = resourceService.getAll(null, null, buildFakeAdminUser());
         for (ShortResource item : list) {
@@ -196,8 +181,8 @@ public class ServiceTestBase extends TestCase {
     }
 
     /**
-     * @param name
      * @param data
+     * @param resource
      * @return long
      * @throws Exception
      */
@@ -207,14 +192,13 @@ public class ServiceTestBase extends TestCase {
 
     /**
      * @param name
-     * @param creation
      * @param description
-     * @param storedData
+     * @param catName
      * @return long
      * @throws Exception
      */
-    protected long createResource(String name, String description, String catName) throws Exception {
-
+    protected long createResource(String name, String description, String catName)
+            throws Exception {
         Category category = new Category();
         category.setName(catName);
 
@@ -224,21 +208,22 @@ public class ServiceTestBase extends TestCase {
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
-    
+
     /**
      * @param name
-     * @param creation
      * @param description
+     * @param catName
      * @param data
-     *
      * @return long
      * @throws Exception
      */
-    protected long createResource(String name, String description, String catName, String data) throws Exception {
-
+    protected long createResource(String name, String description, String catName, String data)
+            throws Exception {
         Category category = new Category();
         category.setName(catName);
 
@@ -251,20 +236,23 @@ public class ServiceTestBase extends TestCase {
         StoredData storedData = new StoredData();
         storedData.setData(data);
         resource.setData(storedData);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
-    
+
     /**
      * @param name
-     * @param creation
      * @param description
-     * @param storedData
+     * @param catName
+     * @param rules
      * @return long
      * @throws Exception
      */
-    protected long createResource(String name, String description, String catName, List<SecurityRule> rules) throws Exception {
-
+    protected long createResource(
+            String name, String description, String catName, List<SecurityRule> rules)
+            throws Exception {
         Category category = new Category();
         category.setName(catName);
 
@@ -279,13 +267,54 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    protected long createResource(String name, String description, Category category)
+    /**
+     * @param name
+     * @param description
+     * @param catName
+     * @param advertised
+     * @param rules
+     * @return long
+     * @throws Exception
+     */
+    protected long createResource(
+            String name,
+            String description,
+            String catName,
+            boolean advertised,
+            List<SecurityRule> rules)
             throws Exception {
+        Category category = new Category();
+        category.setName(catName);
+
+        categoryService.insert(category);
 
         Resource resource = new Resource();
         resource.setName(name);
         resource.setDescription(description);
         resource.setCategory(category);
+        resource.setAdvertised(advertised);
+        resource.setSecurity(rules);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
+
+        return resourceService.insert(resource);
+    }
+
+    /**
+     * @param name
+     * @param description
+     * @param category
+     * @return
+     * @throws Exception
+     */
+    protected long createResource(String name, String description, Category category)
+            throws Exception {
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setDescription(description);
+        resource.setCategory(category);
+        resource.setCreator("USER1");
+        resource.setEditor("USER2");
 
         return resourceService.insert(resource);
     }
@@ -317,19 +346,25 @@ public class ServiceTestBase extends TestCase {
 
         return userService.insert(user);
     }
-    
+
     protected long createUserGroup(String name, long[] usersId) throws Exception {
-    	UserGroup group = new UserGroup();
-    	group.setGroupName(name);
-    	group.setDescription("");
-    	long groupId = userGroupService.insert(group);
-    	for (long userId : usersId) {
-    		userGroupService.assignUserGroup(userId, groupId);
-    	}
-    	return groupId;
+        UserGroup group = new UserGroup();
+        group.setGroupName(name);
+        group.setDescription("");
+        long groupId = userGroupService.insert(group);
+        for (long userId : usersId) {
+            userGroupService.assignUserGroup(userId, groupId);
+        }
+        return groupId;
     }
-    
-    protected long createUser(String name, Role role, String password, List<UserAttribute> attributes) throws Exception {
+
+    protected void createSpecialUserGroups() {
+        userGroupService.insertSpecialUsersGroups();
+    }
+
+    protected long createUser(
+            String name, Role role, String password, List<UserAttribute> attributes)
+            throws Exception {
         User user = new User();
         user.setName(name);
         user.setRole(role);
@@ -337,8 +372,9 @@ public class ServiceTestBase extends TestCase {
         user.setAttribute(attributes);
         return userService.insert(user);
     }
-    
-    protected long createUser(String name, Role role, String password, long groupId) throws Exception {
+
+    protected long createUser(String name, Role role, String password, long groupId)
+            throws Exception {
         User user = new User();
         user.setName(name);
         user.setRole(role);
@@ -347,11 +383,9 @@ public class ServiceTestBase extends TestCase {
         userGroupService.assignUserGroup(id, groupId);
         return id;
     }
-    
+
     /**
      * @param name
-     * @param role
-     * @param password
      * @return long
      * @throws Exception
      */
@@ -367,5 +401,33 @@ public class ServiceTestBase extends TestCase {
         user.setRole(Role.ADMIN);
         user.setName("ThisIsNotARealUser");
         return user;
+    }
+
+    // SecurityRuleBuilder class
+    protected class SecurityRuleBuilder {
+        private SecurityRule rule;
+
+        public SecurityRuleBuilder() {
+            rule = new SecurityRule();
+        }
+
+        public SecurityRuleBuilder user(User user) {
+            rule.setUser(user);
+            return this;
+        }
+
+        public SecurityRuleBuilder canRead(boolean canRead) {
+            rule.setCanRead(canRead);
+            return this;
+        }
+
+        public SecurityRuleBuilder group(UserGroup group) {
+            rule.setGroup(group);
+            return this;
+        }
+
+        public SecurityRule build() {
+            return rule;
+        }
     }
 }

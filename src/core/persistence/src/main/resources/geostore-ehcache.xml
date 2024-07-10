@@ -3,7 +3,7 @@
 
 	<diskStore path="java.io.tmpdir" />
 
-	<defaultCache maxElementsInMemory="10000" eternal="false"
+	<!-- defaultCache maxElementsInMemory="10000" eternal="false"
 		timeToIdleSeconds="120" timeToLiveSeconds="120" overflowToDisk="true"
 		diskPersistent="false" diskExpiryThreadIntervalSeconds="120"
 		memoryStoreEvictionPolicy="LRU" />
@@ -60,6 +60,6 @@
 		name="org.hibernate.cache.UpdateTimestampsCache"
 		maxElementsInMemory="5000"
 		eternal="true"
-		overflowToDisk="true"/>
+		overflowToDisk="true"/>-->
 
 </ehcache>

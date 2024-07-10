@@ -21,13 +21,13 @@ package it.geosolutions.geostore.services.dto;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.enums.DataType;
-
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * Class ShortAttribute.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public class ShortAttribute implements Serializable {
@@ -64,23 +64,20 @@ public class ShortAttribute implements Serializable {
     }
 
     public static ShortAttribute createDateAttribute(String name, Date date) {
-        return new ShortAttribute(name, Attribute.DATE_FORMAT.format(date), DataType.DATE);
+        return new ShortAttribute(
+                name, new SimpleDateFormat(Attribute.DATE_FORMAT).format(date), DataType.DATE);
     }
 
     public static ShortAttribute createStringAttribute(String name, String text) {
         return new ShortAttribute(name, text, DataType.STRING);
     }
 
-    /**
-     * @return the attribute
-     */
+    /** @return the attribute */
     public String getName() {
         return name;
     }
 
-    /**
-     * @param name the attribute to set
-     */
+    /** @param name the attribute to set */
     public void setName(String name) {
         this.name = name;
     }
@@ -89,30 +86,24 @@ public class ShortAttribute implements Serializable {
         return this.value;
     }
 
-    /**
-     * @param value
-     */
+    /** @param value */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /**
-     * @return the type
-     */
+    /** @return the type */
     public DataType getType() {
         return type;
     }
 
-    /**
-     * @param type the type to set
-     */
+    /** @param type the type to set */
     public void setType(DataType type) {
         this.type = type;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#toString()
      */
     @Override
@@ -120,17 +111,13 @@ public class ShortAttribute implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if (name != null)
-            builder.append("name=").append(name).append(", ");
+        if (name != null) builder.append("name=").append(name).append(", ");
 
-        if (value != null)
-            builder.append("value=").append(value).append(", ");
+        if (value != null) builder.append("value=").append(value).append(", ");
 
-        if (type != null)
-            builder.append("type=").append(type);
+        if (type != null) builder.append("type=").append(type);
 
         builder.append(']');
         return builder.toString();
     }
-
 }

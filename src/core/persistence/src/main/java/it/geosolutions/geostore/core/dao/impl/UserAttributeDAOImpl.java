@@ -20,29 +20,27 @@
 package it.geosolutions.geostore.core.dao.impl;
 
 import com.googlecode.genericdao.search.ISearch;
-
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.model.UserAttribute;
-
-import org.apache.log4j.Logger;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class UserAttributeDAOImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
 public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implements UserAttributeDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(UserAttributeDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserAttributeDAOImpl.class);
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
@@ -56,7 +54,7 @@ public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implement
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
@@ -66,7 +64,7 @@ public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implement
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
@@ -77,7 +75,7 @@ public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implement
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
@@ -87,7 +85,7 @@ public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implement
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -97,12 +95,11 @@ public class UserAttributeDAOImpl extends BaseDAO<UserAttribute, Long> implement
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
     public boolean removeById(Long id) {
         return super.removeById(id);
     }
-
 }

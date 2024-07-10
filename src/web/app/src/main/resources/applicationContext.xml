@@ -27,7 +27,6 @@
         <property name="userGroupListInitFile" value="classpath:sample_groups.xml" />
         <!-- The default password encoder -->
         <property name="passwordEncoder" ref="${passwordEncoderUsed}"></property>	
-        
-        
     </bean>
+
 </beans>

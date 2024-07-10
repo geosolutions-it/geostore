@@ -24,9 +24,7 @@ import it.geosolutions.geostore.core.model.StoredData;
 
 /**
  * Interface StoredDataDAO. Public interface to define operations on Rule
- * 
+ *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  */
-public interface StoredDataDAO extends RestrictedGenericDAO<StoredData> {
-
-}
+public interface StoredDataDAO extends RestrictedGenericDAO<StoredData> {}

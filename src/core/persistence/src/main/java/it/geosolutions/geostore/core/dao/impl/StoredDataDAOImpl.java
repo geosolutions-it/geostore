@@ -19,30 +19,24 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
-import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
-import com.googlecode.genericdao.search.Search;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
-
-import org.apache.log4j.Logger;
+import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class StoredDataDAOImpl.
- * 
+ *
  * @author Emanuele Tajariol (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
 public class StoredDataDAOImpl extends BaseDAO<StoredData, Long> implements StoredDataDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(StoredDataDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(StoredDataDAOImpl.class);
 
     @Override
     public void persist(StoredData... entities) {

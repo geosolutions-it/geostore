@@ -9,7 +9,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -21,7 +21,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -43,30 +43,26 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-
 import javax.ws.rs.core.SecurityContext;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTCategoryServiceImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- * 
  */
 public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCategoryService {
 
-    private final static Logger LOGGER = Logger.getLogger(RESTCategoryServiceImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(RESTCategoryServiceImpl.class);
 
     private CategoryService categoryService;
 
-    /**
-     * @param categoryService the categoryService to set
-     */
+    /** @param categoryService the categoryService to set */
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
     }
-    
+
     /* (non-Javadoc)
      * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
      */
@@ -77,15 +73,13 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#insert(it.geosolutions.geostore.core.model.Category)
      */
     @Override
     public long insert(SecurityContext sc, Category category) {
-        if (category == null)
-            throw new BadRequestWebEx("Category is null");
-        if (category.getId() != null)
-            throw new BadRequestWebEx("Id should be null");
+        if (category == null) throw new BadRequestWebEx("Category is null");
+        if (category.getId() != null) throw new BadRequestWebEx("Id should be null");
 
         long id = -1;
 
@@ -119,8 +113,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
     public long update(SecurityContext sc, long id, Category category) {
         try {
             Category old = categoryService.get(id);
-            if (old == null)
-                throw new NotFoundWebEx("Category not found");
+            if (old == null) throw new NotFoundWebEx("Category not found");
 
             //
             // Authorization check.
@@ -144,7 +137,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#delete(long)
      */
     @Override
@@ -158,23 +151,19 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
         if (canDelete) {
             boolean ret = categoryService.delete(id);
-            if (!ret)
-                throw new NotFoundWebEx("Category not found");
-        } else
-            throw new ForbiddenErrorWebEx("This user cannot delete this category !");
-
+            if (!ret) throw new NotFoundWebEx("Category not found");
+        } else throw new ForbiddenErrorWebEx("This user cannot delete this category !");
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#get(long)
      */
     @Override
     public Category get(SecurityContext sc, long id) throws NotFoundWebEx {
         if (id == -1) {
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Retriving dummy data !");
+            if (LOGGER.isDebugEnabled()) LOGGER.debug("Retriving dummy data !");
 
             //
             // return test instance
@@ -185,15 +174,14 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
         }
 
         Category ret = categoryService.get(id);
-        if (ret == null)
-            throw new NotFoundWebEx("Category not found");
+        if (ret == null) throw new NotFoundWebEx("Category not found");
 
         return ret;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#getAll(java.lang.Integer, java.lang.Integer)
      */
     @Override
@@ -208,7 +196,7 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see it.geosolutions.geostore.services.rest.RESTCategoryService#getCount(java.lang.String)
      */
     @Override

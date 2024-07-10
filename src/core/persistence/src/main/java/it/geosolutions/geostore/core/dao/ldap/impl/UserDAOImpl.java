@@ -19,6 +19,15 @@
  */
 package it.geosolutions.geostore.core.dao.ldap.impl;
 
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
+import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,68 +35,57 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import javax.naming.directory.SearchControls;
-
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.support.AbstractContextMapper;
 
-import com.googlecode.genericdao.search.Filter;
-import com.googlecode.genericdao.search.ISearch;
-import com.googlecode.genericdao.search.Search;
-
-import it.geosolutions.geostore.core.dao.UserDAO;
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserAttribute;
-import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.enums.Role;
-
 /**
- * Class UserDAOImpl.
- * LDAP (read-only) implementation of UserDAO.
- * Allows fetching User from an LDAP repository.
- * 
+ * Class UserDAOImpl. LDAP (read-only) implementation of UserDAO. Allows fetching User from an LDAP
+ * repository.
+ *
  * @author Mauro Bartolomeoli (mauro.bartolomeoli at geo-solutions.it)
  */
 public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
     protected Map<String, String> attributesMapper = new HashMap<String, String>();
     private Pattern memberPattern = Pattern.compile("^(.*)$");
     private String adminRoleGroup = "ADMIN";
-    
+
     UserGroupDAOImpl userGroupDAO = null;
-    
+
     public UserDAOImpl(ContextSource contextSource) {
         super(contextSource);
     }
-    
+
     public void setUserGroupDAO(UserGroupDAOImpl userGroupDAO) {
         if (this.userGroupDAO == null) {
             this.userGroupDAO = userGroupDAO;
             userGroupDAO.setUserDAO(this);
         }
     }
-    
+
     public String getAdminRoleGroup() {
-		return adminRoleGroup;
-	}
+        return adminRoleGroup;
+    }
 
     /**
-     * Case insensitive name of the group associated to the ADMIN role.
-     * This is used to assign ADMIN role to users belonging to a specific LDAP group.
-     * 
+     * Case insensitive name of the group associated to the ADMIN role. This is used to assign ADMIN
+     * role to users belonging to a specific LDAP group.
+     *
      * @param adminRoleGroup ADMIN role group name (default to ADMIN)
      */
-	public void setAdminRoleGroup(String adminRoleGroup) {
-		this.adminRoleGroup = adminRoleGroup;
-	}
+    public void setAdminRoleGroup(String adminRoleGroup) {
+        this.adminRoleGroup = adminRoleGroup;
+    }
 
-	/**
+    /**
      * Sets regular expression used to extract the member user name from a member LDAP attribute.
-     * The LDAP attribute can contain a DN, so this is useful to extract the real member name from it.
-     * 
-     * e.g. ^(uid=[^,]+.*)$ extracts the uid fragment of a DN
+     * The LDAP attribute can contain a DN, so this is useful to extract the real member name from
+     * it.
+     *
+     * <p>e.g. ^(uid=[^,]+.*)$ extracts the uid fragment of a DN
+     *
      * @param memberPattern
      */
     public void setMemberPattern(String memberPattern) {
@@ -100,16 +98,16 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /**
      * Mapping of LDAP attribute names to geostore attribute names.
-     * 
+     *
      * @param attributesMapper
      */
     public void setAttributesMapper(Map<String, String> attributesMapper) {
         this.attributesMapper = attributesMapper;
     }
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
@@ -122,7 +120,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
@@ -132,7 +130,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
@@ -141,23 +139,26 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
         if (isNested(search)) {
             // users belonging to a group
             List<User> users = new ArrayList<User>();
-            for(UserGroup group :  userGroupDAO.search(getNestedSearch(search))) {
+            for (UserGroup group : userGroupDAO.search(getNestedSearch(search))) {
                 users.addAll(group.getUsers());
             }
             return users;
         } else {
-            return ldapSearch(combineFilters(baseFilter, getLdapFilter(search, getPropertyMapper())), getProcessorForSearch(search));
+            return ldapSearch(
+                    combineFilters(baseFilter, getLdapFilter(search, getPropertyMapper())),
+                    getProcessorForSearch(search));
         }
     }
 
     /**
      * Maps user properties to LDAP properties.
+     *
      * @return
      */
     private Map<String, Object> getPropertyMapper() {
         Map<String, Object> mapper = new HashMap<>();
         mapper.put("name", nameAttribute);
-        for(String ldap : attributesMapper.keySet()) {
+        for (String ldap : attributesMapper.keySet()) {
             mapper.put(attributesMapper.get(ldap), ldap);
         }
         // sub-mapper for groups properties
@@ -170,24 +171,30 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
     protected List<User> ldapSearch(String filter, DirContextProcessor processor) {
         SearchControls controls = new SearchControls();
         controls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        return template.search(searchBase, filter, controls, new AbstractContextMapper() {
-            int counter = 1;
-            @Override
-            protected User doMapFromContext(DirContextOperations ctx) {
-                User user = new User();
-                user.setId((long)counter++); // TODO: optionally map an attribute to the id
-                user.setEnabled(true);
-                user.setName(ctx.getStringAttribute(nameAttribute));
-                user.setAttribute(fetchAttributes(ctx));
-                assignGroupsAndRole(ctx, user);
-                return user;
-            }
-        }, processor);
+        return template.search(
+                searchBase,
+                filter,
+                controls,
+                new AbstractContextMapper() {
+                    int counter = 1;
+
+                    @Override
+                    protected User doMapFromContext(DirContextOperations ctx) {
+                        User user = new User();
+                        user.setId((long) counter++); // TODO: optionally map an attribute to the id
+                        user.setEnabled(true);
+                        user.setName(ctx.getStringAttribute(nameAttribute));
+                        user.setAttribute(fetchAttributes(ctx));
+                        assignGroupsAndRole(ctx, user);
+                        return user;
+                    }
+                },
+                processor);
     }
-    
+
     /**
      * Gets all the attributes defined in AttributeMapper.
-     * 
+     *
      * @param ctx
      * @return
      */
@@ -203,13 +210,13 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
         }
         return attributes;
     }
-        
+
     /**
-     * If UserGroupDAO is defined, fetches all the groups
-     * using a membership filter (member=<userDN>) on groups.
-     * 
-     * Assigns the ADMIN role to users belonging to the adminRoleGroup group.
-     * 
+     * If UserGroupDAO is defined, fetches all the groups using a membership filter
+     * (member=<userDN>) on groups.
+     *
+     * <p>Assigns the ADMIN role to users belonging to the adminRoleGroup group.
+     *
      * @param ctx
      * @param user
      */
@@ -219,31 +226,32 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
         user.setRole(Role.USER);
         if (userGroupDAO != null) {
             Search searchCriteria = new Search(UserGroup.class);
-            searchCriteria.addFilterSome("user",
-                    new Filter("name", ctx.getNameInNamespace(), Filter.OP_EQUAL));
-            for (UserGroup ug : userGroupDAO.search(searchCriteria)) {
+            searchCriteria.addFilterSome(
+                    "user", new Filter("name", ctx.getNameInNamespace(), Filter.OP_EQUAL));
+            GeoStoreISearchWrapper searchWrapper =
+                    new GeoStoreISearchWrapper(searchCriteria, this.getClass());
+            for (UserGroup ug : userGroupDAO.search(searchWrapper)) {
                 if (isAdminGroup(ug)) {
                     user.setRole(Role.ADMIN);
                 }
                 user.getGroups().add(ug);
             }
-            
         }
     }
-    
+
     /**
      * Returns true if the given group is the adminRoleGroup group.
-     * 
+     *
      * @param ug
      * @return
      */
     private boolean isAdminGroup(UserGroup ug) {
-		return ug.getGroupName().equalsIgnoreCase(adminRoleGroup);
-	}
+        return ug.getGroupName().equalsIgnoreCase(adminRoleGroup);
+    }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
@@ -252,12 +260,12 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
         // some authentication providers try to persist stuff for synchronization
         // purposes and they don't know  DAOs can be readonly
         // TODO: make readonly behaviour explicit
-    	return entity;
+        return entity;
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -271,7 +279,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
@@ -285,7 +293,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
      */
     @Override
@@ -297,7 +305,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#save(T[])
      */
     @Override
@@ -313,7 +321,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /**
      * Create a User object from a group member name.
-     * 
+     *
      * @param member
      * @return
      */
@@ -327,7 +335,7 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
 
     /**
      * Extracts a User name from a member name, using the memberPattern regexp.
-     * 
+     *
      * @param member
      * @return
      */
@@ -338,5 +346,4 @@ public class UserDAOImpl extends LdapBaseDAOImpl implements UserDAO {
         }
         return member;
     }
-
 }

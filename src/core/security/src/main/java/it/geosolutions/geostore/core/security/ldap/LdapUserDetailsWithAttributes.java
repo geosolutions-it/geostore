@@ -27,30 +27,23 @@
  */
 package it.geosolutions.geostore.core.security.ldap;
 
-
-
-
-
 import it.geosolutions.geostore.core.security.UserDetailsWithAttributes;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
 /**
  * Extends LdapUserDetails with the ability to store attributes coming from Ldap.
- * 
- * @author Mauro Bartolomeoli
  *
+ * @author Mauro Bartolomeoli
  */
 public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetailsWithAttributes {
     private LdapUserDetails delegate;
-    
+
     private Map<String, Object> attributes = new HashMap<String, Object>();
-    
+
     public LdapUserDetailsWithAttributes(LdapUserDetails delegate) {
         super();
         this.delegate = delegate;
@@ -59,12 +52,12 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
     public void setAttribute(String name, Object value) {
         this.attributes.put(name, value);
     }
-    
+
     public Object getAttribute(String name) {
         return attributes.get(name);
     }
-    
-    public Collection<GrantedAuthority> getAuthorities() {
+
+    public Collection<? extends GrantedAuthority> getAuthorities() {
         return delegate.getAuthorities();
     }
 
@@ -107,6 +100,9 @@ public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetai
     public String toString() {
         return delegate.toString();
     }
-    
-    
+
+    @Override
+    public void eraseCredentials() {
+        delegate.eraseCredentials();
+    }
 }

@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -27,16 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
-
-import javax.ws.rs.core.SecurityContext;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
+import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
+import static it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl.DEFAULT_NAME;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.SecurityService;
@@ -44,180 +36,226 @@ import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
+import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.SecurityContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
-public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService{
-	private static final String BEARER_TYPE = "bearer";
-	@Autowired
-	UserSessionService userSessionService;
-	private boolean autorefresh = false;
-	
-	public boolean isAutorefresh() {
-		return autorefresh;
-	}
+public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService {
+    static final String BEARER_TYPE = "bearer";
+    private static final String expireParser = "yyyy-MM-dd'T'HH:mm:ssZ";
+    @Autowired UserSessionService userSessionService;
+    private Map<String, SessionServiceDelegate> delegates;
+    private boolean autorefresh = false;
+    private long sessionTimeout = 86400; // 1 day
 
-	public void setAutorefresh(boolean autorefresh) {
-		this.autorefresh = autorefresh;
-	}
+    public RESTSessionServiceImpl() {
+        registerDelegate(DEFAULT_NAME, new SessionServiceDelegateImpl());
+    }
 
-	private long sessionTimeout = 86400; // 1 day
+    /** Transform Calendar to ISO 8601 string. */
+    public static String fromCalendar(final Calendar calendar) {
+        Date date = calendar.getTime();
+        String formatted = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
+        return formatted.substring(0, 22) + ":" + formatted.substring(22);
+    }
 
-	public UserSessionService getUserSessionService() {
-		return userSessionService;
-	}
+    /** Transform ISO 8601 string to Calendar. */
+    public static Calendar toCalendar(final String iso8601string) throws ParseException {
+        Calendar calendar = GregorianCalendar.getInstance();
+        String s = iso8601string.replace("Z", "+00:00");
+        try {
+            s = s.substring(0, 22) + s.substring(23); // to get rid of the ":"
+        } catch (IndexOutOfBoundsException e) {
+            throw new ParseException("Invalid length", 0);
+        }
+        Date date = new SimpleDateFormat(expireParser).parse(s);
+        calendar.setTime(date);
+        return calendar;
+    }
 
-	public void setUserSessionService(UserSessionService userSessionService) {
-		this.userSessionService = userSessionService;
-	}
+    public boolean isAutorefresh() {
+        return autorefresh;
+    }
 
-	private static SimpleDateFormat expireParser = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+    public void setAutorefresh(boolean autorefresh) {
+        this.autorefresh = autorefresh;
+    }
 
-	/**
-	 * Gets the User object associated to the given sessionId (if it exists).
-	 * 
-	 * @param sessionId
-	 * @return
-	 */
-	public User getUser(String sessionId, boolean refresh) {
-		User details = userSessionService.getUserData(sessionId);
-		if (details != null && refresh && autorefresh) {
-			userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
-		}
-		return details;
-	}
+    public UserSessionService getUserSessionService() {
+        return userSessionService;
+    }
 
-	/**
-	 * Gets the username associated to the given sessionId (if it exists).
-	 * 
-	 * @param sessionId
-	 * @return
-	 */
-	public String getUserName(String sessionId, boolean refresh) {
-		User userData = userSessionService.getUserData(sessionId);
-		if (userData != null) {
-			if (refresh  && autorefresh) {
-				userSessionService.refreshSession(sessionId, userSessionService.getRefreshToken(sessionId));
-			}
-			return userData.getName();
-		}
-		return null;
-	}
+    public void setUserSessionService(UserSessionService userSessionService) {
+        this.userSessionService = userSessionService;
+    }
 
-	private Calendar getExpiration(String expires) throws ParseException {
-		if (!"".equals(expires)) {
-			return toCalendar(expires);
-		}
-		return null;
-	}
+    /**
+     * Gets the User object associated to the given sessionId (if it exists).
+     *
+     * @param sessionId
+     * @return
+     */
+    public User getUser(String sessionId, boolean refresh) {
+        User user = null;
+        Collection<SessionServiceDelegate> list = delegates.values();
+        for (SessionServiceDelegate del : list) {
+            user = del.getUser(sessionId, refresh, autorefresh);
+            if (user != null) break;
+        }
+        return user;
+    }
 
-	/**
-	 * Creates a new session for the User in SecurityContext.
-	 * 
-	 * @return
-	 * @throws ParseException
-	 */
-	public String createSession(String expires,SecurityContext sc) throws ParseException {
-		User user = extractAuthUser(sc);
-		if (user != null) {
-			Calendar expiration = getExpiration(expires);
-			UserSession session = null;
-			if (user instanceof User) {
-				session = new UserSessionImpl(null, user, expiration);
-			}
-			return userSessionService.registerNewSession(session);
-		}
+    /**
+     * Gets the username associated to the given sessionId (if it exists).
+     *
+     * @param sessionId
+     * @return
+     */
+    public String getUserName(String sessionId, boolean refresh) {
+        String userName = null;
+        Collection<SessionServiceDelegate> list = delegates.values();
+        for (SessionServiceDelegate del : list) {
+            userName = del.getUserName(sessionId, refresh, autorefresh);
+            if (userName != null) break;
+        }
+        return userName;
+    }
 
-		return null;
-	}
-	
-	@Override
-	public SessionToken login(SecurityContext sc) throws ParseException {
-		Calendar expires = new GregorianCalendar();
-		expires.add(Calendar.SECOND, (int) getSessionTimeout());
-		User user = extractAuthUser(sc);
-		if (user != null) {
-			
-			UserSession session = null;
-			if (user instanceof User) {
-				session = new UserSessionImpl(null, user, expires);
-				session.setExpirationInterval(getSessionTimeout());
-			}
-			return toSessionToken(userSessionService.registerNewSession(session), session);
-		}
-		return null;
-	}
+    private Calendar getExpiration(String expires) throws ParseException {
+        if (!"".equals(expires)) {
+            return toCalendar(expires);
+        }
+        return null;
+    }
 
-	private SessionToken toSessionToken(String accessToken, UserSession sessionToken) {
-		if(sessionToken == null) {
-			return null;
-		}
-		SessionToken token = new SessionToken();
-		token.setAccessToken(accessToken);
-		token.setRefreshToken(sessionToken.getRefreshToken());
-		token.setExpires(sessionToken.getExpirationInterval());
-		token.setTokenType(BEARER_TYPE);
-		return token;
-	}
+    /**
+     * Creates a new session for the User in SecurityContext.
+     *
+     * @return
+     * @throws ParseException
+     */
+    public String createSession(String expires, SecurityContext sc) throws ParseException {
+        User user = extractAuthUser(sc);
+        if (user != null) {
+            Calendar expiration = getExpiration(expires);
+            UserSession session = null;
+            if (user instanceof User) {
+                session = new UserSessionImpl(null, user, expiration);
+            }
+            return userSessionService.registerNewSession(session);
+        }
 
-	@Override
-	public SessionToken refresh(SecurityContext sc, String sessionId, String refreshToken) {
-		return toSessionToken(sessionId, userSessionService.refreshSession(sessionId, refreshToken));
+        return null;
+    }
 
-	}
+    @Override
+    public SessionToken login(SecurityContext sc) throws ParseException {
+        Calendar expires = new GregorianCalendar();
+        expires.add(Calendar.SECOND, (int) getSessionTimeout());
+        User user = extractAuthUser(sc);
+        if (user != null) {
 
-	/**
-	 * Removes the given session.
-	 * 
-	 * @return
-	 */
-	public void removeSession(String sessionId) {
-		userSessionService.removeSession(sessionId);
-	}
+            UserSession session = null;
+            if (user instanceof User) {
+                session = new UserSessionImpl(null, user, expires);
+                session.setExpirationInterval(getSessionTimeout());
+            }
+            return toSessionToken(userSessionService.registerNewSession(session), session);
+        }
+        return null;
+    }
 
-	/**
-	 * Removes all sessions.
-	 * 
-	 * @return
-	 */
-	public void clear() {
-		userSessionService.removeAllSessions();
-	}
+    private SessionToken toSessionToken(String accessToken, UserSession sessionToken) {
+        if (sessionToken == null) {
+            return null;
+        }
+        SessionToken token = new SessionToken();
+        token.setAccessToken(accessToken);
+        token.setRefreshToken(sessionToken.getRefreshToken());
+        token.setExpires(sessionToken.getExpirationInterval());
+        token.setTokenType(BEARER_TYPE);
+        return token;
+    }
 
-	/** Transform Calendar to ISO 8601 string. */
-	public static String fromCalendar(final Calendar calendar) {
-		Date date = calendar.getTime();
-		String formatted = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ").format(date);
-		return formatted.substring(0, 22) + ":" + formatted.substring(22);
-	}
+    @Override
+    public SessionToken refresh(SecurityContext sc, String sessionId, String refreshToken) {
+        String provider =
+                (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+        SessionServiceDelegate delegate = getDelegate(provider);
+        return delegate.refresh(refreshToken, sessionId);
+    }
 
-	/** Transform ISO 8601 string to Calendar. */
-	public static Calendar toCalendar(final String iso8601string) throws ParseException {
-		Calendar calendar = GregorianCalendar.getInstance();
-		String s = iso8601string.replace("Z", "+00:00");
-		try {
-			s = s.substring(0, 22) + s.substring(23); // to get rid of the ":"
-		} catch (IndexOutOfBoundsException e) {
-			throw new ParseException("Invalid length", 0);
-		}
-		Date date = expireParser.parse(s);
-		calendar.setTime(date);
-		return calendar;
-	}
+    private SessionServiceDelegate getDelegate(String key) {
+        SessionServiceDelegate result;
+        if (key == null) result = delegates.get(DEFAULT_NAME);
+        else result = delegates.get(key);
 
-	
-	@Override
-	protected SecurityService getSecurityService() {
-		return null;
-	}
+        if (result == null) result = delegates.get(DEFAULT_NAME);
 
-	public long getSessionTimeout() {
-		return sessionTimeout;
-	}
+        return result;
+    }
 
-	public void setSessionTimeout(long sessionTimeout) {
-		this.sessionTimeout = sessionTimeout;
-	}
+    /**
+     * Removes the given session.
+     *
+     * @return
+     */
+    public void removeSession(String sessionId) {
+        String provider =
+                (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+        SessionServiceDelegate delegate = getDelegate(provider);
+        delegate.doLogout(sessionId);
+    }
 
-	
+    @Override
+    public SessionToken refresh(SessionToken sessionToken) throws ParseException {
+        return refresh(null, sessionToken.getAccessToken(), sessionToken.getRefreshToken());
+    }
 
+    @Override
+    public void removeSession() {
+        HttpServletRequest request =
+                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                        .getRequest();
+        Authentication authentication = new BearerTokenExtractor().extract(request);
+        if (authentication != null && authentication.getPrincipal() != null)
+            removeSession(authentication.getPrincipal().toString());
+    }
+
+    /**
+     * Removes all sessions.
+     *
+     * @return
+     */
+    public void clear() {
+        userSessionService.removeAllSessions();
+    }
+
+    @Override
+    protected SecurityService getSecurityService() {
+        return null;
+    }
+
+    public long getSessionTimeout() {
+        return sessionTimeout;
+    }
+
+    public void setSessionTimeout(long sessionTimeout) {
+        this.sessionTimeout = sessionTimeout;
+    }
+
+    @Override
+    public void registerDelegate(String key, SessionServiceDelegate delegate) {
+        if (delegates == null) this.delegates = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        this.delegates.put(key, delegate);
+    }
 }

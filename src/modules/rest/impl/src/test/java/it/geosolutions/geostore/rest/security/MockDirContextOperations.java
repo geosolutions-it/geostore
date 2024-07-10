@@ -2,20 +2,8 @@ package it.geosolutions.geostore.rest.security;
 
 import java.util.Hashtable;
 import java.util.SortedSet;
-
-import javax.naming.Binding;
-import javax.naming.Context;
-import javax.naming.Name;
-import javax.naming.NameClassPair;
-import javax.naming.NameParser;
-import javax.naming.NamingEnumeration;
-import javax.naming.NamingException;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.ModificationItem;
-import javax.naming.directory.SearchControls;
-import javax.naming.directory.SearchResult;
-
+import javax.naming.*;
+import javax.naming.directory.*;
 import org.springframework.ldap.core.DirContextOperations;
 
 public class MockDirContextOperations implements DirContextOperations {
@@ -143,15 +131,17 @@ public class MockDirContextOperations implements DirContextOperations {
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(Name name, Attributes matchingAttributes,
-            String[] attributesToReturn) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            Name name, Attributes matchingAttributes, String[] attributesToReturn)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(String name, Attributes matchingAttributes,
-            String[] attributesToReturn) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            String name, Attributes matchingAttributes, String[] attributesToReturn)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -171,15 +161,17 @@ public class MockDirContextOperations implements DirContextOperations {
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(Name name, String filterExpr, Object[] filterArgs,
-            SearchControls cons) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            Name name, String filterExpr, Object[] filterArgs, SearchControls cons)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public NamingEnumeration<SearchResult> search(String name, String filterExpr,
-            Object[] filterArgs, SearchControls cons) throws NamingException {
+    public NamingEnumeration<SearchResult> search(
+            String name, String filterExpr, Object[] filterArgs, SearchControls cons)
+            throws NamingException {
         // TODO Auto-generated method stub
         return null;
     }
@@ -389,6 +381,12 @@ public class MockDirContextOperations implements DirContextOperations {
     }
 
     @Override
+    public void setDn(Name arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
     public String getNameInNamespace() {
         // TODO Auto-generated method stub
         return null;
@@ -467,15 +465,14 @@ public class MockDirContextOperations implements DirContextOperations {
     }
 
     @Override
-    public void setDn(Name arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void update() {
         // TODO Auto-generated method stub
 
     }
 
+    @Override
+    public boolean attributeExists(String arg0) {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }

@@ -19,8 +19,6 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
@@ -28,16 +26,16 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Alternative implementation of SecurityDAO that uses names for users and groups instead of
- * loading data from the database.
- * To be activated as an alias when external authentication is enabled:
- * 
- *  <alias name="externalSecurityDAO" alias="securityDAO"/>
- *  
- * @author mauro.bartolomeoli@geo-solutions.it
+ * Alternative implementation of SecurityDAO that uses names for users and groups instead of loading
+ * data from the database. To be activated as an alias when external authentication is enabled:
  *
+ * <p><alias name="externalSecurityDAO" alias="securityDAO"/>
+ *
+ * @author mauro.bartolomeoli@geo-solutions.it
  */
 public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
 
@@ -56,9 +54,9 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
     }
 
     /**
-     * Returns a new list populating User object from username and UserGroup object from groupname so
-     * that using external users is transparent for higher levels.
-     * 
+     * Returns a new list populating User object from username and UserGroup object from groupname
+     * so that using external users is transparent for higher levels.
+     *
      * @param rules input rules
      * @return rules with populated user objects
      */
@@ -96,9 +94,9 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
     }
 
     /**
-     * Extracts username and groupname from DTO objets, so that security is persisted
-     * with the names instead of the object.
-     * 
+     * Extracts username and groupname from DTO objets, so that security is persisted with the names
+     * instead of the object.
+     *
      * @param rules input rules
      * @return
      */
@@ -129,36 +127,28 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
     public List<SecurityRule> search(ISearch search) {
         return fillFromNames(super.search(search));
     }
-    
-    /**
-     * Add security filtering in order to filter out resources the user has not read access to
-     */
+
+    /** Add security filtering in order to filter out resources the user has not read access to */
     @Override
-    public void addReadSecurityConstraints(Search searchCriteria, User user)
-    {
+    public void addReadSecurityConstraints(Search searchCriteria, User user) {
         // no further constraints for admin user
-        if(user.getRole() == Role.ADMIN) {
+        if (user.getRole() == Role.ADMIN) {
             return;
         }
 
         Filter userFiltering = Filter.equal("username", user.getName());
 
-        if(! user.getGroups().isEmpty()) {
+        if (user.getGroups() != null && !user.getGroups().isEmpty()) {
             List<String> groupsName = new ArrayList<>();
             for (UserGroup group : user.getGroups()) {
                 groupsName.add(group.getGroupName());
             }
-            
-            userFiltering = Filter.or( userFiltering, Filter.in("groupname", groupsName));
+
+            userFiltering = Filter.or(userFiltering, Filter.in("groupname", groupsName));
         }
 
-        Filter securityFilter = Filter.some(
-                "security",
-                Filter.and(
-                        Filter.equal("canRead", true),
-                        userFiltering
-                        )
-                );
+        Filter securityFilter =
+                Filter.some("security", Filter.and(Filter.equal("canRead", true), userFiltering));
 
         searchCriteria.addFilter(securityFilter);
     }
@@ -172,17 +162,18 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
         Search searchCriteria = new Search(SecurityRule.class);
 
         Filter securityFilter =
-                Filter.and(Filter.equal("resource.id", resourceId),
+                Filter.and(
+                        Filter.equal("resource.id", resourceId),
                         Filter.equal("username", userName));
         searchCriteria.addFilter(securityFilter);
-        // now rules are not properly filtered. 
-        // so no user rules have to be removed externally (see RESTServiceImpl > ResourceServiceImpl)
-        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when this unit is well tested).
+        // now rules are not properly filtered.
+        // so no user rules have to be removed externally (see RESTServiceImpl >
+        // ResourceServiceImpl)
+        // TODO: apply same worakaround of findGroupSecurityRule or fix searchCriteria issue (when
+        // this unit is well tested).
         return fillFromNames(super.search(searchCriteria));
     }
 
-    
-    
     @Override
     public List<SecurityRule> findSecurityRules(long resourceId) {
         return fillFromNames(super.findSecurityRules(resourceId));
@@ -194,10 +185,10 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
     @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
         List<SecurityRule> rules = findSecurityRules(resourceId);
-        //WORKAROUND
+        // WORKAROUND
         List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
-        for(SecurityRule sr : rules){
-            if(sr.getGroupname() != null && groupNames.contains(sr.getGroupname())){
+        for (SecurityRule sr : rules) {
+            if (sr.getGroupname() != null && groupNames.contains(sr.getGroupname())) {
                 filteredRules.add(sr);
             }
         }

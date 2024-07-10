@@ -20,32 +20,30 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.User;
-
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
 import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * @author DamianoG
- *
- */
-
+/** @author DamianoG */
 @XmlRootElement(name = "UserGroup")
-public class RESTUserGroup implements Serializable{
+public class RESTUserGroup implements Serializable {
 
     private static final long serialVersionUID = 7681963958796864207L;
 
     private Long id;
-    
+
     private String groupName;
-    
+
     private UserList restUsers;
-    
+
     private String description;
-    
+
+    private List<UserGroupAttribute> attributes;
+
     public RESTUserGroup() {}
 
     /**
@@ -56,72 +54,66 @@ public class RESTUserGroup implements Serializable{
         this.id = id;
         this.groupName = groupName;
         List<RESTUser> list = new ArrayList<RESTUser>();
-        for(User u : users){
+        for (User u : users) {
             list.add(new RESTUser(u.getId(), u.getName(), u.getRole(), u.getGroups(), true));
         }
-        this.restUsers = new UserList(list); 
+        this.restUsers = new UserList(list);
         this.description = description;
     }
 
-    /**
-     * @return the id
-     */
+    public RESTUserGroup(UserGroup group, Set<User> users) {
+        this(group.getId(), group.getGroupName(), users, group.getDescription());
+    }
+
+    /** @return the id */
     public Long getId() {
         return id;
     }
 
-    /**
-     * @param id the id to set
-     */
+    /** @param id the id to set */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /**
-     * @return the groupName
-     */
+    /** @return the groupName */
     public String getGroupName() {
         return groupName;
     }
 
-    /**
-     * @param groupName the groupName to set
-     */
+    /** @param groupName the groupName to set */
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
-    
-    /**
-     * @return the restUsers
-     */
+
+    /** @return the restUsers */
     public UserList getRestUsers() {
         return restUsers;
     }
 
-    /**
-     * @param restUsers the restUsers to set
-     */
+    /** @param restUsers the restUsers to set */
     public void setRestUsers(UserList restUsers) {
         this.restUsers = restUsers;
     }
-    
-    /**
-     * @return the description
-     */
+
+    /** @return the description */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * @param description the description to set
-     */
+    /** @param description the description to set */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /**
-     * @return the serialversionuid
-     */
+    public List<UserGroupAttribute> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(List<UserGroupAttribute> attributes) {
+        this.attributes = attributes;
+    }
+
+    /** @return the serialversionuid */
     public static long getSerialversionuid() {
         return serialVersionUID;
     }

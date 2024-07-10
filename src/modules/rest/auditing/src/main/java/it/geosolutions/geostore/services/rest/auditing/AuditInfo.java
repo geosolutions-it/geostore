@@ -28,7 +28,6 @@
 package it.geosolutions.geostore.services.rest.auditing;
 
 enum AuditInfo {
-
     HTTP_METHOD("httpMethod"),
     PATH("path"),
     BASE_PATH("basePath"),

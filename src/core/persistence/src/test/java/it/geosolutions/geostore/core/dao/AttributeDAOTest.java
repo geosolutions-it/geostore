@@ -1,19 +1,19 @@
 /*
  *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
- * 
+ *
  *  GPLv3 + Classpath exception
- * 
+ *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- * 
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- * 
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -22,32 +22,28 @@ package it.geosolutions.geostore.core.dao;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
-
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.enums.DataType;
-
 import java.util.Date;
 import java.util.List;
-
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 
 /**
  * Class AttributeDAOTest
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 public class AttributeDAOTest extends BaseDAOTest {
 
-    final private static Logger LOGGER = Logger.getLogger(AttributeDAOTest.class);
+    private static final Logger LOGGER = LogManager.getLogger(AttributeDAOTest.class);
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     @Test
     public void testPersistAttribute() throws Exception {
 
@@ -184,12 +180,9 @@ public class AttributeDAOTest extends BaseDAOTest {
             attributeDAO.removeById(id);
             assertNull("Attribute not deleted", attributeDAO.find(id));
         }
-
     }
 
-    /**
-     * @throws Exception
-     */
+    /** @throws Exception */
     @Test
     public void testSearchAttribute() throws Exception {
 
@@ -326,8 +319,8 @@ public class AttributeDAOTest extends BaseDAOTest {
         //
         {
             Search criteria = new Search(Attribute.class);
-            criteria.addFilterOr(Filter.notEqual("type", DataType.NUMBER),
-                    Filter.equal("type", DataType.DATE));
+            criteria.addFilterOr(
+                    Filter.notEqual("type", DataType.NUMBER), Filter.equal("type", DataType.DATE));
 
             List<Attribute> attrList = attributeDAO.search(criteria);
 
@@ -349,5 +342,4 @@ public class AttributeDAOTest extends BaseDAOTest {
             assertEquals(0, storedDataDAO.count(null));
         }
     }
-
 }

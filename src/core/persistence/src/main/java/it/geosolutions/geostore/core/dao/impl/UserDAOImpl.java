@@ -20,34 +20,32 @@
 package it.geosolutions.geostore.core.dao.impl;
 
 import com.googlecode.genericdao.search.ISearch;
-
-import java.util.List;
-import java.util.Set;
-
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
-
-import org.apache.log4j.Logger;
+import java.util.List;
+import java.util.Set;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class UserDAOImpl.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
 @Transactional(value = "geostoreTransactionManager")
 public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(UserDAOImpl.class);
+    private static final Logger LOGGER = LogManager.getLogger(UserDAOImpl.class);
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#persist(T[])
      */
     @Override
@@ -69,7 +67,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#findAll()
      */
     @Override
@@ -79,7 +77,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
     @SuppressWarnings("unchecked")
@@ -90,7 +88,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#merge(java.lang.Object)
      */
     @Override
@@ -106,7 +104,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#remove(java.lang.Object)
      */
     @Override
@@ -116,7 +114,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#removeById(java.io.Serializable)
      */
     @Override
@@ -126,7 +124,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#find(java.io.Serializable)
      */
     @Override
@@ -150,7 +148,7 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.trg.dao.jpa.GenericDAOImpl#save(T[])
      */
     @Override
@@ -169,5 +167,4 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
 
         return super.save(entities);
     }
-
 }

@@ -27,27 +27,36 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import org.junit.After;
-import org.junit.Before;
-
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.UUID;
+import org.junit.After;
+import org.junit.Before;
 
 /**
- * Base class that defines the necessary tests directories and make everything is cleaned at the end.
+ * Base class that defines the necessary tests directories and make everything is cleaned at the
+ * end.
  */
-abstract public class AuditingTestsBase {
+public abstract class AuditingTestsBase {
 
-    protected final File TESTS_ROOT_DIRECTORY = new File(System.getProperty("java.io.tmpdir"), "auditing-tests-" + UUID.randomUUID().toString());
+    protected final File TESTS_ROOT_DIRECTORY =
+            new File(
+                    System.getProperty("java.io.tmpdir"),
+                    "auditing-tests-" + UUID.randomUUID().toString());
     protected final File OUTPUT_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "output");
     protected final File TEMPLATES_DIRECTORY = getTemplatesDirectory();
     protected final File CONFIGURATION_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "configuration");
-    protected final File CONFIGURATION_FILE_PATH = new File(CONFIGURATION_DIRECTORY, "auditing.properties");
+    protected final File CONFIGURATION_FILE_PATH =
+            new File(CONFIGURATION_DIRECTORY, "auditing.properties");
 
     private File getTemplatesDirectory() {
         try {
-            return new File(AuditingTestsUtils.class.getClassLoader().getResource("templates").toURI().getPath());
+            return new File(
+                    AuditingTestsUtils.class
+                            .getClassLoader()
+                            .getResource("templates")
+                            .toURI()
+                            .getPath());
         } catch (URISyntaxException exception) {
             throw new RuntimeException("Error getting tests templates directory.");
         }
@@ -56,7 +65,11 @@ abstract public class AuditingTestsBase {
     @Before
     public void before() {
         AuditingTestsUtils.initDirectory(TESTS_ROOT_DIRECTORY);
-        AuditingTestsUtils.createDefaultConfiguration(CONFIGURATION_DIRECTORY, CONFIGURATION_FILE_PATH, OUTPUT_DIRECTORY, TEMPLATES_DIRECTORY);
+        AuditingTestsUtils.createDefaultConfiguration(
+                CONFIGURATION_DIRECTORY,
+                CONFIGURATION_FILE_PATH,
+                OUTPUT_DIRECTORY,
+                TEMPLATES_DIRECTORY);
         AuditingTestsUtils.initDirectory(OUTPUT_DIRECTORY);
     }
 

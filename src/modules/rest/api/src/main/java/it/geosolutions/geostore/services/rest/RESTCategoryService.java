@@ -4,7 +4,7 @@
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
- * 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -16,7 +16,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. 
+ * along with this program.
  *
  * ====================================================================
  *
@@ -33,7 +33,6 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
-
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -46,13 +45,12 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
-
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
  * Interface RESTCategoryService.
- * 
+ *
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
@@ -66,10 +64,10 @@ public interface RESTCategoryService {
      */
     @POST
     @Path("/")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN" })
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({"ROLE_ADMIN"})
     long insert(@Context SecurityContext sc, @Multipart("category") Category category)
             throws BadRequestServiceEx, NotFoundServiceEx;
 
@@ -81,11 +79,15 @@ public interface RESTCategoryService {
      */
     @PUT
     @Path("/category/{id}")
-    @Consumes({ MediaType.APPLICATION_XML, MediaType.TEXT_XML })
+    @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN" })
-    @Secured({ "ROLE_ADMIN" })
-    long update(@Context SecurityContext sc, @PathParam("id") long id,
-            @Multipart("category") Category category) throws NotFoundWebEx;
+    @Secured({"ROLE_ADMIN"})
+    long update(
+            @Context SecurityContext sc,
+            @PathParam("id") long id,
+            @Multipart("category") Category category)
+            throws NotFoundWebEx;
 
     /**
      * @param id
@@ -94,7 +96,7 @@ public interface RESTCategoryService {
     @DELETE
     @Path("/category/{id}")
     // @RolesAllowed({ "ADMIN" })
-    @Secured({ "ROLE_ADMIN" })
+    @Secured({"ROLE_ADMIN"})
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
@@ -104,9 +106,9 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/category/{id}")
-    @Produces({ MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
     Category get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
@@ -117,11 +119,14 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/")
-    @Produces({ MediaType.TEXT_XML, MediaType.APPLICATION_JSON })
+    @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
-    CategoryList getAll(@Context SecurityContext sc, @QueryParam("page") Integer page,
-            @QueryParam("entries") Integer entries) throws BadRequestWebEx;
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    CategoryList getAll(
+            @Context SecurityContext sc,
+            @QueryParam("page") Integer page,
+            @QueryParam("entries") Integer entries)
+            throws BadRequestWebEx;
 
     /**
      * @param nameLike
@@ -129,8 +134,8 @@ public interface RESTCategoryService {
      */
     @GET
     @Path("/count/{nameLike}")
+    @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
-    @Secured({ "ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS" })
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
     long getCount(@Context SecurityContext sc, @PathParam("nameLike") String nameLike);
-
 }
