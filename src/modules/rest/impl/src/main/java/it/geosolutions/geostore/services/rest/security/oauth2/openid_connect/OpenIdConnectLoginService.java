@@ -98,6 +98,6 @@ public class OpenIdConnectLoginService extends Oauth2LoginService {
         }
         assert requestAttributes != null;
         requestAttributes.setAttribute(PROVIDER_KEY, provider, 0);
-        return buildCallbackResponse(token, refreshToken, provider);
+        return buildCallbackResponse(response, token, refreshToken, provider);
     }
 }

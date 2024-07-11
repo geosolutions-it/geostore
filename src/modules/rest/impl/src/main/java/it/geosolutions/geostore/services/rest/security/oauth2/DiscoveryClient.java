@@ -27,10 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -103,20 +100,22 @@ public class DiscoveryClient {
                     .ifPresent(uri -> conf.setIdTokenUri((String) uri));
             Optional.ofNullable(response.get(getEndSessionEndpoint()))
                     .ifPresent(uri -> conf.setLogoutUri((String) uri));
-            Optional.ofNullable(response.get(getScopesSupported()))
-                    .ifPresent(
-                            s -> {
-                                @SuppressWarnings("unchecked")
-                                List<String> scopes = (List<String>) s;
-                                conf.setScopes(collectScopes(scopes));
-                            });
             Optional.ofNullable(response.get(getRevocationEndpoint()))
                     .ifPresent(s -> conf.setRevokeEndpoint((String) s));
+            if (conf.getScopes() == null || conf.getScopes().isEmpty()) {
+                Optional.ofNullable(response.get(getScopesSupported()))
+                        .ifPresent(
+                                s -> {
+                                    @SuppressWarnings("unchecked")
+                                    List<String> scopes = (List<String>) s;
+                                    conf.setScopes(collectScopes(scopes));
+                                });
+            }
         }
     }
 
     private String collectScopes(List<String> scopes) {
-        return scopes.stream().collect(Collectors.joining(","));
+        return String.join(",", scopes);
     }
 
     protected String getUserinfoEndpointAttrName() {

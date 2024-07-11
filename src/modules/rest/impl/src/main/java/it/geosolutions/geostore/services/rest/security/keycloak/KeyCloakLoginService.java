@@ -101,7 +101,7 @@ public class KeyCloakLoginService extends Oauth2LoginService {
             token = getAccessToken();
             refreshToken = getRefreshAccessToken();
         }
-        return buildCallbackResponse(token, refreshToken, provider);
+        return buildCallbackResponse(response, token, refreshToken, provider);
     }
 
     private KeycloakTokenDetails getDetails() {
