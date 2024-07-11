@@ -267,7 +267,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         searchCriteria.addFilterEqual("groupName", name);
         UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
-        if (!existingGroups.isEmpty()) {
+        if (existingGroups.size() > 0) {
             result = existingGroups.get(0);
         }
         return result;
