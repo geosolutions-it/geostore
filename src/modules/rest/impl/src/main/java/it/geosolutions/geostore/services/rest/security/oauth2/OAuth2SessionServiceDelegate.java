@@ -34,6 +34,7 @@ import it.geosolutions.geostore.core.security.password.SecurityUtils;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
+import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
@@ -49,6 +50,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
@@ -56,11 +58,12 @@ import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.DefaultOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.common.exceptions.InvalidTokenException;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpMessageConverterExtractor;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.*;
 import org.springframework.web.context.request.RequestContextHolder;
 
 /** Abstract implementation of an OAuth2 SessionServiceDelegate. */
@@ -83,32 +86,94 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
         HttpServletRequest request = getRequest();
-        if (accessToken == null)
-            accessToken = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
-        if (accessToken == null)
-            throw new NotFoundWebEx("Either the accessToken or the refresh token are missing");
+        LOGGER.debug("Starting token refresh process.");
 
+        // Attempt to retrieve access token if not provided
+        if (accessToken == null) {
+            LOGGER.debug(
+                    "Access token not provided. Attempting to retrieve from request parameters or headers.");
+            accessToken = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
+        }
+
+        // If access token is still null, throw exception
+        if (accessToken == null) {
+            LOGGER.warn("Access token is missing. Cannot proceed with token refresh.");
+            throw new NotFoundWebEx("Either the access token or the refresh token is missing.");
+        }
+
+        // Retrieve current access token details
         OAuth2AccessToken currentToken = retrieveAccessToken(accessToken);
+        if (currentToken == null) {
+            LOGGER.error("Current access token is invalid or expired.");
+            throw new InvalidTokenException("Invalid access token.");
+        }
         Date expiresIn = currentToken.getExpiration();
-        if (refreshToken == null) refreshToken = getParameterValue(REFRESH_TOKEN_PARAM, request);
+
+        // Attempt to retrieve refresh token if not provided
+        if (refreshToken == null) {
+            LOGGER.debug(
+                    "Refresh token not provided. Attempting to retrieve from request parameters.");
+            refreshToken = getParameterValue(REFRESH_TOKEN_PARAM, request);
+        }
+
+        // Calculate five minutes from now
         Date fiveMinutesFromNow = fiveMinutesFromNow();
         SessionToken sessionToken = null;
+
+        // Retrieve OAuth2 configuration
         OAuth2Configuration configuration = configuration();
         if (configuration != null && configuration.isEnabled()) {
-            if ((expiresIn == null || fiveMinutesFromNow.after(expiresIn))
-                    && refreshToken != null) {
-                if (LOGGER.isDebugEnabled()) LOGGER.info("Going to refresh the token.");
+            LOGGER.debug("OAuth2 configuration is enabled.");
+
+            // Check if token is about to expire or already expired
+            boolean tokenExpiring = (expiresIn == null || fiveMinutesFromNow.after(expiresIn));
+            if (tokenExpiring && refreshToken != null) {
+                LOGGER.info(
+                        "Access token is expiring or expired. Proceeding to refresh the token.");
+
                 try {
                     sessionToken = doRefresh(refreshToken, accessToken, configuration);
-                    if (sessionToken == null)
+                    if (sessionToken != null) {
+                        LOGGER.info("Token successfully refreshed.");
+                    } else {
+                        LOGGER.warn(
+                                "Token refresh returned null. Creating session token with existing access token.");
                         sessionToken =
-                                sessionToken(
+                                createSessionToken(
                                         accessToken, refreshToken, currentToken.getExpiration());
+                    }
                 } catch (NullPointerException npe) {
-                    LOGGER.error("Current configuration wasn't correctly initialized.");
+                    LOGGER.error("Configuration is not properly initialized.", npe);
+                    throw new InternalErrorWebEx("OAuth2 configuration is invalid.");
+                } catch (AuthenticationException ae) {
+                    LOGGER.error("Authentication error during token refresh.", ae);
+                    throw ae;
+                } catch (Exception e) {
+                    LOGGER.error("Unexpected error during token refresh.", e);
+                    throw new InvalidTokenException("Unexpected error during token refresh.", e);
+                }
+            } else {
+                if (!tokenExpiring) {
+                    LOGGER.debug("Access token is still valid for more than five minutes.");
+                }
+                if (refreshToken == null) {
+                    LOGGER.warn("Refresh token is missing. Cannot refresh access token.");
                 }
             }
+        } else {
+            if (configuration == null) {
+                LOGGER.error("OAuth2 configuration is null.");
+                throw new InternalErrorWebEx("OAuth2 configuration is missing.");
+            } else {
+                LOGGER.warn("OAuth2 configuration is disabled.");
+            }
         }
+
+        if (sessionToken == null) {
+            LOGGER.debug("Returning existing session token or null.");
+        }
+
+        LOGGER.debug("Token refresh process completed.");
         return sessionToken;
     }
 
@@ -121,50 +186,65 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * @return the SessionToken.
      */
     protected SessionToken doRefresh(
-            String refreshToken, String accessToken, OAuth2Configuration configuration) {
+            String refreshToken, String accessToken, OAuth2Configuration configuration)
+            throws AuthenticationException {
+        // Validate input parameters
+        if (configuration == null) {
+            throw new IllegalArgumentException("OAuth2Configuration must not be null.");
+        }
+
         SessionToken sessionToken = null;
 
+        // Consider reusing RestTemplate instance if thread safety is ensured
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = getHttpHeaders(accessToken, configuration);
 
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
         requestBody.add("grant_type", "refresh_token");
         requestBody.add("refresh_token", refreshToken);
+        requestBody.add("client_id", configuration.getClientId()); // Added client_id
         requestBody.add("client_secret", configuration.getClientSecret());
+
+        // Include scope if required by Azure AD B2C
+        if (StringUtils.hasText(configuration.getScopes())) {
+            requestBody.add("scope", configuration.getScopes());
+        }
 
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(requestBody, headers);
 
         OAuth2AccessToken newToken = null;
         try {
-            newToken =
-                    restTemplate
-                            .exchange(
-                                    configuration
-                                            .buildRefreshTokenURI(), // Use exchange method for POST
-                                    // request
-                                    HttpMethod.POST,
-                                    requestEntity, // Include request body
-                                    OAuth2AccessToken.class)
-                            .getBody();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Refresh endpoint URL: {}", configuration.buildRefreshTokenURI());
+            }
+
+            ResponseEntity<OAuth2AccessToken> response =
+                    restTemplate.exchange(
+                            configuration.buildRefreshTokenURI(),
+                            HttpMethod.POST,
+                            requestEntity,
+                            OAuth2AccessToken.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                newToken = response.getBody();
+            }
+        } catch (HttpClientErrorException | HttpServerErrorException ex) {
+            LOGGER.error("HTTP error during token refresh: {}", ex.getStatusCode(), ex);
+        } catch (ResourceAccessException ex) {
+            LOGGER.error("Resource access error during token refresh.", ex);
         } catch (Exception ex) {
-            LOGGER.error("Error trying to obtain a refresh token.", ex);
+            LOGGER.error("Unexpected error during token refresh.", ex);
         }
 
-        if (newToken != null && newToken.getValue() != null) {
-            // update the Authentication
+        if (isValidToken(newToken)) {
+            // Update the authentication token
             updateAuthToken(accessToken, newToken, refreshToken, configuration);
             sessionToken =
-                    sessionToken(newToken.getValue(), refreshToken, newToken.getExpiration());
-        } else if (accessToken != null) {
-            // update the Authentication
-            sessionToken = sessionToken(accessToken, refreshToken, null);
-        } else {
-            // the refresh token was invalid. let's clear the session and send a remote logout.
-            // then redirect to the login entry point.
-            LOGGER.info(
-                    "Unable to refresh the token. The following request was performed: {}. Redirecting to login.",
-                    configuration.buildRefreshTokenURI("offline"));
+                    createSessionToken(newToken.getValue(), refreshToken, newToken.getExpiration());
+        } else if (accessToken == null) {
+            // Clear session and redirect to login whenever the access_token is not valid anymore
+            LOGGER.info("Unable to refresh the token. Redirecting to login.");
             doLogout(null);
             try {
                 getResponse()
@@ -173,11 +253,17 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                                         + configuration.getProvider().toLowerCase()
                                         + "/login");
             } catch (IOException e) {
-                LOGGER.error("Error while sending redirect to login service. ", e);
-                throw new RuntimeException(e);
+                LOGGER.error("Error while sending redirect to login service.", e);
             }
         }
         return sessionToken;
+    }
+
+    private boolean isValidToken(OAuth2AccessToken token) {
+        return token != null
+                && StringUtils.hasText(token.getValue())
+                && token.getRefreshToken() != null
+                && StringUtils.hasText(token.getRefreshToken().getValue());
     }
 
     private static HttpHeaders getHttpHeaders(
@@ -197,7 +283,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         return headers;
     }
 
-    private SessionToken sessionToken(String accessToken, String refreshToken, Date expires) {
+    private SessionToken createSessionToken(String accessToken, String refreshToken, Date expires) {
         SessionToken sessionToken = new SessionToken();
         if (expires != null) sessionToken.setExpires(expires.getTime());
         sessionToken.setAccessToken(accessToken);
