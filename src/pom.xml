@@ -1191,24 +1191,15 @@
         </pluginRepository>
     </pluginRepositories>
 
+    <modules>
+        <module>core</module>
+        <module>modules</module>
+        <module>web</module>
+    </modules>
     <profiles>
-        <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <modules>
-                <module>core</module>
-                <module>modules</module>
-                <module>web</module>
-            </modules>
-        </profile>
         <profile>
             <id>all</id>
             <modules>
-                <module>core</module>
-                <module>modules</module>
-                <module>web</module>
                 <module>cli</module>
             </modules>
         </profile>
