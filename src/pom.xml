@@ -1198,12 +1198,6 @@
     </modules>
     <profiles>
         <profile>
-            <id>all</id>
-            <modules>
-                <module>cli</module>
-            </modules>
-        </profile>
-        <profile>
             <id>cli</id>
             <modules>
                 <module>cli</module>

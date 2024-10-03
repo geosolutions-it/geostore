@@ -40,6 +40,10 @@
             <artifactId>geostore-rest-impl</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>it.geosolutions.geostore</groupId>
+            <artifactId>geostore-rest-extjs</artifactId>
+        </dependency>
         <!-- Avoids java.lang.ClassNotFoundException: com.sun.ws.rs.ext.RuntimeDelegateImpl -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
@@ -237,16 +241,6 @@
                 <dependency>
                     <groupId>com.oracle</groupId>
                     <artifactId>ojdbc6</artifactId>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>extjs</id>
-            <dependencies>
-                <dependency>
-                    <groupId>it.geosolutions.geostore</groupId>
-                    <artifactId>geostore-rest-extjs</artifactId>
                 </dependency>
             </dependencies>
         </profile>
