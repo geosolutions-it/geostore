@@ -6,10 +6,10 @@ name: Release
 on:
   workflow_dispatch:
     inputs:
-      version: 
+      version:
         description: 'Version to release, e.g. 2.1.0 (make sure to execute on this on the release branch)'
         required: true
-      base: 
+      base:
         description: 'Base Version. e.g. 2.1'
         required: true
 
@@ -45,7 +45,7 @@ jobs:
         # Optional
         git config user.name github-actions
         git config user.email github-actions@github.com
-        
+
         # Commit changes
         find . -name 'pom.xml' | xargs git add
         git commit -m "Version Release ${{ inputs.version }}"
@@ -53,7 +53,7 @@ jobs:
         git push origin ${{ github.ref_name }} --tags
 
     - name: Build with Maven
-      run: mvn -B clean install -Pextjs,h2_disk,auditing
+      run: mvn -B clean install -Ph2_disk,auditing # Test with h2 disk profile and auditing module
 
     - name: Set up Maven Repository
       uses: actions/setup-java@v3
@@ -65,7 +65,7 @@ jobs:
         server-password: MAVEN_PASSWORD
 
     - name: Publish package
-      run: mvn clean install deploy -Ppostgres,extjs
+      run: mvn clean install deploy -Ppostgres # deploy version includes only the postgres drivers. Auditing module is not added to the published webapp.
       env:
         MAVEN_USERNAME: ${{ secrets.GS_MAVEN_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.GS_MAVEN_PASSWORD }}
@@ -79,7 +79,7 @@ jobs:
         git tag ${VERSION} # create tag
         git push origin ${{ github.ref_name }}
         echo "Snapshots version restored"
-  release: 
+  release:
       runs-on: ubuntu-latest
       needs: fix-version
       concurrency: release-${{ github.ref }}

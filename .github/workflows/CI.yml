@@ -26,7 +26,7 @@ jobs:
         distribution: 'adopt'
         cache: maven
     - name: Build with Maven
-      run: mvn -B clean install -Pextjs,h2_disk,auditing
+      run: mvn -B clean install -Ph2_disk,auditing # running the test build with the h2 disk profile and auditing too.
   ## Only on push event, publish on geosolutions maven repo
   publish:
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       - name: Publish package
-        run: mvn clean install deploy -Ppostgres,extjs
+        run: mvn clean install deploy -Ppostgres # published version includes only the postgres drivers. Auditing module is not added to the published version.
         env:
           MAVEN_USERNAME: ${{ secrets.GS_MAVEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.GS_MAVEN_PASSWORD }}
