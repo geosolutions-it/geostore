@@ -304,7 +304,9 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         LOGGER.debug("About to configure the REST Resource Template");
         configureRestTemplate();
 
-        if (accessToken != null) {
+        if (accessToken != null
+                && accessToken.getValue() != null
+                && !accessToken.getValue().isEmpty()) {
             LOGGER.debug("Setting the access token on the OAuth2ClientContext");
             restTemplate.getOAuth2ClientContext().setAccessToken(accessToken);
         }
