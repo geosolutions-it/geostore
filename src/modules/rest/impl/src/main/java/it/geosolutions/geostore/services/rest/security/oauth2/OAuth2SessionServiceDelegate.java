@@ -56,6 +56,7 @@ import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.DefaultOAuth2RefreshToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
+import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -90,7 +91,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
         OAuth2AccessToken currentToken = retrieveAccessToken(accessToken);
         Date expiresIn = currentToken.getExpiration();
-        if (refreshToken == null) refreshToken = getParameterValue(REFRESH_TOKEN_PARAM, request);
+        if (refreshToken == null || refreshToken.isEmpty())
+            refreshToken = getParameterValue(REFRESH_TOKEN_PARAM, request);
         Date fiveMinutesFromNow = fiveMinutesFromNow();
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
@@ -100,15 +102,19 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                 if (LOGGER.isDebugEnabled()) LOGGER.info("Going to refresh the token.");
                 try {
                     sessionToken = doRefresh(refreshToken, accessToken, configuration);
-                    if (sessionToken == null)
-                        sessionToken =
-                                sessionToken(
-                                        accessToken, refreshToken, currentToken.getExpiration());
                 } catch (NullPointerException npe) {
                     LOGGER.error("Current configuration wasn't correctly initialized.");
                 }
             }
         }
+        if (sessionToken == null)
+            sessionToken = sessionToken(accessToken, refreshToken, currentToken.getExpiration());
+
+        request.setAttribute(
+                OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, sessionToken.getAccessToken());
+        request.setAttribute(
+                OAuth2AuthenticationDetails.ACCESS_TOKEN_TYPE, sessionToken.getTokenType());
+
         return sessionToken;
     }
 
@@ -131,6 +137,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         requestBody.add("grant_type", "refresh_token");
         requestBody.add("refresh_token", refreshToken);
         requestBody.add("client_secret", configuration.getClientSecret());
+        requestBody.add("client_id", configuration.getClientId());
 
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(requestBody, headers);
@@ -151,9 +158,21 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             LOGGER.error("Error trying to obtain a refresh token.", ex);
         }
 
-        if (newToken != null && newToken.getValue() != null) {
+        if (refreshToken != null
+                && accessToken != null
+                && !refreshToken.isEmpty()
+                && !accessToken.isEmpty()
+                && newToken != null
+                && newToken.getValue() != null
+                && !newToken.getValue().isEmpty()) {
             // update the Authentication
-            updateAuthToken(accessToken, newToken, refreshToken, configuration);
+            String newRefreshToken =
+                    newToken.getRefreshToken() != null
+                                    && newToken.getRefreshToken().getValue() != null
+                                    && !newToken.getRefreshToken().getValue().isEmpty()
+                            ? newToken.getRefreshToken().getValue()
+                            : refreshToken;
+            updateAuthToken(accessToken, newToken, newRefreshToken, configuration);
             sessionToken =
                     sessionToken(newToken.getValue(), refreshToken, newToken.getExpiration());
         } else if (accessToken != null) {
@@ -190,7 +209,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     configuration.clientId,
                     configuration
                             .clientSecret); // Set client ID and client secret for authentication
-        else if (accessToken != null) {
+        else if (accessToken != null && !accessToken.isEmpty()) {
             headers.set("Authorization", "Bearer " + accessToken);
         }
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED); // Set content type
@@ -321,7 +340,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
         OAuth2Configuration configuration = configuration();
         if (configuration != null && configuration.isEnabled()) {
-            if (token != null && accessToken != null) {
+            if (token != null
+                    && accessToken != null
+                    && !token.isEmpty()
+                    && !accessToken.isEmpty()) {
                 if (configuration.isGlobalLogoutEnabled())
                     doLogoutInternal(token, configuration, accessToken);
                 if (configuration.getRevokeEndpoint() != null) clearSession(restTemplate, request);

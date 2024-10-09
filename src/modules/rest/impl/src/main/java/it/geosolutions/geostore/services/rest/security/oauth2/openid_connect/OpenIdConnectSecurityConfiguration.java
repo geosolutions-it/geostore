@@ -141,7 +141,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
                 oidcTokenServices(),
                 oauth2RestTemplate(),
                 configuration(),
-                oidcCache(),
+                oAuth2Cache(),
                 openIdConnectBearerTokenValidator());
     }
 
@@ -157,7 +157,7 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
     }
 
     @Bean
-    public TokenAuthenticationCache oidcCache() {
+    public TokenAuthenticationCache oAuth2Cache() {
         return new TokenAuthenticationCache();
     }
 }
