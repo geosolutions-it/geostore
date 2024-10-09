@@ -422,7 +422,7 @@ public class OAuth2Configuration extends IdPConfiguration {
                     configuration.clientId,
                     configuration
                             .clientSecret); // Set client ID and client secret for authentication
-        else if (accessToken != null) {
+        else if (accessToken != null && !accessToken.isEmpty()) {
             headers.set("Authorization", "Bearer " + accessToken);
         }
         return headers;
