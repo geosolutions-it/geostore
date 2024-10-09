@@ -54,8 +54,8 @@ import org.springframework.security.oauth2.client.token.grant.password.ResourceO
 import org.springframework.security.oauth2.common.AuthenticationScheme;
 
 /**
- * Base abstract class for @Configuration classes providing needed beans from the Spring OAuth2
- * mechanism.
+ * Base abstract class for @Configuration classes providing the necessary beans from the Spring
+ * OAuth2 mechanism.
  */
 @Configuration
 public abstract class OAuth2GeoStoreSecurityConfiguration implements ApplicationContextAware {

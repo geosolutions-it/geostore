@@ -169,7 +169,7 @@ public class KeyCloakFilter extends GenericFilterBean {
             KeyCloakHelper helper = GeoStoreContext.bean(KeyCloakHelper.class);
             KeycloakTokenDetails keycloakDetails = (KeycloakTokenDetails) details;
             String accessToken = keycloakDetails.getAccessToken();
-            if (accessToken != null) {
+            if (accessToken != null && !accessToken.isEmpty()) {
                 cache.putCacheEntry(accessToken, authentication);
                 if (helper != null) {
                     HttpFacade facade = new SimpleHttpFacade(getRequest(), getResponse());

@@ -86,7 +86,7 @@ public class GeoStoreKeycloakAuthProvider implements AuthenticationProvider {
         HttpServletRequest request = getRequest();
         // set tokens as request attributes so that can made available in a cookie for the frontend
         // on the callback url.
-        if (accessToken != null) {
+        if (accessToken != null && !accessToken.isExpired()) {
             expiration = accessToken.getExp();
             if (request != null) request.setAttribute(ACCESS_TOKEN_PARAM, accessToken);
         }
