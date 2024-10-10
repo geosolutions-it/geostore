@@ -91,7 +91,10 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             }
             // we must validate
             String token = null;
-            if (accessToken != null) {
+            if (accessToken != null
+                    && !accessToken.isExpired()
+                    && accessToken.getValue() != null
+                    && !accessToken.getValue().isEmpty()) {
                 token = accessToken.getValue();
             } else {
                 token = (String) req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);

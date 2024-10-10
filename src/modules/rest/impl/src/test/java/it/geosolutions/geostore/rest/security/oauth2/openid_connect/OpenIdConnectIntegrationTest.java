@@ -153,7 +153,7 @@ public class OpenIdConnectIntegrationTest {
                         securityConfiguration.oidcTokenServices(),
                         restTemplate,
                         configuration,
-                        securityConfiguration.oidcCache(),
+                        securityConfiguration.oAuth2Cache(),
                         securityConfiguration.openIdConnectBearerTokenValidator());
     }
 
