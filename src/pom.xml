@@ -81,7 +81,7 @@
         <asm-version>2.2.3</asm-version>
         <cglib-version>2.1_3</cglib-version>
         <guava-version>18.0</guava-version>
-        <mockito-version>3.8.0</mockito-version>
+        <mockito-version>4.0.0</mockito-version>
         <javassist-version>3.8.0.GA</javassist-version>
         <geoapi-version>2.3-M1</geoapi-version>
         <gt-version>2.7-RC2</gt-version>
