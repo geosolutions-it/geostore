@@ -42,7 +42,7 @@
         spring-security-core 3.0.4 requires spring-core 3.x, otherwise we'd normally use 2.5.6, which
         is what the rest of the app uses
         -->
-        <spring-version>5.3.18</spring-version>
+        <spring-version>6.1.14</spring-version>
         <!-- 2.5.6.SEC01 is the version used by smix-->
         <!-- 2.5.5 is the version used by memberService-->
         <spring-security-version>5.7.12</spring-security-version>
