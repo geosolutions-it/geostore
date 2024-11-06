@@ -85,6 +85,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         this.userService = userService;
     }
 
+    public OAuth2SessionServiceDelegate(
+            RestTemplate restTemplate, OAuth2Configuration configuration) {}
+
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
         HttpServletRequest request = getRequest();
@@ -302,7 +305,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     private OAuth2AccessToken retrieveAccessToken(String accessToken) {
-        Authentication authentication = cache().get(accessToken);
+        Authentication authentication = cache() != null ? cache().get(accessToken) : null;
         OAuth2AccessToken result = null;
         if (authentication != null) {
             TokenDetails details = OAuth2Utils.getTokenDetails(authentication);
