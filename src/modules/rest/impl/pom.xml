@@ -254,10 +254,20 @@
             <artifactId>mockito-inline</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>RELEASE</version>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Mockito for JUnit 5 -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>4.8.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -294,8 +304,15 @@
                             </executions>
                         </plugin>
             -->
+            <!-- Maven Surefire Plugin -->
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <useModulePath>false</useModulePath>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
 
 </project>
