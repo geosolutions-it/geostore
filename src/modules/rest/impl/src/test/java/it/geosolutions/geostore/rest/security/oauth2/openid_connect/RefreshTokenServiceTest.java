@@ -9,42 +9,35 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import java.util.Date;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import org.junit.jupiter.api.*;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.client.OAuth2ClientContext;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
-import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
-import org.springframework.security.oauth2.common.OAuth2RefreshToken;
+import org.springframework.security.oauth2.common.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+/** Test class for OAuth2SessionServiceDelegate. */
 class RefreshTokenServiceTest {
 
-    @Mock private OAuth2RestTemplate restTemplate;
-
-    @Mock private OAuth2Configuration configuration;
-
-    private TestOAuth2SessionServiceDelegate service;
-
-    private final String accessToken = "testAccessToken";
-    private final String refreshToken = "testRefreshToken";
-    private final String clientId = "testClientId";
-    private final String clientSecret = "testClientSecret";
-    private final String refreshTokenUri = "http://test.com/oauth2/refresh";
-
-    @Mock private OAuth2RestTemplate oAuth2RestTemplate;
-
-    @Mock private OAuth2ClientContext clientContext;
+    private TestOAuth2SessionServiceDelegate serviceDelegate;
+    private OAuth2Configuration configuration;
+    private OAuth2RestTemplate restTemplate;
+    private MockHttpServletRequest mockRequest;
+    private MockHttpServletResponse mockResponse;
+    private DefaultOAuth2AccessToken mockOAuth2AccessToken;
 
     @Mock private TokenAuthenticationCache authenticationCache;
 
@@ -52,184 +45,434 @@ class RefreshTokenServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Create a spy of the service
-        service =
-                spy(
-                        new TestOAuth2SessionServiceDelegate(
-                                (OAuth2RestTemplate) restTemplate, configuration));
+        // Initialize mocks and dependencies
+        configuration = mock(OAuth2Configuration.class);
+        restTemplate = mock(OAuth2RestTemplate.class);
+        authenticationCache = mock(TokenAuthenticationCache.class);
 
-        // Mock the cache to return an Authentication with TokenDetails
-        Authentication mockAuth = mock(Authentication.class);
-        TokenDetails mockTokenDetails = mock(TokenDetails.class);
-        OAuth2AccessToken mockOAuth2AccessToken = new DefaultOAuth2AccessToken(accessToken);
+        // Create an instance of the test subclass
+        serviceDelegate = spy(new TestOAuth2SessionServiceDelegate());
+        serviceDelegate.setRestTemplate(restTemplate);
+        serviceDelegate.setConfiguration(configuration);
+        serviceDelegate.authenticationCache = authenticationCache;
 
-        when(authenticationCache.get(accessToken)).thenReturn(mockAuth);
-        when(OAuth2Utils.getTokenDetails(mockAuth)).thenReturn(mockTokenDetails);
-        when(mockTokenDetails.getAccessToken()).thenReturn(mockOAuth2AccessToken);
+        // Set up mock request and response
+        mockRequest = new MockHttpServletRequest();
+        mockResponse = new MockHttpServletResponse();
 
-        // Mock restTemplate and clientContext
-        when(oAuth2RestTemplate.getOAuth2ClientContext()).thenReturn(clientContext);
-        when(clientContext.getAccessToken()).thenReturn(mockOAuth2AccessToken);
-
-        // Mock configuration values
-        when(configuration.getClientId()).thenReturn(clientId);
-        when(configuration.getClientSecret()).thenReturn(clientSecret);
-        when(configuration.buildRefreshTokenURI()).thenReturn(refreshTokenUri);
-
-        // Mock HttpServletRequest and set in RequestContextHolder
-        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        // Set the RequestAttributes in RequestContextHolder
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
 
-        // Mock updateAuthToken method
-        doAnswer(
-                        invocation -> {
-                            String oldAccessToken = invocation.getArgument(0);
-                            OAuth2AccessToken newAccessToken = invocation.getArgument(1);
-                            OAuth2RefreshToken newRefreshToken = invocation.getArgument(2);
-                            OAuth2Configuration config = invocation.getArgument(3);
+        // Mock configuration behavior
+        when(configuration.isEnabled()).thenReturn(true);
+        when(configuration.getClientId()).thenReturn("testClientId");
+        when(configuration.getClientSecret()).thenReturn("testClientSecret");
+        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
 
-                            // Remove old access token from cache
-                            authenticationCache.removeEntry(oldAccessToken);
+        // Mock the existing OAuth2AccessToken with a refresh token
+        mockOAuth2AccessToken = new DefaultOAuth2AccessToken("providedAccessToken");
+        OAuth2RefreshToken mockRefreshToken = new DefaultOAuth2RefreshToken("existingRefreshToken");
+        mockOAuth2AccessToken.setRefreshToken(mockRefreshToken);
+        mockOAuth2AccessToken.setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000));
 
-                            // Create new Authentication and TokenDetails
-                            Authentication newAuth = mock(Authentication.class);
-                            TokenDetails newTokenDetails = mock(TokenDetails.class);
+        // Initialize currentAccessToken
+        serviceDelegate.currentAccessToken = mockOAuth2AccessToken;
 
-                            when(newTokenDetails.getAccessToken()).thenReturn(newAccessToken);
-                            when(OAuth2Utils.getTokenDetails(newAuth)).thenReturn(newTokenDetails);
+        // Mock the Authentication object
+        Authentication mockAuthentication = mock(Authentication.class);
 
-                            // Put new access token and authentication in cache
-                            when(authenticationCache.get(newAccessToken.getValue()))
-                                    .thenReturn(newAuth);
+        // Mock TokenDetails
+        TokenDetails mockTokenDetails = mock(TokenDetails.class);
+        when(mockTokenDetails.getIdToken()).thenReturn("mockIdToken");
 
-                            return null;
-                        })
-                .when(service)
-                .updateAuthToken(
-                        anyString(),
-                        any(OAuth2AccessToken.class),
-                        any(OAuth2RefreshToken.class),
-                        any(OAuth2Configuration.class));
+        // Mock getTokenDetails(authentication) to return mockTokenDetails
+        doReturn(mockTokenDetails).when(serviceDelegate).getTokenDetails(mockAuthentication);
+
+        // Ensure cache returns the mocked Authentication for oldToken
+        when(authenticationCache.get("providedAccessToken")).thenReturn(mockAuthentication);
+
+        // Optionally, set up SecurityContextHolder
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(mockAuthentication);
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @AfterEach
     void tearDown() {
-        // Clear RequestContextHolder after each test to avoid interference with other tests
+        // Clear the RequestContextHolder after each test
         RequestContextHolder.resetRequestAttributes();
+
+        // Close static mocks if any
+        // For Mockito 3.4.0 and above
+        Mockito.framework().clearInlineMocks();
     }
 
     @Test
-    void testDoRefresh_SuccessfulRefresh() {
-        // Mocking a successful response
-        OAuth2AccessToken mockToken = new DefaultOAuth2AccessToken("newAccessToken");
+    void testRefreshWithValidTokens() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        // Mock the RestTemplate exchange method to simulate a successful token refresh
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        OAuth2RefreshToken newRefreshToken = new DefaultOAuth2RefreshToken("newRefreshToken");
+        newAccessToken.setRefreshToken(newRefreshToken);
+        newAccessToken.setExpiration(
+                new Date(System.currentTimeMillis() + 7200 * 1000)); // Expires in 2 hours
+
         ResponseEntity<OAuth2AccessToken> responseEntity =
-                new ResponseEntity<>(mockToken, HttpStatus.OK);
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
 
         when(restTemplate.exchange(
-                        eq(refreshTokenUri),
+                        anyString(),
                         eq(HttpMethod.POST),
                         any(HttpEntity.class),
                         eq(OAuth2AccessToken.class)))
                 .thenReturn(responseEntity);
 
-        SessionToken sessionToken = service.refresh(refreshToken, accessToken);
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
 
+        // Assert
         assertNotNull(sessionToken, "SessionToken should not be null");
         assertEquals(
-                "newAccessToken",
-                sessionToken.getAccessToken(),
-                "Access token should match the new token");
+                "newAccessToken", sessionToken.getAccessToken(), "Access token should be updated");
+        assertEquals(
+                "newRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should be updated");
+        assertTrue(
+                sessionToken.getExpires() > System.currentTimeMillis(),
+                "Token expiration should be in the future");
+        assertEquals("bearer", sessionToken.getTokenType(), "Token type should be 'bearer'");
     }
 
     @Test
-    void testDoRefresh_ClientError_NoRetry() {
-        // Mocking a 4xx client error response
-        ResponseEntity<OAuth2AccessToken> responseEntity =
-                new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    void testRefreshWithInvalidRefreshToken() {
+        // Arrange
+        String refreshToken = "invalidRefreshToken";
+        String accessToken = "providedAccessToken";
 
+        // Mock the RestTemplate exchange method to simulate a client error (400 Bad Request)
         when(restTemplate.exchange(
-                        eq(refreshTokenUri),
+                        anyString(),
                         eq(HttpMethod.POST),
                         any(HttpEntity.class),
                         eq(OAuth2AccessToken.class)))
-                .thenReturn(responseEntity);
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
 
-        SessionToken sessionToken = service.refresh(refreshToken, accessToken);
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
 
-        assertNotNull(sessionToken, "SessionToken should not be null");
+        // Assert
+        assertNotNull(sessionToken, "SessionToken should not be null even when refresh fails");
         assertEquals(
-                "testAccessToken",
+                "providedAccessToken",
                 sessionToken.getAccessToken(),
-                "Access token should match the old token");
+                "Access token should remain unchanged");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged");
     }
 
     @Test
-    void testDoRefresh_ServerError_WithRetry() {
-        // Mocking a 5xx server error response
-        ResponseEntity<OAuth2AccessToken> responseEntity =
-                new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    void testRefreshWithServerError() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
 
+        // Mock the RestTemplate exchange method to simulate a server error (500 Internal Server
+        // Error)
         when(restTemplate.exchange(
-                        eq(refreshTokenUri),
+                        anyString(),
                         eq(HttpMethod.POST),
                         any(HttpEntity.class),
                         eq(OAuth2AccessToken.class)))
-                .thenReturn(responseEntity);
+                .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
-        SessionToken sessionToken = service.refresh(refreshToken, accessToken);
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
 
-        assertNotNull(sessionToken, "SessionToken should not be null");
+        // Assert
+        assertNotNull(sessionToken, "SessionToken should not be null even when refresh fails");
         assertEquals(
-                "testAccessToken",
+                "providedAccessToken",
                 sessionToken.getAccessToken(),
-                "Access token should match the old token");
+                "Access token should remain unchanged after server error");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged after server error");
+        // You can also verify that the method retried the expected number of times
+        verify(restTemplate, times(3))
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
     }
 
     @Test
-    void testDoRefresh_NullResponseFromServer() {
-        // Mocking a null response body
+    void testRefreshWithNullResponse() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        // Mock the RestTemplate exchange method to return a response with null body
         ResponseEntity<OAuth2AccessToken> responseEntity =
                 new ResponseEntity<>(null, HttpStatus.OK);
-
         when(restTemplate.exchange(
-                        eq(refreshTokenUri),
+                        anyString(),
                         eq(HttpMethod.POST),
                         any(HttpEntity.class),
                         eq(OAuth2AccessToken.class)))
                 .thenReturn(responseEntity);
 
-        SessionToken sessionToken = service.refresh(refreshToken, accessToken);
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
 
+        // Assert
+        assertNotNull(sessionToken, "SessionToken should not be null even when response is null");
+        assertEquals(
+                "providedAccessToken",
+                sessionToken.getAccessToken(),
+                "Access token should remain unchanged");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged");
+    }
+
+    @Test
+    void testRefreshWhenConfigurationDisabled() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        // Mock configuration to be disabled
+        when(configuration.isEnabled()).thenReturn(false);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        // Assert
+        assertNotNull(
+                sessionToken, "SessionToken should not be null when configuration is disabled");
+        assertEquals(
+                "providedAccessToken",
+                sessionToken.getAccessToken(),
+                "Access token should remain unchanged");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged");
+        // Verify that no exchange was attempted
+        verify(restTemplate, never())
+                .exchange(
+                        anyString(),
+                        any(HttpMethod.class),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshWithMissingAccessToken() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = null; // Access token is missing
+
+        // Act & Assert
+        Exception exception =
+                assertThrows(
+                        RuntimeException.class,
+                        () -> {
+                            serviceDelegate.refresh(refreshToken, accessToken);
+                        });
+
+        assertTrue(
+                exception
+                        .getMessage()
+                        .contains("Either the accessToken or the refresh token are missing"),
+                "Expected exception message");
+    }
+
+    @Test
+    void testRefreshWhenCacheReturnsNullAuthentication() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        // Mock cache to return null
+        when(authenticationCache.get("providedAccessToken")).thenReturn(null);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        // Assert
+        assertNotNull(
+                sessionToken,
+                "SessionToken should not be null even when authentication is not found in cache");
+        assertEquals(
+                "providedAccessToken",
+                sessionToken.getAccessToken(),
+                "Access token should remain unchanged");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged");
+    }
+
+    @Test
+    void testRefreshWhenAuthenticationIsAnonymous() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        // Mock an AnonymousAuthenticationToken
+        Authentication anonymousAuthentication =
+                mock(
+                        org.springframework.security.authentication.AnonymousAuthenticationToken
+                                .class);
+        when(authenticationCache.get("providedAccessToken")).thenReturn(anonymousAuthentication);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        // Assert
+        assertNotNull(
+                sessionToken,
+                "SessionToken should not be null even when authentication is anonymous");
+        assertEquals(
+                "providedAccessToken",
+                sessionToken.getAccessToken(),
+                "Access token should remain unchanged");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged");
+    }
+
+    @Test
+    void testRefreshWithExpiredAccessToken() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "expiredAccessToken";
+
+        // Set the current access token to be expired
+        mockOAuth2AccessToken.setExpiration(
+                new Date(System.currentTimeMillis() - 1000)); // Set expiration in the past
+        serviceDelegate.currentAccessToken = mockOAuth2AccessToken;
+
+        // Mock the RestTemplate exchange method to simulate a successful token refresh
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        OAuth2RefreshToken newRefreshToken = new DefaultOAuth2RefreshToken("newRefreshToken");
+        newAccessToken.setRefreshToken(newRefreshToken);
+        newAccessToken.setExpiration(
+                new Date(System.currentTimeMillis() + 7200 * 1000)); // Expires in 2 hours
+
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
+
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        // Assert
         assertNotNull(sessionToken, "SessionToken should not be null");
         assertEquals(
-                "testAccessToken",
-                sessionToken.getAccessToken(),
-                "Access token should match the old token");
-    }
-}
-
-// Concrete test subclass for the abstract class
-class TestOAuth2SessionServiceDelegate extends OAuth2SessionServiceDelegate {
-    private final OAuth2RestTemplate oAuth2RestTemplate;
-
-    public TestOAuth2SessionServiceDelegate(
-            OAuth2RestTemplate oAuth2RestTemplate, OAuth2Configuration configuration) {
-        super(oAuth2RestTemplate, configuration);
-        this.oAuth2RestTemplate = oAuth2RestTemplate;
+                "newAccessToken", sessionToken.getAccessToken(), "Access token should be updated");
+        assertEquals(
+                "newRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should be updated");
+        assertTrue(
+                sessionToken.getExpires() > System.currentTimeMillis(),
+                "Token expiration should be in the future");
     }
 
-    @Override
-    protected OAuth2RestTemplate restTemplate() {
-        return oAuth2RestTemplate;
-    }
+    /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */
+    class TestOAuth2SessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
-    // Override the updateAuthToken method
-    protected void updateAuthToken(
-            String oldAccessToken,
-            OAuth2AccessToken newAccessToken,
-            OAuth2RefreshToken newRefreshToken,
-            OAuth2Configuration configuration) {
-        // For testing purposes, you can provide a mock implementation or leave it empty
-        // If needed, update the authentication cache or context here
+        private OAuth2RestTemplate restTemplate;
+        private OAuth2Configuration configuration;
+        private OAuth2AccessToken currentAccessToken;
+        protected TokenAuthenticationCache authenticationCache;
+
+        public TestOAuth2SessionServiceDelegate() {
+            super(null, null); // Mocked dependencies
+        }
+
+        public void setRestTemplate(OAuth2RestTemplate restTemplate) {
+            this.restTemplate = restTemplate;
+        }
+
+        public void setConfiguration(OAuth2Configuration configuration) {
+            this.configuration = configuration;
+        }
+
+        @Override
+        protected OAuth2RestTemplate restTemplate() {
+            return restTemplate;
+        }
+
+        @Override
+        protected OAuth2Configuration configuration() {
+            return configuration;
+        }
+
+        @Override
+        protected HttpServletRequest getRequest() {
+            return mockRequest;
+        }
+
+        @Override
+        protected HttpServletResponse getResponse() {
+            return mockResponse;
+        }
+
+        @Override
+        protected TokenDetails getTokenDetails(Authentication authentication) {
+            // This method is now mocked in the test setup using doReturn()
+            return super.getTokenDetails(authentication);
+        }
+
+        @Override
+        protected OAuth2AccessToken retrieveAccessToken(String accessToken) {
+            return currentAccessToken;
+        }
+
+        @Override
+        protected TokenAuthenticationCache cache() {
+            return authenticationCache; // Return the mocked cache
+        }
+
+        @Override
+        protected void updateAuthToken(
+                String oldAccessToken,
+                OAuth2AccessToken newAccessToken,
+                OAuth2RefreshToken newRefreshToken,
+                OAuth2Configuration configuration) {
+            // Update the currentAccessToken to the newAccessToken
+            this.currentAccessToken = newAccessToken;
+
+            // Simulate updating the authentication in the cache
+            Authentication newAuthentication = mock(Authentication.class);
+            TokenDetails newTokenDetails = mock(TokenDetails.class);
+            when(newTokenDetails.getAccessToken()).thenReturn(newAccessToken);
+            when(OAuth2Utils.getTokenDetails(newAuthentication)).thenReturn(newTokenDetails);
+
+            // Remove the old token from the cache
+            authenticationCache.removeEntry(oldAccessToken);
+
+            // Add the new token to the cache
+            authenticationCache.putCacheEntry(newAccessToken.getValue(), newAuthentication);
+        }
     }
 }

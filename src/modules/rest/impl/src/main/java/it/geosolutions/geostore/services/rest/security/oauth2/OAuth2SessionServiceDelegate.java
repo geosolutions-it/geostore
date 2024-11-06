@@ -148,7 +148,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         boolean success = false;
 
         // Setup HTTP headers and body for the request
-        RestTemplate restTemplate = new RestTemplate();
+        // Use restTemplate() method to get RestTemplate instance
+        OAuth2RestTemplate restTemplate = restTemplate();
         HttpHeaders headers = getHttpHeaders(accessToken, configuration);
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
         requestBody.add("grant_type", "refresh_token");
@@ -271,7 +272,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     // Builds an authentication instance out of the passed values.
     // Sets it to the cache and to the SecurityContext to be sure the new token is updates.
-    private void updateAuthToken(
+    protected void updateAuthToken(
             String oldToken,
             OAuth2AccessToken newToken,
             OAuth2RefreshToken refreshToken,
@@ -304,7 +305,11 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
     }
 
-    private OAuth2AccessToken retrieveAccessToken(String accessToken) {
+    protected TokenDetails getTokenDetails(Authentication authentication) {
+        return OAuth2Utils.getTokenDetails(authentication);
+    }
+
+    protected OAuth2AccessToken retrieveAccessToken(String accessToken) {
         Authentication authentication = cache() != null ? cache().get(accessToken) : null;
         OAuth2AccessToken result = null;
         if (authentication != null) {
@@ -320,6 +325,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
         if (result == null) result = new DefaultOAuth2AccessToken(accessToken);
         return result;
+    }
+
+    protected HttpServletRequest getRequest() {
+        return OAuth2Utils.getRequest();
+    }
+
+    protected HttpServletResponse getResponse() {
+        return OAuth2Utils.getResponse();
     }
 
     @Override
@@ -502,7 +515,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                 || c.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM);
     }
 
-    private TokenAuthenticationCache cache() {
+    protected TokenAuthenticationCache cache() {
         return GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class);
     }
 
