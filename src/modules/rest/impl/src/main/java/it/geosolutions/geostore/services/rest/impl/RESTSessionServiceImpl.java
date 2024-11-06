@@ -189,7 +189,9 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
     @Override
     public SessionToken refresh(SecurityContext sc, String sessionId, String refreshToken) {
         String provider =
-                (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+                (String)
+                        Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                .getAttribute(PROVIDER_KEY, 0);
         SessionServiceDelegate delegate = getDelegate(provider);
         return delegate.refresh(refreshToken, sessionId);
     }
