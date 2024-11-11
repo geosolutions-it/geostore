@@ -123,13 +123,12 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
                 params.put(
                         "post_logout_redirect_uri",
                         Collections.singletonList(getPostLogoutRedirectUri()));
-            getLogoutRequestParams(token, clientId, params);
+            getLogoutRequestParams(token, getClientId(), params);
 
             HttpEntity<MultiValueMap<String, String>> requestEntity =
                     new HttpEntity<>(null, headers);
 
-            result = new Endpoint(HttpMethod.GET, appendParameters(params, uri));
-            result.setRequestEntity(requestEntity);
+            result = new Endpoint(HttpMethod.GET, appendParameters(params, uri), requestEntity);
         }
         return result;
     }

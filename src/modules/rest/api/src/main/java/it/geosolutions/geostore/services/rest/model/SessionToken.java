@@ -5,10 +5,12 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class SessionToken {
-    String token_type;
-    String access_token;
-    String refresh_token;
-    Long expires;
+    private String token_type;
+    private String access_token;
+    private String refresh_token;
+    private Long expires;
+    private String error;
+    private String warning;
 
     @XmlElement(name = "token_type")
     public String getTokenType() {
@@ -38,11 +40,29 @@ public class SessionToken {
     }
 
     @XmlElement(name = "refresh_token")
+    public String getRefreshToken() {
+        return refresh_token;
+    }
+
     public void setRefreshToken(String refresh_token) {
         this.refresh_token = refresh_token;
     }
 
-    public String getRefreshToken() {
-        return refresh_token;
+    @XmlElement(name = "error")
+    public String getError() {
+        return error;
+    }
+
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    @XmlElement(name = "warning")
+    public String getWarning() {
+        return warning;
+    }
+
+    public void setWarning(String warning) {
+        this.warning = warning;
     }
 }

@@ -138,6 +138,16 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
     public void doLogout(String sessionId) {
         HttpServletRequest request = OAuth2Utils.getRequest();
         HttpServletResponse response = OAuth2Utils.getResponse();
+        AdapterConfig configuration =
+                GeoStoreContext.bean(KeyCloakConfiguration.class).readAdapterConfig();
+
+        // Check if request, response, or configuration are null
+        if (request == null || response == null || configuration == null) {
+            LOGGER.warn(
+                    "Request, response, or configuration is null, unable to proceed with logout.");
+            return;
+        }
+
         KeyCloakHelper helper = GeoStoreContext.bean(KeyCloakHelper.class);
         KeycloakDeployment deployment = helper.getDeployment(request, response);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -146,12 +156,10 @@ public class KeycloakSessionServiceDelegate implements SessionServiceDelegate {
             refreshToken = ((KeycloakTokenDetails) authentication.getDetails()).getRefreshToken();
         }
         String logoutUrl = deployment.getLogoutUrl().build().toString();
-        AdapterConfig adapterConfig =
-                GeoStoreContext.bean(KeyCloakConfiguration.class).readAdapterConfig();
-        Configuration clientConfiguration = helper.getClientConfiguration(adapterConfig);
+        Configuration clientConfiguration = helper.getClientConfiguration(configuration);
         Http http = new Http(clientConfiguration, (params, headers) -> {});
-        String clientId = adapterConfig.getResource();
-        String secret = (String) adapterConfig.getCredentials().get("secret");
+        String clientId = configuration.getResource();
+        String secret = (String) configuration.getCredentials().get("secret");
         try {
             http.post(logoutUrl)
                     .form()
