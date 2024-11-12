@@ -9,7 +9,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
-import java.util.Date;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.*;
@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.resource.UserRedirectRequiredException;
 import org.springframework.security.oauth2.common.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -52,6 +53,7 @@ class RefreshTokenServiceTest {
 
         // Create an instance of the test subclass
         serviceDelegate = spy(new TestOAuth2SessionServiceDelegate());
+        // Ensure restTemplate is set correctly
         serviceDelegate.setRestTemplate(restTemplate);
         serviceDelegate.setConfiguration(configuration);
         serviceDelegate.authenticationCache = authenticationCache;
@@ -65,6 +67,7 @@ class RefreshTokenServiceTest {
 
         // Mock configuration behavior
         when(configuration.isEnabled()).thenReturn(true);
+        when(configuration.getMaxRetries()).thenReturn(3);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
         when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
@@ -113,7 +116,7 @@ class RefreshTokenServiceTest {
         String refreshToken = "providedRefreshToken";
         String accessToken = "providedAccessToken";
 
-        // Mock the RestTemplate exchange method to simulate a successful token refresh
+        // Mock a successful refresh response
         DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
         OAuth2RefreshToken newRefreshToken = new DefaultOAuth2RefreshToken("newRefreshToken");
         newAccessToken.setRefreshToken(newRefreshToken);
@@ -123,12 +126,24 @@ class RefreshTokenServiceTest {
         ResponseEntity<OAuth2AccessToken> responseEntity =
                 new ResponseEntity<>(newAccessToken, HttpStatus.OK);
 
+        // Mock configuration and restTemplate behavior
+        when(configuration.isEnabled()).thenReturn(true);
+        when(configuration.getClientId()).thenReturn("testClientId");
+        when(configuration.getClientSecret()).thenReturn("testClientSecret");
+        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
+        when(configuration.getMaxRetries()).thenReturn(3);
+
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.POST),
                         any(HttpEntity.class),
                         eq(OAuth2AccessToken.class)))
                 .thenReturn(responseEntity);
+
+        // Mock request and response to avoid NullPointerExceptions in doLogout
+        when(serviceDelegate.getRequest()).thenReturn(mockRequest);
+        when(serviceDelegate.getResponse()).thenReturn(mockResponse);
 
         // Act
         SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
@@ -145,6 +160,13 @@ class RefreshTokenServiceTest {
                 sessionToken.getExpires() > System.currentTimeMillis(),
                 "Token expiration should be in the future");
         assertEquals("bearer", sessionToken.getTokenType(), "Token type should be 'bearer'");
+
+        // Verify that the cache was updated with the new token
+        verify(authenticationCache).putCacheEntry(eq("newAccessToken"), any(Authentication.class));
+
+        // Verify that handleRefreshFailure (and therefore doLogout) was never called
+        verify(serviceDelegate, never())
+                .handleRefreshFailure(anyString(), anyString(), any(OAuth2Configuration.class));
     }
 
     @Test
@@ -174,6 +196,13 @@ class RefreshTokenServiceTest {
                 "existingRefreshToken",
                 sessionToken.getRefreshToken(),
                 "Refresh token should remain unchanged");
+        assertNotNull(sessionToken.getWarning(), "Warning message should be set");
+        assertTrue(
+                sessionToken
+                        .getWarning()
+                        .contains(
+                                "Refresh Session Token was NULL for some reason... Seeding it with previous Access Token!"),
+                "Expected error message in SessionToken");
     }
 
     @Test
@@ -204,7 +233,13 @@ class RefreshTokenServiceTest {
                 "existingRefreshToken",
                 sessionToken.getRefreshToken(),
                 "Refresh token should remain unchanged after server error");
-        // You can also verify that the method retried the expected number of times
+        assertNotNull(sessionToken.getWarning(), "Warning message should be set");
+        assertTrue(
+                sessionToken
+                        .getWarning()
+                        .contains(
+                                "Refresh Session Token was NULL for some reason... Seeding it with previous Access Token!"),
+                "Expected error message in SessionToken");
         verify(restTemplate, times(3))
                 .exchange(
                         anyString(),
@@ -242,6 +277,10 @@ class RefreshTokenServiceTest {
                 "existingRefreshToken",
                 sessionToken.getRefreshToken(),
                 "Refresh token should remain unchanged");
+        assertNotNull(sessionToken.getWarning(), "Warning message should be set");
+        assertTrue(
+                sessionToken.getWarning().contains("Seeding it with previous Access Token!"),
+                "Expected warning message in SessionToken");
     }
 
     @Test
@@ -395,6 +434,81 @@ class RefreshTokenServiceTest {
         assertTrue(
                 sessionToken.getExpires() > System.currentTimeMillis(),
                 "Token expiration should be in the future");
+    }
+
+    @Test
+    void testRefreshWithExpiredTokenAndUnsuccessfulRefresh() {
+        // Arrange
+        String refreshToken = "expiredRefreshToken";
+        String accessToken = "expiredAccessToken";
+
+        // Set the current access token to be expired
+        mockOAuth2AccessToken.setExpiration(
+                new Date(System.currentTimeMillis() - 1000)); // Set expiration in the past
+        serviceDelegate.currentAccessToken = mockOAuth2AccessToken;
+
+        // Mock the RestTemplate exchange method to simulate failure in all attempts to refresh the
+        // token
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.UNAUTHORIZED));
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        // Assert
+        assertNull(
+                sessionToken,
+                "SessionToken should be null when the token is expired and cannot be refreshed");
+        verify(restTemplate, times(3))
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshWithUserRedirectRequiredException() {
+        // Arrange
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        // Set the mock RestTemplate to throw UserRedirectRequiredException
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenThrow(new UserRedirectRequiredException("redirect_uri", new HashMap<>()));
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        // Assert
+        assertNotNull(
+                sessionToken, "SessionToken should not be null even when redirect is required");
+        assertEquals(
+                "providedAccessToken",
+                sessionToken.getAccessToken(),
+                "Access token should remain unchanged");
+        assertEquals(
+                "existingRefreshToken",
+                sessionToken.getRefreshToken(),
+                "Refresh token should remain unchanged");
+        assertNotNull(sessionToken.getWarning(), "Warning message should be set");
+        assertTrue(
+                sessionToken
+                        .getWarning()
+                        .contains("A redirect is required to get the user's approval"),
+                "Expected redirect warning message in SessionToken");
+
+        // Ensure handleRefreshFailure (and doLogout) was not called
+        verify(serviceDelegate, never())
+                .handleRefreshFailure(anyString(), anyString(), any(OAuth2Configuration.class));
     }
 
     /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */

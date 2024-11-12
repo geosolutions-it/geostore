@@ -54,6 +54,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.resource.UserRedirectRequiredException;
 import org.springframework.security.oauth2.client.token.AccessTokenRequest;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.DefaultOAuth2RefreshToken;
@@ -90,10 +91,12 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
+        String errorMessage = "";
+        String warningMessage = "";
         HttpServletRequest request = getRequest();
-        if (accessToken == null)
+        if (accessToken == null || accessToken.isEmpty())
             accessToken = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
-        if (accessToken == null)
+        if (accessToken == null || accessToken.isEmpty())
             throw new NotFoundWebEx("Either the accessToken or the refresh token are missing");
 
         OAuth2AccessToken currentToken = retrieveAccessToken(accessToken);
@@ -111,20 +114,46 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (LOGGER.isDebugEnabled()) LOGGER.info("Going to refresh the token.");
             try {
                 sessionToken = doRefresh(refreshTokenToUse, accessToken, configuration);
+            } catch (UserRedirectRequiredException e) {
+                // Log the warning and set the warning message in the session token
+                warningMessage = "A redirect is required to get the user's approval.";
+                LOGGER.warn(warningMessage);
             } catch (NullPointerException npe) {
-                LOGGER.error("Current configuration wasn't correctly initialized.");
+                // Log the error and set the error message in the session token
+                errorMessage = "Current configuration wasn't correctly initialized.";
+                LOGGER.error("Current configuration wasn't correctly initialized.", npe);
+            } catch (Exception e) {
+                // Log the error and set the error message in the session token
+                errorMessage = "An error occurred during token refresh: " + e.getMessage();
+                LOGGER.error(errorMessage);
             }
         }
-        if (sessionToken == null)
+        if (sessionToken == null && !isTokenExpired(currentToken)) {
+            if (warningMessage.isEmpty())
+                warningMessage =
+                        "Refresh Session Token was NULL for some reason... Seeding it with previous Access Token!";
             sessionToken =
                     sessionToken(accessToken, refreshTokenToUse, currentToken.getExpiration());
+        }
 
-        request.setAttribute(
-                OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, sessionToken.getAccessToken());
-        request.setAttribute(
-                OAuth2AuthenticationDetails.ACCESS_TOKEN_TYPE, sessionToken.getTokenType());
+        if (sessionToken != null) {
+            if (!warningMessage.isEmpty()) sessionToken.setWarning(warningMessage);
+            if (!errorMessage.isEmpty()) sessionToken.setError(errorMessage);
+            request.setAttribute(
+                    OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, sessionToken.getAccessToken());
+            request.setAttribute(
+                    OAuth2AuthenticationDetails.ACCESS_TOKEN_TYPE, sessionToken.getTokenType());
+        }
 
         return sessionToken;
+    }
+
+    private boolean isTokenExpired(OAuth2AccessToken token) {
+        return token != null
+                && !token.getValue().isEmpty()
+                && (token.getExpiration() == null
+                        || (token.getExpiration() != null
+                                && token.getExpiration().before(new Date())));
     }
 
     /**
@@ -143,12 +172,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     protected SessionToken doRefresh(
             String refreshToken, String accessToken, OAuth2Configuration configuration) {
         SessionToken sessionToken = null;
-        int maxRetries = 3;
         int attempt = 0;
-        boolean success = false;
+        String errorMessage = "";
+        String warningMessage = "";
 
-        // Setup HTTP headers and body for the request
-        // Use restTemplate() method to get RestTemplate instance
         OAuth2RestTemplate restTemplate = restTemplate();
         HttpHeaders headers = getHttpHeaders(accessToken, configuration);
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
@@ -159,7 +186,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(requestBody, headers);
 
-        while (attempt < maxRetries && !success) {
+        long backoffDelay = configuration.getInitialBackoffDelay();
+        int maxRetries = configuration.getMaxRetries() > 0 ? configuration.getMaxRetries() : 1;
+
+        while (attempt < maxRetries) {
             attempt++;
             LOGGER.info("Attempting to refresh token, attempt {} of {}", attempt, maxRetries);
 
@@ -173,10 +203,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
                 if (response.getStatusCode().is2xxSuccessful()) {
                     OAuth2AccessToken newToken = response.getBody();
-                    if (newToken != null
-                            && newToken.getValue() != null
-                            && !newToken.getValue().isEmpty()) {
-                        // Process and update the new token details
+                    if (newToken != null && !isTokenExpired(newToken)) {
                         OAuth2RefreshToken newRefreshToken = newToken.getRefreshToken();
                         OAuth2RefreshToken refreshTokenToUse =
                                 (newRefreshToken != null && newRefreshToken.getValue() != null)
@@ -191,44 +218,72 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                                         newToken.getExpiration());
 
                         LOGGER.info("Token refreshed successfully on attempt {}", attempt);
-                        success = true;
+                        attempt = maxRetries; // Exit retry loop on redirect exception
+                        break;
                     } else {
-                        LOGGER.warn("Received empty or null token on attempt {}", attempt);
+                        LOGGER.warn("Received invalid or expired token on attempt {}", attempt);
                     }
                 } else if (response.getStatusCode().is4xxClientError()) {
-                    // For client errors (e.g., 400, 401, 403), do not retry.
                     LOGGER.error(
                             "Client error occurred: {}. Stopping further attempts.",
                             response.getStatusCode());
                     break;
                 } else {
-                    // For server errors (5xx), continue retrying
                     LOGGER.warn("Server error occurred: {}. Retrying...", response.getStatusCode());
                 }
+            } catch (UserRedirectRequiredException e) {
+                // Handle redirect exception, set warning, and prevent further attempts
+                warningMessage = "A redirect is required to get the user's approval.";
+                LOGGER.warn(warningMessage);
+                sessionToken = sessionToken(accessToken, refreshToken, null); // Keep current token
+                sessionToken.setWarning(warningMessage);
+                attempt = maxRetries; // Exit retry loop on redirect exception
+                break;
             } catch (RestClientException ex) {
                 LOGGER.error("Attempt {}: Error refreshing token: {}", attempt, ex.getMessage());
                 if (attempt == maxRetries) {
-                    LOGGER.error("Max retries reached. Unable to refresh token.");
+                    errorMessage = "Max retries reached. Unable to refresh token.";
+                    LOGGER.error(errorMessage);
+                    break;
                 }
+            }
+
+            // Apply backoff delay before the next retry, unless it's the last attempt
+            if (attempt < maxRetries) {
+                try {
+                    LOGGER.info("Waiting for {} ms before next retry.", backoffDelay);
+                    Thread.sleep(backoffDelay);
+                } catch (InterruptedException e) {
+                    LOGGER.warn("Backoff delay interrupted", e);
+                    Thread.currentThread().interrupt(); // Preserve interrupt status
+                }
+                backoffDelay *=
+                        configuration.getBackoffMultiplier(); // Increase delay for next attempt
             }
         }
 
-        // Handle unsuccessful refresh
-        if (!success) {
-            handleRefreshFailure(accessToken, refreshToken, configuration);
+        // Only call handleRefreshFailure if sessionToken is null after all attempts and errors
+        if (sessionToken == null) {
+            try {
+                handleRefreshFailure(accessToken, refreshToken, configuration);
+            } catch (Exception e) {
+                errorMessage =
+                        "Could not successfully perform the 'doLogout' procedure due to an internal error.";
+                LOGGER.error(errorMessage, e);
+            }
         }
         return sessionToken;
     }
 
     /**
      * Handles the refresh failure by clearing the session, logging out remotely, and redirecting to
-     * login.
+     * log in.
      *
      * @param accessToken the current access token
      * @param refreshToken the current refresh token
      * @param configuration the OAuth2Configuration with endpoint details
      */
-    private void handleRefreshFailure(
+    public void handleRefreshFailure(
             String accessToken, String refreshToken, OAuth2Configuration configuration) {
         LOGGER.info(
                 "Unable to refresh token after max retries. Clearing session and redirecting to login.");
@@ -248,12 +303,12 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             String accessToken, OAuth2Configuration configuration) {
         HttpHeaders headers = new HttpHeaders();
         if (configuration != null
-                && configuration.clientId != null
-                && configuration.clientSecret != null)
+                && configuration.getClientId() != null
+                && configuration.getClientSecret() != null)
             headers.setBasicAuth(
-                    configuration.clientId,
-                    configuration
-                            .clientSecret); // Set client ID and client secret for authentication
+                    configuration.getClientId(),
+                    configuration.getClientSecret()); // Set client ID and client secret for
+        // authentication
         else if (accessToken != null && !accessToken.isEmpty()) {
             headers.set("Authorization", "Bearer " + accessToken);
         }
@@ -340,6 +395,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         HttpServletRequest request = getRequest();
         HttpServletResponse response = getResponse();
         OAuth2RestTemplate restTemplate = restTemplate();
+        OAuth2Configuration configuration = configuration();
+
+        // Check if request, response, or configuration are null
+        if (request == null || response == null || configuration == null) {
+            LOGGER.warn(
+                    "Request, response, or configuration is null, unable to proceed with logout.");
+            return;
+        }
 
         String token = null;
         String accessToken = null;
@@ -355,7 +418,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
 
         if (token == null) {
-            if (restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
+            if (restTemplate != null
+                    && restTemplate.getOAuth2ClientContext() != null
+                    && restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
                 token =
                         restTemplate
                                 .getOAuth2ClientContext()
@@ -375,7 +440,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
 
         if (accessToken == null) {
-            if (restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
+            if (restTemplate != null
+                    && restTemplate.getOAuth2ClientContext() != null
+                    && restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
                 accessToken = restTemplate.getOAuth2ClientContext().getAccessToken().getValue();
             }
             if (accessToken == null) {
@@ -389,8 +456,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             }
         }
 
-        OAuth2Configuration configuration = configuration();
-        if (configuration != null && configuration.isEnabled()) {
+        if (configuration.isEnabled()) {
             if (token != null
                     && accessToken != null
                     && !token.isEmpty()
@@ -536,6 +602,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (enabledConfig.isPresent()) {
                 return enabledConfig.get();
             }
+        } else {
+            LOGGER.error("OAuth2Configuration is not initialized properly.");
+            throw new IllegalStateException("Configuration is required but not initialized.");
         }
         return null;
     }
