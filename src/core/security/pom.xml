@@ -135,7 +135,6 @@
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-model</artifactId>
         </dependency>
-
     </dependencies>
 
 </project>

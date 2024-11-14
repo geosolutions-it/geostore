@@ -136,7 +136,6 @@
             <artifactId>jstl</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <!-- if you want to create a new profile for support another DB create a

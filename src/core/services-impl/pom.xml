@@ -157,7 +157,6 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -181,7 +180,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>cobertura-maven-plugin</artifactId>
-                        <version>2.7</version>
+                        <version>${cobertura-maven-plugin.version}</version>
                         <configuration>
                             <instrumentation>
                             </instrumentation>
