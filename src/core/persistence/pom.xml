@@ -211,11 +211,10 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
-    <!-- if you want to create a new profile for support another DB create a profile including -->
-    <!-- JDBC dependency and right esclusion/inclusion rule for load the right override file -->
+    <!-- if you want to create a new profile for support, another DB create a profile including -->
+    <!-- JDBC dependency and right exclusion/inclusion rule for a load the right override file -->
     <!-- Profile for supporting Postgres -->
     <profiles>
         <profile>

@@ -270,7 +270,6 @@
             <version>4.8.0</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -283,36 +282,6 @@
                 </includes>
             </resource>
         </resources>
-
-        <plugins>
-            <!-- Attach sources ============================================ -->
-            <!--
-                        <plugin>
-                            <inherited>true</inherited>
-                            <groupId>org.apache.maven.plugins</groupId>
-                            <artifactId>maven-source-plugin</artifactId>
-                            <configuration>
-                                <attach>true</attach>
-                            </configuration>
-                            <executions>
-                                <execution>
-                                    <id>attach-sources</id>
-                                    <goals>
-                                        <goal>jar</goal>
-                                    </goals>
-                                </execution>
-                            </executions>
-                        </plugin>
-            -->
-            <!-- Maven Surefire Plugin -->
-            <plugin>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M7</version>
-                <configuration>
-                    <useModulePath>false</useModulePath>
-                </configuration>
-            </plugin>
-        </plugins>
     </build>
 
 </project>
