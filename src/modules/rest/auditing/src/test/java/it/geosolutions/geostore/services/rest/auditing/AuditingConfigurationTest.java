@@ -27,8 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 import java.util.Map;
 import org.junit.Test;
@@ -38,7 +37,7 @@ public final class AuditingConfigurationTest extends AuditingTestsBase {
     @Test
     public void testSimpleConfiguration() {
         AuditingConfiguration auditingConfiguration = new AuditingConfiguration();
-        assertEquals(auditingConfiguration.isAuditEnable(), true);
+        assertTrue(auditingConfiguration.isAuditEnable());
         assertEquals(auditingConfiguration.getMaxRequestPerFile(), 3);
         assertEquals(auditingConfiguration.getTemplatesVersion(), 1);
         assertEquals(
@@ -52,7 +51,7 @@ public final class AuditingConfigurationTest extends AuditingTestsBase {
     @Test
     public void testUpdateConfiguration() {
         AuditingConfiguration auditingConfiguration = new AuditingConfiguration();
-        assertEquals(auditingConfiguration.isAuditEnable(), true);
+        assertTrue(auditingConfiguration.isAuditEnable());
         Map<String, String> properties =
                 AuditingTestsUtils.getDefaultProperties(OUTPUT_DIRECTORY, TEMPLATES_DIRECTORY);
         properties.put(AuditingConfiguration.AUDIT_ENABLE, "false");

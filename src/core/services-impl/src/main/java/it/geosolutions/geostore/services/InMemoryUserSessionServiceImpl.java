@@ -44,12 +44,12 @@ import java.util.concurrent.TimeUnit;
  */
 public class InMemoryUserSessionServiceImpl implements UserSessionService {
 
-    private Map<String, UserSession> sessions = new ConcurrentHashMap<String, UserSession>();
+    private final Map<String, UserSession> sessions = new ConcurrentHashMap<String, UserSession>();
     private int cleanUpSeconds = 60;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private Runnable evictionTask =
+    private final Runnable evictionTask =
             new Runnable() {
                 @Override
                 public void run() {

@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
  */
 public interface GeoStorePasswordEncoder extends PasswordEncoder, BeanNameAware {
 
-    public static final String PREFIX_DELIMTER = ":";
+    String PREFIX_DELIMTER = ":";
 
     /** The name of the password encoder. */
     String getName();

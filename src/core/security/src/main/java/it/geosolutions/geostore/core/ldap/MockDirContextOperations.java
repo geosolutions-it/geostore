@@ -20,7 +20,7 @@ import org.springframework.ldap.core.DirContextOperations;
 
 public class MockDirContextOperations implements DirContextOperations {
 
-    private Map<String, String> ldapAttributes = new HashMap<String, String>();
+    private final Map<String, String> ldapAttributes = new HashMap<String, String>();
 
     public Map<String, String> getLdapAttributes() {
         return ldapAttributes;

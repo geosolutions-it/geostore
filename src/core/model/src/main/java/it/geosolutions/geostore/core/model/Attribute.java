@@ -110,8 +110,7 @@ public class Attribute implements Serializable {
     @PrePersist
     public void onPreUpdate() throws Exception {
         if (textValue == null && numberValue == null && dateValue == null) {
-            throw new NullPointerException(
-                    "Null value not allowed in attribute: " + this.toString());
+            throw new NullPointerException("Null value not allowed in attribute: " + this);
 
         } else if (this.textValue == null && this.numberValue != null ^ this.dateValue != null
                 || this.numberValue == null && this.dateValue == null) {
@@ -122,8 +121,7 @@ public class Attribute implements Serializable {
 
         } else {
             throw new Exception(
-                    "Only one DataType can be not-null inside the Attribute entity: "
-                            + this.toString());
+                    "Only one DataType can be not-null inside the Attribute entity: " + this);
         }
     }
 
@@ -192,7 +190,7 @@ public class Attribute implements Serializable {
             case NUMBER:
                 return numberValue.toString();
             case STRING:
-                return textValue.toString();
+                return textValue;
             default:
                 throw new IllegalStateException("Unknown type " + type);
         }
@@ -347,7 +345,6 @@ public class Attribute implements Serializable {
         if (textValue == null) {
             if (other.textValue != null) return false;
         } else if (!textValue.equals(other.textValue)) return false;
-        if (type != other.type) return false;
-        return true;
+        return type == other.type;
     }
 }

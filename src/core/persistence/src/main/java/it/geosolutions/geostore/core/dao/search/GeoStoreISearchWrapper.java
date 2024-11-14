@@ -29,9 +29,9 @@ import java.util.List;
 /** A wrapper for an ISearch. It is meant to provide the callerContext as a Class. */
 public class GeoStoreISearchWrapper implements ISearch {
 
-    private ISearch delegate;
+    private final ISearch delegate;
 
-    private Class<?> callerContext;
+    private final Class<?> callerContext;
 
     public GeoStoreISearchWrapper(ISearch delegate, Class<?> callerContext) {
         this.delegate = delegate;

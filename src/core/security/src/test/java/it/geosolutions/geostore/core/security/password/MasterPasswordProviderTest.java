@@ -21,7 +21,6 @@ package it.geosolutions.geostore.core.security.password;
 
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toChars;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -41,7 +40,7 @@ public class MasterPasswordProviderTest {
         // System.out.println(toChars(encPass));
         byte[] dec = mp.decode(encPass);
         mp.setEncrypting(true);
-        assertTrue(testString.equals(new String(toChars(dec))));
+        assertEquals(testString, new String(toChars(dec)));
 
         String geostore = "kfn8fAS8YMHgLxR8i3VBhzenrp3lnLLT";
         String geoserver1 = "F8fX7L2gs8H5SVD2q7HoC3IKo/0QAbEx";

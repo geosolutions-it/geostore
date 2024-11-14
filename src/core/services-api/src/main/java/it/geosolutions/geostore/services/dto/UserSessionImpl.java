@@ -43,7 +43,7 @@ public class UserSessionImpl implements UserSession {
 
     private Calendar expiration;
 
-    private long expirationInterval = 0l;
+    private long expirationInterval = 0L;
 
     private String refreshToken;
 

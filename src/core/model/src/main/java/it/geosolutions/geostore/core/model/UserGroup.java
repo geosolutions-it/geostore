@@ -249,13 +249,7 @@ public class UserGroup implements Serializable {
         }
 
         if (attributes == null) {
-            if (other.attributes != null) {
-                return false;
-            }
-        } else if (!attributes.equals(other.attributes)) {
-            return false;
-        }
-
-        return true;
+            return other.attributes == null;
+        } else return attributes.equals(other.attributes);
     }
 }

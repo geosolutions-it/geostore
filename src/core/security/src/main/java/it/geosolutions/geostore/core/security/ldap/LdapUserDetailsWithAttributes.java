@@ -40,9 +40,9 @@ import org.springframework.security.ldap.userdetails.LdapUserDetails;
  * @author Mauro Bartolomeoli
  */
 public class LdapUserDetailsWithAttributes implements LdapUserDetails, UserDetailsWithAttributes {
-    private LdapUserDetails delegate;
+    private final LdapUserDetails delegate;
 
-    private Map<String, Object> attributes = new HashMap<String, Object>();
+    private final Map<String, Object> attributes = new HashMap<String, Object>();
 
     public LdapUserDetailsWithAttributes(LdapUserDetails delegate) {
         super();

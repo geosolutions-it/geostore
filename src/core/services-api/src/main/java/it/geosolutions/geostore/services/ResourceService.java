@@ -206,7 +206,7 @@ public interface ResourceService extends SecurityService {
      * {@link #getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, it.geosolutions.geostore.core.model.User) getResources) if you
      * need less data.
      */
-    public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
+    List<Resource> getResourcesFull(SearchFilter filter, User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
@@ -215,8 +215,7 @@ public interface ResourceService extends SecurityService {
      * @param id
      * @return
      */
-    public List<SecurityRule> getSecurityRules(long id)
-            throws BadRequestServiceEx, InternalErrorServiceEx;
+    List<SecurityRule> getSecurityRules(long id) throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
      * Replaces the list of security rules for the given resource.
@@ -227,7 +226,7 @@ public interface ResourceService extends SecurityService {
      * @throws InternalErrorServiceEx
      * @throws NotFoundServiceEx
      */
-    public void updateSecurityRules(long id, List<SecurityRule> rules)
+    void updateSecurityRules(long id, List<SecurityRule> rules)
             throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx;
 
     /**

@@ -105,7 +105,7 @@ public interface UserGroupService {
      *
      * @return true if the persist operation finish with success, false otherwise
      */
-    public boolean insertSpecialUsersGroups();
+    boolean insertSpecialUsersGroups();
 
     /**
      * Remove the special UserGroups, those that implies special behavior
@@ -114,13 +114,13 @@ public interface UserGroupService {
      *
      * @return true if the removal operation finish with success, false otherwise
      */
-    public boolean removeSpecialUsersGroups();
+    boolean removeSpecialUsersGroups();
     /**
      * Get The UserGroup from the name
      *
      * @param name
      */
-    public UserGroup get(String name);
+    UserGroup get(String name);
 
     /**
      * Returns the amount of groups that match searching criteria. The 'everyone' group is never

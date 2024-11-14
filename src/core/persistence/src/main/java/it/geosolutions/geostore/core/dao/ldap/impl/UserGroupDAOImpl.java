@@ -188,7 +188,7 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
                         // the users list here
                         if (!"".equals(memberAttribute) && userDAO != null && loadUsers(search)) {
                             String[] memberAttrs = ctx.getStringAttributes(memberAttribute);
-                            if (memberAttrs != null && memberAttrs.length > 0) {
+                            if (memberAttrs != null) {
                                 for (String member : memberAttrs) {
                                     group.getUsers().add(userDAO.createMemberUser(member));
                                 }
@@ -217,6 +217,7 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
             for (UserGroup group : groups) {
                 if (group.getGroupName().equals(everyoneGroup.getGroupName())) {
                     everyoneFound = true;
+                    break;
                 }
             }
             if (!everyoneFound && addEveryOneGroup) {
@@ -283,7 +284,7 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         if (search instanceof GeoStoreISearchWrapper) {
             GeoStoreISearchWrapper wrapper = (GeoStoreISearchWrapper) search;
             Class<?> clazz = wrapper.getCallerContext();
-            if (clazz != null && UserDAO.class.isAssignableFrom(clazz)) return false;
+            return clazz == null || !UserDAO.class.isAssignableFrom(clazz);
         }
         return true;
     }

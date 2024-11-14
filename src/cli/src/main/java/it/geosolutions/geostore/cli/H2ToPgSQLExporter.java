@@ -35,13 +35,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -115,17 +109,15 @@ public class H2ToPgSQLExporter implements Runnable {
 
     List<String> orderedTables =
             Arrays.asList(
-                    new String[] {
-                        "GS_CATEGORY",
-                        "GS_RESOURCE",
-                        "GS_ATTRIBUTE",
-                        "GS_USER",
-                        "GS_USER_ATTRIBUTE",
-                        "GS_USERGROUP",
-                        "GS_USERGROUP_MEMBERS",
-                        "GS_SECURITY",
-                        "GS_STORED_DATA"
-                    });
+                    "GS_CATEGORY",
+                    "GS_RESOURCE",
+                    "GS_ATTRIBUTE",
+                    "GS_USER",
+                    "GS_USER_ATTRIBUTE",
+                    "GS_USERGROUP",
+                    "GS_USERGROUP_MEMBERS",
+                    "GS_SECURITY",
+                    "GS_STORED_DATA");
 
     Pattern searchInserts =
             Pattern.compile(
@@ -210,7 +202,8 @@ public class H2ToPgSQLExporter implements Runnable {
             if (insertsByTable.containsKey(tableName)) {
                 insertsByTable.get(tableName).add(insert);
             } else {
-                insertsByTable.put(tableName, new ArrayList<String>(Arrays.asList(insert)));
+                insertsByTable.put(
+                        tableName, new ArrayList<String>(Collections.singletonList(insert)));
             }
         }
         return flat(insertsByTable);
@@ -226,7 +219,7 @@ public class H2ToPgSQLExporter implements Runnable {
             try {
                 Script.execute(
                         "jdbc:h2:" + h2path.get() + ";ACCESS_MODE_DATA=r", username, password, os);
-                String script = new String(os.toByteArray(), StandardCharsets.UTF_8);
+                String script = os.toString(StandardCharsets.UTF_8);
                 return Optional.of(script);
             } catch (SQLException e) {
                 System.err.println("Error extracting data from the H2 database: " + e.getMessage());

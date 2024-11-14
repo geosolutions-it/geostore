@@ -19,7 +19,7 @@
  */
 package it.geosolutions.geostore.core.model;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
@@ -45,6 +45,6 @@ public class SecurityRuleTest {
         String s = MARSHALER.marshal(a0);
         SecurityRule a1 = MARSHALER.unmarshal(s);
 
-        assertTrue(a0.equals(a1));
+        assertEquals(a0, a1);
     }
 }

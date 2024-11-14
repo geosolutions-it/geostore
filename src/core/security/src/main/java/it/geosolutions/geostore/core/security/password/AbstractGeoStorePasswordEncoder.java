@@ -184,7 +184,7 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
     }
 
     /** Interface for password encoding when source password is specified as char array. */
-    protected static interface CharArrayPasswordEncoder {
+    protected interface CharArrayPasswordEncoder {
 
         String encodePassword(char[] rawPass, Object salt);
 

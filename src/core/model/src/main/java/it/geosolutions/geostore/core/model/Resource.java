@@ -441,11 +441,7 @@ public class Resource implements Serializable, CycleRecoverable {
         }
         if (editor == null) {
             return other.editor == null;
-        } else if (!editor.equals(other.editor)) {
-            return false;
-        }
-
-        return true;
+        } else return editor.equals(other.editor);
     }
 
     /*

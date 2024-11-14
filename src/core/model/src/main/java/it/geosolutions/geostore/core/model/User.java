@@ -90,7 +90,7 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    public User() {};
+    public User() {}
 
     public User(User user) {
         this.id = user.id;
@@ -294,7 +294,7 @@ public class User implements Serializable {
 
         if (groups != null) {
             builder.append(", ");
-            builder.append("group=").append(groups.toString());
+            builder.append("group=").append(groups);
         }
 
         if (role != null) {
@@ -380,13 +380,7 @@ public class User implements Serializable {
             return false;
         }
         if (security == null) {
-            if (other.security != null) {
-                return false;
-            }
-        } else if (!security.equals(other.security)) {
-            return false;
-        }
-
-        return true;
+            return other.security == null;
+        } else return security.equals(other.security);
     }
 }

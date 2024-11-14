@@ -159,13 +159,7 @@ public class StoredData implements Serializable {
             return false;
         }
         if (resource == null) {
-            if (other.resource != null) {
-                return false;
-            }
-        } else if (!resource.equals(other.resource)) {
-            return false;
-        }
-
-        return true;
+            return other.resource == null;
+        } else return resource.equals(other.resource);
     }
 }

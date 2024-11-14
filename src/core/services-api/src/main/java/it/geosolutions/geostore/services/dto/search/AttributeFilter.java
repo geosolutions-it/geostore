@@ -112,15 +112,18 @@ public class AttributeFilter extends SearchFilter implements Serializable {
      */
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getSimpleName()).append('[');
-        builder.append('<').append(type != null ? type : "!type!").append('>');
-        builder.append(name != null ? name : "!name!");
-        builder.append(' ');
-        builder.append(operator != null ? operator : "!op!");
-        builder.append(' ');
-        builder.append(value != null ? value : "!value!");
-        builder.append(']');
-        return builder.toString();
+        String builder =
+                getClass().getSimpleName()
+                        + '['
+                        + '<'
+                        + (type != null ? type : "!type!")
+                        + '>'
+                        + (name != null ? name : "!name!")
+                        + ' '
+                        + (operator != null ? operator : "!op!")
+                        + ' '
+                        + (value != null ? value : "!value!")
+                        + ']';
+        return builder;
     }
 }

@@ -236,7 +236,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
         System.out.println("RESOURCE has ID " + rid);
 
         // test getResource
-        String name1 = "rest_test_resource_" + Long.toString(System.currentTimeMillis());
+        String name1 = "rest_test_resource_" + System.currentTimeMillis();
         {
             RESTResource updResource = new RESTResource();
             updResource.setName(name1);

@@ -247,10 +247,7 @@ public abstract class LdapBaseDAOImpl {
      * @return
      */
     private boolean isNested(Filter filter) {
-        if (filter.getOperator() == Filter.OP_SOME || filter.getOperator() == Filter.OP_ALL) {
-            return true;
-        }
-        return false;
+        return filter.getOperator() == Filter.OP_SOME || filter.getOperator() == Filter.OP_ALL;
     }
 
     /**

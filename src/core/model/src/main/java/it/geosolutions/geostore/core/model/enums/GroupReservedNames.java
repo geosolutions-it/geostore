@@ -47,10 +47,7 @@ public enum GroupReservedNames {
      * @return
      */
     public static boolean isAllowedName(String groupNameToCheck) {
-        if (EVERYONE.groupName().equalsIgnoreCase(groupNameToCheck)) {
-            return false;
-        }
-        return true;
+        return !EVERYONE.groupName().equalsIgnoreCase(groupNameToCheck);
     }
 
     /**

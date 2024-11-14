@@ -86,12 +86,13 @@ public class CategoryFilter extends SearchFilter implements Serializable {
      */
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getSimpleName()).append('[');
-        builder.append(operator != null ? operator : "!op!");
-        builder.append(' ');
-        builder.append(name != null ? name : "!name!");
-        builder.append(']');
-        return builder.toString();
+        String builder =
+                getClass().getSimpleName()
+                        + '['
+                        + (operator != null ? operator : "!op!")
+                        + ' '
+                        + (name != null ? name : "!name!")
+                        + ']';
+        return builder;
     }
 }

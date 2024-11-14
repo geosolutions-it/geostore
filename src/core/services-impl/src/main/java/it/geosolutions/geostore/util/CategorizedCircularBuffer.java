@@ -34,7 +34,7 @@ public class CategorizedCircularBuffer<T, K> {
 
     LinkedList<Pair<T, K>> mainList;
 
-    private Map<K, LinkedList<T>> typedLists = new HashMap<K, LinkedList<T>>();
+    private final Map<K, LinkedList<T>> typedLists = new HashMap<K, LinkedList<T>>();
 
     public CategorizedCircularBuffer(int maxCount) {
         if (maxCount < 1) {

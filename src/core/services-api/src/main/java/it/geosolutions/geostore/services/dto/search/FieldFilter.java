@@ -80,14 +80,15 @@ public class FieldFilter extends SearchFilter implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append(getClass().getSimpleName()).append('[');
-        builder.append(field != null ? field : "!field!");
-        builder.append(' ');
-        builder.append(operator != null ? operator : "!op!");
-        builder.append(' ');
-        builder.append(value != null ? value : "!value!");
-        builder.append(']');
-        return builder.toString();
+        String builder =
+                getClass().getSimpleName()
+                        + '['
+                        + (field != null ? field : "!field!")
+                        + ' '
+                        + (operator != null ? operator : "!op!")
+                        + ' '
+                        + (value != null ? value : "!value!")
+                        + ']';
+        return builder;
     }
 }

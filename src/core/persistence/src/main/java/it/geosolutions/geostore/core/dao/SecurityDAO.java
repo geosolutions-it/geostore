@@ -41,18 +41,18 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
      * @param resourceId
      * @return List<SecurityRule>
      */
-    public List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
+    List<SecurityRule> findUserSecurityRule(String userName, long resourceId);
 
     /**
      * @param groupNames
      * @param resourceId
      * @return
      */
-    public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId);
+    List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId);
 
     /**
      * @param resourceId
      * @return List<SecurityRule>
      */
-    public List<SecurityRule> findSecurityRules(long resourceId);
+    List<SecurityRule> findSecurityRules(long resourceId);
 }

@@ -126,7 +126,7 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         Mockito.when(exchange.getInMessage()).thenReturn(inMessage);
         Message outSuccessMessage = getOutSuccessMessage();
         Mockito.when(exchange.getOutMessage()).thenReturn(outSuccessMessage);
-        Mockito.when(exchange.get(AuditInfo.START_TIME.getKey())).thenReturn(1000l);
+        Mockito.when(exchange.get(AuditInfo.START_TIME.getKey())).thenReturn(1000L);
         Map<String, String> auditInfo = AuditInfoExtractor.extract(message);
         assertEquals(auditInfo.size(), 18);
         assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");
@@ -164,7 +164,7 @@ public final class AuditInfoExtractorTest extends AuditingTestsBase {
         Mockito.when(exchange.getInMessage()).thenReturn(inMessage);
         Message outFaultMessage = getOutFaultMessage();
         Mockito.when(exchange.getOutFaultMessage()).thenReturn(outFaultMessage);
-        Mockito.when(exchange.get(AuditInfo.START_TIME.getKey())).thenReturn(1000l);
+        Mockito.when(exchange.get(AuditInfo.START_TIME.getKey())).thenReturn(1000L);
         Map<String, String> auditInfo = AuditInfoExtractor.extract(message);
         assertEquals(auditInfo.size(), 20);
         assertEquals(auditInfo.get(AuditInfo.HOST.getKey()), "localhost");

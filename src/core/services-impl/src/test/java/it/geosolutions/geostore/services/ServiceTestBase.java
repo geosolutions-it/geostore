@@ -405,7 +405,7 @@ public class ServiceTestBase extends TestCase {
 
     // SecurityRuleBuilder class
     protected class SecurityRuleBuilder {
-        private SecurityRule rule;
+        private final SecurityRule rule;
 
         public SecurityRuleBuilder() {
             rule = new SecurityRule();

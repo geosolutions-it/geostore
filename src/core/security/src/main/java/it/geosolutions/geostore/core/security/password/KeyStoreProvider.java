@@ -199,5 +199,5 @@ public interface KeyStoreProvider {
      */
     void commitMasterPasswordChange() throws IOException;
 
-    public Enumeration<String> aliases();
+    Enumeration<String> aliases();
 }

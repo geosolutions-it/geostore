@@ -235,8 +235,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
     public SecretKey getSecretKey(String name) throws IOException {
         Key key = getKey(name);
         if (key == null) return null;
-        if ((key instanceof SecretKey) == false)
-            throw new IOException("Invalid key type for: " + name);
+        if (!(key instanceof SecretKey)) throw new IOException("Invalid key type for: " + name);
         return (SecretKey) key;
     }
 
@@ -247,8 +246,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
     public PublicKey getPublicKey(String name) throws IOException {
         Key key = getKey(name);
         if (key == null) return null;
-        if ((key instanceof PublicKey) == false)
-            throw new IOException("Invalid key type for: " + name);
+        if (!(key instanceof PublicKey)) throw new IOException("Invalid key type for: " + name);
         return (PublicKey) key;
     }
 
@@ -259,8 +257,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
     public PrivateKey getPrivateKey(String name) throws IOException {
         Key key = getKey(name);
         if (key == null) return null;
-        if ((key instanceof PrivateKey) == false)
-            throw new IOException("Invalid key type for: " + name);
+        if (!(key instanceof PrivateKey)) throw new IOException("Invalid key type for: " + name);
         return (PrivateKey) key;
     }
 
@@ -269,10 +266,8 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
      */
     @Override
     public String aliasForGroupService(String serviceName) {
-        StringBuffer buff = new StringBuffer(USERGROUP_PREFIX);
-        buff.append(serviceName);
-        buff.append(USERGROUP_POSTFIX);
-        return buff.toString();
+        String buff = USERGROUP_PREFIX + serviceName + USERGROUP_POSTFIX;
+        return buff;
     }
 
     /**
@@ -288,7 +283,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         char[] passwd = getMasterPassword();
         try {
             ks = KeyStore.getInstance(KEYSTORETYPE);
-            if (getFile().exists() == false) { // create an empy one
+            if (!getFile().exists()) { // create an empy one
                 ks.load(null, passwd);
                 addInitialKeys();
                 try (FileOutputStream fos = new FileOutputStream(getFile())) {
@@ -494,9 +489,9 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         File newKSFile = new File(dir, PREPARED_FILE_NAME);
         File oldKSFile = new File(dir, DEFAULT_FILE_NAME);
 
-        if (newKSFile.exists() == false) return; // nothing to do
+        if (!newKSFile.exists()) return; // nothing to do
 
-        if (oldKSFile.exists() == false) return; // not initialized
+        if (!oldKSFile.exists()) return; // not initialized
 
         // Try to open with new password
         try (FileInputStream fin = new FileInputStream(newKSFile)) {
@@ -511,12 +506,12 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
                 while (enumeration.hasMoreElements()) {
                     newKS.getKey(enumeration.nextElement(), passwd);
                 }
-                if (oldKSFile.delete() == false) {
+                if (!oldKSFile.delete()) {
                     LOGGER.error("cannot delete " + getFile().getCanonicalPath());
                     return;
                 }
 
-                if (newKSFile.renameTo(oldKSFile) == false) {
+                if (!newKSFile.renameTo(oldKSFile)) {
                     String msg = "cannot rename " + newKSFile.getCanonicalPath();
                     msg += "to " + oldKSFile.getCanonicalPath();
                     msg += "Try to rename manually and restart";

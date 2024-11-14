@@ -38,5 +38,5 @@ public enum PasswordEncodingType {
     PLAIN,
     ENCRYPT,
     DIGEST,
-    GEOSTORE;
+    GEOSTORE
 }

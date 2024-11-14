@@ -20,11 +20,7 @@
 
 package it.geosolutions.geostore.services.rest;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 import com.sun.jersey.api.client.UniformInterfaceException;
@@ -316,7 +312,7 @@ public class AdministratorGeostoreClientTest {
         assertEquals("usergroupTest1", ug1.getGroupName());
 
         List<RESTUser> userAssigned = ug1.getRestUsers().getList();
-        assertEquals(null, userAssigned);
+        assertNull(userAssigned);
 
         geoStoreClient.assignUserGroup(uid1, ug1.getId());
         geoStoreClient.assignUserGroup(uid2, ug1.getId());
@@ -628,7 +624,7 @@ public class AdministratorGeostoreClientTest {
         // Add group permissions to resources
         long errorCode = -1;
         try {
-            geoStoreClient.updateSecurityRules(new ShortResourceList(listG1), 787687l, true, true);
+            geoStoreClient.updateSecurityRules(new ShortResourceList(listG1), 787687L, true, true);
         } catch (UniformInterfaceException e) {
             errorCode = e.getResponse().getStatus();
         }
@@ -645,8 +641,8 @@ public class AdministratorGeostoreClientTest {
                 assertTrue(r.isCanDelete());
                 assertTrue(r.isCanEdit());
             } else {
-                assertTrue(!r.isCanDelete());
-                assertTrue(!r.isCanEdit());
+                assertFalse(r.isCanDelete());
+                assertFalse(r.isCanEdit());
             }
         }
 
@@ -785,7 +781,7 @@ public class AdministratorGeostoreClientTest {
 
         ExtGroupList searchResult =
                 geoStoreClient.searchUserGroup(0, 10, "*" + targetGrpPrefix + "*");
-        assertTrue(searchResult.getList().size() == targetGrpNum);
+        assertEquals(searchResult.getList().size(), targetGrpNum);
     }
 
     @Test
@@ -836,13 +832,13 @@ public class AdministratorGeostoreClientTest {
     public void userGroupsPaginationTest() {
         int totalGrps = 10;
         int pageSize = 3;
-        int expectedItems[] = {3, 3, 3, 1};
+        int[] expectedItems = {3, 3, 3, 1};
         ExtGroupList result;
 
         addSomeUserGroups(totalGrps, "paging");
         for (int page = 0; page < expectedItems.length; page++) {
             result = geoStoreClient.searchUserGroup(page * pageSize, pageSize, "*");
-            assertTrue(expectedItems[page] == result.getList().size());
+            assertEquals(expectedItems[page], result.getList().size());
         }
     }
 

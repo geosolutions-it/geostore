@@ -44,13 +44,13 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @param resourceId
      * @return List<Attribute>
      */
-    public List<Attribute> findAttributes(long resourceId);
+    List<Attribute> findAttributes(long resourceId);
 
     /** @param search */
-    public void removeResources(ISearch search);
+    void removeResources(ISearch search);
 
     /** @param resourcesIDs A list of resources Ids to search */
-    public List<Resource> findResources(List<Long> resourcesIds);
+    List<Resource> findResources(List<Long> resourcesIds);
 
     /**
      * Gets a resource by name.
@@ -58,7 +58,7 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @return the resource with the specified name, or null if none was found
      * @throws NonUniqueResultException if more than one result
      */
-    public Resource findByName(String resourceName);
+    Resource findByName(String resourceName);
 
     /**
      * Returns a list of resource names matching the specified pattern
@@ -66,5 +66,5 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      * @param pattern the pattern used to build a LIKE filter
      * @return a list of resource names
      */
-    public List<String> findResourceNamesMatchingPattern(String pattern);
+    List<String> findResourceNamesMatchingPattern(String pattern);
 }
