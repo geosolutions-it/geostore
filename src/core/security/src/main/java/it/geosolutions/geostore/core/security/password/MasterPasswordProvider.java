@@ -27,7 +27,7 @@ public interface MasterPasswordProvider {
      * @return the Master Password
      * @throws Exception
      */
-    public char[] doGetMasterPassword() throws Exception;
+    char[] doGetMasterPassword() throws Exception;
 
     /**
      * Set the master password
@@ -35,5 +35,5 @@ public interface MasterPasswordProvider {
      * @param passwd the password to set
      * @throws Exception
      */
-    public void doSetMasterPassword(char[] passwd) throws Exception;
+    void doSetMasterPassword(char[] passwd) throws Exception;
 }

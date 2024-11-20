@@ -40,5 +40,5 @@ public enum SearchOperator {
     ILIKE,
 
     IS_NULL,
-    IS_NOT_NULL;
+    IS_NOT_NULL
 }

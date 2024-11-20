@@ -32,21 +32,21 @@ import java.util.List;
  */
 public interface RestrictedGenericDAO<ENTITY> {
 
-    public List<ENTITY> findAll();
+    List<ENTITY> findAll();
 
-    public ENTITY find(Long id);
+    ENTITY find(Long id);
 
-    public void persist(ENTITY... entities);
+    void persist(ENTITY... entities);
 
-    public ENTITY[] save(ENTITY... entities);
+    ENTITY[] save(ENTITY... entities);
 
-    public ENTITY merge(ENTITY entity);
+    ENTITY merge(ENTITY entity);
 
-    public boolean remove(ENTITY entity);
+    boolean remove(ENTITY entity);
 
-    public boolean removeById(Long id);
+    boolean removeById(Long id);
 
-    public List<ENTITY> search(ISearch search);
+    List<ENTITY> search(ISearch search);
 
-    public int count(ISearch search);
+    int count(ISearch search);
 }

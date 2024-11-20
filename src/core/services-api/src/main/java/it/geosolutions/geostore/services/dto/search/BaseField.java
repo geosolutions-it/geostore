@@ -36,15 +36,14 @@ public enum BaseField {
     NAME("name", String.class),
     DESCRIPTION("description", String.class),
     METADATA("metadata", String.class);
-    ;
 
-    private String fieldName;
-
-    @SuppressWarnings("rawtypes")
-    private Class type;
+    private final String fieldName;
 
     @SuppressWarnings("rawtypes")
-    private BaseField(String name, Class type) {
+    private final Class type;
+
+    @SuppressWarnings("rawtypes")
+    BaseField(String name, Class type) {
         this.fieldName = name;
         this.type = type;
     }

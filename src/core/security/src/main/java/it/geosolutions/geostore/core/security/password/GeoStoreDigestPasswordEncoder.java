@@ -48,7 +48,7 @@ public class GeoStoreDigestPasswordEncoder extends AbstractGeoStorePasswordEncod
     @Override
     protected CharArrayPasswordEncoder createCharEncoder() {
         return new CharArrayPasswordEncoder() {
-            StandardByteDigester digester = new StandardByteDigester();
+            final StandardByteDigester digester = new StandardByteDigester();
 
             {
                 digester.setAlgorithm("SHA-256");

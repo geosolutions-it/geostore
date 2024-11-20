@@ -19,7 +19,7 @@
  */
 package it.geosolutions.geostore.core.model;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
@@ -34,7 +34,7 @@ public class CategoryTest {
     public void testMarshallingString() throws Exception {
         Category c0 = new Category();
         c0.setName("testatt");
-        c0.setId(1l);
+        c0.setId(1L);
 
         doTheTest(c0);
     }
@@ -47,6 +47,6 @@ public class CategoryTest {
         System.out.println(a1);
         System.out.println(s);
 
-        assertTrue(a0.equals(a1));
+        assertEquals(a0, a1);
     }
 }

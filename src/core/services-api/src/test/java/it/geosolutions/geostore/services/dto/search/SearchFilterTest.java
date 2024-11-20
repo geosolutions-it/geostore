@@ -83,7 +83,7 @@ public class SearchFilterTest extends TestCase {
         StringWriter sw = new StringWriter();
         JAXB.marshal(sf, sw);
 
-        if (LOGGER.isDebugEnabled()) LOGGER.debug("Marshalled into: " + sw.toString());
+        if (LOGGER.isDebugEnabled()) LOGGER.debug("Marshalled into: " + sw);
 
         StringReader sr = new StringReader(sw.getBuffer().toString());
 

@@ -20,9 +20,8 @@
 package it.geosolutions.geostore.core.model;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 /** @author ETj (etj at geo-solutions.it) */
@@ -42,7 +41,7 @@ public class UserGroupTest {
         User u0 = new User();
         u0.setName("user name");
         u0.setEnabled(true);
-        g0.setUsers(Arrays.asList(u0));
+        g0.setUsers(List.of(u0));
 
         doTheTest(g0);
     }
@@ -51,6 +50,6 @@ public class UserGroupTest {
         String s = MARSHALER.marshal(g0);
         UserGroup ug = MARSHALER.unmarshal(s);
         assertEquals(0, ug.getUsers().size());
-        assertTrue(g0.equals(ug));
+        assertEquals(g0, ug);
     }
 }

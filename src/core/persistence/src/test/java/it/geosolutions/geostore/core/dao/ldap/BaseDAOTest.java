@@ -305,8 +305,7 @@ public abstract class BaseDAOTest {
                                             }
                                         },
                                         new BasicAttributes());
-                        return new IterableNamingEnumeration(
-                                Arrays.asList(new SearchResult[] {sr1, sr2}));
+                        return new IterableNamingEnumeration(Arrays.asList(sr1, sr2));
                     } else if ("(& (cn=*) (member=cn=username2,ou=users))".contentEquals(filter)) {
                         SearchResult sr =
                                 new SearchResult(

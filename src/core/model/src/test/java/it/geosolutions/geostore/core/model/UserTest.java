@@ -19,8 +19,7 @@
  */
 package it.geosolutions.geostore.core.model;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import org.junit.Test;
 
@@ -43,7 +42,7 @@ public class UserTest {
         String s = MARSHALER.marshal(u0);
         User u = MARSHALER.unmarshal(s);
 
-        assertTrue(u0.equals(u));
+        assertEquals(u0, u);
         assertFalse(u.isTrusted());
     }
 }

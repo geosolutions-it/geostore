@@ -58,7 +58,7 @@ final class AuditingConfiguration {
     private final String outputFilesExtension;
 
     AuditingConfiguration() {
-        this(null, 0l);
+        this(null, 0L);
     }
 
     AuditingConfiguration(File configurationFile, long configurationFileChecksum) {

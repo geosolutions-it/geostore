@@ -40,7 +40,7 @@ import org.junit.Assert;
 final class AuditingTestsUtils {
 
     static File randomDirectory(File original) {
-        return new File(original.getPath() + "-" + UUID.randomUUID().toString());
+        return new File(original.getPath() + "-" + UUID.randomUUID());
     }
 
     static void createDefaultConfiguration(

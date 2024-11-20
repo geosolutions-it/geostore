@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -180,7 +181,7 @@ public class GeoStoreJAXBContext {
 
             if (LOGGER.isDebugEnabled()) LOGGER.debug("   adding resource " + fileName);
 
-            String fileNameDecoded = URLDecoder.decode(fileName, "UTF-8");
+            String fileNameDecoded = URLDecoder.decode(fileName, StandardCharsets.UTF_8);
             dirs.add(new File(fileNameDecoded));
         }
         ArrayList<Class> classes = new ArrayList<Class>();
