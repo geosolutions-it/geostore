@@ -438,7 +438,9 @@ class RefreshTokenServiceTest {
 
         // Set the current access token to be expired
         mockOAuth2AccessToken.setExpiration(
-                new Date(System.currentTimeMillis() - 1000)); // Set expiration in the past
+                new Date(
+                        System.currentTimeMillis()
+                                - 5 * 60 * 1000)); // Set expiration in the past (5 minutes)
         serviceDelegate.currentAccessToken = mockOAuth2AccessToken;
 
         // Mock the RestTemplate exchange method to simulate failure in all attempts to refresh the

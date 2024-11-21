@@ -78,10 +78,12 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     private static final Logger LOGGER = LogManager.getLogger(OAuth2SessionServiceDelegate.class);
 
+    private static final long CLOCK_SKEW_ALLOWANCE_MILLIS = 5 * 60 * 1000; // 5 minutes
+
     protected UserService userService;
 
     /**
-     * @param restSessionService the session service to which register this delegate.
+     * @param restSessionService the session service to which register this delegate?
      * @param delegateName this delegate name eg. google or GitHub etc...
      */
     public OAuth2SessionServiceDelegate(
@@ -185,8 +187,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             }
         }
 
-        // Allow clock skew if necessary
-        return expiration.before(new Date());
+        long now = System.currentTimeMillis();
+        long adjustedExpirationTime = expiration.getTime() + CLOCK_SKEW_ALLOWANCE_MILLIS;
+
+        return adjustedExpirationTime <= now;
     }
 
     private Date getExpirationDateFromToken(String token) {
@@ -210,9 +214,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     throw new IllegalArgumentException("Cannot parse 'exp' claim from token");
                 }
 
-                // The 'exp' claim is usually in seconds since epoch
-                Date expiration = new Date(expLong * 1000);
-                return expiration;
+                // The 'exp' claim has usually been in seconds since the epoch
+                return new Date(expLong * 1000);
             } else {
                 return null;
             }
