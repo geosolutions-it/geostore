@@ -198,10 +198,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should remain unchanged");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
-                sessionToken
-                        .getWarning()
-                        .contains(
-                                "Refresh Session Token was NULL for some reason... Seeding it with previous Access Token!"),
+                sessionToken.getWarning().contains("Using existing access token."),
                 "Expected error message in SessionToken");
     }
 
@@ -235,10 +232,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should remain unchanged after server error");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
-                sessionToken
-                        .getWarning()
-                        .contains(
-                                "Refresh Session Token was NULL for some reason... Seeding it with previous Access Token!"),
+                sessionToken.getWarning().contains("Using existing access token."),
                 "Expected error message in SessionToken");
         verify(restTemplate, times(3))
                 .exchange(
@@ -279,7 +273,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should remain unchanged");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
-                sessionToken.getWarning().contains("Seeding it with previous Access Token!"),
+                sessionToken.getWarning().contains("Using existing access token."),
                 "Expected warning message in SessionToken");
     }
 
@@ -558,7 +552,7 @@ class RefreshTokenServiceTest {
         }
 
         @Override
-        protected OAuth2AccessToken retrieveAccessToken(String accessToken) {
+        protected OAuth2AccessToken retrieveAccessToken(String accessToken, Long expires) {
             return currentAccessToken;
         }
 
