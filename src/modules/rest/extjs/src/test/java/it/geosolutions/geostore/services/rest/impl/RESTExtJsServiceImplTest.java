@@ -27,6 +27,9 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import java.util.Arrays;
@@ -403,6 +406,94 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             List<Date> resourcesCreationDates = resources.stream().map(Resource::getCreation).collect(Collectors.toList());
             assertTrue(resourcesCreationDates.get(0).after(resourcesCreationDates.get(1)));
             assertTrue(resourcesCreationDates.get(1).after(resourcesCreationDates.get(2)));
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_creatorFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String CREATOR_A = "creatorA";
+        final String CREATOR_B = "creatorB";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource("name_A", "description_A", CAT0_NAME, u0, true);
+        long resourceBId = restCreateResource("name_B", "description_B", CAT0_NAME, u0, true);
+
+        Resource resourceA = resourceService.get(resourceAId);
+        resourceA.setCreator(CREATOR_A);
+        resourceService.update(resourceA);
+
+        Resource resourceB = resourceService.get(resourceBId);
+        resourceB.setCreator(CREATOR_B);
+        resourceService.update(resourceB);
+
+        {
+            FieldFilter editorFieldFilter = new FieldFilter(BaseField.CREATOR, "creatorB", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(CREATOR_B, resource.getCreator());
+
+        }
+
+        {
+            FieldFilter editorFieldFilter = new FieldFilter(BaseField.CREATOR, "CREATOR_", SearchOperator.ILIKE);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_editorFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String EDITOR_A = "editorA";
+        final String EDITOR_B = "editorB";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource("name_A", "description_A", CAT0_NAME, u0, true);
+        long resourceBId = restCreateResource("name_B", "description_B", CAT0_NAME, u0, true);
+
+        Resource resourceA = resourceService.get(resourceAId);
+        resourceA.setEditor(EDITOR_A);
+        resourceService.update(resourceA);
+
+        Resource resourceB = resourceService.get(resourceBId);
+        resourceB.setEditor(EDITOR_B);
+        resourceService.update(resourceB);
+
+        {
+            FieldFilter editorFieldFilter = new FieldFilter(BaseField.EDITOR, "editorA", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(EDITOR_A, resource.getEditor());
+
+        }
+
+        {
+            FieldFilter editorFieldFilter = new FieldFilter(BaseField.EDITOR, "EDITOR_", SearchOperator.ILIKE);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(2, resources.size());
         }
     }
 
