@@ -52,6 +52,10 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -61,9 +65,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Class ResourceServiceImpl.
@@ -735,6 +736,26 @@ public class ResourceServiceImpl implements ResourceService {
             boolean includeData,
             User authUser)
             throws BadRequestServiceEx, InternalErrorServiceEx {
+        return getResources(
+                filter, page, entries, "", "", includeAttributes, includeData, authUser);
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see it.geosolutions.geostore.services.ResourceService#getResources(it.geosolutions.geostore.services.dto.search.SearchFilter,
+     * java.lang.Integer, java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.core.model.User)
+     */
+    public List<Resource> getResources(
+            SearchFilter filter,
+            Integer page,
+            Integer entries,
+            String sortBy,
+            String sortOrder,
+            boolean includeAttributes,
+            boolean includeData,
+            User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
 
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
@@ -745,6 +766,10 @@ public class ResourceServiceImpl implements ResourceService {
         if (page != null) {
             searchCriteria.setMaxResults(entries);
             searchCriteria.setPage(page);
+        }
+
+        if (sortBy != null && !sortBy.isBlank()) {
+            searchCriteria.addSort(sortBy, "DESC".equalsIgnoreCase(sortOrder));
         }
 
         searchCriteria.addFetch("security");
@@ -855,14 +880,18 @@ public class ResourceServiceImpl implements ResourceService {
      * @param searchCriteria search criteria
      * @return results of the search
      */
-    private List<Resource> search(Search searchCriteria) {
-        // apply defaults for sorting
-        if (searchCriteria != null) {
-            searchCriteria.addSort(new Sort("name"));
-        }
+    private List<Resource> search(Search searchCriteria) throws BadRequestServiceEx {
+        try {
+            // apply defaults for sorting if not already set
+            if (searchCriteria != null && searchCriteria.getSorts().isEmpty()) {
+                searchCriteria.addSort(new Sort("name"));
+            }
 
-        // search
-        return resourceDAO.search(searchCriteria);
+            // search
+            return resourceDAO.search(searchCriteria);
+        } catch (IllegalArgumentException iaex) {
+            throw new BadRequestServiceEx("Resource search failed", iaex);
+        }
     }
 
     /*

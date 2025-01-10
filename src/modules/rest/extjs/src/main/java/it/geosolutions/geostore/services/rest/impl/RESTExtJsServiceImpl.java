@@ -284,13 +284,15 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * (non-Javadoc)
      *
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
-     * java.lang.Integer, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
+     * java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
      */
     @Override
     public ExtResourceList getExtResourcesList(
             SecurityContext sc,
             Integer start,
             Integer limit,
+            String sortBy,
+            String sortOrder,
             boolean includeAttributes,
             boolean includeData,
             SearchFilter filter)
@@ -329,7 +331,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             List<Resource> resources =
                     filterOutUnadvertisedResources(
                             resourceService.getResources(
-                                    filter, page, limit, includeAttributes, includeData, authUser),
+                                    filter,
+                                    page,
+                                    limit,
+                                    sortBy,
+                                    sortOrder,
+                                    includeAttributes,
+                                    includeData,
+                                    authUser),
                             authUser);
 
             // Here the Read permission on each resource must be checked due to will be returned the

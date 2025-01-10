@@ -201,6 +201,29 @@ public interface ResourceService extends SecurityService {
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
+     * @param filter
+     * @param page
+     * @param entries
+     * @param sortBy
+     * @param sortOrder
+     * @param includeAttributes
+     * @param includeData
+     * @return List<Resource>
+     * @throws BadRequestServiceEx
+     * @throws InternalErrorServiceEx
+     */
+    List<Resource> getResources(
+            SearchFilter filter,
+            Integer page,
+            Integer entries,
+            String sortBy,
+            String sortOrder,
+            boolean includeAttributes,
+            boolean includeData,
+            User authUser)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
+
+    /**
      * Return a list of resources joined with their data. This call can be very heavy for the system. Please use this method only when you are sure a
      * few data will be returned, otherwise consider using
      * {@link #getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, it.geosolutions.geostore.core.model.User) getResources) if you

@@ -52,7 +52,7 @@ import org.springframework.security.access.annotation.Secured;
 public interface RESTExtJsService {
 
     @GET
-    @Path("/search/{nameLike}")
+    @Path("/search//{nameLike: [^/]+}\")")
     @Produces({MediaType.APPLICATION_JSON})
     @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     String getAllResources(
@@ -114,6 +114,8 @@ public interface RESTExtJsService {
             @Context SecurityContext sc,
             @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit,
+            @QueryParam("sortBy") String sortBy,
+            @QueryParam("sortOrder") @DefaultValue("asc") String sortOrder,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeData") @DefaultValue("false") boolean includeData,
             @Multipart("filter") SearchFilter filter)

@@ -26,11 +26,16 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
@@ -359,6 +364,45 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             result = parse(response);
             assertEquals(2, result.total);
             assertEquals(2, result.returnedCount);
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_sorted() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RES_ATTRIBUTE_A = "A";
+        final String RES_ATTRIBUTE_B = "B";
+        final String RES_ATTRIBUTE_C = "C";
+
+        assertEquals(0, resourceService.getResources(new AndFilter(), buildFakeAdminUser()).size());
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        restCreateResource(RES_ATTRIBUTE_A, RES_ATTRIBUTE_A, CAT0_NAME, u0, true);
+        restCreateResource(RES_ATTRIBUTE_B, RES_ATTRIBUTE_B, CAT0_NAME, u0, true);
+        restCreateResource(RES_ATTRIBUTE_C, RES_ATTRIBUTE_C, CAT0_NAME, u0, true);
+
+        {
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "description", "asc", false, false, new AndFilter());
+
+            List<Resource> resources = response.getList();
+            assertEquals(3, resources.size());
+            List<String> resourcesDescriptions = resources.stream().map(Resource::getName).collect(Collectors.toList());
+            assertEquals(List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C), resourcesDescriptions);
+
+        }
+
+        {
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "creation", "desc", false, false, new AndFilter());
+
+            List<Resource> resources = response.getList();
+            assertEquals(3, resources.size());
+            List<Date> resourcesCreationDates = resources.stream().map(Resource::getCreation).collect(Collectors.toList());
+            assertTrue(resourcesCreationDates.get(0).after(resourcesCreationDates.get(1)));
+            assertTrue(resourcesCreationDates.get(1).after(resourcesCreationDates.get(2)));
         }
     }
 
