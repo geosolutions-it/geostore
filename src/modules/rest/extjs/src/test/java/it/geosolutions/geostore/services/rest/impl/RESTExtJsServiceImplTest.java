@@ -17,8 +17,6 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
-import static org.junit.Assert.*;
-
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -29,17 +27,10 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -47,7 +38,24 @@ import net.sf.json.JSONSerializer;
 import org.junit.Before;
 import org.junit.Test;
 
-/** @author ETj (etj at geo-solutions.it) */
+import javax.ws.rs.core.SecurityContext;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
     private final RESTExtJsServiceImpl restExtJsService;
@@ -395,7 +403,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(3, resources.size());
             List<String> resourcesDescriptions = resources.stream().map(Resource::getName).collect(Collectors.toList());
             assertEquals(List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C), resourcesDescriptions);
-
         }
 
         {
@@ -440,7 +447,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, resources.size());
             Resource resource = resources.get(0);
             assertEquals(CREATOR_B, resource.getCreator());
-
         }
 
         {
@@ -484,7 +490,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, resources.size());
             Resource resource = resources.get(0);
             assertEquals(EDITOR_A, resource.getEditor());
-
         }
 
         {
@@ -494,6 +499,85 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+        final String GROUP_A_NAME = "groupA";
+        final String GROUP_B_NAME = "groupB";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource(RESOURCE_A_NAME, "description_A", CAT0_NAME, user0Id, true);
+        long resourceBId = restCreateResource(RESOURCE_B_NAME, "description_B", CAT0_NAME, user0Id, true);
+
+        SecurityRule securityRuleGroupA = new SecurityRule();
+        securityRuleGroupA.setGroup(userGroupService.get(createGroup(GROUP_A_NAME)));
+        securityRuleGroupA.setCanWrite(true);
+
+        List<SecurityRule> securityRulesResourceA = resourceService.getSecurityRules(resourceAId);
+        securityRulesResourceA.add(securityRuleGroupA);
+        restResourceService.updateSecurityRules(sc, resourceAId, new SecurityRuleList(securityRulesResourceA));
+
+        SecurityRule securityRuleGroupB = new SecurityRule();
+        securityRuleGroupB.setGroup(userGroupService.get(createGroup(GROUP_B_NAME)));
+        securityRuleGroupB.setCanRead(true);
+
+        List<SecurityRule> securityRulesResourceB = resourceService.getSecurityRules(resourceBId);
+        securityRulesResourceB.add(securityRuleGroupB);
+        restResourceService.updateSecurityRules(sc, resourceBId, new SecurityRuleList(securityRulesResourceB));
+
+        {
+            /* search for name equality of a single group */
+            GroupFilter groupFilter = new GroupFilter(Collections.singletonList("groupA"), SearchOperator.EQUAL_TO);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity (ignoring case) of multiple groups */
+            GroupFilter groupFilter = new GroupFilter(Collections.singletonList("GROUP_"), SearchOperator.ILIKE);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* search for name equality of multiple groups */
+            GroupFilter groupFilter = new GroupFilter(List.of("groupA", "groupB", "groupC"), SearchOperator.IN);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* erroneous search for similarity of multiple groups */
+            GroupFilter groupFilter = new GroupFilter(List.of("a", "b"), SearchOperator.LIKE);
+
+            assertThrows(IllegalStateException.class, () -> restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter));
+        }
+
+        {
+            /* erroneous search for equality in empty group list */
+            GroupFilter groupFilter = new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
+
+            assertThrows(IllegalStateException.class, () -> restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter));
         }
     }
 

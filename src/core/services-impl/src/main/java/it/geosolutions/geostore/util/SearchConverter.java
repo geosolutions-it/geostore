@@ -27,6 +27,7 @@ import it.geosolutions.geostore.services.dto.search.AttributeFilter;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.FilterVisitor;
+import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.NotFilter;
 import it.geosolutions.geostore.services.dto.search.OrFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -38,6 +39,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,6 +68,7 @@ public class SearchConverter implements FilterVisitor {
         ops.put(SearchOperator.LESS_THAN_OR_EQUAL_TO, Filter.OP_LESS_OR_EQUAL);
         ops.put(SearchOperator.LIKE, Filter.OP_LIKE);
         ops.put(SearchOperator.ILIKE, Filter.OP_ILIKE);
+        ops.put(SearchOperator.IN, Filter.OP_IN);
 
         ops_rest_trg = Collections.unmodifiableMap(ops);
     }
@@ -221,11 +224,9 @@ public class SearchConverter implements FilterVisitor {
 
     /**
      * This is a leaf filter.
-     *
-     * @throws InternalErrorServiceEx
      */
     @Override
-    public void visit(CategoryFilter filter) throws InternalErrorServiceEx {
+    public void visit(CategoryFilter filter) {
         CategoryFilter.checkOperator(filter.getOperator());
 
         Integer op = ops_rest_trg.get(filter.getOperator());
@@ -238,6 +239,38 @@ public class SearchConverter implements FilterVisitor {
         f.setOperator(op);
         f.setProperty("category.name");
         f.setValue(filter.getName());
+
+        trgFilter = f;
+    }
+
+    /**
+     * This is a leaf filter.
+     */
+    @Override
+    public void visit(GroupFilter filter) {
+        GroupFilter.checkOperator(filter.getOperator());
+
+        Integer op = ops_rest_trg.get(filter.getOperator());
+
+        if (op == null) {
+            throw new IllegalStateException("Unknown op " + filter.getOperator());
+        }
+
+        Filter f = new Filter();
+        f.setOperator(op);
+        f.setProperty("security.group.groupName");
+
+        List<String> names = filter.getNames();
+
+        if (SearchOperator.IN != filter.getOperator() && names.size() != 1) {
+            throw new IllegalStateException("Erroneous search op " + filter.getOperator());
+        }
+
+        if (SearchOperator.IN == filter.getOperator()) {
+            f.setValue(names);
+        } else {
+            f.setValue(names.get(0));
+        }
 
         trgFilter = f;
     }
