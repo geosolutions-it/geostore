@@ -922,8 +922,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<SecurityRule> getSecurityRules(long id)
-            throws BadRequestServiceEx, InternalErrorServiceEx {
+    public List<SecurityRule> getSecurityRules(long id) {
         return securityDAO.findSecurityRules(id);
     }
 

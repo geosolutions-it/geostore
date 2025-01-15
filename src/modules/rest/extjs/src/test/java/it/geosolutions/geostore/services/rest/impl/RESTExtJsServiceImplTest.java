@@ -581,6 +581,85 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
     }
 
+    @Test
+    public void testExtResourcesList_withPermissionsInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String OWNER_RESOURCE_NAME = "ownerResource";
+        final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
+        final String ADVERTISED_GROUP_RESOURCE_NAME = "advertisedGroupResource";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* admin owned resource */
+        restCreateResource("adminResource", "", CAT0_NAME, adminId, false);
+
+        /* user owned resource */
+        restCreateResource(OWNER_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+
+        /* user owned resource - read only */
+        long readOnlyResourceId = restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+        SecurityRule readOnlyRule = new SecurityRule();
+        readOnlyRule.setUser(userService.get(userId));
+        readOnlyRule.setCanRead(true);
+        restResourceService.updateSecurityRules(adminSecurityContext, readOnlyResourceId, new SecurityRuleList(Collections.singletonList(readOnlyRule)));
+
+        /* advertised resource */
+        restCreateResource("advertisedResource", "", CAT0_NAME, adminId, true);
+
+        SecurityRule groupRule = new SecurityRule();
+        groupRule.setGroup(group);
+        groupRule.setCanRead(true);
+        groupRule.setCanWrite(true);
+
+        /* group owned resource - advertised */
+        long advertisedGroupResourceId = restCreateResource(ADVERTISED_GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+        List<SecurityRule> securityRulesAdvertisedGroupResource = resourceService.getSecurityRules(advertisedGroupResourceId);
+        securityRulesAdvertisedGroupResource.add(groupRule);
+        restResourceService.updateSecurityRules(adminSecurityContext, advertisedGroupResourceId, new SecurityRuleList(securityRulesAdvertisedGroupResource));
+
+        /* group owned resource - unadvertised */
+        long unadvertisedGroupResourceId = restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
+        List<SecurityRule> securityRulesUnadvertisedGroupResource = resourceService.getSecurityRules(unadvertisedGroupResourceId);
+        securityRulesUnadvertisedGroupResource.add(groupRule);
+        restResourceService.updateSecurityRules(adminSecurityContext, unadvertisedGroupResourceId, new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+
+        {
+            ExtResourceList response = restExtJsService.getExtResourcesList(adminSecurityContext, 0, 1000, "", "", false, false, new AndFilter());
+            List<Resource> resources = response.getList();
+            assertEquals(6, resources.size());
+            assertTrue(resources.stream().allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+        {
+            ExtResourceList response = restExtJsService.getExtResourcesList(user0SecurityContext, 0, 1000, "", "", false, false, new AndFilter());
+            List<Resource> resources = response.getList();
+            assertEquals(3, resources.size());
+
+            Resource ownerResource = resources.stream().filter(r -> r.getName().equals(OWNER_RESOURCE_NAME)).findFirst().orElseThrow();
+            assertTrue(ownerResource.isCanEdit());
+            assertTrue(ownerResource.isCanDelete());
+            assertTrue(ownerResource.isCanCopy());
+
+            Resource readOnlyResource = resources.stream().filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME)).findFirst().orElseThrow();
+            assertFalse(readOnlyResource.isCanEdit());
+            assertFalse(readOnlyResource.isCanDelete());
+            assertTrue(readOnlyResource.isCanCopy());
+
+            Resource groupResource = resources.stream().filter(r -> r.getName().equals(ADVERTISED_GROUP_RESOURCE_NAME)).findFirst().orElseThrow();
+            assertTrue(groupResource.isCanEdit());
+            assertTrue(groupResource.isCanDelete());
+            assertTrue(groupResource.isCanCopy());
+        }
+    }
+
     private JSONResult parse(String jsonString) {
         JSONResult ret = new JSONResult();
 

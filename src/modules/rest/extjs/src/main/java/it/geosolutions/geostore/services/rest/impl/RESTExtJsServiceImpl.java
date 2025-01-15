@@ -27,14 +27,23 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.*;
+import it.geosolutions.geostore.core.model.Attribute;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortResource;
-import it.geosolutions.geostore.services.dto.search.*;
+import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.model.ExtGroupList;
@@ -45,7 +54,13 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
@@ -206,7 +221,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         List<String> extraAttributesList =
                 extraAttributes != null
                         ? Arrays.asList(extraAttributes.split(","))
-                        : Collections.EMPTY_LIST;
+                        : Collections.emptyList();
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
@@ -245,15 +260,15 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                                         BaseField.NAME, resourceNameLike, SearchOperator.ILIKE));
             }
 
+            boolean shouldIncludeAttributes =
+                    includeAttributes || (extraAttributes != null && !extraAttributes.isEmpty());
             List<Resource> resources =
-                    filterOutUnadvertisedResources(
+                    filterOutUnavailableResources(
                             resourceService.getResources(
                                     filter,
                                     page,
                                     limit,
-                                    includeAttributes
-                                            || (extraAttributes != null
-                                                    && !extraAttributes.isEmpty()),
+                                    shouldIncludeAttributes,
                                     includeData,
                                     authUser),
                             authUser);
@@ -279,6 +294,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             JSONObject obj = makeJSONResult(false, 0, null, authUser);
             return obj.toString();
         }
+    }
+
+    private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
+        return resources.stream()
+                .filter(r -> isResourceAvailableForUser(r, user))
+                .collect(Collectors.toList());
     }
 
     /*
@@ -331,7 +352,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             List<Resource> resources =
-                    filterOutUnadvertisedResources(
+                    handleFoundResources(
                             resourceService.getResources(
                                     filter,
                                     page,
@@ -364,29 +385,47 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     }
 
     /**
-     * This internal method allows us to filter out "unadvertised" resources for
-     * non-admin/non-owners
+     * Filters out unadvertised resources and adds permission information to the resources.
      *
-     * @param resources
-     * @param authUser
+     * @param foundResources
+     * @param user
      * @return
      */
-    private List<Resource> filterOutUnadvertisedResources(List<Resource> resources, User authUser) {
-        List<Resource> filteredList = new ArrayList<>();
-        for (Resource r : resources) {
-            // get security rules for user
-            User owner = null;
-            for (SecurityRule rule :
-                    resourceService.getUserSecurityRule(authUser.getName(), r.getId())) {
-                owner = rule.getUser();
-            }
-            if (r.isAdvertised()
-                    || (authUser.getRole().equals(Role.ADMIN)
-                            || (owner != null && owner.getId().equals(authUser.getId())))) {
-                filteredList.add(r);
-            }
-        }
-        return filteredList;
+    private List<Resource> handleFoundResources(List<Resource> foundResources, User user) {
+        return foundResources.stream()
+                .filter(r -> isResourceAvailableForUser(r, user))
+                .map(r -> addPermissionsToResource(r, user))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * This internal method allows us to know if we filter out "unadvertised" resources for
+     * non-admin/non-owners, keeping only owned resources.
+     *
+     * @param resource
+     * @param user
+     * @return <code>true</code> if the resource should be visible to the user, <code>false</code>
+     *     otherwise
+     */
+    private boolean isResourceAvailableForUser(Resource resource, User user) {
+        return resource.isAdvertised()
+                || user.getRole().equals(Role.ADMIN)
+                || isUserOwner(user, resource);
+    }
+
+    private boolean isUserOwner(User authUser, Resource r) {
+        return resourceService.getSecurityRules(r.getId()).stream()
+                .map(SecurityRule::getUser)
+                .filter(Objects::nonNull)
+                .anyMatch(ruleUser -> ruleUser.getId().equals(authUser.getId()));
+    }
+
+    private Resource addPermissionsToResource(Resource resource, User user) {
+        ResourceEnvelop envelope = new ResourceEnvelop(resource, user);
+        resource.setCanEdit(envelope.isCanEdit());
+        resource.setCanDelete(envelope.isCanDelete());
+        resource.setCanCopy(envelope.isCanCopy());
+        return resource;
     }
 
     /**
@@ -717,12 +756,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             // This to inform the client in HTTP response result.
             // ///////////////////////////////////////////////////////////////////////
             if (authUser != null) {
-                // GUEST users can not access to the delete and edit (resource, data blob is editable) services
+                // GUEST users can not access to the delete and edit (resource, data blob is
+                // editable) services
                 // so only authenticated users with
-                if (!authUser.getRole().equals(Role.GUEST) &&
-                    (authUser.getRole().equals(Role.ADMIN) ||
-                     canUserGroupsEditResource() ||
-                     canUserEditResource())) {
+                if (!authUser.getRole().equals(Role.GUEST)
+                        && (authUser.getRole().equals(Role.ADMIN)
+                                || canUserGroupsEditResource()
+                                || canUserEditResource())) {
                     canEdit = true;
                     canDelete = true;
                 }
@@ -730,18 +770,20 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         private boolean canUserGroupsEditResource() {
-            List<String> groupsNames = authUser.getGroups().stream()
-                    .map(UserGroup::getGroupName)
-                    .collect(Collectors.toList());
+            List<String> groupsNames =
+                    authUser.getGroups().stream()
+                            .map(UserGroup::getGroupName)
+                            .collect(Collectors.toList());
             return resourceService.getGroupSecurityRule(groupsNames, r.getId()).stream()
                     .anyMatch(SecurityRule::isCanWrite);
         }
 
         private boolean canUserEditResource() {
             return resourceService.getUserSecurityRule(authUser.getName(), r.getId()).stream()
-                    .anyMatch(rule ->
-                            isRuleUserOwnerWithWritePermissions(rule)
-                            || hasRuleGroupWritePermissions(rule));
+                    .anyMatch(
+                            rule ->
+                                    isRuleUserOwnerWithWritePermissions(rule)
+                                            || hasRuleGroupWritePermissions(rule));
         }
 
         private boolean isRuleUserOwnerWithWritePermissions(SecurityRule rule) {
@@ -759,8 +801,10 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             if (ruleGroup != null && authUserGroups != null) {
 
-                boolean noneMatch = authUserGroups.stream()
-                        .noneMatch(ug -> ug.getGroupName().equals(ruleGroup.getGroupName()));
+                boolean noneMatch =
+                        authUserGroups.stream()
+                                .noneMatch(
+                                        ug -> ug.getGroupName().equals(ruleGroup.getGroupName()));
 
                 return noneMatch && rule.isCanWrite();
             }

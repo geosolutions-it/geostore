@@ -575,15 +575,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             if ((authUser.getRole() == Role.ADMIN)
                     || (owner == null)
                     || (owner.getValue().equals(authUser.getName()))) {
-                try {
-                    return new SecurityRuleList(resourceService.getSecurityRules(id));
-                } catch (BadRequestServiceEx e) {
-                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
-                    throw new BadRequestWebEx(e.getMessage());
-                } catch (InternalErrorServiceEx e) {
-                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
-                    throw new InternalErrorWebEx(e.getMessage());
-                }
+                return new SecurityRuleList(resourceService.getSecurityRules(id));
             } else {
                 throw new ForbiddenErrorWebEx("This user cannot read this resource permissions!");
             }

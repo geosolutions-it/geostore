@@ -238,8 +238,7 @@ public interface ResourceService extends SecurityService {
      * @param id
      * @return
      */
-    public List<SecurityRule> getSecurityRules(long id)
-            throws BadRequestServiceEx, InternalErrorServiceEx;
+    public List<SecurityRule> getSecurityRules(long id);
 
     /**
      * Replaces the list of security rules for the given resource.
