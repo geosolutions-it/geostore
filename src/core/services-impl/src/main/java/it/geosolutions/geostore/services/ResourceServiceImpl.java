@@ -59,12 +59,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Class ResourceServiceImpl.
@@ -492,72 +494,80 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     /**
-     * @param list
+     * @param resources
+     * @param user
      * @return List<ShortResource>
      */
-    private List<ShortResource> convertToShortList(List<Resource> list, User authUser) {
-        List<ShortResource> swList = new LinkedList<>();
-        for (Resource resource : list) {
-            ShortResource shortResource = new ShortResource(resource);
-
-            // ///////////////////////////////////////////////////////////////////////
-            // This fragment checks if the authenticated user can modify and delete
-            // the loaded resource (and associated attributes and stored data).
-            // This to inform the client in HTTP response result.
-            // ///////////////////////////////////////////////////////////////////////
-            boolean resourceCanBeListed = true;
-            if (authUser != null) {
-                if (authUser.getRole().equals(Role.ADMIN)) {
-                    shortResource.setCanEdit(true);
-                    shortResource.setCanDelete(true);
-                } else {
-                    boolean authUserIsOwner = false;
-                    for (SecurityRule rule : resource.getSecurity()) {
-                        User owner = rule.getUser();
-                        UserGroup userGroup = rule.getGroup();
-                        if (owner != null) {
-                            if (owner.getId().equals(authUser.getId())) {
-                                authUserIsOwner = true;
-                                if (rule.isCanWrite()) {
-                                    shortResource.setCanEdit(true);
-                                    shortResource.setCanDelete(true);
-
-                                    break;
-                                }
-                            }
-                        } else if (userGroup != null) {
-                            List<String> groups = extractGroupNames(authUser.getGroups());
-                            if (groups.contains(userGroup.getGroupName())) {
-                                if (rule.isCanWrite()) {
-                                    shortResource.setCanEdit(true);
-                                    shortResource.setCanDelete(true);
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (!authUserIsOwner) resourceCanBeListed = resource.isAdvertised();
-                }
-            } else {
-                resourceCanBeListed = resource.isAdvertised();
-            }
-
-            if (resourceCanBeListed) swList.add(shortResource);
-        }
-
-        return swList;
+    private List<ShortResource> convertToShortList(List<Resource> resources, User user) {
+        return resources.stream()
+                .filter(r -> isResourceCanBeListed(user, r))
+                .map(r -> createShortResourceWithPermissions(user, r))
+                .collect(Collectors.toList());
     }
 
-    public static List<String> extractGroupNames(Set<UserGroup> groups) {
-        List<String> groupNames = new ArrayList<String>();
+    private boolean isResourceCanBeListed(User user, Resource resource) {
+        if (user != null
+            && (user.getRole().equals(Role.ADMIN) || isUserResourceOwner(user, resource))) {
+            return true;
+        }
+        return resource.isAdvertised();
+    }
+
+    private boolean isUserResourceOwner(User user, Resource resource) {
+        for (SecurityRule securityRule : resource.getSecurity()) {
+            User owner = securityRule.getUser();
+            if (owner != null) {
+                if (owner.getId().equals(user.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private ShortResource createShortResourceWithPermissions(User user, Resource resource) {
+        ShortResource shortResource = new ShortResource(resource);
+
+        if (user != null) {
+            addPermissionsToShortResource(user, resource, shortResource);
+        }
+
+        return shortResource;
+    }
+
+    /**
+     * Checks if the user can modify and delete the loaded resource (and associated attributes and
+     * stored data). This to inform the client in HTTP response result.
+     */
+    public ShortResource addPermissionsToShortResource(User user, Resource resource, ShortResource shortResource) {
+        boolean resourceRulesPermitUserEdit = resource.getSecurity().stream().anyMatch(rule -> canUserEditResource(rule, user));
+        if (user.getRole().equals(Role.ADMIN) || resourceRulesPermitUserEdit) {
+            shortResource.setCanEdit(true);
+            shortResource.setCanDelete(true);
+        }
+        return shortResource;
+    }
+
+    private boolean canUserEditResource(SecurityRule rule, User user) {
+        User ruleUser = rule.getUser();
+        if (ruleUser != null) {
+            return ruleUser.getId().equals(user.getId()) && rule.isCanWrite();
+        }
+
+        UserGroup ruleGroup = rule.getGroup();
+        if (ruleGroup != null) {
+            List<String> userGroupsNames = extractGroupsNames(user.getGroups());
+            return userGroupsNames.contains(ruleGroup.getGroupName()) && rule.isCanWrite();
+        }
+
+        return false;
+    }
+
+    private static List<String> extractGroupsNames(Set<UserGroup> groups) {
         if (groups == null) {
-            return groupNames;
+            return Collections.emptyList();
         }
-        for (UserGroup ug : groups) {
-            groupNames.add(ug.getGroupName());
-        }
-        return groupNames;
+        return groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
     }
 
     /*
