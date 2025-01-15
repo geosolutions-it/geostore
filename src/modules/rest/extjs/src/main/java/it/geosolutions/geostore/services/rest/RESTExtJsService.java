@@ -52,7 +52,7 @@ import org.springframework.security.access.annotation.Secured;
 public interface RESTExtJsService {
 
     @GET
-    @Path("/search/{nameLike: [^/]+}\")")
+    @Path("/search/resource/{nameLike}")
     @Produces({MediaType.APPLICATION_JSON})
     @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     String getAllResources(
