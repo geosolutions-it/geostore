@@ -46,6 +46,7 @@ import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
@@ -286,6 +287,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
      * java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
      */
+
     @Override
     public ExtResourceList getExtResourcesList(
             SecurityContext sc,
@@ -705,7 +707,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             if (sr != null) {
                 canDelete = sr.isCanDelete();
                 canEdit = sr.isCanEdit();
-            } else
+                return;
+            }
             // ///////////////////////////////////////////////////////////////////////
             // This fragment checks if the authenticated user can modify and
             // delete
@@ -714,58 +717,55 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             // This to inform the client in HTTP response result.
             // ///////////////////////////////////////////////////////////////////////
             if (authUser != null) {
-                if (authUser.getRole().equals(Role.ADMIN)) {
+                // GUEST users can not access to the delete and edit (resource, data blob is editable) services
+                // so only authenticated users with
+                if (!authUser.getRole().equals(Role.GUEST) &&
+                    (authUser.getRole().equals(Role.ADMIN) ||
+                     canUserGroupsEditResource() ||
+                     canUserEditResource())) {
                     canEdit = true;
                     canDelete = true;
-                } else {
-                    // get security rules for groups
-                    List<String> groups = new ArrayList<String>();
-                    for (UserGroup g : authUser.getGroups()) {
-                        groups.add(g.getGroupName());
-                    }
-                    for (SecurityRule rule :
-                            resourceService.getGroupSecurityRule(groups, r.getId())) {
-                        // GUEST users can not access to the delete and edit(resource,data blob is
-                        // editable) services
-                        // so only authenticated users with
-                        if (rule.isCanWrite() && !authUser.getRole().equals(Role.GUEST)) {
-                            canEdit = true;
-                            canDelete = true;
-                            break;
-                        }
-                    }
-                    // get security rules for user
-                    for (SecurityRule rule :
-                            resourceService.getUserSecurityRule(authUser.getName(), r.getId())) {
-                        User owner = rule.getUser();
-                        UserGroup userGroup = rule.getGroup();
-                        if (owner != null) {
-                            if (owner.getId().equals(authUser.getId())) {
-                                if (rule.isCanWrite()) {
-                                    canEdit = true;
-                                    canDelete = true;
-                                    break;
-                                }
-                            }
-                        } else if (userGroup != null) {
-                            if (authUser.getGroups() != null
-                                    && authUser.getGroups().stream()
-                                            .noneMatch(
-                                                    ug ->
-                                                            ug.getGroupName()
-                                                                    .equals(
-                                                                            userGroup
-                                                                                    .getGroupName()))) {
-                                if (rule.isCanWrite()) {
-                                    canEdit = true;
-                                    canDelete = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
                 }
             }
+        }
+
+        private boolean canUserGroupsEditResource() {
+            List<String> groupsNames = authUser.getGroups().stream()
+                    .map(UserGroup::getGroupName)
+                    .collect(Collectors.toList());
+            return resourceService.getGroupSecurityRule(groupsNames, r.getId()).stream()
+                    .anyMatch(SecurityRule::isCanWrite);
+        }
+
+        private boolean canUserEditResource() {
+            return resourceService.getUserSecurityRule(authUser.getName(), r.getId()).stream()
+                    .anyMatch(rule ->
+                            isRuleUserOwnerWithWritePermissions(rule)
+                            || hasRuleGroupWritePermissions(rule));
+        }
+
+        private boolean isRuleUserOwnerWithWritePermissions(SecurityRule rule) {
+            User ruleUser = rule.getUser();
+            if (ruleUser != null) {
+                return ruleUser.getId().equals(authUser.getId()) && rule.isCanWrite();
+            }
+            return false;
+        }
+
+        /* What's this checking? */
+        private boolean hasRuleGroupWritePermissions(SecurityRule rule) {
+            UserGroup ruleGroup = rule.getGroup();
+            Set<UserGroup> authUserGroups = authUser.getGroups();
+
+            if (ruleGroup != null && authUserGroups != null) {
+
+                boolean noneMatch = authUserGroups.stream()
+                        .noneMatch(ug -> ug.getGroupName().equals(ruleGroup.getGroupName()));
+
+                return noneMatch && rule.isCanWrite();
+            }
+
+            return false;
         }
 
         /** @return true if the logged user is owner of the resource and false otherwise */
