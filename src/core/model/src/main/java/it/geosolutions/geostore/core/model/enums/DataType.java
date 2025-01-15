@@ -36,5 +36,5 @@ package it.geosolutions.geostore.core.model.enums;
 public enum DataType {
     STRING,
     NUMBER,
-    DATE;
+    DATE
 }

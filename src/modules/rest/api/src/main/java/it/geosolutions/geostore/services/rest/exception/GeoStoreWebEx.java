@@ -26,7 +26,7 @@ import javax.ws.rs.core.Response.Status;
 /** @author ETj (etj at geo-solutions.it) */
 public abstract class GeoStoreWebEx extends WebApplicationException {
 
-    private String message;
+    private final String message;
 
     protected GeoStoreWebEx(Status status, String message) {
         super(Response.status(status).type("text/plain").entity(message).build());

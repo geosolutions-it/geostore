@@ -40,9 +40,7 @@ import org.junit.Before;
 public abstract class AuditingTestsBase {
 
     protected final File TESTS_ROOT_DIRECTORY =
-            new File(
-                    System.getProperty("java.io.tmpdir"),
-                    "auditing-tests-" + UUID.randomUUID().toString());
+            new File(System.getProperty("java.io.tmpdir"), "auditing-tests-" + UUID.randomUUID());
     protected final File OUTPUT_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "output");
     protected final File TEMPLATES_DIRECTORY = getTemplatesDirectory();
     protected final File CONFIGURATION_DIRECTORY = new File(TESTS_ROOT_DIRECTORY, "configuration");

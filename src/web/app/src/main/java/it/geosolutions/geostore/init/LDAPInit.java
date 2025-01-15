@@ -23,7 +23,7 @@ import it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationPro
 import org.springframework.beans.factory.InitializingBean;
 
 public class LDAPInit implements InitializingBean {
-    private UserLdapAuthenticationProvider authenticationProvider;
+    private final UserLdapAuthenticationProvider authenticationProvider;
 
     public LDAPInit(UserLdapAuthenticationProvider authenticationProvider) {
         super();

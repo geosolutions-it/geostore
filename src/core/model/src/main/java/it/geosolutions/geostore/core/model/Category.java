@@ -192,12 +192,8 @@ public class Category implements Serializable {
             return false;
         }
         if (resource == null) {
-            if (other.resource != null) {
-                return false;
-            }
-        } else if (!resource.equals(other.resource)) {
-            return false;
-        }
+            return other.resource == null;
+        } else return resource.equals(other.resource);
         // if ( security == null ) {
         // if ( other.security != null ) {
         // return false;
@@ -205,7 +201,5 @@ public class Category implements Serializable {
         // } else if ( !security.equals(other.security) ) {
         // return false;
         // }
-
-        return true;
     }
 }

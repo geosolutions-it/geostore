@@ -50,7 +50,7 @@ public class AttributeTest {
         System.out.println(a1);
         System.out.println(s);
 
-        assertTrue(a0.equals(a1));
+        assertEquals(a0, a1);
     }
 
     @Test

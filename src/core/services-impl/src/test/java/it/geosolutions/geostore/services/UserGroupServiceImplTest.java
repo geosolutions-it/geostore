@@ -152,8 +152,8 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
 
         listsr = userGroupService.updateSecurityRules(ug1.getId(), listR, false, false);
         assertEquals(1, listsr.size());
-        assertTrue("Expected FALSE", !listsr.get(0).isCanDelete());
-        assertTrue("Expected FALSE", !listsr.get(0).isCanEdit());
+        assertFalse("Expected FALSE", listsr.get(0).isCanDelete());
+        assertFalse("Expected FALSE", listsr.get(0).isCanEdit());
     }
 
     /**
@@ -284,10 +284,10 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         groupAttribute.setName("organization");
         groupAttribute.setValue("value");
         Collection<UserGroup> groups =
-                userGroupService.findByAttribute("organization", Arrays.asList("value"), true);
+                userGroupService.findByAttribute("organization", List.of("value"), true);
         assertEquals(2, groups.size());
 
-        groups = userGroupService.findByAttribute("organization", Arrays.asList("value"), false);
+        groups = userGroupService.findByAttribute("organization", List.of("value"), false);
         assertEquals(1, groups.size());
     }
 }

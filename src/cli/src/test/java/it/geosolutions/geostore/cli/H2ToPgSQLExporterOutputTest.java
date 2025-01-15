@@ -28,8 +28,7 @@
  */
 package it.geosolutions.geostore.cli;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import it.geosolutions.geostore.cli.H2ToPgSQLExporter.Output;
 import it.geosolutions.geostore.cli.H2ToPgSQLExporter.OutputType;
@@ -44,7 +43,7 @@ public class H2ToPgSQLExporterOutputTest extends H2ToPgSQLExporterTest {
 
         Output output = exporter.validateOutputFile();
 
-        assertTrue(output.type == OutputType.FILE);
+        assertSame(output.type, OutputType.FILE);
         assertEquals(exporter.outputPath, output.path.get());
     }
 
@@ -54,7 +53,7 @@ public class H2ToPgSQLExporterOutputTest extends H2ToPgSQLExporterTest {
 
         Output output = exporter.validateOutputFile();
 
-        assertTrue(output.type == OutputType.FILE);
+        assertSame(output.type, OutputType.FILE);
         assertTrue(output.path.get().toLowerCase().endsWith(".sql"));
     }
 
@@ -64,7 +63,7 @@ public class H2ToPgSQLExporterOutputTest extends H2ToPgSQLExporterTest {
 
         Output output = exporter.validateOutputFile();
 
-        assertTrue(output.type == OutputType.INVALID);
+        assertSame(output.type, OutputType.INVALID);
     }
 
     @Test
@@ -73,7 +72,7 @@ public class H2ToPgSQLExporterOutputTest extends H2ToPgSQLExporterTest {
 
         Output output = exporter.validateOutputFile();
 
-        assertTrue(output.type == OutputType.STDOUT);
+        assertSame(output.type, OutputType.STDOUT);
     }
 
     private String getValidPath() throws IOException {

@@ -45,7 +45,7 @@ public interface UserSessionService {
      * @param sessionId
      * @return
      */
-    public User getUserData(String sessionId);
+    User getUserData(String sessionId);
 
     /**
      * Gets refresh token for a given session id (if existing).
@@ -53,14 +53,14 @@ public interface UserSessionService {
      * @param sessionId
      * @return
      */
-    public String getRefreshToken(String sessionId);
+    String getRefreshToken(String sessionId);
 
     /**
      * Refresh an expiring session by the given interval.
      *
      * @param sessionId
      */
-    public UserSession refreshSession(String sessionId, String refreshToken);
+    UserSession refreshSession(String sessionId, String refreshToken);
 
     /**
      * Register a new session. The session id is given.
@@ -68,7 +68,7 @@ public interface UserSessionService {
      * @param sessionId
      * @param session
      */
-    public void registerNewSession(String sessionId, UserSession session);
+    void registerNewSession(String sessionId, UserSession session);
 
     /**
      * Register a new session. The session id is automatically created and returned.
@@ -76,17 +76,17 @@ public interface UserSessionService {
      * @param session
      * @return the generated session id
      */
-    public String registerNewSession(UserSession session);
+    String registerNewSession(UserSession session);
 
     /**
      * Remove a session, given its id.
      *
      * @param sessionId
      */
-    public void removeSession(String sessionId);
+    void removeSession(String sessionId);
 
     /** Remove all the sessions. */
-    public void removeAllSessions();
+    void removeAllSessions();
 
     /**
      * Checks that owner is the user bound to the given sessionId.
@@ -95,5 +95,5 @@ public interface UserSessionService {
      * @param owner
      * @return
      */
-    public boolean isOwner(String sessionId, Object owner);
+    boolean isOwner(String sessionId, Object owner);
 }

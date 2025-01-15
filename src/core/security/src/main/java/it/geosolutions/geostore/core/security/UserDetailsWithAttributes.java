@@ -35,5 +35,5 @@ import org.springframework.security.core.userdetails.UserDetails;
  * @author Mauro Bartolomeoli
  */
 public interface UserDetailsWithAttributes extends UserDetails {
-    public Object getAttribute(String name);
+    Object getAttribute(String name);
 }

@@ -39,7 +39,7 @@ public final class AuditingOutputTest extends AuditingTestsBase {
     @Test
     public void testAuditOutput() throws InterruptedException {
         AuditingOutput auditingOutput = new AuditingOutput();
-        Assert.assertEquals(auditingOutput.isAuditEnable(), true);
+        Assert.assertTrue(auditingOutput.isAuditEnable());
         Map<String, String> message1 = createTestMessage("1");
         Map<String, String> message2 = createTestMessage("2");
         Map<String, String> message3 = createTestMessage("3");

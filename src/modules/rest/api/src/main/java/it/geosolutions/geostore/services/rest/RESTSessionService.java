@@ -73,7 +73,7 @@ public interface RESTSessionService {
     @Path("/username/{sessionId}")
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
-    public String getUserName(
+    String getUserName(
             @PathParam("sessionId") String sessionId,
             @DefaultValue("true") @QueryParam("refresh") boolean refresh);
 
@@ -87,7 +87,7 @@ public interface RESTSessionService {
     @Path("/")
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
-    public String createSession(
+    String createSession(
             @DefaultValue("") @QueryParam("expires") String expires, @Context SecurityContext sc)
             throws ParseException;
 
@@ -101,7 +101,7 @@ public interface RESTSessionService {
     @Path("/login")
     @Produces({MediaType.APPLICATION_JSON})
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
-    public SessionToken login(@Context SecurityContext sc) throws ParseException;
+    SessionToken login(@Context SecurityContext sc) throws ParseException;
 
     /**
      * Refresh the session token
@@ -116,7 +116,7 @@ public interface RESTSessionService {
     @Produces({MediaType.APPLICATION_JSON})
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
     @Deprecated
-    public SessionToken refresh(
+    SessionToken refresh(
             @Context SecurityContext sc,
             @PathParam("sessionId") String sessionId,
             @PathParam("refreshToken") String refreshToken)
@@ -130,14 +130,14 @@ public interface RESTSessionService {
     @Path("/{sessionId}")
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
     @Deprecated
-    public void removeSession(@PathParam("sessionId") String sessionId);
+    void removeSession(@PathParam("sessionId") String sessionId);
 
     @POST
     @Path("/refreshToken")
     @Produces({MediaType.APPLICATION_JSON})
     @Consumes({MediaType.APPLICATION_JSON})
     @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
-    public SessionToken refresh(SessionToken token) throws ParseException;
+    SessionToken refresh(SessionToken token) throws ParseException;
     /**
      * Removes the given session.
      *
@@ -146,7 +146,7 @@ public interface RESTSessionService {
     @DELETE
     @Path("/logout")
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
-    public void removeSession();
+    void removeSession();
 
     /**
      * Removes all sessions.
@@ -156,7 +156,7 @@ public interface RESTSessionService {
     @DELETE
     @Path("/")
     @Secured({"ROLE_ADMIN"})
-    public void clear();
+    void clear();
 
     void registerDelegate(String key, SessionServiceDelegate delegate);
 }
