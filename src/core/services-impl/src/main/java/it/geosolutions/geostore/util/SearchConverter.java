@@ -203,7 +203,7 @@ public class SearchConverter implements FilterVisitor {
         f.setOperator(op);
 
         if (type == Date.class) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
                 f.setValue(sdf.parse(value));
             } catch (ParseException e) {
@@ -222,9 +222,7 @@ public class SearchConverter implements FilterVisitor {
         trgFilter = f;
     }
 
-    /**
-     * This is a leaf filter.
-     */
+    /** This is a leaf filter. */
     @Override
     public void visit(CategoryFilter filter) {
         CategoryFilter.checkOperator(filter.getOperator());
@@ -243,9 +241,7 @@ public class SearchConverter implements FilterVisitor {
         trgFilter = f;
     }
 
-    /**
-     * This is a leaf filter.
-     */
+    /** This is a leaf filter. */
     @Override
     public void visit(GroupFilter filter) {
         GroupFilter.checkOperator(filter.getOperator());

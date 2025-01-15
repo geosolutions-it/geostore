@@ -39,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.core.SecurityContext;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -578,6 +579,48 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             GroupFilter groupFilter = new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
 
             assertThrows(IllegalStateException.class, () -> restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter));
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_timeAttributesFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource("name_A", "", CAT0_NAME, u0, true);
+        long resourceBId = restCreateResource("name_B", "", CAT0_NAME, u0, true);
+
+        Resource resourceA = resourceService.get(resourceAId);
+
+        Resource resourceB = resourceService.get(resourceBId);
+        Thread.sleep(1000);
+        resourceB.setDescription("posticipated");
+        resourceService.update(resourceB);
+
+        {
+            FieldFilter ltDateFilter = new FieldFilter(BaseField.LASTUPDATE, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(resourceB.getLastUpdate()), SearchOperator.LESS_THAN);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, ltDateFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(resourceAId, resource.getId().longValue());
+        }
+
+        {
+            FieldFilter gteDateFilter = new FieldFilter(BaseField.CREATION, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(resourceA.getCreation()), SearchOperator.GREATER_THAN_OR_EQUAL_TO);
+            FieldFilter lteDateFilter = new FieldFilter(BaseField.CREATION, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(resourceB.getLastUpdate()), SearchOperator.LESS_THAN_OR_EQUAL_TO);
+            AndFilter betweenDatesFieldFilter = new AndFilter(gteDateFilter, lteDateFilter);
+
+            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, betweenDatesFieldFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(2, resources.size());
         }
     }
 
