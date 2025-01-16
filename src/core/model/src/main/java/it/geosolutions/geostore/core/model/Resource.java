@@ -343,10 +343,15 @@ public class Resource implements Serializable, CycleRecoverable {
             builder.append("advertised=").append(advertised);
         }
 
-        builder
-                .append(", ").append("canEdit=").append(canEdit)
-                .append(", ").append("canDelete=").append(canDelete)
-                .append(", ").append("canCopy=").append(canCopy);
+        builder.append(", ")
+                .append("canEdit=")
+                .append(canEdit)
+                .append(", ")
+                .append("canDelete=")
+                .append(canDelete)
+                .append(", ")
+                .append("canCopy=")
+                .append(canCopy);
 
         builder.append(']');
 

@@ -52,10 +52,6 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.dao.DataIntegrityViolationException;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -67,6 +63,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Class ResourceServiceImpl.
@@ -507,7 +506,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     private boolean isResourceCanBeListed(User user, Resource resource) {
         if (user != null
-            && (user.getRole().equals(Role.ADMIN) || isUserResourceOwner(user, resource))) {
+                && (user.getRole().equals(Role.ADMIN) || isUserResourceOwner(user, resource))) {
             return true;
         }
         return resource.isAdvertised();
@@ -539,8 +538,10 @@ public class ResourceServiceImpl implements ResourceService {
      * Checks if the user can modify and delete the loaded resource (and associated attributes and
      * stored data). This to inform the client in HTTP response result.
      */
-    public ShortResource addPermissionsToShortResource(User user, Resource resource, ShortResource shortResource) {
-        boolean resourceRulesPermitUserEdit = resource.getSecurity().stream().anyMatch(rule -> canUserEditResource(rule, user));
+    public ShortResource addPermissionsToShortResource(
+            User user, Resource resource, ShortResource shortResource) {
+        boolean resourceRulesPermitUserEdit =
+                resource.getSecurity().stream().anyMatch(rule -> canUserEditResource(rule, user));
         if (user.getRole().equals(Role.ADMIN) || resourceRulesPermitUserEdit) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);

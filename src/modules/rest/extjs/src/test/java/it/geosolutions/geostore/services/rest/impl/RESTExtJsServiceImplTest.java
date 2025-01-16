@@ -17,6 +17,12 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -31,14 +37,6 @@ import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import org.junit.Before;
-import org.junit.Test;
-
-import javax.ws.rs.core.SecurityContext;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
@@ -47,16 +45,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.SecurityContext;
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+import org.junit.Before;
+import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-
-/**
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
     private final RESTExtJsServiceImpl restExtJsService;
@@ -398,20 +395,28 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         restCreateResource(RES_ATTRIBUTE_C, RES_ATTRIBUTE_C, CAT0_NAME, u0, true);
 
         {
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "description", "asc", false, false, new AndFilter());
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "description", "asc", false, false, new AndFilter());
 
             List<Resource> resources = response.getList();
             assertEquals(3, resources.size());
-            List<String> resourcesDescriptions = resources.stream().map(Resource::getName).collect(Collectors.toList());
-            assertEquals(List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C), resourcesDescriptions);
+            List<String> resourcesDescriptions =
+                    resources.stream().map(Resource::getName).collect(Collectors.toList());
+            assertEquals(
+                    List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C),
+                    resourcesDescriptions);
         }
 
         {
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "creation", "desc", false, false, new AndFilter());
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "creation", "desc", false, false, new AndFilter());
 
             List<Resource> resources = response.getList();
             assertEquals(3, resources.size());
-            List<Date> resourcesCreationDates = resources.stream().map(Resource::getCreation).collect(Collectors.toList());
+            List<Date> resourcesCreationDates =
+                    resources.stream().map(Resource::getCreation).collect(Collectors.toList());
             assertTrue(resourcesCreationDates.get(0).after(resourcesCreationDates.get(1)));
             assertTrue(resourcesCreationDates.get(1).after(resourcesCreationDates.get(2)));
         }
@@ -440,9 +445,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         resourceService.update(resourceB);
 
         {
-            FieldFilter editorFieldFilter = new FieldFilter(BaseField.CREATOR, "creatorB", SearchOperator.EQUAL_TO);
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "creatorB", SearchOperator.EQUAL_TO);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, editorFieldFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -451,9 +459,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            FieldFilter editorFieldFilter = new FieldFilter(BaseField.CREATOR, "CREATOR_", SearchOperator.ILIKE);
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "CREATOR_", SearchOperator.ILIKE);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, editorFieldFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -483,9 +494,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         resourceService.update(resourceB);
 
         {
-            FieldFilter editorFieldFilter = new FieldFilter(BaseField.EDITOR, "editorA", SearchOperator.EQUAL_TO);
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.EDITOR, "editorA", SearchOperator.EQUAL_TO);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, editorFieldFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -494,9 +508,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            FieldFilter editorFieldFilter = new FieldFilter(BaseField.EDITOR, "EDITOR_", SearchOperator.ILIKE);
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.EDITOR, "EDITOR_", SearchOperator.ILIKE);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, editorFieldFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, editorFieldFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -516,8 +533,10 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         createCategory(CAT0_NAME);
 
-        long resourceAId = restCreateResource(RESOURCE_A_NAME, "description_A", CAT0_NAME, user0Id, true);
-        long resourceBId = restCreateResource(RESOURCE_B_NAME, "description_B", CAT0_NAME, user0Id, true);
+        long resourceAId =
+                restCreateResource(RESOURCE_A_NAME, "description_A", CAT0_NAME, user0Id, true);
+        long resourceBId =
+                restCreateResource(RESOURCE_B_NAME, "description_B", CAT0_NAME, user0Id, true);
 
         SecurityRule securityRuleGroupA = new SecurityRule();
         securityRuleGroupA.setGroup(userGroupService.get(createGroup(GROUP_A_NAME)));
@@ -525,7 +544,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         List<SecurityRule> securityRulesResourceA = resourceService.getSecurityRules(resourceAId);
         securityRulesResourceA.add(securityRuleGroupA);
-        restResourceService.updateSecurityRules(sc, resourceAId, new SecurityRuleList(securityRulesResourceA));
+        restResourceService.updateSecurityRules(
+                sc, resourceAId, new SecurityRuleList(securityRulesResourceA));
 
         SecurityRule securityRuleGroupB = new SecurityRule();
         securityRuleGroupB.setGroup(userGroupService.get(createGroup(GROUP_B_NAME)));
@@ -533,13 +553,17 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         List<SecurityRule> securityRulesResourceB = resourceService.getSecurityRules(resourceBId);
         securityRulesResourceB.add(securityRuleGroupB);
-        restResourceService.updateSecurityRules(sc, resourceBId, new SecurityRuleList(securityRulesResourceB));
+        restResourceService.updateSecurityRules(
+                sc, resourceBId, new SecurityRuleList(securityRulesResourceB));
 
         {
             /* search for name equality of a single group */
-            GroupFilter groupFilter = new GroupFilter(Collections.singletonList("groupA"), SearchOperator.EQUAL_TO);
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList("groupA"), SearchOperator.EQUAL_TO);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -549,9 +573,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name similarity (ignoring case) of multiple groups */
-            GroupFilter groupFilter = new GroupFilter(Collections.singletonList("GROUP_"), SearchOperator.ILIKE);
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList("GROUP_"), SearchOperator.ILIKE);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -559,9 +586,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of multiple groups */
-            GroupFilter groupFilter = new GroupFilter(List.of("groupA", "groupB", "groupC"), SearchOperator.IN);
+            GroupFilter groupFilter =
+                    new GroupFilter(List.of("groupA", "groupB", "groupC"), SearchOperator.IN);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -571,14 +601,23 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             /* erroneous search for similarity of multiple groups */
             GroupFilter groupFilter = new GroupFilter(List.of("a", "b"), SearchOperator.LIKE);
 
-            assertThrows(IllegalStateException.class, () -> restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter));
+            assertThrows(
+                    IllegalStateException.class,
+                    () ->
+                            restExtJsService.getExtResourcesList(
+                                    sc, 0, 1000, "", "", false, false, groupFilter));
         }
 
         {
             /* erroneous search for equality in empty group list */
-            GroupFilter groupFilter = new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
 
-            assertThrows(IllegalStateException.class, () -> restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, groupFilter));
+            assertThrows(
+                    IllegalStateException.class,
+                    () ->
+                            restExtJsService.getExtResourcesList(
+                                    sc, 0, 1000, "", "", false, false, groupFilter));
         }
     }
 
@@ -602,9 +641,16 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         resourceService.update(resourceB);
 
         {
-            FieldFilter ltDateFilter = new FieldFilter(BaseField.LASTUPDATE, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(resourceB.getLastUpdate()), SearchOperator.LESS_THAN);
+            FieldFilter ltDateFilter =
+                    new FieldFilter(
+                            BaseField.LASTUPDATE,
+                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+                                    .format(resourceB.getLastUpdate()),
+                            SearchOperator.LESS_THAN);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, ltDateFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, ltDateFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -613,11 +659,23 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            FieldFilter gteDateFilter = new FieldFilter(BaseField.CREATION, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(resourceA.getCreation()), SearchOperator.GREATER_THAN_OR_EQUAL_TO);
-            FieldFilter lteDateFilter = new FieldFilter(BaseField.CREATION, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS").format(resourceB.getLastUpdate()), SearchOperator.LESS_THAN_OR_EQUAL_TO);
+            FieldFilter gteDateFilter =
+                    new FieldFilter(
+                            BaseField.CREATION,
+                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                                    .format(resourceA.getCreation()),
+                            SearchOperator.GREATER_THAN_OR_EQUAL_TO);
+            FieldFilter lteDateFilter =
+                    new FieldFilter(
+                            BaseField.CREATION,
+                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+                                    .format(resourceB.getLastUpdate()),
+                            SearchOperator.LESS_THAN_OR_EQUAL_TO);
             AndFilter betweenDatesFieldFilter = new AndFilter(gteDateFilter, lteDateFilter);
 
-            ExtResourceList response = restExtJsService.getExtResourcesList(sc, 0, 1000, "", "", false, false, betweenDatesFieldFilter);
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, betweenDatesFieldFilter);
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -649,11 +707,15 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         restCreateResource(OWNER_RESOURCE_NAME, "", CAT0_NAME, userId, false);
 
         /* user owned resource - read only */
-        long readOnlyResourceId = restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+        long readOnlyResourceId =
+                restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, userId, false);
         SecurityRule readOnlyRule = new SecurityRule();
         readOnlyRule.setUser(userService.get(userId));
         readOnlyRule.setCanRead(true);
-        restResourceService.updateSecurityRules(adminSecurityContext, readOnlyResourceId, new SecurityRuleList(Collections.singletonList(readOnlyRule)));
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyResourceId,
+                new SecurityRuleList(Collections.singletonList(readOnlyRule)));
 
         /* advertised resource */
         restCreateResource("advertisedResource", "", CAT0_NAME, adminId, true);
@@ -664,39 +726,67 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         groupRule.setCanWrite(true);
 
         /* group owned resource - advertised */
-        long advertisedGroupResourceId = restCreateResource(ADVERTISED_GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
-        List<SecurityRule> securityRulesAdvertisedGroupResource = resourceService.getSecurityRules(advertisedGroupResourceId);
+        long advertisedGroupResourceId =
+                restCreateResource(ADVERTISED_GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+        List<SecurityRule> securityRulesAdvertisedGroupResource =
+                resourceService.getSecurityRules(advertisedGroupResourceId);
         securityRulesAdvertisedGroupResource.add(groupRule);
-        restResourceService.updateSecurityRules(adminSecurityContext, advertisedGroupResourceId, new SecurityRuleList(securityRulesAdvertisedGroupResource));
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                advertisedGroupResourceId,
+                new SecurityRuleList(securityRulesAdvertisedGroupResource));
 
         /* group owned resource - unadvertised */
-        long unadvertisedGroupResourceId = restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
-        List<SecurityRule> securityRulesUnadvertisedGroupResource = resourceService.getSecurityRules(unadvertisedGroupResourceId);
+        long unadvertisedGroupResourceId =
+                restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
+        List<SecurityRule> securityRulesUnadvertisedGroupResource =
+                resourceService.getSecurityRules(unadvertisedGroupResourceId);
         securityRulesUnadvertisedGroupResource.add(groupRule);
-        restResourceService.updateSecurityRules(adminSecurityContext, unadvertisedGroupResourceId, new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                unadvertisedGroupResourceId,
+                new SecurityRuleList(securityRulesUnadvertisedGroupResource));
 
         {
-            ExtResourceList response = restExtJsService.getExtResourcesList(adminSecurityContext, 0, 1000, "", "", false, false, new AndFilter());
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext, 0, 1000, "", "", false, false, new AndFilter());
             List<Resource> resources = response.getList();
             assertEquals(6, resources.size());
-            assertTrue(resources.stream().allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
         }
         {
-            ExtResourceList response = restExtJsService.getExtResourcesList(user0SecurityContext, 0, 1000, "", "", false, false, new AndFilter());
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            user0SecurityContext, 0, 1000, "", "", false, false, new AndFilter());
             List<Resource> resources = response.getList();
             assertEquals(3, resources.size());
 
-            Resource ownerResource = resources.stream().filter(r -> r.getName().equals(OWNER_RESOURCE_NAME)).findFirst().orElseThrow();
+            Resource ownerResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(OWNER_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
             assertTrue(ownerResource.isCanEdit());
             assertTrue(ownerResource.isCanDelete());
             assertTrue(ownerResource.isCanCopy());
 
-            Resource readOnlyResource = resources.stream().filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME)).findFirst().orElseThrow();
+            Resource readOnlyResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
             assertFalse(readOnlyResource.isCanEdit());
             assertFalse(readOnlyResource.isCanDelete());
             assertTrue(readOnlyResource.isCanCopy());
 
-            Resource groupResource = resources.stream().filter(r -> r.getName().equals(ADVERTISED_GROUP_RESOURCE_NAME)).findFirst().orElseThrow();
+            Resource groupResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(ADVERTISED_GROUP_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
             assertTrue(groupResource.isCanEdit());
             assertTrue(groupResource.isCanDelete());
             assertTrue(groupResource.isCanCopy());
@@ -710,7 +800,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         JSONObject jo = (JSONObject) json;
         ret.total = jo.getInt("totalCount");
 
-        Set names;
+        Set<String> names;
 
         JSONArray arrResults = jo.optJSONArray("results");
         if (arrResults != null) {
@@ -722,7 +812,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 names = Collections.singleton(getSingle(results));
             } else {
                 LOGGER.warn("No results found");
-                names = Collections.EMPTY_SET;
+                names = Collections.emptySet();
             }
         }
 
@@ -749,6 +839,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     static class JSONResult {
         int total;
         int returnedCount;
-        Set names;
+        Set<String> names;
     }
 }

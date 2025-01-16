@@ -19,8 +19,8 @@
  */
 package it.geosolutions.geostore.services.dto.search;
 
-import javax.xml.bind.annotation.XmlType;
 import java.util.Date;
+import javax.xml.bind.annotation.XmlType;
 
 /**
  * Enum BaseField.

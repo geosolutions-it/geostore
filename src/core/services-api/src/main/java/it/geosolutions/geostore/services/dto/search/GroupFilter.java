@@ -21,15 +21,12 @@ package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import javax.xml.bind.annotation.XmlRootElement;
 
-/**
- * Filter by group name
- */
+/** Filter by group name */
 @XmlRootElement(name = "GroupFilter")
 public class GroupFilter extends SearchFilter implements Serializable {
 
@@ -37,11 +34,8 @@ public class GroupFilter extends SearchFilter implements Serializable {
 
     private SearchOperator operator;
 
-    /**
-     *
-     */
-    public GroupFilter() {
-    }
+    /** */
+    public GroupFilter() {}
 
     /**
      * @param names
@@ -52,38 +46,34 @@ public class GroupFilter extends SearchFilter implements Serializable {
         setOperator(operator);
     }
 
-    /**
-     * @return the name
-     */
+    /** @return the name */
     public List<String> getNames() {
         return names;
     }
 
-    /**
-     * @param names the name to set
-     */
+    /** @param names the name to set */
     public void setNames(List<String> names) {
         this.names = names;
     }
 
-    /**
-     * @return the operator
-     */
+    /** @return the operator */
     public SearchOperator getOperator() {
         return operator;
     }
 
-    /**
-     * @param operator the operator to set
-     */
+    /** @param operator the operator to set */
     public final void setOperator(SearchOperator operator) {
         checkOperator(operator);
         this.operator = operator;
     }
 
     public static void checkOperator(SearchOperator operator) {
-        if (operator != SearchOperator.EQUAL_TO && operator != SearchOperator.LIKE && operator != SearchOperator.ILIKE && operator != SearchOperator.IN)
-            throw new IllegalArgumentException("Only EQUAL, LIKE, ILIKE, or IN operators are acceptable");
+        if (operator != SearchOperator.EQUAL_TO
+                && operator != SearchOperator.LIKE
+                && operator != SearchOperator.ILIKE
+                && operator != SearchOperator.IN)
+            throw new IllegalArgumentException(
+                    "Only EQUAL, LIKE, ILIKE, or IN operators are acceptable");
     }
 
     @Override
@@ -98,10 +88,11 @@ public class GroupFilter extends SearchFilter implements Serializable {
      */
     @Override
     public String toString() {
-        return getClass().getSimpleName() + '[' +
-               (operator != null ? operator : "!op!") +
-               ' ' +
-               (names != null ? names : "[!names!]") +
-               ']';
+        return getClass().getSimpleName()
+                + '['
+                + (operator != null ? operator : "!op!")
+                + ' '
+                + (names != null ? names : "[!names!]")
+                + ']';
     }
 }
