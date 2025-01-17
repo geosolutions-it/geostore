@@ -133,7 +133,8 @@ public class StoredDataServiceImpl implements StoredDataService {
         for (StoredData data : found) {
             Resource resource = data.getResource();
             if (resource != null) {
-                List<SecurityRule> security = securityDAO.findSecurityRules(resource.getId());
+                List<SecurityRule> security =
+                        securityDAO.findResourceSecurityRules(resource.getId());
                 resource.setSecurity(security);
 
                 List<Attribute> attribute = resourceDAO.findAttributes(resource.getId());

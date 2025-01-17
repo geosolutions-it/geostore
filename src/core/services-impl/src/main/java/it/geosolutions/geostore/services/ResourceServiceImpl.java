@@ -43,7 +43,6 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
-import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -55,11 +54,9 @@ import it.geosolutions.geostore.util.SearchConverter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -89,6 +86,9 @@ public class ResourceServiceImpl implements ResourceService {
 
     private SecurityDAO securityDAO;
 
+    private UserService userService;
+    private PermissionService permissionService;
+
     /** @param securityDAO the securityDAO to set */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
@@ -117,6 +117,14 @@ public class ResourceServiceImpl implements ResourceService {
     /** @param userGroupDAO the userGroupDAO to set */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     /*
@@ -428,7 +436,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
         List<Resource> found = search(searchCriteria);
 
-        return convertToShortList(found, authUser);
+        return convertToShortResourceList(found, authUser);
     }
 
     /*
@@ -461,7 +469,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<Resource> found = search(searchCriteria);
 
-        return convertToShortList(found, authUser);
+        return convertToShortResourceList(found, authUser);
     }
 
     /*
@@ -497,78 +505,25 @@ public class ResourceServiceImpl implements ResourceService {
      * @param user
      * @return List<ShortResource>
      */
-    private List<ShortResource> convertToShortList(List<Resource> resources, User user) {
+    private List<ShortResource> convertToShortResourceList(List<Resource> resources, User user) {
+
+        userService.fetchSecurityRules(user);
+
         return resources.stream()
-                .filter(r -> isResourceCanBeListed(user, r))
-                .map(r -> createShortResourceWithPermissions(user, r))
+                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
+                .map(r -> createShortResource(user, r))
                 .collect(Collectors.toList());
     }
 
-    private boolean isResourceCanBeListed(User user, Resource resource) {
-        if (user != null
-                && (user.getRole().equals(Role.ADMIN) || isUserResourceOwner(user, resource))) {
-            return true;
-        }
-        return resource.isAdvertised();
-    }
-
-    private boolean isUserResourceOwner(User user, Resource resource) {
-        for (SecurityRule securityRule : resource.getSecurity()) {
-            User owner = securityRule.getUser();
-            if (owner != null) {
-                if (owner.getId().equals(user.getId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private ShortResource createShortResourceWithPermissions(User user, Resource resource) {
+    private ShortResource createShortResource(User user, Resource resource) {
         ShortResource shortResource = new ShortResource(resource);
 
-        if (user != null) {
-            addPermissionsToShortResource(user, resource, shortResource);
-        }
-
-        return shortResource;
-    }
-
-    /**
-     * Checks if the user can modify and delete the loaded resource (and associated attributes and
-     * stored data). This to inform the client in HTTP response result.
-     */
-    public ShortResource addPermissionsToShortResource(
-            User user, Resource resource, ShortResource shortResource) {
-        boolean resourceRulesPermitUserEdit =
-                resource.getSecurity().stream().anyMatch(rule -> canUserEditResource(rule, user));
-        if (user.getRole().equals(Role.ADMIN) || resourceRulesPermitUserEdit) {
+        if (user != null && permissionService.canUserAccessResource(user, resource)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
         }
+
         return shortResource;
-    }
-
-    private boolean canUserEditResource(SecurityRule rule, User user) {
-        User ruleUser = rule.getUser();
-        if (ruleUser != null) {
-            return ruleUser.getId().equals(user.getId()) && rule.isCanWrite();
-        }
-
-        UserGroup ruleGroup = rule.getGroup();
-        if (ruleGroup != null) {
-            List<String> userGroupsNames = extractGroupsNames(user.getGroups());
-            return userGroupsNames.contains(ruleGroup.getGroupName()) && rule.isCanWrite();
-        }
-
-        return false;
-    }
-
-    private static List<String> extractGroupsNames(Set<UserGroup> groups) {
-        if (groups == null) {
-            return Collections.emptyList();
-        }
-        return groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
     }
 
     /*
@@ -582,9 +537,8 @@ public class ResourceServiceImpl implements ResourceService {
         searchCriteria.addFilterEqual("resource.id", id);
 
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
-        List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
-        return dtoList;
+        return convertToShortAttributeList(attributes);
     }
 
     /**
@@ -613,7 +567,7 @@ public class ResourceServiceImpl implements ResourceService {
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
-        if (dtoList.size() > 0) {
+        if (!dtoList.isEmpty()) {
             return dtoList.get(0);
         } else {
             return null;
@@ -668,7 +622,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         // if the attribute exist, update id (note: it must have the same type)
-        if (attributes.size() > 0) {
+        if (!attributes.isEmpty()) {
             Attribute attribute = attributes.get(0);
             switch (attribute.getType()) {
                 case DATE:
@@ -857,7 +811,7 @@ public class ResourceServiceImpl implements ResourceService {
         securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
         List<Resource> resources = this.search(searchCriteria);
 
-        return convertToShortList(resources, authUser);
+        return convertToShortResourceList(resources, authUser);
     }
 
     /**
@@ -924,7 +878,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public List<SecurityRule> getSecurityRules(long id) {
-        return securityDAO.findSecurityRules(id);
+        return securityDAO.findResourceSecurityRules(id);
     }
 
     @Override
@@ -980,10 +934,8 @@ public class ResourceServiceImpl implements ResourceService {
      * @param nameLike
      * @param user
      * @return resources' count that the user has access
-     * @throws InternalErrorServiceEx
-     * @throws BadRequestServiceEx
      */
-    public long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx {
+    public long getCountByFilterAndUser(String nameLike, User user) {
 
         Search searchCriteria = new Search(Resource.class);
 

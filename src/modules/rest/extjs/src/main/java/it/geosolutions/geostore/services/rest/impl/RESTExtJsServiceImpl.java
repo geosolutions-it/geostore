@@ -29,10 +29,9 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.PermissionService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
@@ -59,8 +58,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
@@ -85,6 +82,10 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private UserGroupService groupService;
 
+    private SecurityService securityService;
+
+    private PermissionService permissionService;
+
     /** @param resourceService */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
@@ -97,6 +98,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     public void setUserGroupService(UserGroupService userGroupService) {
         this.groupService = userGroupService;
+    }
+
+    public void setSecurityService(SecurityService securityService) {
+        this.securityService = securityService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     /*
@@ -297,8 +306,11 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     }
 
     private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
+
+        userService.fetchSecurityRules(user);
+
         return resources.stream()
-                .filter(r -> isResourceAvailableForUser(r, user))
+                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
                 .collect(Collectors.toList());
     }
 
@@ -392,39 +404,24 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return
      */
     private List<Resource> handleFoundResources(List<Resource> foundResources, User user) {
+
+        userService.fetchSecurityRules(user);
+
         return foundResources.stream()
-                .filter(r -> isResourceAvailableForUser(r, user))
+                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
                 .map(r -> addPermissionsToResource(r, user))
                 .collect(Collectors.toList());
     }
 
-    /**
-     * This internal method allows us to know if we filter out "unadvertised" resources for
-     * non-admin/non-owners, keeping only owned resources.
-     *
-     * @param resource
-     * @param user
-     * @return <code>true</code> if the resource should be visible to the user, <code>false</code>
-     *     otherwise
-     */
-    private boolean isResourceAvailableForUser(Resource resource, User user) {
-        return resource.isAdvertised()
-                || user.getRole().equals(Role.ADMIN)
-                || isUserOwner(user, resource);
-    }
-
-    private boolean isUserOwner(User authUser, Resource r) {
-        return resourceService.getSecurityRules(r.getId()).stream()
-                .map(SecurityRule::getUser)
-                .filter(Objects::nonNull)
-                .anyMatch(ruleUser -> ruleUser.getId().equals(authUser.getId()));
-    }
-
     private Resource addPermissionsToResource(Resource resource, User user) {
-        ResourceEnvelop envelope = new ResourceEnvelop(resource, user);
-        resource.setCanEdit(envelope.isCanEdit());
-        resource.setCanDelete(envelope.isCanDelete());
-        resource.setCanCopy(envelope.isCanCopy());
+        if (permissionService.canUserAccessResource(user, resource)) {
+            resource.setCanEdit(true);
+            resource.setCanDelete(true);
+        }
+
+        /* setting copy permission as in ResourceEnvelop.isCanCopy */
+        resource.setCanCopy(user != null);
+
         return resource;
     }
 
@@ -748,68 +745,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 canEdit = sr.isCanEdit();
                 return;
             }
-            // ///////////////////////////////////////////////////////////////////////
-            // This fragment checks if the authenticated user can modify and
-            // delete
-            // the loaded resource (and associated attributes and stored
-            // data).
-            // This to inform the client in HTTP response result.
-            // ///////////////////////////////////////////////////////////////////////
             if (authUser != null) {
-                // GUEST users can not access to the delete and edit (resource, data blob is
-                // editable) services
-                // so only authenticated users with
-                if (!authUser.getRole().equals(Role.GUEST)
-                        && (authUser.getRole().equals(Role.ADMIN)
-                                || canUserGroupsEditResource()
-                                || canUserEditResource())) {
+                if (permissionService.canUserAccessResource(authUser, r)) {
                     canEdit = true;
                     canDelete = true;
                 }
             }
-        }
-
-        private boolean canUserGroupsEditResource() {
-            List<String> groupsNames =
-                    authUser.getGroups().stream()
-                            .map(UserGroup::getGroupName)
-                            .collect(Collectors.toList());
-            return resourceService.getGroupSecurityRule(groupsNames, r.getId()).stream()
-                    .anyMatch(SecurityRule::isCanWrite);
-        }
-
-        private boolean canUserEditResource() {
-            return resourceService.getUserSecurityRule(authUser.getName(), r.getId()).stream()
-                    .anyMatch(
-                            rule ->
-                                    isRuleUserOwnerWithWritePermissions(rule)
-                                            || hasRuleGroupWritePermissions(rule));
-        }
-
-        private boolean isRuleUserOwnerWithWritePermissions(SecurityRule rule) {
-            User ruleUser = rule.getUser();
-            if (ruleUser != null) {
-                return ruleUser.getId().equals(authUser.getId()) && rule.isCanWrite();
-            }
-            return false;
-        }
-
-        /* What's this checking? */
-        private boolean hasRuleGroupWritePermissions(SecurityRule rule) {
-            UserGroup ruleGroup = rule.getGroup();
-            Set<UserGroup> authUserGroups = authUser.getGroups();
-
-            if (ruleGroup != null && authUserGroups != null) {
-
-                boolean noneMatch =
-                        authUserGroups.stream()
-                                .noneMatch(
-                                        ug -> ug.getGroupName().equals(ruleGroup.getGroupName()));
-
-                return noneMatch && rule.isCanWrite();
-            }
-
-            return false;
         }
 
         /** @return true if the logged user is owner of the resource and false otherwise */

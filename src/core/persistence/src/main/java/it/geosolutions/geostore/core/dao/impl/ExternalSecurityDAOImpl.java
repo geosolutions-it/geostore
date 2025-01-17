@@ -175,8 +175,8 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
     }
 
     @Override
-    public List<SecurityRule> findSecurityRules(long resourceId) {
-        return fillFromNames(super.findSecurityRules(resourceId));
+    public List<SecurityRule> findResourceSecurityRules(long resourceId) {
+        return fillFromNames(super.findResourceSecurityRules(resourceId));
     }
 
     /* (non-Javadoc)
@@ -184,7 +184,7 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
      */
     @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
-        List<SecurityRule> rules = findSecurityRules(resourceId);
+        List<SecurityRule> rules = findResourceSecurityRules(resourceId);
         // WORKAROUND
         List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
         for (SecurityRule sr : rules) {

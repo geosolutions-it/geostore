@@ -66,6 +66,7 @@ public class ServiceTestBase {
     protected static CategoryService categoryService;
     protected static UserService userService;
     protected static UserGroupService userGroupService;
+    protected static PermissionService permissionService;
 
     protected static ResourceDAO resourceDAO;
     protected static UserDAO userDAO;
@@ -92,6 +93,7 @@ public class ServiceTestBase {
                 categoryService = (CategoryService) ctx.getBean("categoryService");
                 userService = (UserService) ctx.getBean("userService");
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
+                permissionService = (PermissionService) ctx.getBean("permissionService");
 
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
@@ -121,6 +123,7 @@ public class ServiceTestBase {
         assertNotNull(categoryService);
         assertNotNull(userService);
         assertNotNull(userGroupService);
+        assertNotNull(permissionService);
 
         assertNotNull(resourceDAO);
         assertNotNull(userDAO);

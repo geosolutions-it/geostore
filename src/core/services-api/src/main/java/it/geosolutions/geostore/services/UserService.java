@@ -74,7 +74,7 @@ public interface UserService {
     /**
      * @param name
      * @return User
-     * @throws NotFoundWebEx
+     * @throws NotFoundServiceEx
      */
     public User get(String name) throws NotFoundServiceEx;
 
@@ -128,4 +128,14 @@ public interface UserService {
     public Collection<User> getByAttribute(UserAttribute attribute);
 
     public Collection<User> getByGroup(UserGroup group);
+
+    /**
+     * Initialize the user entity by fetching its security rules and group security rules from the
+     * database.
+     *
+     * @param user
+     */
+    default void fetchSecurityRules(User user) {
+        /* no-op */
+    }
 }
