@@ -35,7 +35,6 @@ import it.geosolutions.geostore.services.PermissionService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
-import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.BaseField;
@@ -78,11 +77,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ResourceService resourceService;
 
-    private UserService userService;
-
     private UserGroupService groupService;
-
-    private SecurityService securityService;
 
     private PermissionService permissionService;
 
@@ -91,17 +86,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         this.resourceService = resourceService;
     }
 
-    /** @param userService the userService to set */
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
     public void setUserGroupService(UserGroupService userGroupService) {
         this.groupService = userGroupService;
-    }
-
-    public void setSecurityService(SecurityService securityService) {
-        this.securityService = securityService;
     }
 
     public void setPermissionService(PermissionService permissionService) {
@@ -745,11 +731,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 canEdit = sr.isCanEdit();
                 return;
             }
-            if (authUser != null) {
-                if (permissionService.canUserAccessResource(authUser, r)) {
-                    canEdit = true;
-                    canDelete = true;
-                }
+            if (authUser != null && permissionService.canUserAccessResource(authUser, r)) {
+                canEdit = true;
+                canDelete = true;
             }
         }
 
