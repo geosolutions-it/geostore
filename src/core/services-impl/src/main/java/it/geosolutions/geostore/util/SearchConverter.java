@@ -36,6 +36,10 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
@@ -56,9 +60,11 @@ public class SearchConverter implements FilterVisitor {
 
     private static final Logger LOGGER = LogManager.getLogger(SearchConverter.class);
 
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]");
+
     static {
-        Map<SearchOperator, Integer> ops =
-                new EnumMap<SearchOperator, Integer>(SearchOperator.class);
+        Map<SearchOperator, Integer> ops = new EnumMap<>(SearchOperator.class);
         ops.put(SearchOperator.EQUAL_TO, Filter.OP_EQUAL);
         ops.put(SearchOperator.GREATER_THAN_OR_EQUAL_TO, Filter.OP_GREATER_OR_EQUAL);
         ops.put(SearchOperator.GREATER_THAN, Filter.OP_GREATER_THAN);
@@ -184,12 +190,11 @@ public class SearchConverter implements FilterVisitor {
      *
      * @throws InternalErrorServiceEx
      */
-    @SuppressWarnings("rawtypes")
     @Override
     public void visit(FieldFilter filter) throws InternalErrorServiceEx {
         String property = filter.getField().getFieldName();
         String value = filter.getValue();
-        Class type = filter.getField().getType();
+        Class<?> type = filter.getField().getType();
 
         Filter f = new Filter();
 
@@ -203,10 +208,13 @@ public class SearchConverter implements FilterVisitor {
         f.setOperator(op);
 
         if (type == Date.class) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
-                f.setValue(sdf.parse(value));
-            } catch (ParseException e) {
+                f.setValue(
+                        Date.from(
+                                LocalDateTime.parse(value, DATE_FORMATTER)
+                                        .atZone(ZoneOffset.systemDefault())
+                                        .toInstant()));
+            } catch (DateTimeParseException e) {
                 throw new InternalErrorServiceEx("Error parsing attribute date value");
             }
         } else if (type == Long.class) {
