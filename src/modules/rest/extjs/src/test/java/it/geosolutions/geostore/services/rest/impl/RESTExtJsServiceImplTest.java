@@ -622,6 +622,51 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testExtResourcesList_groupFilteredWithInvalidInFilter() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        createCategory(CAT0_NAME);
+
+        restCreateResource("resourceA", "description_A", CAT0_NAME, user0Id, true);
+
+        {
+            GroupFilter groupFilter = new GroupFilter(null, SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
+
+            List<Resource> resources = response.getList();
+            assertEquals(1, resources.size());
+        }
+
+        {
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList(""), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+
+        {
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList(null), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+    }
+
+    @Test
     public void testExtResourcesList_timeAttributesFiltered() throws Exception {
         final String CAT0_NAME = "CAT000";
 
