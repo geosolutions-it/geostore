@@ -20,6 +20,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -420,6 +421,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertTrue(resourcesCreationDates.get(0).after(resourcesCreationDates.get(1)));
             assertTrue(resourcesCreationDates.get(1).after(resourcesCreationDates.get(2)));
         }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "unknown field", "desc", false, false, new AndFilter());
+
+            assertNull(response);
+        }
     }
 
     @Test
@@ -469,6 +478,17 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
         }
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "unknown creator", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, editorFieldFilter);
+
+            assertTrue(response.isEmpty());
+        }
     }
 
     @Test
@@ -517,6 +537,17 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             List<Resource> resources = response.getList();
             assertEquals(2, resources.size());
+        }
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "unknown editor", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, editorFieldFilter);
+
+            assertTrue(response.isEmpty());
         }
     }
 
@@ -618,6 +649,19 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     () ->
                             restExtJsService.getExtResourcesList(
                                     sc, 0, 1000, "", "", false, false, groupFilter));
+        }
+
+        {
+            /* unknown group */
+            GroupFilter groupFilter =
+                    new GroupFilter(
+                            Collections.singletonList("unknown group"), SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, "", "", false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
         }
     }
 
@@ -728,19 +772,15 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testExtResourcesList_withPermissionsInformation() throws Exception {
+    public void testExtResourcesList_userOwnedWithPermissionsInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
-        final String OWNER_RESOURCE_NAME = "ownerResource";
+        final String OWNED_RESOURCE_NAME = "ownedResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
-        final String ADVERTISED_GROUP_RESOURCE_NAME = "advertisedGroupResource";
-
-        long groupId = createGroup("group");
-        UserGroup group = userGroupService.get(groupId);
 
         long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
-        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
         SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
 
         createCategory(CAT0_NAME);
@@ -749,7 +789,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         restCreateResource("adminResource", "", CAT0_NAME, adminId, false);
 
         /* user owned resource */
-        restCreateResource(OWNER_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+        restCreateResource(OWNED_RESOURCE_NAME, "", CAT0_NAME, userId, false);
 
         /* user owned resource - read only */
         long readOnlyResourceId =
@@ -765,53 +805,36 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         /* advertised resource */
         restCreateResource("advertisedResource", "", CAT0_NAME, adminId, true);
 
-        SecurityRule groupRule = new SecurityRule();
-        groupRule.setGroup(group);
-        groupRule.setCanRead(true);
-        groupRule.setCanWrite(true);
-
-        /* group owned resource - advertised */
-        long advertisedGroupResourceId =
-                restCreateResource(ADVERTISED_GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
-        List<SecurityRule> securityRulesAdvertisedGroupResource =
-                resourceService.getSecurityRules(advertisedGroupResourceId);
-        securityRulesAdvertisedGroupResource.add(groupRule);
-        restResourceService.updateSecurityRules(
-                adminSecurityContext,
-                advertisedGroupResourceId,
-                new SecurityRuleList(securityRulesAdvertisedGroupResource));
-
-        /* group owned resource - unadvertised */
-        long unadvertisedGroupResourceId =
-                restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
-        List<SecurityRule> securityRulesUnadvertisedGroupResource =
-                resourceService.getSecurityRules(unadvertisedGroupResourceId);
-        securityRulesUnadvertisedGroupResource.add(groupRule);
-        restResourceService.updateSecurityRules(
-                adminSecurityContext,
-                unadvertisedGroupResourceId,
-                new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+        /* resource without security rules */
+        restCreateResource(
+                "unruledResource",
+                "",
+                CAT0_NAME,
+                adminId,
+                new SecurityRuleList(Collections.emptyList()),
+                false);
 
         {
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
                             adminSecurityContext, 0, 1000, "", "", false, false, new AndFilter());
             List<Resource> resources = response.getList();
-            assertEquals(6, resources.size());
+            assertEquals(5, resources.size());
             assertTrue(
                     resources.stream()
                             .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
         }
+
         {
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
                             user0SecurityContext, 0, 1000, "", "", false, false, new AndFilter());
             List<Resource> resources = response.getList();
-            assertEquals(3, resources.size());
+            assertEquals(2, resources.size());
 
             Resource ownerResource =
                     resources.stream()
-                            .filter(r -> r.getName().equals(OWNER_RESOURCE_NAME))
+                            .filter(r -> r.getName().equals(OWNED_RESOURCE_NAME))
                             .findFirst()
                             .orElseThrow();
             assertTrue(ownerResource.isCanEdit());
@@ -826,15 +849,104 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertFalse(readOnlyResource.isCanEdit());
             assertFalse(readOnlyResource.isCanDelete());
             assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupOwnedResourceWithPermissionsInformation()
+            throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
+        final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* group owned resource - advertised */
+        SecurityRule editorGroupRule = new SecurityRule();
+        editorGroupRule.setGroup(group);
+        editorGroupRule.setCanRead(true);
+        editorGroupRule.setCanWrite(true);
+
+        long advertisedGroupResourceId =
+                restCreateResource(GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+        List<SecurityRule> securityRulesAdvertisedGroupResource =
+                resourceService.getSecurityRules(advertisedGroupResourceId);
+        securityRulesAdvertisedGroupResource.add(editorGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                advertisedGroupResourceId,
+                new SecurityRuleList(securityRulesAdvertisedGroupResource));
+
+        /* group owned resource - read only, advertised */
+        SecurityRule readOnlyGroupRule = new SecurityRule();
+        readOnlyGroupRule.setGroup(group);
+        readOnlyGroupRule.setCanRead(true);
+
+        long readOnlyGroupResourceId =
+                restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+        List<SecurityRule> securityRulesReadOnlyGroupResource =
+                resourceService.getSecurityRules(readOnlyGroupResourceId);
+        securityRulesReadOnlyGroupResource.add(readOnlyGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyGroupResourceId,
+                new SecurityRuleList(securityRulesReadOnlyGroupResource));
+
+        /* group owned resource - unadvertised */
+        long unadvertisedGroupResourceId =
+                restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
+        List<SecurityRule> securityRulesUnadvertisedGroupResource =
+                resourceService.getSecurityRules(unadvertisedGroupResourceId);
+        securityRulesUnadvertisedGroupResource.add(readOnlyGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                unadvertisedGroupResourceId,
+                new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext, 0, 1000, "", "", false, false, new AndFilter());
+            List<Resource> resources = response.getList();
+            assertEquals(3, resources.size());
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            user0SecurityContext, 0, 1000, "", "", false, false, new AndFilter());
+            List<Resource> resources = response.getList();
+            assertEquals(2, resources.size());
 
             Resource groupResource =
                     resources.stream()
-                            .filter(r -> r.getName().equals(ADVERTISED_GROUP_RESOURCE_NAME))
+                            .filter(r -> r.getName().equals(GROUP_RESOURCE_NAME))
                             .findFirst()
                             .orElseThrow();
             assertTrue(groupResource.isCanEdit());
             assertTrue(groupResource.isCanDelete());
             assertTrue(groupResource.isCanCopy());
+
+            Resource readOnlyResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertFalse(readOnlyResource.isCanEdit());
+            assertFalse(readOnlyResource.isCanDelete());
+            assertTrue(readOnlyResource.isCanCopy());
         }
     }
 
