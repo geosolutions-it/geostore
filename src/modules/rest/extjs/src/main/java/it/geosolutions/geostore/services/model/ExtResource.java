@@ -9,9 +9,11 @@ import java.util.Objects;
  */
 public class ExtResource extends Resource {
 
-    private final boolean canEdit;
-    private final boolean canDelete;
-    private final boolean canCopy;
+    private boolean canEdit;
+    private boolean canDelete;
+    private boolean canCopy;
+
+    public ExtResource() {}
 
     private ExtResource(Builder builder) {
         this.setId(builder.resource.getId());
