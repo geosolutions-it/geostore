@@ -45,6 +45,7 @@ import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.model.ExtGroupList;
+import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
@@ -291,15 +292,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
     }
 
-    private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
-
-        userService.fetchSecurityRules(user);
-
-        return resources.stream()
-                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
-                .collect(Collectors.toList());
-    }
-
     /*
      * (non-Javadoc)
      *
@@ -350,7 +342,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             List<Resource> resources =
-                    handleFoundResources(
+                    filterOutUnavailableResources(
                             resourceService.getResources(
                                     filter,
                                     page,
@@ -362,24 +354,27 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                                     authUser),
                             authUser);
 
-            // Here the Read permission on each resource must be checked due to will be returned the
-            // full Resource not just a ShortResource
-            // N.B. This is a bad method to check the permissions on each requested resource, it can
-            // perform 2 database access for each resource.
-            // Possible optimization -> When retrieving the resources, add to "filter" also another
-            // part to load only the allowed resources.
             long count = 0;
             if (!resources.isEmpty()) {
                 count = resourceService.getCountByFilterAndUser(filter, authUser);
             }
 
-            return new ExtResourceList(count, resources);
+            return new ExtResourceList(count, convertToExtResources(resources, authUser));
 
         } catch (InternalErrorServiceEx | BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
             return null;
         }
+    }
+
+    private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
+
+        userService.fetchSecurityRules(user);
+
+        return resources.stream()
+                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -389,26 +384,27 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @param user
      * @return
      */
-    private List<Resource> handleFoundResources(List<Resource> foundResources, User user) {
+    private List<ExtResource> convertToExtResources(List<Resource> foundResources, User user) {
 
         userService.fetchSecurityRules(user);
 
         return foundResources.stream()
-                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
-                .map(r -> addPermissionsToResource(r, user))
+                .map(r -> convertToExtResource(r, user))
                 .collect(Collectors.toList());
     }
 
-    private Resource addPermissionsToResource(Resource resource, User user) {
+    private ExtResource convertToExtResource(Resource resource, User user) {
+
+        ExtResource.Builder extResourceBuilder =
+                ExtResource.builder(resource)
+                        /* setting copy permission as in ResourceEnvelop.isCanCopy */
+                        .withCanCopy(user != null);
+
         if (permissionService.canUserAccessResource(user, resource)) {
-            resource.setCanEdit(true);
-            resource.setCanDelete(true);
+            extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
-        /* setting copy permission as in ResourceEnvelop.isCanCopy */
-        resource.setCanCopy(user != null);
-
-        return resource;
+        return extResourceBuilder.build();
     }
 
     /**

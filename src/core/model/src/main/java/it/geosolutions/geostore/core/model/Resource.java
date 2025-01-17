@@ -45,7 +45,6 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -119,10 +118,6 @@ public class Resource implements Serializable, CycleRecoverable {
      */
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
-
-    @Transient private boolean canEdit;
-    @Transient private boolean canDelete;
-    @Transient private boolean canCopy;
 
     /** @return the id */
     public Long getId() {
@@ -257,30 +252,6 @@ public class Resource implements Serializable, CycleRecoverable {
         this.editor = editor;
     }
 
-    public boolean isCanEdit() {
-        return canEdit;
-    }
-
-    public void setCanEdit(boolean canEdit) {
-        this.canEdit = canEdit;
-    }
-
-    public boolean isCanDelete() {
-        return canDelete;
-    }
-
-    public void setCanDelete(boolean canDelete) {
-        this.canDelete = canDelete;
-    }
-
-    public boolean isCanCopy() {
-        return canCopy;
-    }
-
-    public void setCanCopy(boolean canCopy) {
-        this.canCopy = canCopy;
-    }
-
     /*
      * (non-Javadoc) @see java.lang.Object#toString()
      */
@@ -342,16 +313,6 @@ public class Resource implements Serializable, CycleRecoverable {
             builder.append(", ");
             builder.append("advertised=").append(advertised);
         }
-
-        builder.append(", ")
-                .append("canEdit=")
-                .append(canEdit)
-                .append(", ")
-                .append("canDelete=")
-                .append(canDelete)
-                .append(", ")
-                .append("canCopy=")
-                .append(canCopy);
 
         builder.append(']');
 
