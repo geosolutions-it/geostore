@@ -833,7 +833,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             FieldFilter lteDateFilter =
                     new FieldFilter(
                             BaseField.CREATION,
-                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+                            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
                                     .format(resourceB.getLastUpdate()),
                             SearchOperator.LESS_THAN_OR_EQUAL_TO);
             AndFilter betweenDatesFieldFilter = new AndFilter(gteDateFilter, lteDateFilter);

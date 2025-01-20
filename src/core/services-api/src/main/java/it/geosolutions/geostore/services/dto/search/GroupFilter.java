@@ -22,15 +22,15 @@ package it.geosolutions.geostore.services.dto.search;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.io.Serializable;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /** Filter by group name */
-@XmlRootElement(name = "GroupFilter")
+@XmlRootElement(name = "Group")
 public class GroupFilter extends SearchFilter implements Serializable {
 
-    private List<String> names = Collections.emptyList();
+    private List<String> names = new ArrayList<>();
 
     private SearchOperator operator;
 
@@ -46,12 +46,12 @@ public class GroupFilter extends SearchFilter implements Serializable {
         setOperator(operator);
     }
 
-    /** @return the name */
+    /** @return the names */
     public List<String> getNames() {
         return names;
     }
 
-    /** @param names the name to set */
+    /** @param names the names to set */
     public void setNames(List<String> names) {
         this.names = names;
     }
@@ -73,7 +73,7 @@ public class GroupFilter extends SearchFilter implements Serializable {
                 && operator != SearchOperator.ILIKE
                 && operator != SearchOperator.IN)
             throw new IllegalArgumentException(
-                    "Only EQUAL, LIKE, ILIKE, or IN operators are acceptable");
+                    "Only EQUAL_TO, LIKE, ILIKE, or IN operators are acceptable");
     }
 
     @Override

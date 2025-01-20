@@ -213,6 +213,7 @@ public class SearchConverter implements FilterVisitor {
 
         if (type == Date.class) {
             try {
+                value = value.replace("T", " ");
                 f.setValue(
                         Date.from(
                                 LocalDateTime.parse(value, DATE_FORMATTER)

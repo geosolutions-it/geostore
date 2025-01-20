@@ -2,16 +2,19 @@ package it.geosolutions.geostore.services.model;
 
 import it.geosolutions.geostore.core.model.Resource;
 import java.util.Objects;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * An extended version of the {@link Resource} class that includes additional permission flags to
  * indicate whether the resource can be edited, deleted, or copied.
  */
+@XmlRootElement(name = "Resource")
 public class ExtResource extends Resource {
 
-    private boolean canEdit;
-    private boolean canDelete;
-    private boolean canCopy;
+    @XmlElement private boolean canEdit;
+    @XmlElement private boolean canDelete;
+    @XmlElement private boolean canCopy;
 
     public ExtResource() {}
 

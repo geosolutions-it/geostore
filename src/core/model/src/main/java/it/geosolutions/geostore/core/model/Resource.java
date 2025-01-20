@@ -47,7 +47,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
 /**
@@ -70,7 +69,6 @@ import javax.xml.bind.annotation.XmlTransient;
             @Index(name = "idx_resource_category", columnList = "category_id")
         })
 // @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
-@XmlRootElement(name = "Resource")
 public class Resource implements Serializable, CycleRecoverable {
 
     private static final long serialVersionUID = 4852100679788007328L;
