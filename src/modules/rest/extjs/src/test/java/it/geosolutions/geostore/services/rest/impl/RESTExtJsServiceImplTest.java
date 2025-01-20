@@ -30,6 +30,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.BaseField;
@@ -76,7 +77,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetAllResources_auth_base() throws Exception {
         final String CAT_NAME = "CAT000";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         long u1 = restCreateUser("u1", Role.USER, null, "p1");
@@ -122,7 +130,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetAllResources_auth_many() throws Exception {
         final String CAT_NAME = "CAT009";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         long u1 = restCreateUser("u1", Role.USER, null, "p1");
@@ -194,7 +209,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String CAT1_NAME = "CAT111";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
 
@@ -240,7 +262,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String CAT0_NAME = "CAT000";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long a0 = restCreateUser("a0", Role.ADMIN, new HashSet<>(), "p0");
         long u0 = restCreateUser("u0", Role.USER, new HashSet<>(), "p0");
@@ -283,7 +312,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String CAT1_NAME = "CAT111";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long g0Id = createGroup("g0");
         UserGroup g0 = new UserGroup();
@@ -386,7 +422,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String RES_ATTRIBUTE_B = "B";
         final String RES_ATTRIBUTE_C = "C";
 
-        assertEquals(0, resourceService.getResources(new AndFilter(), buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         SecurityContext sc = new SimpleSecurityContext(u0);

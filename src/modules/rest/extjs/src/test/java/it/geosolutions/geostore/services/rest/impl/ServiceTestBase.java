@@ -26,8 +26,10 @@ import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.*;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTResourceService;
 import it.geosolutions.geostore.services.rest.RESTUserService;
@@ -133,7 +135,8 @@ public class ServiceTestBase {
      * @throws NotFoundServiceEx
      * @throws BadRequestServiceEx
      */
-    protected void removeAll() throws NotFoundServiceEx, BadRequestServiceEx {
+    protected void removeAll()
+            throws NotFoundServiceEx, BadRequestServiceEx, InternalErrorServiceEx {
         LOGGER.info("***** removeAll()");
         removeAllResource();
         removeAllStoredData();
@@ -196,8 +199,10 @@ public class ServiceTestBase {
     }
 
     /** @throws BadRequestServiceEx */
-    private void removeAllResource() throws BadRequestServiceEx {
-        List<ShortResource> list = resourceService.getAll(null, null, buildFakeAdminUser());
+    private void removeAllResource() throws BadRequestServiceEx, InternalErrorServiceEx {
+        List<ShortResource> list =
+                resourceService.getAll(
+                        ResourceSearchParameters.builder().authUser(buildFakeAdminUser()).build());
         for (ShortResource item : list) {
             LOGGER.info("Removing " + item);
 

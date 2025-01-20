@@ -35,6 +35,7 @@ import it.geosolutions.geostore.services.PermissionService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.BaseField;
@@ -131,7 +132,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             // TODO: implement includeAttributes and includeData
 
             List<ShortResource> resources =
-                    resourceService.getList(nameLike, page, limit, authUser);
+                    resourceService.getList(
+                            ResourceSearchParameters.builder()
+                                    .nameLike(nameLike)
+                                    .page(page)
+                                    .entries(limit)
+                                    .authUser(authUser)
+                                    .build());
 
             long count = 0;
             if (resources != null && !resources.isEmpty()) {
@@ -141,7 +148,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             JSONObject result = makeJSONResult(true, count, resources, authUser);
             return result.toString();
 
-        } catch (BadRequestServiceEx e) {
+        } catch (BadRequestServiceEx | InternalErrorServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
             JSONObject obj = makeJSONResult(false, 0, null, authUser);
@@ -262,12 +269,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             List<Resource> resources =
                     filterOutUnavailableResources(
                             resourceService.getResources(
-                                    filter,
-                                    page,
-                                    limit,
-                                    shouldIncludeAttributes,
-                                    includeData,
-                                    authUser),
+                                    ResourceSearchParameters.builder()
+                                            .filter(filter)
+                                            .page(page)
+                                            .entries(limit)
+                                            .includeAttributes(shouldIncludeAttributes)
+                                            .includeData(includeData)
+                                            .authUser(authUser)
+                                            .build()),
                             authUser);
 
             long count = 0;
@@ -344,14 +353,16 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             List<Resource> resources =
                     filterOutUnavailableResources(
                             resourceService.getResources(
-                                    filter,
-                                    page,
-                                    limit,
-                                    sort.getSortBy(),
-                                    sort.getSortOrder(),
-                                    includeAttributes,
-                                    includeData,
-                                    authUser),
+                                    ResourceSearchParameters.builder()
+                                            .filter(filter)
+                                            .page(page)
+                                            .entries(limit)
+                                            .sortBy(sort.getSortBy())
+                                            .sortOrder(sort.getSortOrder())
+                                            .includeAttributes(includeAttributes)
+                                            .includeData(includeData)
+                                            .authUser(authUser)
+                                            .build()),
                             authUser);
 
             long count = 0;

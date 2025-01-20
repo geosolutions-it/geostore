@@ -34,6 +34,7 @@ import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.StoredDataService;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.*;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -96,7 +97,12 @@ public class RESTMiscServiceImpl extends RESTServiceImpl
         List<Resource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            resources = resourceService.getResourcesFull(filter, user);
+            resources =
+                    resourceService.getResourcesFull(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(user)
+                                    .build());
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -134,7 +140,12 @@ public class RESTMiscServiceImpl extends RESTServiceImpl
         List<Resource> resources = null;
         try {
             User user = extractAuthUser(sc);
-            resources = resourceService.getResourcesFull(filter, user);
+            resources =
+                    resourceService.getResourcesFull(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(user)
+                                    .build());
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -179,7 +190,12 @@ public class RESTMiscServiceImpl extends RESTServiceImpl
         try {
             User user = extractAuthUser(sc);
 
-            resources = resourceService.getResources(filter, user);
+            resources =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(user)
+                                    .build());
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {
@@ -220,7 +236,12 @@ public class RESTMiscServiceImpl extends RESTServiceImpl
             User user = extractAuthUser(sc);
             resources =
                     resourceService.getResources(
-                            filter, null, null, includeAttributes, includeData, user);
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .includeAttributes(includeAttributes)
+                                    .includeData(includeData)
+                                    .authUser(user)
+                                    .build());
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         } catch (InternalErrorServiceEx ex) {

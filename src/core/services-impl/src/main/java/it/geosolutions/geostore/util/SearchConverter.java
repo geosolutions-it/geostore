@@ -87,11 +87,15 @@ public class SearchConverter implements FilterVisitor {
      */
     public static Search convert(SearchFilter filter)
             throws BadRequestServiceEx, InternalErrorServiceEx {
-        SearchConverter sc = new SearchConverter();
-        filter.accept(sc);
 
         Search trgSearch = new Search(Resource.class);
-        trgSearch.addFilter(sc.trgFilter);
+
+        if (filter != null) {
+            SearchConverter sc = new SearchConverter();
+            filter.accept(sc);
+
+            trgSearch.addFilter(sc.trgFilter);
+        }
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("TRG Search  --> " + trgSearch);
