@@ -53,6 +53,7 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.Sort;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -304,8 +305,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             SecurityContext sc,
             Integer start,
             Integer limit,
-            String sortBy,
-            String sortOrder,
+            Sort sort,
             boolean includeAttributes,
             boolean includeData,
             SearchFilter filter)
@@ -347,8 +347,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                                     filter,
                                     page,
                                     limit,
-                                    sortBy,
-                                    sortOrder,
+                                    sort.getSortBy(),
+                                    sort.getSortOrder(),
                                     includeAttributes,
                                     includeData,
                                     authUser),

@@ -36,8 +36,17 @@ import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.Sort;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.*;
+import javax.ws.rs.BeanParam;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
@@ -104,6 +113,26 @@ public interface RESTExtJsService {
             @QueryParam("includeData") @DefaultValue("false") boolean includeData)
             throws BadRequestWebEx, InternalErrorWebEx;
 
+    /**
+     * Retrieves a list of resources based on the specified request parameters.
+     *
+     * <p>The results can be sorted using the <code>sort</code> parameter, which includes the <code>
+     * sortBy</code> attribute (name of the resource attribute to sort by) and <code>sortOrder
+     * </code> ("asc" for ascending or "desc" for descending order). If not specified, the default
+     * sorting is in ascending order by resource name.
+     *
+     * @param sc security context
+     * @param start the n-th group shown as first in results
+     * @param limit max entries per page
+     * @param sort the sorting parameters for the results (includes <code>sortBy</code> and <code>
+     *     sortOrder</code>)
+     * @param includeAttributes whether to include attributes in the returned results
+     * @param includeData whether to include data in the returned results
+     * @param filter the multipart filter object to apply for resource filtering
+     * @return
+     * @throws BadRequestWebEx
+     * @throws InternalErrorWebEx
+     */
     @POST
     @GET
     @Path("/search/list")
@@ -114,8 +143,7 @@ public interface RESTExtJsService {
             @Context SecurityContext sc,
             @QueryParam("start") Integer start,
             @QueryParam("limit") Integer limit,
-            @QueryParam("sortBy") String sortBy,
-            @QueryParam("sortOrder") @DefaultValue("asc") String sortOrder,
+            @BeanParam Sort sort,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeData") @DefaultValue("false") boolean includeData,
             @Multipart("filter") SearchFilter filter)
