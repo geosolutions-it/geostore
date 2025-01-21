@@ -36,6 +36,7 @@ import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
+import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.BaseField;
@@ -48,12 +49,14 @@ import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
+import it.geosolutions.geostore.services.model.ExtShortResource;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import java.util.Arrays;
 import java.util.Collections;
@@ -95,6 +98,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     public void setPermissionService(PermissionService permissionService) {
         this.permissionService = permissionService;
+    }
+
+    /* (non-Javadoc)
+     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
+     */
+    @Override
+    protected SecurityService getSecurityService() {
+        return resourceService;
     }
 
     /*
@@ -308,7 +319,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
      * java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
      */
-
     @Override
     public ExtResourceList getExtResourcesList(
             SecurityContext sc,
@@ -411,7 +421,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                         /* setting copy permission as in ResourceEnvelop.isCanCopy */
                         .withCanCopy(user != null);
 
-        if (permissionService.canUserAccessResource(user, resource)) {
+        if (permissionService.canUserWriteResource(user, resource)) {
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
@@ -542,14 +552,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
     }
 
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
-     */
-    @Override
-    protected SecurityService getSecurityService() {
-        return resourceService;
-    }
-
     /**
      * Generalize method. Use this.ResourceEnvelop class
      *
@@ -669,26 +671,39 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     }
 
     @Override
-    public ShortResource getResource(SecurityContext sc, long id) throws NotFoundWebEx {
+    public ExtShortResource getExtResource(
+            SecurityContext sc, long id, boolean includeAttributes, boolean includePermissions) {
 
-        User authUser = extractAuthUser(sc);
-        ResourceAuth auth = getResourceAuth(authUser, id);
+        Resource resource = resourceService.getResource(id, includeAttributes, includePermissions);
 
-        if (!auth.canRead) {
-            throw new ForbiddenErrorWebEx("Resource is protected");
-        }
-
-        Resource ret = resourceService.get(id);
-
-        if (ret == null) {
+        if (resource == null) {
             throw new NotFoundWebEx("Resource not found");
         }
 
-        ShortResource sr = new ShortResource(ret);
-        sr.setCanEdit(auth.canWrite);
-        sr.setCanDelete(auth.canWrite);
+        User authUser = extractAuthUser(sc);
+        userService.fetchSecurityRules(authUser);
 
-        return sr;
+        if (!permissionService.canUserReadResource(authUser, id)) {
+            throw new ForbiddenErrorWebEx("Resource is protected");
+        }
+
+        ShortResource shortResource = new ShortResource(resource);
+        if (permissionService.canUserWriteResource(authUser, resource)) {
+            shortResource.setCanEdit(true);
+            shortResource.setCanDelete(true);
+        }
+
+        return ExtShortResource.builder(shortResource)
+                .withAttributes(createShortAttributeList(resource.getAttribute()))
+                .build();
+    }
+
+    private ShortAttributeList createShortAttributeList(List<Attribute> attributes) {
+        if (attributes == null) {
+            return new ShortAttributeList();
+        }
+        return new ShortAttributeList(
+                attributes.stream().map(ShortAttribute::new).collect(Collectors.toList()));
     }
 
     /**
@@ -738,7 +753,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 canEdit = sr.isCanEdit();
                 return;
             }
-            if (authUser != null && permissionService.canUserAccessResource(authUser, r)) {
+            if (authUser != null && permissionService.canUserWriteResource(authUser, r)) {
                 canEdit = true;
                 canDelete = true;
             }

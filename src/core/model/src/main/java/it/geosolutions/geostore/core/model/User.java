@@ -152,7 +152,7 @@ public class User implements Serializable {
         return groups;
     }
 
-    /** @param group the group to set */
+    /** @param groups the group to set */
     public void setGroups(Set<UserGroup> groups) {
         this.groups = groups;
     }

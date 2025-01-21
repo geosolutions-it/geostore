@@ -43,7 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.SecurityContext;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -250,49 +249,6 @@ public abstract class RESTServiceImpl {
         return false;
     }
 
-    public ResourceAuth getResourceAuth(User authUser, long resourceId) {
-        if (authUser.getRole().equals(Role.ADMIN)) {
-            return new ResourceAuth(true, true);
-        }
-
-        List<SecurityRule> userSecurityRules =
-                getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
-
-        ResourceAuth ret = new ResourceAuth();
-
-        if (CollectionUtils.isNotEmpty(userSecurityRules)) {
-            // take the more permissive grants
-            for (SecurityRule rule : userSecurityRules) {
-                ret.canRead |= rule.isCanRead();
-                ret.canWrite |= rule.isCanWrite();
-
-                if (ret.canRead && ret.canWrite) { // short circuit
-                    return ret;
-                }
-            }
-        }
-
-        List<String> groupNames = extratcGroupNames(authUser.getGroups());
-        if (!groupNames.isEmpty()) {
-            List<SecurityRule> groupSecurityRules =
-                    getSecurityService().getGroupSecurityRule(groupNames, resourceId);
-
-            if (CollectionUtils.isNotEmpty(groupSecurityRules)) {
-                // take the more permissive grants
-                for (SecurityRule rule : groupSecurityRules) {
-                    ret.canRead |= rule.isCanRead();
-                    ret.canWrite |= rule.isCanWrite();
-
-                    if (ret.canRead && ret.canWrite) { // short circuit
-                        return ret;
-                    }
-                }
-            }
-        }
-
-        return ret;
-    }
-
     /**
      * Creates a Guest principal with Username="guest" password="" and role ROLE_GUEST. The guest
      * principal should be used with unauthenticated users.
@@ -321,20 +277,5 @@ public abstract class RESTServiceImpl {
         groups.add(everyoneGroup);
         guest.setGroups(groups);
         return new UsernamePasswordAuthenticationToken(guest, "", authorities);
-    }
-
-    protected static class ResourceAuth {
-
-        boolean canRead;
-        boolean canWrite;
-
-        public ResourceAuth() {
-            this(false, false);
-        }
-
-        public ResourceAuth(boolean canRead, boolean canWrite) {
-            this.canRead = canRead;
-            this.canWrite = canWrite;
-        }
     }
 }

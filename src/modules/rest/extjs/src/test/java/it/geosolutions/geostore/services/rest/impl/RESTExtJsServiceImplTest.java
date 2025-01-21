@@ -29,8 +29,10 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
+import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
 import it.geosolutions.geostore.services.dto.search.BaseField;
@@ -39,6 +41,9 @@ import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
+import it.geosolutions.geostore.services.model.ExtShortResource;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
+import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import java.text.SimpleDateFormat;
@@ -287,7 +292,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, result.total);
             assertEquals(1, result.returnedCount);
 
-            ShortResource resource = restExtJsService.getResource(sc, r0Id);
+            ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false);
             assertEquals(RES_NAME, resource.getName());
             assertEquals("u0", resource.getCreator());
             assertEquals("u0", resource.getEditor());
@@ -299,7 +304,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             realResource.setName("new name");
             restResourceService.update(sc, r0Id, createRESTResource(realResource));
 
-            ShortResource resource = restExtJsService.getResource(sc, r0Id);
+            ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false);
             assertEquals(realResource.getName(), resource.getName());
             assertEquals("u0", resource.getCreator());
             assertEquals("a0", resource.getEditor());
@@ -1047,6 +1052,239 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertFalse(readOnlyResource.isCanEdit());
             assertFalse(readOnlyResource.isCanDelete());
             assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testGetExtResource_userOwnedWithAttributesInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        ShortAttribute attributeA = new ShortAttribute("attributeA", "ABC", DataType.STRING);
+        ShortAttribute attributeB = new ShortAttribute("attributeB", "123.0", DataType.NUMBER);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* user owned resource */
+        long userOwnedResourceId =
+                restCreateResource("ownedResource", "", CAT0_NAME, userId, false);
+        restResourceService.updateAttribute(
+                adminSecurityContext,
+                userOwnedResourceId,
+                attributeA.getName(),
+                attributeA.getValue(),
+                attributeA.getType());
+
+        /* user owned resource - read only */
+        long readOnlyResourceId =
+                restCreateResource("readOnlyResource", "", CAT0_NAME, userId, false);
+        SecurityRule readOnlyRule = new SecurityRule();
+        readOnlyRule.setUser(userService.get(userId));
+        readOnlyRule.setCanRead(true);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyResourceId,
+                new SecurityRuleList(Collections.singletonList(readOnlyRule)));
+        restResourceService.updateAttribute(
+                adminSecurityContext,
+                readOnlyResourceId,
+                attributeB.getName(),
+                attributeB.getValue(),
+                attributeB.getType());
+
+        /* user owned resource - protected */
+        long protectedResourceId =
+                restCreateResource("protectedResource", "", CAT0_NAME, userId, false);
+        SecurityRule protectedRule = new SecurityRule();
+        protectedRule.setUser(userService.get(userId));
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                protectedResourceId,
+                new SecurityRuleList(Collections.singletonList(protectedRule)));
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, userOwnedResourceId, true, true);
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertNotNull(attributes);
+            assertEquals(1, attributes.size());
+            ShortAttribute attribute = attributes.get(0);
+            assertEquals(attributeA.getName(), attribute.getName());
+            assertEquals(attributeA.getValue(), attribute.getValue());
+            assertEquals(attributeA.getType(), attribute.getType());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, userOwnedResourceId, true, true);
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertNotNull(attributes);
+            assertEquals(1, attributes.size());
+            ShortAttribute attribute = attributes.get(0);
+            assertEquals(attributeA.getName(), attribute.getName());
+            assertEquals(attributeA.getValue(), attribute.getValue());
+            assertEquals(attributeA.getType(), attribute.getType());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, readOnlyResourceId, true, true);
+            assertFalse(response.isCanEdit());
+            assertFalse(response.isCanDelete());
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertNotNull(attributes);
+            assertEquals(1, attributes.size());
+            ShortAttribute attribute = attributes.get(0);
+            assertEquals(attributeB.getName(), attribute.getName());
+            assertEquals(attributeB.getValue(), attribute.getValue());
+            assertEquals(attributeB.getType(), attribute.getType());
+        }
+
+        {
+            assertThrows(
+                    ForbiddenErrorWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    user0SecurityContext, protectedResourceId, true, true));
+        }
+
+        {
+            assertThrows(
+                    NotFoundWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    user0SecurityContext, Long.MAX_VALUE, true, true));
+        }
+    }
+
+    @Test
+    public void testGetExtResource_groupOwnedWithAttributesInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        ShortAttribute attributeA = new ShortAttribute("attributeA", "ABC", DataType.STRING);
+        ShortAttribute attributeB =
+                new ShortAttribute("attributeB", "2024-08-31 16:22:45.654", DataType.DATE);
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* group owned resource */
+        SecurityRule ownerGroupRule = new SecurityRule();
+        ownerGroupRule.setGroup(group);
+        ownerGroupRule.setCanRead(true);
+        ownerGroupRule.setCanWrite(true);
+
+        long groupOwnedResourceId =
+                restCreateResource("ownedResource", "", CAT0_NAME, adminId, false);
+        List<SecurityRule> securityRulesGroupOwnedResource =
+                resourceService.getSecurityRules(groupOwnedResourceId);
+        securityRulesGroupOwnedResource.add(ownerGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                groupOwnedResourceId,
+                new SecurityRuleList(securityRulesGroupOwnedResource));
+        restResourceService.updateAttribute(
+                adminSecurityContext,
+                groupOwnedResourceId,
+                attributeA.getName(),
+                attributeA.getValue(),
+                attributeA.getType());
+
+        /* group owned resource - read only */
+        SecurityRule readOnlyGroupRule = new SecurityRule();
+        readOnlyGroupRule.setGroup(group);
+        readOnlyGroupRule.setCanRead(true);
+
+        long readOnlyGroupResourceId =
+                restCreateResource("readOnlyResource", "", CAT0_NAME, adminId, false);
+        List<SecurityRule> securityRulesReadOnlyGroupResource =
+                resourceService.getSecurityRules(readOnlyGroupResourceId);
+        securityRulesReadOnlyGroupResource.add(readOnlyGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyGroupResourceId,
+                new SecurityRuleList(securityRulesReadOnlyGroupResource));
+        restResourceService.updateAttribute(
+                adminSecurityContext,
+                readOnlyGroupResourceId,
+                attributeB.getName(),
+                attributeB.getValue(),
+                attributeB.getType());
+
+        /* group owned resource - protected */
+        SecurityRule protectedRule = new SecurityRule();
+        protectedRule.setGroup(group);
+
+        long protectedResourceId =
+                restCreateResource("protectedResource", "", CAT0_NAME, adminId, false);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                protectedResourceId,
+                new SecurityRuleList(Collections.singletonList(protectedRule)));
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, groupOwnedResourceId, true, true);
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertNotNull(attributes);
+            assertEquals(1, attributes.size());
+            ShortAttribute attribute = attributes.get(0);
+            assertEquals(attributeA.getName(), attribute.getName());
+            assertEquals(attributeA.getValue(), attribute.getValue());
+            assertEquals(attributeA.getType(), attribute.getType());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, groupOwnedResourceId, true, true);
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertNotNull(attributes);
+            assertEquals(1, attributes.size());
+            ShortAttribute attribute = attributes.get(0);
+            assertEquals(attributeA.getName(), attribute.getName());
+            assertEquals(attributeA.getValue(), attribute.getValue());
+            assertEquals(attributeA.getType(), attribute.getType());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, readOnlyGroupResourceId, true, true);
+            assertFalse(response.isCanEdit());
+            assertFalse(response.isCanDelete());
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertNotNull(attributes);
+            assertEquals(1, attributes.size());
+            ShortAttribute attribute = attributes.get(0);
+            assertEquals(attributeB.getName(), attribute.getName());
+            assertEquals("2024-08-31T16:22:45.654+0200", attribute.getValue());
+            assertEquals(attributeB.getType(), attribute.getType());
+        }
+
+        {
+            assertThrows(
+                    ForbiddenErrorWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    user0SecurityContext, protectedResourceId, true, true));
         }
     }
 

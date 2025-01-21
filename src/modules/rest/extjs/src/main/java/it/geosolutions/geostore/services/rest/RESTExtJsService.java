@@ -28,12 +28,13 @@
  */
 package it.geosolutions.geostore.services.rest;
 
-import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResourceList;
+import it.geosolutions.geostore.services.model.ExtShortResource;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.Sort;
@@ -184,10 +185,24 @@ public interface RESTExtJsService {
             @QueryParam("all") @DefaultValue("false") boolean all)
             throws BadRequestWebEx;
 
+    /**
+     * Retrieve the resource.
+     *
+     * @param sc security context
+     * @param id the id of the resource to fetch
+     * @param includeAttributes whether to include attributes in the returned resource
+     * @param includePermissions whether to include permissions in the returned resource
+     * @return the resource
+     * @throws ForbiddenErrorWebEx if the resource is protected
+     * @throws NotFoundWebEx if the resource is not found
+     */
     @GET
     @Path("/resource/{id}")
     @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
-    ShortResource getResource(@Context SecurityContext sc, @PathParam("id") long id)
-            throws NotFoundWebEx;
+    ExtShortResource getExtResource(
+            @Context SecurityContext sc,
+            @PathParam("id") long id,
+            @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
+            @QueryParam("includePermissions") @DefaultValue("false") boolean includePermissions);
 }
