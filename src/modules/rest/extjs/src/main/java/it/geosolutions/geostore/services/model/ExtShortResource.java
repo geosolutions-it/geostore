@@ -1,15 +1,20 @@
 package it.geosolutions.geostore.services.model;
 
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** An extended version of the {@link ShortResource} class that includes attributes list. */
+/**
+ * An extended version of the {@link ShortResource} class that includes {@link ShortAttributeList}
+ * and {@link SecurityRuleList} for the resource.
+ */
 @XmlRootElement(name = "ShortResource")
 public class ExtShortResource extends ShortResource {
 
     @XmlElement private ShortAttributeList attributeList;
+    @XmlElement private SecurityRuleList securityRuleList;
 
     public ExtShortResource() {}
 
@@ -26,10 +31,15 @@ public class ExtShortResource extends ShortResource {
         this.setAdvertised(builder.shortResource.isAdvertised());
 
         this.attributeList = builder.attributeList;
+        this.securityRuleList = builder.securityRuleList;
     }
 
     public ShortAttributeList getAttributeList() {
         return attributeList;
+    }
+
+    public SecurityRuleList getSecurityRuleList() {
+        return securityRuleList;
     }
 
     public static Builder builder(ShortResource resource) {
@@ -39,6 +49,7 @@ public class ExtShortResource extends ShortResource {
     public static class Builder {
         private final ShortResource shortResource;
         public ShortAttributeList attributeList;
+        public SecurityRuleList securityRuleList;
 
         private Builder(ShortResource shortResource) {
             this.shortResource = shortResource;
@@ -46,6 +57,11 @@ public class ExtShortResource extends ShortResource {
 
         public Builder withAttributes(ShortAttributeList attributeList) {
             this.attributeList = attributeList;
+            return this;
+        }
+
+        public Builder withSecurityRules(SecurityRuleList securityRuleList) {
+            this.securityRuleList = securityRuleList;
             return this;
         }
 

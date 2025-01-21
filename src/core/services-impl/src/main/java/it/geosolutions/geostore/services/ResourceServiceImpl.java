@@ -625,31 +625,31 @@ public class ResourceServiceImpl implements ResourceService {
             boolean includeData,
             boolean includePermissions) {
 
-        Resource res = new Resource();
+        Resource configuredResource = new Resource();
 
-        res.setCategory(resource.getCategory());
-        res.setCreation(resource.getCreation());
-        res.setDescription(resource.getDescription());
-        res.setAdvertised(resource.isAdvertised());
-        res.setId(resource.getId());
-        res.setLastUpdate(resource.getLastUpdate());
-        res.setName(resource.getName());
-        res.setCreator(resource.getCreator());
-        res.setEditor(resource.getEditor());
+        configuredResource.setCategory(resource.getCategory());
+        configuredResource.setCreation(resource.getCreation());
+        configuredResource.setDescription(resource.getDescription());
+        configuredResource.setAdvertised(resource.isAdvertised());
+        configuredResource.setId(resource.getId());
+        configuredResource.setLastUpdate(resource.getLastUpdate());
+        configuredResource.setName(resource.getName());
+        configuredResource.setCreator(resource.getCreator());
+        configuredResource.setEditor(resource.getEditor());
 
         if (includeData) {
-            res.setData(resource.getData());
+            configuredResource.setData(resource.getData());
         }
 
         if (includeAttributes) {
-            res.setAttribute(resource.getAttribute());
+            configuredResource.setAttribute(resource.getAttribute());
         }
 
         if (includePermissions) {
-            res.setSecurity(resource.getSecurity());
+            configuredResource.setSecurity(getSecurityRules(resource.getId()));
         }
 
-        return res;
+        return configuredResource;
     }
 
     @Override

@@ -29,10 +29,10 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -50,10 +50,12 @@ public class SecurityRuleList implements Iterable<RESTSecurityRule> {
 
     /** @param list */
     public SecurityRuleList(List<SecurityRule> list) {
-        this.list = new ArrayList<RESTSecurityRule>();
-        for (SecurityRule rule : list) {
-            this.list.add(new RESTSecurityRule(rule));
+        if (list == null) {
+            this.list = null;
+            return;
         }
+
+        this.list = list.stream().map(RESTSecurityRule::new).collect(Collectors.toList());
     }
 
     /** @return List<Category> */

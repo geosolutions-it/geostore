@@ -44,6 +44,7 @@ import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtShortResource;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import java.text.SimpleDateFormat;
@@ -1097,6 +1098,10 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 attributeB.getValue(),
                 attributeB.getType());
 
+        /* user owned resource - no attributes */
+        long noAttributesResourceId =
+                restCreateResource("noAttributesResource", "", CAT0_NAME, userId, false);
+
         /* user owned resource - protected */
         long protectedResourceId =
                 restCreateResource("protectedResource", "", CAT0_NAME, userId, false);
@@ -1111,8 +1116,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             ExtShortResource response =
                     restExtJsService.getExtResource(
                             adminSecurityContext, userOwnedResourceId, true, true);
+            assertTrue(response.isCanEdit());
+            assertTrue(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
-            assertNotNull(attributes);
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeA.getName(), attribute.getName());
@@ -1123,9 +1129,18 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, userOwnedResourceId, true, true);
+                            adminSecurityContext, userOwnedResourceId, false, false);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
-            assertNotNull(attributes);
+            assertNull(attributes);
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, userOwnedResourceId, true, true);
+            assertTrue(response.isCanEdit());
+            assertTrue(response.isCanDelete());
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeA.getName(), attribute.getName());
@@ -1140,12 +1155,19 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
-            assertNotNull(attributes);
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeB.getName(), attribute.getName());
             assertEquals(attributeB.getValue(), attribute.getValue());
             assertEquals(attributeB.getType(), attribute.getType());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, noAttributesResourceId, true, true);
+            List<ShortAttribute> attributes = response.getAttributeList().getList();
+            assertTrue(attributes.isEmpty());
         }
 
         {
@@ -1231,11 +1253,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         SecurityRule protectedRule = new SecurityRule();
         protectedRule.setGroup(group);
 
-        long protectedResourceId =
+        long protectedGroupResourceId =
                 restCreateResource("protectedResource", "", CAT0_NAME, adminId, false);
         restResourceService.updateSecurityRules(
                 adminSecurityContext,
-                protectedResourceId,
+                protectedGroupResourceId,
                 new SecurityRuleList(Collections.singletonList(protectedRule)));
 
         {
@@ -1243,7 +1265,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     restExtJsService.getExtResource(
                             adminSecurityContext, groupOwnedResourceId, true, true);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
-            assertNotNull(attributes);
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeA.getName(), attribute.getName());
@@ -1256,7 +1277,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     restExtJsService.getExtResource(
                             user0SecurityContext, groupOwnedResourceId, true, true);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
-            assertNotNull(attributes);
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeA.getName(), attribute.getName());
@@ -1271,7 +1291,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
-            assertNotNull(attributes);
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeB.getName(), attribute.getName());
@@ -1284,7 +1303,221 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     ForbiddenErrorWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
+                                    user0SecurityContext, protectedGroupResourceId, true, true));
+        }
+    }
+
+    @Test
+    public void testGetExtResource_userOwnedWithPermissionsInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* empty permissions resource */
+        long noPermissionsResourceId =
+                restCreateResource("noPermissionsResource", "", CAT0_NAME, adminId, false);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                noPermissionsResourceId,
+                new SecurityRuleList(Collections.emptyList()));
+
+        /* user owned resource */
+        long userOwnedResourceId =
+                restCreateResource("ownedResource", "", CAT0_NAME, userId, false);
+
+        /* user owned resource - read only */
+        long readOnlyResourceId =
+                restCreateResource("readOnlyResource", "", CAT0_NAME, userId, false);
+        SecurityRule readOnlyRule = new SecurityRule();
+        readOnlyRule.setUser(userService.get(userId));
+        readOnlyRule.setCanRead(true);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyResourceId,
+                new SecurityRuleList(Collections.singletonList(readOnlyRule)));
+
+        /* user owned resource - protected */
+        long protectedResourceId =
+                restCreateResource("protectedResource", "", CAT0_NAME, userId, false);
+        SecurityRule protectedRule = new SecurityRule();
+        protectedRule.setUser(userService.get(userId));
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                protectedResourceId,
+                new SecurityRuleList(Collections.singletonList(protectedRule)));
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, noPermissionsResourceId, true, true);
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertTrue(securityRules.isEmpty());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, userOwnedResourceId, true, true);
+            assertTrue(response.isCanEdit());
+            assertTrue(response.isCanDelete());
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertEquals(1, securityRules.size());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, userOwnedResourceId, false, false);
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertNull(securityRules);
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, userOwnedResourceId, true, true);
+            assertTrue(response.isCanEdit());
+            assertTrue(response.isCanDelete());
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertEquals(1, securityRules.size());
+            RESTSecurityRule securityRule = securityRules.get(0);
+            assertEquals(userId, securityRule.getUser().getId().longValue());
+            assertTrue(securityRule.isCanRead());
+            assertTrue(securityRule.isCanWrite());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, readOnlyResourceId, true, true);
+            assertFalse(response.isCanEdit());
+            assertFalse(response.isCanDelete());
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertEquals(1, securityRules.size());
+            RESTSecurityRule securityRule = securityRules.get(0);
+            assertEquals(userId, securityRule.getUser().getId().longValue());
+            assertTrue(securityRule.isCanRead());
+            assertFalse(securityRule.isCanWrite());
+        }
+
+        {
+            assertThrows(
+                    ForbiddenErrorWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
                                     user0SecurityContext, protectedResourceId, true, true));
+        }
+
+        {
+            assertThrows(
+                    NotFoundWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    user0SecurityContext, Long.MAX_VALUE, true, true));
+        }
+    }
+
+    @Test
+    public void testGetExtResource_groupOwnedWithPermissionsInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* group owned resource */
+        SecurityRule ownerGroupRule = new SecurityRule();
+        ownerGroupRule.setGroup(group);
+        ownerGroupRule.setCanRead(true);
+        ownerGroupRule.setCanWrite(true);
+
+        long groupOwnedResourceId =
+                restCreateResource("ownedResource", "", CAT0_NAME, adminId, false);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                groupOwnedResourceId,
+                new SecurityRuleList(Collections.singletonList(ownerGroupRule)));
+
+        /* group owned resource - read only */
+        SecurityRule readOnlyGroupRule = new SecurityRule();
+        readOnlyGroupRule.setGroup(group);
+        readOnlyGroupRule.setCanRead(true);
+
+        long readOnlyGroupResourceId =
+                restCreateResource("readOnlyResource", "", CAT0_NAME, adminId, false);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyGroupResourceId,
+                new SecurityRuleList(Collections.singletonList(readOnlyGroupRule)));
+
+        /* group owned resource - protected */
+        SecurityRule protectedRule = new SecurityRule();
+        protectedRule.setGroup(group);
+
+        long protectedGroupResourceId =
+                restCreateResource("protectedResource", "", CAT0_NAME, adminId, false);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                protectedGroupResourceId,
+                new SecurityRuleList(Collections.singletonList(protectedRule)));
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, groupOwnedResourceId, true, true);
+            assertTrue(response.isCanEdit());
+            assertTrue(response.isCanDelete());
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertEquals(1, securityRules.size());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, groupOwnedResourceId, true, true);
+            assertTrue(response.isCanEdit());
+            assertTrue(response.isCanDelete());
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertEquals(1, securityRules.size());
+            RESTSecurityRule securityRule = securityRules.get(0);
+            assertEquals(groupId, securityRule.getGroup().getId().longValue());
+            assertTrue(securityRule.isCanRead());
+            assertTrue(securityRule.isCanWrite());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            user0SecurityContext, readOnlyGroupResourceId, true, true);
+            assertFalse(response.isCanEdit());
+            assertFalse(response.isCanDelete());
+            List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
+            assertEquals(1, securityRules.size());
+            RESTSecurityRule securityRule = securityRules.get(0);
+            assertEquals(groupId, securityRule.getGroup().getId().longValue());
+            assertTrue(securityRule.isCanRead());
+            assertFalse(securityRule.isCanWrite());
+        }
+
+        {
+            assertThrows(
+                    ForbiddenErrorWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    user0SecurityContext, protectedGroupResourceId, true, true));
         }
     }
 

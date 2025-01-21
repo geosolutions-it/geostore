@@ -56,6 +56,7 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import java.util.Arrays;
@@ -695,6 +696,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         return ExtShortResource.builder(shortResource)
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
+                .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
                 .build();
     }
 
