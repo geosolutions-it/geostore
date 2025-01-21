@@ -236,10 +236,40 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
      * @return List<SecurityRule>
      */
     @Override
-    public List<SecurityRule> findSecurityRules(long resourceId) {
+    public List<SecurityRule> findResourceSecurityRules(long resourceId) {
         Search searchCriteria = new Search(SecurityRule.class);
 
         Filter securityFilter = Filter.equal("resource.id", resourceId);
+
+        searchCriteria.addFilter(securityFilter);
+
+        return super.search(searchCriteria);
+    }
+
+    /**
+     * @param userId
+     * @return List<SecurityRule>
+     */
+    @Override
+    public List<SecurityRule> findUserSecurityRules(long userId) {
+        Search searchCriteria = new Search(SecurityRule.class);
+
+        Filter securityFilter = Filter.equal("user.id", userId);
+
+        searchCriteria.addFilter(securityFilter);
+
+        return super.search(searchCriteria);
+    }
+
+    /**
+     * @param userGroupId
+     * @return List<SecurityRule>
+     */
+    @Override
+    public List<SecurityRule> findUserGroupSecurityRules(long userGroupId) {
+        Search searchCriteria = new Search(SecurityRule.class);
+
+        Filter securityFilter = Filter.equal("group.id", userGroupId);
 
         searchCriteria.addFilter(securityFilter);
 
@@ -251,7 +281,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
      */
     @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
-        List<SecurityRule> rules = findSecurityRules(resourceId);
+        List<SecurityRule> rules = findResourceSecurityRules(resourceId);
         // WORKAROUND
         List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
         for (SecurityRule sr : rules) {

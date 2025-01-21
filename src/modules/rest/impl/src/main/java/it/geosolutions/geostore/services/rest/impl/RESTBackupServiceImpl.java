@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -115,7 +116,8 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
             }
 
             LOGGER.error("Deleting all resources");
-            for (ShortResource shortResource : resourceService.getAll(null, null, null)) {
+            for (ShortResource shortResource :
+                    resourceService.getAll(ResourceSearchParameters.builder().build())) {
                 resourceService.delete(shortResource.getId());
             }
 
@@ -172,7 +174,9 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
         RESTBackupCategory ret = new RESTBackupCategory();
         ret.setName(category.getName());
         SearchFilter filter = new CategoryFilter(category.getName(), SearchOperator.EQUAL_TO);
-        List<Resource> resList = resourceService.getResourcesFull(filter, null);
+        List<Resource> resList =
+                resourceService.getResourcesFull(
+                        ResourceSearchParameters.builder().filter(filter).build());
         for (Resource resource : resList) {
             RESTBackupResource rbe = createResource(resource);
             ret.addResource(rbe);

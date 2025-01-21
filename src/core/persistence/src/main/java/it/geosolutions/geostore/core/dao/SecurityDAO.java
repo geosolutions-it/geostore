@@ -54,5 +54,9 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
      * @param resourceId
      * @return List<SecurityRule>
      */
-    public List<SecurityRule> findSecurityRules(long resourceId);
+    public List<SecurityRule> findResourceSecurityRules(long resourceId);
+
+    List<SecurityRule> findUserSecurityRules(long userId);
+
+    List<SecurityRule> findUserGroupSecurityRules(long userGroupId);
 }

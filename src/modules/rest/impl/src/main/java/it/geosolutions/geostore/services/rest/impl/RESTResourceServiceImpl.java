@@ -33,6 +33,7 @@ import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
@@ -267,7 +268,12 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             try {
                 SearchFilter filter =
                         new FieldFilter(BaseField.ID, Long.toString(id), SearchOperator.EQUAL_TO);
-                resourcesFull = resourceService.getResourcesFull(filter, authUser);
+                resourcesFull =
+                        resourceService.getResourcesFull(
+                                ResourceSearchParameters.builder()
+                                        .filter(filter)
+                                        .authUser(authUser)
+                                        .build());
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
                 throw new InternalErrorWebEx("Internal error");
@@ -307,8 +313,14 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
         try {
             return new ShortResourceList(
-                    resourceService.getList(nameLike, page, entries, authUser));
-        } catch (BadRequestServiceEx ex) {
+                    resourceService.getList(
+                            ResourceSearchParameters.builder()
+                                    .nameLike(nameLike)
+                                    .page(page)
+                                    .entries(entries)
+                                    .authUser(authUser)
+                                    .build()));
+        } catch (BadRequestServiceEx | InternalErrorServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
     }
@@ -324,8 +336,14 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         try {
-            return new ShortResourceList(resourceService.getAll(page, entries, authUser));
-        } catch (BadRequestServiceEx ex) {
+            return new ShortResourceList(
+                    resourceService.getAll(
+                            ResourceSearchParameters.builder()
+                                    .page(page)
+                                    .entries(entries)
+                                    .authUser(authUser)
+                                    .build()));
+        } catch (BadRequestServiceEx | InternalErrorServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }
     }
@@ -487,7 +505,12 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         User authUser = extractAuthUser(sc);
 
         try {
-            return new ShortResourceList(resourceService.getResources(filter, authUser));
+            return new ShortResourceList(
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(authUser)
+                                    .build()));
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
             throw new BadRequestWebEx(e.getMessage());
@@ -515,7 +538,14 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         try {
             return new ResourceList(
                     resourceService.getResources(
-                            filter, page, entries, includeAttributes, includeData, authUser));
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .page(page)
+                                    .entries(entries)
+                                    .includeAttributes(includeAttributes)
+                                    .includeData(includeData)
+                                    .authUser(authUser)
+                                    .build()));
         } catch (BadRequestServiceEx e) {
             if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
             throw new BadRequestWebEx(e.getMessage());
@@ -575,15 +605,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
             if ((authUser.getRole() == Role.ADMIN)
                     || (owner == null)
                     || (owner.getValue().equals(authUser.getName()))) {
-                try {
-                    return new SecurityRuleList(resourceService.getSecurityRules(id));
-                } catch (BadRequestServiceEx e) {
-                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
-                    throw new BadRequestWebEx(e.getMessage());
-                } catch (InternalErrorServiceEx e) {
-                    if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
-                    throw new InternalErrorWebEx(e.getMessage());
-                }
+                return new SecurityRuleList(resourceService.getSecurityRules(id));
             } else {
                 throw new ForbiddenErrorWebEx("This user cannot read this resource permissions!");
             }

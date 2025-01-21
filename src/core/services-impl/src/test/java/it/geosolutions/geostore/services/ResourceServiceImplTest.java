@@ -25,6 +25,7 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
@@ -97,7 +98,14 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
     @Test
     public void testGetAllData() throws Exception {
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         for (int i = 0; i < 10; i++) {
             createResource("name" + i, "description" + i, "MAP1" + i);
@@ -107,15 +115,44 @@ public class ResourceServiceImplTest extends ServiceTestBase {
             createResource("test name" + i, "description" + i, "MAP2" + i);
         }
 
-        assertEquals(20, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                20,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
         assertEquals(10, resourceService.getCount("name%"));
-        assertEquals(10, resourceService.getList("name%", null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                10,
+                resourceService
+                        .getList(
+                                ResourceSearchParameters.builder()
+                                        .nameLike("name%")
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
         assertEquals(20, resourceService.getCount("%name%"));
         assertEquals(
-                20, resourceService.getList("%name%", null, null, buildFakeAdminUser()).size());
+                20,
+                resourceService
+                        .getList(
+                                ResourceSearchParameters.builder()
+                                        .nameLike("%name%")
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
         assertEquals(2, resourceService.getCount("%name1%"));
         assertEquals(
-                2, resourceService.getList("%name1%", null, null, buildFakeAdminUser()).size());
+                2,
+                resourceService
+                        .getList(
+                                ResourceSearchParameters.builder()
+                                        .nameLike("%name1%")
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
     }
     /**
      * Tests if the results are sorted by name
@@ -124,7 +161,14 @@ public class ResourceServiceImplTest extends ServiceTestBase {
      */
     @Test
     public void testSorting() throws Exception {
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
         // setup data. First set is ordered
         for (int i = 0; i < 20; i++) {
             createResource("FIRST SET - " + i, "description" + i, "MAP1" + i);
@@ -136,7 +180,9 @@ public class ResourceServiceImplTest extends ServiceTestBase {
             createResource("SECOND SET - " + i, "description" + i, "MAP2" + i);
         }
         // check getAll
-        List<ShortResource> getAllResult = resourceService.getAll(null, null, buildFakeAdminUser());
+        List<ShortResource> getAllResult =
+                resourceService.getAll(
+                        ResourceSearchParameters.builder().authUser(buildFakeAdminUser()).build());
         assertEquals(40, getAllResult.size());
         assertTrue(isSorted(getAllResult));
 
@@ -147,17 +193,29 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         // category like
         SearchFilter MAPCategoryFilter = new CategoryFilter("MAP%", SearchOperator.LIKE);
         List<ShortResource> getResourcesMAPResult =
-                resourceService.getResources(MAPCategoryFilter, buildFakeAdminUser());
+                resourceService.getShortResources(
+                        ResourceSearchParameters.builder()
+                                .filter(MAPCategoryFilter)
+                                .authUser(buildFakeAdminUser())
+                                .build());
         assertEquals(40, getResourcesMAPResult.size());
         assertTrue(isSorted(getResourcesMAPResult));
         SearchFilter MAP1CategoryFilter = new CategoryFilter("MAP1%", SearchOperator.LIKE);
         List<ShortResource> getResourcesMAP1Result =
-                resourceService.getResources(MAP1CategoryFilter, buildFakeAdminUser());
+                resourceService.getShortResources(
+                        ResourceSearchParameters.builder()
+                                .filter(MAP1CategoryFilter)
+                                .authUser(buildFakeAdminUser())
+                                .build());
         assertEquals(20, getResourcesMAP1Result.size());
         assertTrue(isSorted(getResourcesMAP1Result));
         SearchFilter MAP2CategoryFilter = new CategoryFilter("MAP2%", SearchOperator.LIKE);
         List<ShortResource> getResourcesMAP2Result =
-                resourceService.getResources(MAP2CategoryFilter, buildFakeAdminUser());
+                resourceService.getShortResources(
+                        ResourceSearchParameters.builder()
+                                .filter(MAP2CategoryFilter)
+                                .authUser(buildFakeAdminUser())
+                                .build());
         assertEquals(20, getResourcesMAP2Result.size());
         assertTrue(isSorted(getResourcesMAP2Result));
 
@@ -165,7 +223,11 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         SearchFilter nameContain1Filter =
                 new FieldFilter(BaseField.NAME, "%1%", SearchOperator.LIKE);
         List<ShortResource> nameContain1Result =
-                resourceService.getResources(nameContain1Filter, buildFakeAdminUser());
+                resourceService.getShortResources(
+                        ResourceSearchParameters.builder()
+                                .filter(nameContain1Filter)
+                                .authUser(buildFakeAdminUser())
+                                .build());
         // 22 resources contain 1 in the name: "FIRST SET - 1" + "FIRST SET - 10" ... "FIRST SET -
         // 19", same for second set
         assertEquals(22, nameContain1Result.size());
@@ -174,7 +236,11 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         SearchFilter nameContain2Filter =
                 new FieldFilter(BaseField.NAME, "%2%", SearchOperator.LIKE);
         List<ShortResource> nameContain2Result =
-                resourceService.getResources(nameContain2Filter, buildFakeAdminUser());
+                resourceService.getShortResources(
+                        ResourceSearchParameters.builder()
+                                .filter(nameContain2Filter)
+                                .authUser(buildFakeAdminUser())
+                                .build());
         // 4 resources contain 1 in the name: "FIRST SET - 2" + "FIRST SET - 12"
         assertEquals(4, nameContain2Result.size());
         assertTrue(isSorted(nameContain2Result));
@@ -220,29 +286,58 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         Category c1n = new Category();
         c1n.setName("category1");
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long r0 = createResource("res0", "des0", c0);
         long r1 = createResource("res1", "des1", c1i);
         long r2 = createResource("res2", "des2", c1n);
-        assertEquals(3, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                3,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         {
             SearchFilter filter = new CategoryFilter("category0", SearchOperator.EQUAL_TO);
-            List<ShortResource> list = resourceService.getResources(filter, buildFakeAdminUser());
+            List<ShortResource> list =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(1, list.size());
             assertEquals(r0, list.get(0).getId());
         }
 
         {
             SearchFilter filter = new CategoryFilter("%1", SearchOperator.LIKE);
-            List<ShortResource> list = resourceService.getResources(filter, buildFakeAdminUser());
+            List<ShortResource> list =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(2, list.size());
         }
 
         {
             SearchFilter filter = new CategoryFilter("cat%", SearchOperator.LIKE);
-            List<ShortResource> list = resourceService.getResources(filter, buildFakeAdminUser());
+            List<ShortResource> list =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(3, list.size());
         }
     }
@@ -526,16 +621,38 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         // name like
         SearchFilter nameContains1Filter =
                 new FieldFilter(BaseField.NAME, "%name1%", SearchOperator.LIKE);
-        resourceService.getResources(nameContains1Filter, null, null, user2);
+        resourceService.getShortResources(
+                ResourceSearchParameters.builder()
+                        .filter(nameContains1Filter)
+                        .authUser(user2)
+                        .build());
         assertEquals(
                 1,
                 resourceService
-                        .getResources(nameContains1Filter, null, null, buildFakeAdminUser())
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(nameContains1Filter)
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
                         .size());
         assertEquals(
-                1, resourceService.getResources(nameContains1Filter, null, null, user1).size());
+                1,
+                resourceService
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(nameContains1Filter)
+                                        .authUser(user1)
+                                        .build())
+                        .size());
         assertEquals(
-                0, resourceService.getResources(nameContains1Filter, null, null, user2).size());
+                0,
+                resourceService
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(nameContains1Filter)
+                                        .authUser(user2)
+                                        .build())
+                        .size());
 
         List<SecurityRule> rules2 =
                 new ArrayList<>(
@@ -556,11 +673,29 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(
                 1,
                 resourceService
-                        .getResources(nameContains2Filter, null, null, buildFakeAdminUser())
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(nameContains2Filter)
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
                         .size());
         assertEquals(
-                1, resourceService.getResources(nameContains2Filter, null, null, user1).size());
+                1,
+                resourceService
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(nameContains2Filter)
+                                        .authUser(user1)
+                                        .build())
+                        .size());
         assertEquals(
-                1, resourceService.getResources(nameContains2Filter, null, null, user2).size());
+                1,
+                resourceService
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(nameContains2Filter)
+                                        .authUser(user2)
+                                        .build())
+                        .size());
     }
 }

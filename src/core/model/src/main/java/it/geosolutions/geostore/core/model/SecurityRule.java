@@ -256,6 +256,11 @@ public class SecurityRule implements Serializable {
             builder.append("group=").append(group);
         }
 
+        if (user != null) {
+            builder.append(", ");
+            builder.append("user=").append(user);
+        }
+
         // if ( category != null ) {
         // builder.append(", ");
         // builder.append("category=").append(category);

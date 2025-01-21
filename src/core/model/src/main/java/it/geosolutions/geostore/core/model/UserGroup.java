@@ -186,6 +186,11 @@ public class UserGroup implements Serializable {
             builder.append("groupName=").append(groupName);
         }
 
+        if (users != null) {
+            builder.append(", ");
+            builder.append("users=").append(users);
+        }
+
         builder.append(']');
 
         return builder.toString();

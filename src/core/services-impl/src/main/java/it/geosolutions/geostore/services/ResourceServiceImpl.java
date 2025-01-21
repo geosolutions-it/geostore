@@ -43,7 +43,7 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
-import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -58,9 +58,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -86,6 +86,9 @@ public class ResourceServiceImpl implements ResourceService {
     private CategoryDAO categoryDAO;
 
     private SecurityDAO securityDAO;
+
+    private UserService userService;
+    private PermissionService permissionService;
 
     /** @param securityDAO the securityDAO to set */
     public void setSecurityDAO(SecurityDAO securityDAO) {
@@ -115,6 +118,14 @@ public class ResourceServiceImpl implements ResourceService {
     /** @param userGroupDAO the userGroupDAO to set */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     /*
@@ -388,78 +399,22 @@ public class ResourceServiceImpl implements ResourceService {
         this.resourceDAO.removeResources(searchCriteria);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.ResourceService#getList(java.lang.String, java.lang.Integer, java.lang.Integer)
-     */
     @Override
-    public List<ShortResource> getList(
-            String nameLike, Integer page, Integer entries, User authUser)
-            throws BadRequestServiceEx {
+    public List<ShortResource> getList(ResourceSearchParameters resourceSearchParameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
 
-        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
-            throw new BadRequestServiceEx("Page and entries params should be declared together");
-        }
+        List<Resource> found = searchResources(resourceSearchParameters);
 
-        Search searchCriteria = new Search(Resource.class);
-
-        if (page != null) {
-            searchCriteria.setMaxResults(entries);
-            searchCriteria.setPage(page);
-        }
-
-        searchCriteria.addSortAsc("name");
-
-        if (nameLike != null) {
-            searchCriteria.addFilterILike("name", nameLike);
-        }
-
-        // load security rules for each resource in the list
-        searchCriteria.addFetch("security");
-        searchCriteria.setDistinct(true);
-
-        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace("Get Resource List: " + searchCriteria);
-        }
-        List<Resource> found = search(searchCriteria);
-
-        return convertToShortList(found, authUser);
+        return convertToShortResourceList(found, resourceSearchParameters.getAuthUser());
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.ResourceService#getList(java.lang.Integer, java.lang.Integer)
-     */
     @Override
-    public List<ShortResource> getAll(Integer page, Integer entries, User authUser)
-            throws BadRequestServiceEx {
+    public List<ShortResource> getAll(ResourceSearchParameters resourceSearchParameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
 
-        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
-            throw new BadRequestServiceEx("Page and entries params should be declared together");
-        }
+        List<Resource> found = searchResources(resourceSearchParameters);
 
-        Search searchCriteria = new Search(Resource.class);
-
-        if (page != null) {
-            searchCriteria.setMaxResults(entries);
-            searchCriteria.setPage(page);
-        }
-
-        searchCriteria.addSortAsc("name");
-
-        // load security rules for each resource in the list
-        searchCriteria.addFetch("security");
-        searchCriteria.setDistinct(true);
-
-        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-
-        List<Resource> found = search(searchCriteria);
-
-        return convertToShortList(found, authUser);
+        return convertToShortResourceList(found, resourceSearchParameters.getAuthUser());
     }
 
     /*
@@ -490,75 +445,6 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceDAO.count(searchCriteria);
     }
 
-    /**
-     * @param list
-     * @return List<ShortResource>
-     */
-    private List<ShortResource> convertToShortList(List<Resource> list, User authUser) {
-        List<ShortResource> swList = new LinkedList<>();
-        for (Resource resource : list) {
-            ShortResource shortResource = new ShortResource(resource);
-
-            // ///////////////////////////////////////////////////////////////////////
-            // This fragment checks if the authenticated user can modify and delete
-            // the loaded resource (and associated attributes and stored data).
-            // This to inform the client in HTTP response result.
-            // ///////////////////////////////////////////////////////////////////////
-            boolean resourceCanBeListed = true;
-            if (authUser != null) {
-                if (authUser.getRole().equals(Role.ADMIN)) {
-                    shortResource.setCanEdit(true);
-                    shortResource.setCanDelete(true);
-                } else {
-                    boolean authUserIsOwner = false;
-                    for (SecurityRule rule : resource.getSecurity()) {
-                        User owner = rule.getUser();
-                        UserGroup userGroup = rule.getGroup();
-                        if (owner != null) {
-                            if (owner.getId().equals(authUser.getId())) {
-                                authUserIsOwner = true;
-                                if (rule.isCanWrite()) {
-                                    shortResource.setCanEdit(true);
-                                    shortResource.setCanDelete(true);
-
-                                    break;
-                                }
-                            }
-                        } else if (userGroup != null) {
-                            List<String> groups = extractGroupNames(authUser.getGroups());
-                            if (groups.contains(userGroup.getGroupName())) {
-                                if (rule.isCanWrite()) {
-                                    shortResource.setCanEdit(true);
-                                    shortResource.setCanDelete(true);
-
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (!authUserIsOwner) resourceCanBeListed = resource.isAdvertised();
-                }
-            } else {
-                resourceCanBeListed = resource.isAdvertised();
-            }
-
-            if (resourceCanBeListed) swList.add(shortResource);
-        }
-
-        return swList;
-    }
-
-    public static List<String> extractGroupNames(Set<UserGroup> groups) {
-        List<String> groupNames = new ArrayList<String>();
-        if (groups == null) {
-            return groupNames;
-        }
-        for (UserGroup ug : groups) {
-            groupNames.add(ug.getGroupName());
-        }
-        return groupNames;
-    }
-
     /*
      * (non-Javadoc)
      *
@@ -570,9 +456,8 @@ public class ResourceServiceImpl implements ResourceService {
         searchCriteria.addFilterEqual("resource.id", id);
 
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
-        List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
-        return dtoList;
+        return convertToShortAttributeList(attributes);
     }
 
     /**
@@ -601,7 +486,7 @@ public class ResourceServiceImpl implements ResourceService {
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         List<ShortAttribute> dtoList = convertToShortAttributeList(attributes);
 
-        if (dtoList.size() > 0) {
+        if (!dtoList.isEmpty()) {
             return dtoList.get(0);
         } else {
             return null;
@@ -656,7 +541,7 @@ public class ResourceServiceImpl implements ResourceService {
 
         List<Attribute> attributes = this.attributeDAO.search(searchCriteria);
         // if the attribute exist, update id (note: it must have the same type)
-        if (attributes.size() > 0) {
+        if (!attributes.isEmpty()) {
             Attribute attribute = attributes.get(0);
             switch (attribute.getType()) {
                 case DATE:
@@ -710,49 +595,15 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.ResourceService#getResourcesByFilter(it.geosolutions.geostore.services.dto.SearchFilter)
-     */
-    @Override
-    public List<ShortResource> getResources(SearchFilter filter, User authUser)
-            throws BadRequestServiceEx, InternalErrorServiceEx {
-        return getResources(filter, null, null, authUser);
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.ResourceService#getResources(it.geosolutions.geostore.services.dto.search.SearchFilter,
-     * java.lang.Integer, java.lang.Integer, boolean, boolean, it.geosolutions.geostore.core.model.User)
-     */
-    public List<Resource> getResources(
-            SearchFilter filter,
-            Integer page,
-            Integer entries,
-            boolean includeAttributes,
-            boolean includeData,
-            User authUser)
+    public List<Resource> getResources(ResourceSearchParameters resourceSearchParameters)
             throws BadRequestServiceEx, InternalErrorServiceEx {
 
-        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
-            throw new BadRequestServiceEx("Page and entries params should be declared together");
-        }
-
-        Search searchCriteria = SearchConverter.convert(filter);
-
-        if (page != null) {
-            searchCriteria.setMaxResults(entries);
-            searchCriteria.setPage(page);
-        }
-
-        searchCriteria.addFetch("security");
-        searchCriteria.setDistinct(true);
-
-        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-        List<Resource> resources = this.search(searchCriteria);
-        resources = this.configResourceList(resources, includeAttributes, includeData, authUser);
+        List<Resource> resources = searchResources(resourceSearchParameters);
+        resources =
+                this.configResourceList(
+                        resources,
+                        resourceSearchParameters.isIncludeAttributes(),
+                        resourceSearchParameters.isIncludeData());
 
         return resources;
     }
@@ -761,11 +612,10 @@ public class ResourceServiceImpl implements ResourceService {
      * @param list
      * @param includeAttributes
      * @param includeData
-     * @param authUser
      * @return List<Resource>
      */
     private List<Resource> configResourceList(
-            List<Resource> list, boolean includeAttributes, boolean includeData, User authUser) {
+            List<Resource> list, boolean includeAttributes, boolean includeData) {
         List<Resource> rList = new LinkedList<>();
 
         for (Resource resource : list) {
@@ -796,56 +646,82 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<ShortResource> getResources(
-            SearchFilter filter, Integer page, Integer entries, User authUser)
+    public List<ShortResource> getShortResources(ResourceSearchParameters resourceSearchParameters)
             throws BadRequestServiceEx, InternalErrorServiceEx {
 
-        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
+        List<Resource> resources = searchResources(resourceSearchParameters);
+
+        return convertToShortResourceList(resources, resourceSearchParameters.getAuthUser());
+    }
+
+    private List<Resource> searchResources(ResourceSearchParameters parameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+
+        if (((parameters.getPage() != null) && (parameters.getEntries() == null))
+                || ((parameters.getPage() == null) && (parameters.getEntries() != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
         }
 
-        Search searchCriteria = SearchConverter.convert(filter);
+        Search searchCriteria = SearchConverter.convert(parameters.getFilter());
 
-        if (page != null) {
-            searchCriteria.setMaxResults(entries);
-            searchCriteria.setPage(page);
+        if (parameters.getPage() != null) {
+            searchCriteria.setMaxResults(parameters.getEntries());
+            searchCriteria.setPage(parameters.getPage());
         }
 
-        // //////////////////////////////////////////////////////////
-        // addFetch to charge the corresponding security rules
-        // for each resource in the list
-        // //////////////////////////////////////////////////////////
+        if (parameters.getSortBy() != null && !parameters.getSortBy().isBlank()) {
+            searchCriteria.addSort(
+                    parameters.getSortBy(), "DESC".equalsIgnoreCase(parameters.getSortOrder()));
+        }
+
+        if (parameters.getNameLike() != null) {
+            searchCriteria.addFilterILike("name", parameters.getNameLike());
+        }
+
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
-        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
-        List<Resource> resources = this.search(searchCriteria);
-
-        return convertToShortList(resources, authUser);
+        securityDAO.addReadSecurityConstraints(searchCriteria, parameters.getAuthUser());
+        return this.search(searchCriteria);
     }
 
     /**
-     * Return a list of resources joined with their data. This call can be very heavy for the system. Please use this
-     * method only when you are sure a few data will be returned, otherwise consider using
-     * {@link #getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, it.geosolutions.geostore.core.model.User) getResources)
-     * if you need less data.
-     *
-     * @param filter
-     * @param authUser
-     * @return
-     * @throws BadRequestServiceEx
-     * @throws InternalErrorServiceEx
+     * @param resources
+     * @param user
+     * @return List<ShortResource>
      */
+    private List<ShortResource> convertToShortResourceList(List<Resource> resources, User user) {
+
+        userService.fetchSecurityRules(user);
+
+        return resources.stream()
+                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
+                .map(r -> createShortResource(user, r))
+                .collect(Collectors.toList());
+    }
+
+    private ShortResource createShortResource(User user, Resource resource) {
+        ShortResource shortResource = new ShortResource(resource);
+
+        if (user != null && permissionService.canUserAccessResource(user, resource)) {
+            shortResource.setCanEdit(true);
+            shortResource.setCanDelete(true);
+        }
+
+        return shortResource;
+    }
+
     @Override
-    public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
+    public List<Resource> getResourcesFull(ResourceSearchParameters resourceSearchParameters)
             throws BadRequestServiceEx, InternalErrorServiceEx {
 
-        Search searchCriteria = SearchConverter.convert(filter);
+        Search searchCriteria = SearchConverter.convert(resourceSearchParameters.getFilter());
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
         searchCriteria.addFetch("data");
 
-        securityDAO.addReadSecurityConstraints(searchCriteria, authUser);
+        securityDAO.addReadSecurityConstraints(
+                searchCriteria, resourceSearchParameters.getAuthUser());
         return this.search(searchCriteria);
     }
 
@@ -855,14 +731,18 @@ public class ResourceServiceImpl implements ResourceService {
      * @param searchCriteria search criteria
      * @return results of the search
      */
-    private List<Resource> search(Search searchCriteria) {
-        // apply defaults for sorting
-        if (searchCriteria != null) {
-            searchCriteria.addSort(new Sort("name"));
-        }
+    private List<Resource> search(Search searchCriteria) throws BadRequestServiceEx {
+        try {
+            // apply defaults for sorting if not already set
+            if (searchCriteria != null && searchCriteria.getSorts().isEmpty()) {
+                searchCriteria.addSort(new Sort("name"));
+            }
 
-        // search
-        return resourceDAO.search(searchCriteria);
+            // search
+            return resourceDAO.search(searchCriteria);
+        } catch (IllegalArgumentException iaex) {
+            throw new BadRequestServiceEx("Resource search failed", iaex);
+        }
     }
 
     /*
@@ -883,9 +763,8 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<SecurityRule> getSecurityRules(long id)
-            throws BadRequestServiceEx, InternalErrorServiceEx {
-        return securityDAO.findSecurityRules(id);
+    public List<SecurityRule> getSecurityRules(long id) {
+        return securityDAO.findResourceSecurityRules(id);
     }
 
     @Override
@@ -941,10 +820,8 @@ public class ResourceServiceImpl implements ResourceService {
      * @param nameLike
      * @param user
      * @return resources' count that the user has access
-     * @throws InternalErrorServiceEx
-     * @throws BadRequestServiceEx
      */
-    public long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx {
+    public long getCountByFilterAndUser(String nameLike, User user) {
 
         Search searchCriteria = new Search(Resource.class);
 

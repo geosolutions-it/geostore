@@ -23,6 +23,7 @@ import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
@@ -107,7 +108,11 @@ public class SearchConverterTest extends ServiceTestBase {
             assertNotNull(searchFilter);
 
             List<ShortResource> resources =
-                    resourceService.getResources(searchFilter, buildFakeAdminUser());
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(searchFilter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(1, resources.size());
         }
 
@@ -120,7 +125,11 @@ public class SearchConverterTest extends ServiceTestBase {
             assertNotNull(searchFilter);
 
             List<ShortResource> resources =
-                    resourceService.getResources(searchFilter, buildFakeAdminUser());
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(searchFilter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(2, resources.size());
         }
     }
@@ -265,7 +274,14 @@ public class SearchConverterTest extends ServiceTestBase {
 
             List<Resource> resources =
                     resourceService.getResources(
-                            searchFilter, 0, 5, true, false, buildFakeAdminUser());
+                            ResourceSearchParameters.builder()
+                                    .filter(searchFilter)
+                                    .page(0)
+                                    .entries(5)
+                                    .includeAttributes(true)
+                                    .includeData(false)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);
@@ -301,7 +317,14 @@ public class SearchConverterTest extends ServiceTestBase {
 
             List<Resource> resources =
                     resourceService.getResources(
-                            searchFilter, 0, 5, false, true, buildFakeAdminUser());
+                            ResourceSearchParameters.builder()
+                                    .filter(searchFilter)
+                                    .page(0)
+                                    .entries(5)
+                                    .includeAttributes(false)
+                                    .includeData(true)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);
@@ -335,7 +358,14 @@ public class SearchConverterTest extends ServiceTestBase {
 
             List<Resource> resources =
                     resourceService.getResources(
-                            searchFilter, 0, 5, true, true, buildFakeAdminUser());
+                            ResourceSearchParameters.builder()
+                                    .filter(searchFilter)
+                                    .page(0)
+                                    .entries(5)
+                                    .includeAttributes(true)
+                                    .includeData(true)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
             assertEquals(5, resources.size());
 
             Resource res = resources.get(0);

@@ -188,7 +188,7 @@ public class ShortResource implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
-        if (name != null) builder.append("name=").append(name);
+        if (name != null) builder.append("name=").append(name).append(", ");
 
         if (description != null) builder.append("description=").append(description).append(", ");
 
@@ -198,7 +198,7 @@ public class ShortResource implements Serializable {
 
         if (canEdit) builder.append("canEdit=").append(true).append(", ");
 
-        if (canDelete) builder.append("canDelete=").append(true);
+        if (canDelete) builder.append("canDelete=").append(true).append(", ");
 
         if (creator != null) builder.append("creator=").append(creator).append(", ");
 

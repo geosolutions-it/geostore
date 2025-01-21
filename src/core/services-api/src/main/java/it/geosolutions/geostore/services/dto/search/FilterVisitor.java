@@ -35,6 +35,8 @@ public interface FilterVisitor {
 
     void visit(CategoryFilter filter) throws InternalErrorServiceEx;
 
+    void visit(GroupFilter filter) throws InternalErrorServiceEx;
+
     void visit(FieldFilter filter) throws InternalErrorServiceEx;
 
     void visit(NotFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx;

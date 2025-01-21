@@ -27,6 +27,7 @@ import it.geosolutions.geostore.services.dto.search.AttributeFilter;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.FilterVisitor;
+import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.NotFilter;
 import it.geosolutions.geostore.services.dto.search.OrFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -35,9 +36,14 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,9 +60,11 @@ public class SearchConverter implements FilterVisitor {
 
     private static final Logger LOGGER = LogManager.getLogger(SearchConverter.class);
 
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS]");
+
     static {
-        Map<SearchOperator, Integer> ops =
-                new EnumMap<SearchOperator, Integer>(SearchOperator.class);
+        Map<SearchOperator, Integer> ops = new EnumMap<>(SearchOperator.class);
         ops.put(SearchOperator.EQUAL_TO, Filter.OP_EQUAL);
         ops.put(SearchOperator.GREATER_THAN_OR_EQUAL_TO, Filter.OP_GREATER_OR_EQUAL);
         ops.put(SearchOperator.GREATER_THAN, Filter.OP_GREATER_THAN);
@@ -66,6 +74,7 @@ public class SearchConverter implements FilterVisitor {
         ops.put(SearchOperator.LESS_THAN_OR_EQUAL_TO, Filter.OP_LESS_OR_EQUAL);
         ops.put(SearchOperator.LIKE, Filter.OP_LIKE);
         ops.put(SearchOperator.ILIKE, Filter.OP_ILIKE);
+        ops.put(SearchOperator.IN, Filter.OP_IN);
 
         ops_rest_trg = Collections.unmodifiableMap(ops);
     }
@@ -78,11 +87,15 @@ public class SearchConverter implements FilterVisitor {
      */
     public static Search convert(SearchFilter filter)
             throws BadRequestServiceEx, InternalErrorServiceEx {
-        SearchConverter sc = new SearchConverter();
-        filter.accept(sc);
 
         Search trgSearch = new Search(Resource.class);
-        trgSearch.addFilter(sc.trgFilter);
+
+        if (filter != null) {
+            SearchConverter sc = new SearchConverter();
+            filter.accept(sc);
+
+            trgSearch.addFilter(sc.trgFilter);
+        }
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("TRG Search  --> " + trgSearch);
@@ -181,12 +194,11 @@ public class SearchConverter implements FilterVisitor {
      *
      * @throws InternalErrorServiceEx
      */
-    @SuppressWarnings("rawtypes")
     @Override
     public void visit(FieldFilter filter) throws InternalErrorServiceEx {
         String property = filter.getField().getFieldName();
         String value = filter.getValue();
-        Class type = filter.getField().getType();
+        Class<?> type = filter.getField().getType();
 
         Filter f = new Filter();
 
@@ -200,10 +212,14 @@ public class SearchConverter implements FilterVisitor {
         f.setOperator(op);
 
         if (type == Date.class) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
             try {
-                f.setValue(sdf.parse(value));
-            } catch (ParseException e) {
+                value = value.replace("T", " ");
+                f.setValue(
+                        Date.from(
+                                LocalDateTime.parse(value, DATE_FORMATTER)
+                                        .atZone(ZoneOffset.systemDefault())
+                                        .toInstant()));
+            } catch (DateTimeParseException e) {
                 throw new InternalErrorServiceEx("Error parsing attribute date value");
             }
         } else if (type == Long.class) {
@@ -219,13 +235,9 @@ public class SearchConverter implements FilterVisitor {
         trgFilter = f;
     }
 
-    /**
-     * This is a leaf filter.
-     *
-     * @throws InternalErrorServiceEx
-     */
+    /** This is a leaf filter. */
     @Override
-    public void visit(CategoryFilter filter) throws InternalErrorServiceEx {
+    public void visit(CategoryFilter filter) {
         CategoryFilter.checkOperator(filter.getOperator());
 
         Integer op = ops_rest_trg.get(filter.getOperator());
@@ -238,6 +250,36 @@ public class SearchConverter implements FilterVisitor {
         f.setOperator(op);
         f.setProperty("category.name");
         f.setValue(filter.getName());
+
+        trgFilter = f;
+    }
+
+    /** This is a leaf filter. */
+    @Override
+    public void visit(GroupFilter filter) {
+        GroupFilter.checkOperator(filter.getOperator());
+
+        Integer op = ops_rest_trg.get(filter.getOperator());
+
+        if (op == null) {
+            throw new IllegalStateException("Unknown op " + filter.getOperator());
+        }
+
+        Filter f = new Filter();
+        f.setOperator(op);
+        f.setProperty("security.group.groupName");
+
+        List<String> names = filter.getNames();
+
+        if (SearchOperator.IN != filter.getOperator() && names.size() != 1) {
+            throw new IllegalStateException("Erroneous search op " + filter.getOperator());
+        }
+
+        if (SearchOperator.IN == filter.getOperator()) {
+            f.setValue(names);
+        } else {
+            f.setValue(names.get(0));
+        }
 
         trgFilter = f;
     }

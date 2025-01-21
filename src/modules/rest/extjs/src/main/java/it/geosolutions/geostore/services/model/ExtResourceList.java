@@ -28,7 +28,6 @@
 
 package it.geosolutions.geostore.services.model;
 
-import it.geosolutions.geostore.core.model.Resource;
 import java.util.List;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -44,12 +43,12 @@ public class ExtResourceList {
 
     private long count;
 
-    private List<Resource> list;
+    private List<ExtResource> list;
 
     public ExtResourceList() {}
 
     /** @param list */
-    public ExtResourceList(long count, List<Resource> list) {
+    public ExtResourceList(long count, List<ExtResource> list) {
         this.count = count;
         this.list = list;
     }
@@ -67,12 +66,12 @@ public class ExtResourceList {
 
     /** @return List<ShortResource> */
     @XmlElement(name = "Resource")
-    public List<Resource> getList() {
+    public List<ExtResource> getList() {
         return list;
     }
 
     /** @param list */
-    public void setList(List<Resource> list) {
+    public void setList(List<ExtResource> list) {
         this.list = list;
     }
 

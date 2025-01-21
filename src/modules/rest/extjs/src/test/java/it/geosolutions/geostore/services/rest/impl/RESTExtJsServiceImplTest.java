@@ -17,7 +17,12 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
@@ -25,12 +30,25 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.GroupFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.model.ExtResource;
+import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
+import it.geosolutions.geostore.services.rest.model.Sort;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
@@ -59,7 +77,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetAllResources_auth_base() throws Exception {
         final String CAT_NAME = "CAT000";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         long u1 = restCreateUser("u1", Role.USER, null, "p1");
@@ -105,7 +130,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetAllResources_auth_many() throws Exception {
         final String CAT_NAME = "CAT009";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         long u1 = restCreateUser("u1", Role.USER, null, "p1");
@@ -177,7 +209,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String CAT1_NAME = "CAT111";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
 
@@ -223,7 +262,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String CAT0_NAME = "CAT000";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long a0 = restCreateUser("a0", Role.ADMIN, new HashSet<>(), "p0");
         long u0 = restCreateUser("u0", Role.USER, new HashSet<>(), "p0");
@@ -266,7 +312,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String CAT1_NAME = "CAT111";
         final String RES_NAME = "a MiXeD cAsE sTrInG";
 
-        assertEquals(0, resourceService.getAll(null, null, buildFakeAdminUser()).size());
+        assertEquals(
+                0,
+                resourceService
+                        .getAll(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
 
         long g0Id = createGroup("g0");
         UserGroup g0 = new UserGroup();
@@ -362,6 +415,641 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
     }
 
+    @Test
+    public void testExtResourcesList_sorted() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RES_ATTRIBUTE_A = "A";
+        final String RES_ATTRIBUTE_B = "B";
+        final String RES_ATTRIBUTE_C = "C";
+
+        assertEquals(
+                0,
+                resourceService
+                        .getShortResources(
+                                ResourceSearchParameters.builder()
+                                        .authUser(buildFakeAdminUser())
+                                        .build())
+                        .size());
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        restCreateResource(RES_ATTRIBUTE_A, RES_ATTRIBUTE_A, CAT0_NAME, u0, true);
+        restCreateResource(RES_ATTRIBUTE_B, RES_ATTRIBUTE_B, CAT0_NAME, u0, true);
+        restCreateResource(RES_ATTRIBUTE_C, RES_ATTRIBUTE_C, CAT0_NAME, u0, true);
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc,
+                            0,
+                            100,
+                            new Sort("description", "asc"),
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(3, resources.size());
+            List<String> resourcesDescriptions =
+                    resources.stream().map(Resource::getDescription).collect(Collectors.toList());
+            assertEquals(
+                    List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C),
+                    resourcesDescriptions);
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc,
+                            0,
+                            100,
+                            new Sort("creation", "desc"),
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(3, resources.size());
+            List<Date> resourcesCreationDates =
+                    resources.stream().map(Resource::getCreation).collect(Collectors.toList());
+            assertTrue(resourcesCreationDates.get(0).after(resourcesCreationDates.get(1)));
+            assertTrue(resourcesCreationDates.get(1).after(resourcesCreationDates.get(2)));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 1000, new Sort(null, null), false, false, new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(3, resources.size());
+            List<String> resourcesNames =
+                    resources.stream().map(Resource::getName).collect(Collectors.toList());
+            assertEquals(
+                    List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C), resourcesNames);
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc,
+                            0,
+                            1000,
+                            new Sort("unknown field", "desc"),
+                            false,
+                            false,
+                            new AndFilter());
+
+            assertNull(response);
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_creatorFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String CREATOR_A = "creatorA";
+        final String CREATOR_B = "creatorB";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource("name_A", "description_A", CAT0_NAME, u0, true);
+        long resourceBId = restCreateResource("name_B", "description_B", CAT0_NAME, u0, true);
+
+        Resource resourceA = resourceService.get(resourceAId);
+        resourceA.setCreator(CREATOR_A);
+        resourceService.update(resourceA);
+
+        Resource resourceB = resourceService.get(resourceBId);
+        resourceB.setCreator(CREATOR_B);
+        resourceService.update(resourceB);
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "creatorB", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource resource = resources.get(0);
+            assertEquals(CREATOR_B, resource.getCreator());
+        }
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "CREATOR_", SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "unknown creator", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+
+            assertTrue(response.isEmpty());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_editorFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String EDITOR_A = "editorA";
+        final String EDITOR_B = "editorB";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource("name_A", "description_A", CAT0_NAME, u0, true);
+        long resourceBId = restCreateResource("name_B", "description_B", CAT0_NAME, u0, true);
+
+        Resource resourceA = resourceService.get(resourceAId);
+        resourceA.setEditor(EDITOR_A);
+        resourceService.update(resourceA);
+
+        Resource resourceB = resourceService.get(resourceBId);
+        resourceB.setEditor(EDITOR_B);
+        resourceService.update(resourceB);
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.EDITOR, "editorA", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(EDITOR_A, resource.getEditor());
+        }
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.EDITOR, "EDITOR_", SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            FieldFilter editorFieldFilter =
+                    new FieldFilter(BaseField.CREATOR, "unknown editor", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+
+            assertTrue(response.isEmpty());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+        final String GROUP_A_NAME = "groupA";
+        final String GROUP_B_NAME = "groupB";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId =
+                restCreateResource(RESOURCE_A_NAME, "description_A", CAT0_NAME, user0Id, true);
+        long resourceBId =
+                restCreateResource(RESOURCE_B_NAME, "description_B", CAT0_NAME, user0Id, true);
+
+        SecurityRule securityRuleGroupA = new SecurityRule();
+        securityRuleGroupA.setGroup(userGroupService.get(createGroup(GROUP_A_NAME)));
+        securityRuleGroupA.setCanWrite(true);
+
+        List<SecurityRule> securityRulesResourceA = resourceService.getSecurityRules(resourceAId);
+        securityRulesResourceA.add(securityRuleGroupA);
+        restResourceService.updateSecurityRules(
+                sc, resourceAId, new SecurityRuleList(securityRulesResourceA));
+
+        SecurityRule securityRuleGroupB = new SecurityRule();
+        securityRuleGroupB.setGroup(userGroupService.get(createGroup(GROUP_B_NAME)));
+        securityRuleGroupB.setCanRead(true);
+
+        List<SecurityRule> securityRulesResourceB = resourceService.getSecurityRules(resourceBId);
+        securityRulesResourceB.add(securityRuleGroupB);
+        restResourceService.updateSecurityRules(
+                sc, resourceBId, new SecurityRuleList(securityRulesResourceB));
+
+        {
+            /* search for name equality of a single group */
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList("groupA"), SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity (ignoring case) of multiple groups */
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList("GROUP_"), SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* search for name equality of multiple groups */
+            GroupFilter groupFilter =
+                    new GroupFilter(List.of("groupA", "groupB", "groupC"), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* erroneous search for similarity of multiple groups */
+            GroupFilter groupFilter = new GroupFilter(List.of("a", "b"), SearchOperator.LIKE);
+
+            assertThrows(
+                    IllegalStateException.class,
+                    () ->
+                            restExtJsService.getExtResourcesList(
+                                    sc, 0, 100, new Sort("", ""), false, false, groupFilter));
+        }
+
+        {
+            /* erroneous search for equality in empty group list */
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
+
+            assertThrows(
+                    IllegalStateException.class,
+                    () ->
+                            restExtJsService.getExtResourcesList(
+                                    sc, 0, 100, new Sort("", ""), false, false, groupFilter));
+        }
+
+        {
+            /* unknown group */
+            GroupFilter groupFilter =
+                    new GroupFilter(
+                            Collections.singletonList("unknown group"), SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupFilteredWithInvalidInFilter() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        createCategory(CAT0_NAME);
+
+        restCreateResource("resourceA", "description_A", CAT0_NAME, user0Id, true);
+
+        {
+            GroupFilter groupFilter = new GroupFilter(null, SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+        }
+
+        {
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList(""), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+
+        {
+            GroupFilter groupFilter =
+                    new GroupFilter(Collections.singletonList(null), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_timeAttributesFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource("name_A", "", CAT0_NAME, u0, true);
+        long resourceBId = restCreateResource("name_B", "", CAT0_NAME, u0, true);
+
+        Resource resourceA = resourceService.get(resourceAId);
+
+        Resource resourceB = resourceService.get(resourceBId);
+        Thread.sleep(1000);
+        resourceB.setDescription("posticipated");
+        resourceService.update(resourceB);
+
+        {
+            FieldFilter ltDateFilter =
+                    new FieldFilter(
+                            BaseField.LASTUPDATE,
+                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
+                                    .format(resourceB.getLastUpdate()),
+                            SearchOperator.LESS_THAN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, ltDateFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(resourceAId, resource.getId().longValue());
+        }
+
+        {
+            FieldFilter gteDateFilter =
+                    new FieldFilter(
+                            BaseField.CREATION,
+                            new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+                                    .format(resourceA.getCreation()),
+                            SearchOperator.GREATER_THAN_OR_EQUAL_TO);
+            FieldFilter lteDateFilter =
+                    new FieldFilter(
+                            BaseField.CREATION,
+                            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS")
+                                    .format(resourceB.getLastUpdate()),
+                            SearchOperator.LESS_THAN_OR_EQUAL_TO);
+            AndFilter betweenDatesFieldFilter = new AndFilter(gteDateFilter, lteDateFilter);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, betweenDatesFieldFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_userOwnedWithPermissionsInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String OWNED_RESOURCE_NAME = "ownedResource";
+        final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* admin owned resource */
+        restCreateResource("adminResource", "", CAT0_NAME, adminId, false);
+
+        /* user owned resource */
+        restCreateResource(OWNED_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+
+        /* user owned resource - read only */
+        long readOnlyResourceId =
+                restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+        SecurityRule readOnlyRule = new SecurityRule();
+        readOnlyRule.setUser(userService.get(userId));
+        readOnlyRule.setCanRead(true);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyResourceId,
+                new SecurityRuleList(Collections.singletonList(readOnlyRule)));
+
+        /* advertised resource */
+        restCreateResource("advertisedResource", "", CAT0_NAME, adminId, true);
+
+        /* resource without security rules */
+        restCreateResource(
+                "unruledResource",
+                "",
+                CAT0_NAME,
+                adminId,
+                new SecurityRuleList(Collections.emptyList()),
+                false);
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(5, resources.size());
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            user0SecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+
+            ExtResource ownerResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(OWNED_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertTrue(ownerResource.isCanEdit());
+            assertTrue(ownerResource.isCanDelete());
+            assertTrue(ownerResource.isCanCopy());
+
+            ExtResource readOnlyResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertFalse(readOnlyResource.isCanEdit());
+            assertFalse(readOnlyResource.isCanDelete());
+            assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupOwnedResourceWithPermissionsInformation()
+            throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
+        final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* group owned resource - advertised */
+        SecurityRule editorGroupRule = new SecurityRule();
+        editorGroupRule.setGroup(group);
+        editorGroupRule.setCanRead(true);
+        editorGroupRule.setCanWrite(true);
+
+        long advertisedGroupResourceId =
+                restCreateResource(GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+        List<SecurityRule> securityRulesAdvertisedGroupResource =
+                resourceService.getSecurityRules(advertisedGroupResourceId);
+        securityRulesAdvertisedGroupResource.add(editorGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                advertisedGroupResourceId,
+                new SecurityRuleList(securityRulesAdvertisedGroupResource));
+
+        /* group owned resource - read only, advertised */
+        SecurityRule readOnlyGroupRule = new SecurityRule();
+        readOnlyGroupRule.setGroup(group);
+        readOnlyGroupRule.setCanRead(true);
+
+        long readOnlyGroupResourceId =
+                restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+        List<SecurityRule> securityRulesReadOnlyGroupResource =
+                resourceService.getSecurityRules(readOnlyGroupResourceId);
+        securityRulesReadOnlyGroupResource.add(readOnlyGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                readOnlyGroupResourceId,
+                new SecurityRuleList(securityRulesReadOnlyGroupResource));
+
+        /* group owned resource - unadvertised */
+        long unadvertisedGroupResourceId =
+                restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
+        List<SecurityRule> securityRulesUnadvertisedGroupResource =
+                resourceService.getSecurityRules(unadvertisedGroupResourceId);
+        securityRulesUnadvertisedGroupResource.add(readOnlyGroupRule);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                unadvertisedGroupResourceId,
+                new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(3, resources.size());
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            user0SecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+
+            ExtResource groupResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(GROUP_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertTrue(groupResource.isCanEdit());
+            assertTrue(groupResource.isCanDelete());
+            assertTrue(groupResource.isCanCopy());
+
+            ExtResource readOnlyResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertFalse(readOnlyResource.isCanEdit());
+            assertFalse(readOnlyResource.isCanDelete());
+            assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
     private JSONResult parse(String jsonString) {
         JSONResult ret = new JSONResult();
 
@@ -369,7 +1057,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         JSONObject jo = (JSONObject) json;
         ret.total = jo.getInt("totalCount");
 
-        Set names;
+        Set<String> names;
 
         JSONArray arrResults = jo.optJSONArray("results");
         if (arrResults != null) {
@@ -381,7 +1069,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 names = Collections.singleton(getSingle(results));
             } else {
                 LOGGER.warn("No results found");
-                names = Collections.EMPTY_SET;
+                names = Collections.emptySet();
             }
         }
 
@@ -408,6 +1096,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     static class JSONResult {
         int total;
         int returnedCount;
-        Set names;
+        Set<String> names;
     }
 }

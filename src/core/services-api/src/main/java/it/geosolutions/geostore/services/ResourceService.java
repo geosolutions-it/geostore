@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -91,25 +92,22 @@ public interface ResourceService extends SecurityService {
     Resource get(long id);
 
     /**
-     * @param nameLike
-     * @param page
-     * @param entries
-     * @param authUser
+     * @param resourceSearchParameters the object encapsulating search criteria such as pagination,
+     *     sorting options, filters, user context, and additional settings for resource retrieval.
      * @return List<ShortResource>
      * @throws BadRequestServiceEx
      */
-    List<ShortResource> getList(String nameLike, Integer page, Integer entries, User authUser)
-            throws BadRequestServiceEx;
+    List<ShortResource> getList(ResourceSearchParameters resourceSearchParameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
-     * @param page
-     * @param entries
-     * @param authUser
+     * @param resourceSearchParameters the object encapsulating search criteria such as pagination,
+     *     sorting options, filters, user context, and additional settings for resource retrieval.
      * @return List<ShortResource>
      * @throws BadRequestServiceEx
      */
-    List<ShortResource> getAll(Integer page, Integer entries, User authUser)
-            throws BadRequestServiceEx;
+    List<ShortResource> getAll(ResourceSearchParameters resourceSearchParameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
      * @param nameLike
@@ -159,54 +157,34 @@ public interface ResourceService extends SecurityService {
     long updateAttribute(long id, String name, String value) throws InternalErrorServiceEx;
 
     /**
-     * @param filter
-     * @param authUser
-     * @return List<ShortResource>
-     * @throws BadRequestServiceEx
-     * @throws InternalErrorServiceEx
-     */
-    List<ShortResource> getResources(SearchFilter filter, User authUser)
-            throws BadRequestServiceEx, InternalErrorServiceEx;
-
-    /**
-     * @param filter
-     * @param page
-     * @param entries
-     * @param authUser
-     * @return List<ShortResource>
-     * @throws BadRequestServiceEx
-     * @throws InternalErrorServiceEx
-     */
-    List<ShortResource> getResources(
-            SearchFilter filter, Integer page, Integer entries, User authUser)
-            throws BadRequestServiceEx, InternalErrorServiceEx;
-
-    /**
-     * @param filter
-     * @param page
-     * @param entries
-     * @param includeAttributes
-     * @param includeData
+     * @param resourceSearchParameters the object encapsulating search criteria such as pagination,
+     *     sorting options, filters, user context, and additional settings for resource retrieval.
      * @return List<Resource>
      * @throws BadRequestServiceEx
      * @throws InternalErrorServiceEx
      */
-    List<Resource> getResources(
-            SearchFilter filter,
-            Integer page,
-            Integer entries,
-            boolean includeAttributes,
-            boolean includeData,
-            User authUser)
+    List<Resource> getResources(ResourceSearchParameters resourceSearchParameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx;
+
+    /**
+     * @param resourceSearchParameters the object encapsulating search criteria such as pagination,
+     *     sorting options, filters, user context, and additional settings for resource retrieval.
+     * @return List<ShortResource>
+     * @throws BadRequestServiceEx
+     * @throws InternalErrorServiceEx
+     */
+    List<ShortResource> getShortResources(ResourceSearchParameters resourceSearchParameters)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
      * Return a list of resources joined with their data. This call can be very heavy for the system. Please use this method only when you are sure a
-     * few data will be returned, otherwise consider using
-     * {@link #getResources(it.geosolutions.geostore.services.dto.search.SearchFilter, it.geosolutions.geostore.core.model.User) getResources) if you
-     * need less data.
+     * few data will be returned, otherwise consider using {@link #getShortResources(ResourceSearchParameters)) if you need less data.
+     *
+     * @param resourceSearchParameters the object encapsulating search criteria such as pagination,
+     *                                 sorting options, filters, user context, and additional settings
+     *                                 for resource retrieval.
      */
-    public List<Resource> getResourcesFull(SearchFilter filter, User authUser)
+    List<Resource> getResourcesFull(ResourceSearchParameters resourceSearchParameters)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
@@ -215,8 +193,7 @@ public interface ResourceService extends SecurityService {
      * @param id
      * @return
      */
-    public List<SecurityRule> getSecurityRules(long id)
-            throws BadRequestServiceEx, InternalErrorServiceEx;
+    List<SecurityRule> getSecurityRules(long id);
 
     /**
      * Replaces the list of security rules for the given resource.
@@ -227,7 +204,7 @@ public interface ResourceService extends SecurityService {
      * @throws InternalErrorServiceEx
      * @throws NotFoundServiceEx
      */
-    public void updateSecurityRules(long id, List<SecurityRule> rules)
+    void updateSecurityRules(long id, List<SecurityRule> rules)
             throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx;
 
     /**

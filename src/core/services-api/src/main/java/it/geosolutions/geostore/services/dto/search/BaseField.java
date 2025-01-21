@@ -35,8 +35,9 @@ public enum BaseField {
     LASTUPDATE("lastUpdate", Date.class),
     NAME("name", String.class),
     DESCRIPTION("description", String.class),
-    METADATA("metadata", String.class);
-    ;
+    METADATA("metadata", String.class),
+    CREATOR("creator", String.class),
+    EDITOR("editor", String.class);
 
     private String fieldName;
 

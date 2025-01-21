@@ -28,4 +28,8 @@ public class BadRequestServiceEx extends GeoStoreServiceException {
     public BadRequestServiceEx(String message) {
         super(message);
     }
+
+    public BadRequestServiceEx(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

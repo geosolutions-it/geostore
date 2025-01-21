@@ -27,17 +27,26 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.*;
-import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.core.model.Attribute;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.services.PermissionService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
-import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
-import it.geosolutions.geostore.services.dto.search.*;
+import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.BaseField;
+import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.model.ExtGroupList;
+import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.RESTExtJsService;
@@ -45,7 +54,13 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import java.util.*;
+import it.geosolutions.geostore.services.rest.model.Sort;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
@@ -65,22 +80,21 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ResourceService resourceService;
 
-    private UserService userService;
-
     private UserGroupService groupService;
+
+    private PermissionService permissionService;
 
     /** @param resourceService */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
 
-    /** @param userService the userService to set */
-    public void setUserService(UserService userService) {
-        this.userService = userService;
-    }
-
     public void setUserGroupService(UserGroupService userGroupService) {
         this.groupService = userGroupService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     /*
@@ -118,7 +132,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             // TODO: implement includeAttributes and includeData
 
             List<ShortResource> resources =
-                    resourceService.getList(nameLike, page, limit, authUser);
+                    resourceService.getList(
+                            ResourceSearchParameters.builder()
+                                    .nameLike(nameLike)
+                                    .page(page)
+                                    .entries(limit)
+                                    .authUser(authUser)
+                                    .build());
 
             long count = 0;
             if (resources != null && !resources.isEmpty()) {
@@ -128,7 +148,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             JSONObject result = makeJSONResult(true, count, resources, authUser);
             return result.toString();
 
-        } catch (BadRequestServiceEx e) {
+        } catch (BadRequestServiceEx | InternalErrorServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
             JSONObject obj = makeJSONResult(false, 0, null, authUser);
@@ -205,7 +225,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         List<String> extraAttributesList =
                 extraAttributes != null
                         ? Arrays.asList(extraAttributes.split(","))
-                        : Collections.EMPTY_LIST;
+                        : Collections.emptyList();
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
@@ -244,17 +264,19 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                                         BaseField.NAME, resourceNameLike, SearchOperator.ILIKE));
             }
 
+            boolean shouldIncludeAttributes =
+                    includeAttributes || (extraAttributes != null && !extraAttributes.isEmpty());
             List<Resource> resources =
-                    filterOutUnadvertisedResources(
+                    filterOutUnavailableResources(
                             resourceService.getResources(
-                                    filter,
-                                    page,
-                                    limit,
-                                    includeAttributes
-                                            || (extraAttributes != null
-                                                    && !extraAttributes.isEmpty()),
-                                    includeData,
-                                    authUser),
+                                    ResourceSearchParameters.builder()
+                                            .filter(filter)
+                                            .page(page)
+                                            .entries(limit)
+                                            .includeAttributes(shouldIncludeAttributes)
+                                            .includeData(includeData)
+                                            .authUser(authUser)
+                                            .build()),
                             authUser);
 
             long count = 0;
@@ -284,13 +306,15 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * (non-Javadoc)
      *
      * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
-     * java.lang.Integer, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
+     * java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
      */
+
     @Override
     public ExtResourceList getExtResourcesList(
             SecurityContext sc,
             Integer start,
             Integer limit,
+            Sort sort,
             boolean includeAttributes,
             boolean includeData,
             SearchFilter filter)
@@ -327,23 +351,26 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         try {
             List<Resource> resources =
-                    filterOutUnadvertisedResources(
+                    filterOutUnavailableResources(
                             resourceService.getResources(
-                                    filter, page, limit, includeAttributes, includeData, authUser),
+                                    ResourceSearchParameters.builder()
+                                            .filter(filter)
+                                            .page(page)
+                                            .entries(limit)
+                                            .sortBy(sort.getSortBy())
+                                            .sortOrder(sort.getSortOrder())
+                                            .includeAttributes(includeAttributes)
+                                            .includeData(includeData)
+                                            .authUser(authUser)
+                                            .build()),
                             authUser);
 
-            // Here the Read permission on each resource must be checked due to will be returned the
-            // full Resource not just a ShortResource
-            // N.B. This is a bad method to check the permissions on each requested resource, it can
-            // perform 2 database access for each resource.
-            // Possible optimization -> When retrieving the resources, add to "filter" also another
-            // part to load only the allowed resources.
             long count = 0;
             if (!resources.isEmpty()) {
                 count = resourceService.getCountByFilterAndUser(filter, authUser);
             }
 
-            return new ExtResourceList(count, resources);
+            return new ExtResourceList(count, convertToExtResources(resources, authUser));
 
         } catch (InternalErrorServiceEx | BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
@@ -352,30 +379,43 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
     }
 
+    private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
+
+        userService.fetchSecurityRules(user);
+
+        return resources.stream()
+                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
+                .collect(Collectors.toList());
+    }
+
     /**
-     * This internal method allows us to filter out "unadvertised" resources for
-     * non-admin/non-owners
+     * Filters out unadvertised resources and adds permission information to the resources.
      *
-     * @param resources
-     * @param authUser
+     * @param foundResources
+     * @param user
      * @return
      */
-    private List<Resource> filterOutUnadvertisedResources(List<Resource> resources, User authUser) {
-        List<Resource> filteredList = new ArrayList<>();
-        for (Resource r : resources) {
-            // get security rules for user
-            User owner = null;
-            for (SecurityRule rule :
-                    resourceService.getUserSecurityRule(authUser.getName(), r.getId())) {
-                owner = rule.getUser();
-            }
-            if (r.isAdvertised()
-                    || (authUser.getRole().equals(Role.ADMIN)
-                            || (owner != null && owner.getId().equals(authUser.getId())))) {
-                filteredList.add(r);
-            }
+    private List<ExtResource> convertToExtResources(List<Resource> foundResources, User user) {
+
+        userService.fetchSecurityRules(user);
+
+        return foundResources.stream()
+                .map(r -> convertToExtResource(r, user))
+                .collect(Collectors.toList());
+    }
+
+    private ExtResource convertToExtResource(Resource resource, User user) {
+
+        ExtResource.Builder extResourceBuilder =
+                ExtResource.builder(resource)
+                        /* setting copy permission as in ResourceEnvelop.isCanCopy */
+                        .withCanCopy(user != null);
+
+        if (permissionService.canUserAccessResource(user, resource)) {
+            extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
-        return filteredList;
+
+        return extResourceBuilder.build();
     }
 
     /**
@@ -696,66 +736,11 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             if (sr != null) {
                 canDelete = sr.isCanDelete();
                 canEdit = sr.isCanEdit();
-            } else
-            // ///////////////////////////////////////////////////////////////////////
-            // This fragment checks if the authenticated user can modify and
-            // delete
-            // the loaded resource (and associated attributes and stored
-            // data).
-            // This to inform the client in HTTP response result.
-            // ///////////////////////////////////////////////////////////////////////
-            if (authUser != null) {
-                if (authUser.getRole().equals(Role.ADMIN)) {
-                    canEdit = true;
-                    canDelete = true;
-                } else {
-                    // get security rules for groups
-                    List<String> groups = new ArrayList<String>();
-                    for (UserGroup g : authUser.getGroups()) {
-                        groups.add(g.getGroupName());
-                    }
-                    for (SecurityRule rule :
-                            resourceService.getGroupSecurityRule(groups, r.getId())) {
-                        // GUEST users can not access to the delete and edit(resource,data blob is
-                        // editable) services
-                        // so only authenticated users with
-                        if (rule.isCanWrite() && !authUser.getRole().equals(Role.GUEST)) {
-                            canEdit = true;
-                            canDelete = true;
-                            break;
-                        }
-                    }
-                    // get security rules for user
-                    for (SecurityRule rule :
-                            resourceService.getUserSecurityRule(authUser.getName(), r.getId())) {
-                        User owner = rule.getUser();
-                        UserGroup userGroup = rule.getGroup();
-                        if (owner != null) {
-                            if (owner.getId().equals(authUser.getId())) {
-                                if (rule.isCanWrite()) {
-                                    canEdit = true;
-                                    canDelete = true;
-                                    break;
-                                }
-                            }
-                        } else if (userGroup != null) {
-                            if (authUser.getGroups() != null
-                                    && authUser.getGroups().stream()
-                                            .noneMatch(
-                                                    ug ->
-                                                            ug.getGroupName()
-                                                                    .equals(
-                                                                            userGroup
-                                                                                    .getGroupName()))) {
-                                if (rule.isCanWrite()) {
-                                    canEdit = true;
-                                    canDelete = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+                return;
+            }
+            if (authUser != null && permissionService.canUserAccessResource(authUser, r)) {
+                canEdit = true;
+                canDelete = true;
             }
         }
 
