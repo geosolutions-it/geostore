@@ -28,6 +28,7 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import org.junit.After;
 import org.junit.Before;
@@ -91,5 +92,31 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         assertEquals(1, groups.size());
         RESTUserGroup group = groups.get(0);
         assertEquals(0, group.getRestUsers().getList().size());
+    }
+
+    @Test
+    public void testGetAllPagination() throws Exception {
+
+        final String firstGroupName = "group1";
+        final String secondGroupName = "group2";
+        final String thirdGroupName = "group3";
+
+        long adminID = createUser("admin", Role.ADMIN, "admin");
+
+        createUserGroup(firstGroupName, new long[] {});
+        createUserGroup(secondGroupName, new long[] {});
+        createUserGroup(thirdGroupName, new long[] {});
+
+        SecurityContext sc = new MockSecurityContext(userService.get(adminID));
+
+        UserGroupList firstPage = restService.getAll(sc, 0, 2, false, false);
+        List<RESTUserGroup> firstPageGroups = firstPage.getUserGroupList();
+        List<String> firstPageGroupsNames = firstPageGroups.stream().map(RESTUserGroup::getGroupName).collect(Collectors.toList());
+        assertEquals(firstPageGroupsNames, List.of(firstGroupName, secondGroupName));
+
+        UserGroupList secondPage = restService.getAll(sc, 1, 2, false, false);
+        List<RESTUserGroup> secondPageGroups = secondPage.getUserGroupList();
+        List<String> secondPageGroupsNames = secondPageGroups.stream().map(RESTUserGroup::getGroupName).collect(Collectors.toList());
+        assertEquals(secondPageGroupsNames, List.of(thirdGroupName));
     }
 }
