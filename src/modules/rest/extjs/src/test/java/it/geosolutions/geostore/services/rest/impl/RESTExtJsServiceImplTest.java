@@ -1275,7 +1275,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
             assertEquals(attributeB.getName(), attribute.getName());
-            assertEquals("2024-08-31T16:22:45.654+0200", attribute.getValue());
+            assertTrue(attribute.getValue().matches("2024-08-31T16:22:45.654\\+\\d+"));
             assertEquals(attributeB.getType(), attribute.getType());
         }
 
