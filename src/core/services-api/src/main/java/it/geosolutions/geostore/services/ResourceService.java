@@ -92,6 +92,14 @@ public interface ResourceService extends SecurityService {
     Resource get(long id);
 
     /**
+     * @param id
+     * @param includeAttributes
+     * @param includePermissions
+     * @return long
+     */
+    Resource getResource(long id, boolean includeAttributes, boolean includePermissions);
+
+    /**
      * @param resourceSearchParameters the object encapsulating search criteria such as pagination,
      *     sorting options, filters, user context, and additional settings for resource retrieval.
      * @return List<ShortResource>

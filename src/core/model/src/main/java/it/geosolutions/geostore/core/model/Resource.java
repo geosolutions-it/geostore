@@ -187,7 +187,7 @@ public class Resource implements Serializable, CycleRecoverable {
         this.metadata = metadata;
     }
 
-    /** @return the attribute */
+    /** @return the attributes */
     @XmlElementWrapper(name = "Attributes")
     public List<Attribute> getAttribute() {
         return attribute;

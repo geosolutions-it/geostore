@@ -54,9 +54,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -369,7 +367,17 @@ public class ResourceServiceImpl implements ResourceService {
      */
     @Override
     public Resource get(long id) {
+        return resourceDAO.find(id);
+    }
+
+    @Override
+    public Resource getResource(long id, boolean includeAttributes, boolean includePermissions) {
+
         Resource resource = resourceDAO.find(id);
+
+        if (resource != null) {
+            resource = configResource(resource, includeAttributes, false, includePermissions);
+        }
 
         return resource;
     }
@@ -465,12 +473,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @return List<ShortAttribute>
      */
     private List<ShortAttribute> convertToShortAttributeList(List<Attribute> list) {
-        List<ShortAttribute> swList = new ArrayList<ShortAttribute>(list.size());
-        for (Attribute attribute : list) {
-            swList.add(new ShortAttribute(attribute));
-        }
-
-        return swList;
+        return list.stream().map(ShortAttribute::new).collect(Collectors.toList());
     }
 
     /*
@@ -597,52 +600,56 @@ public class ResourceServiceImpl implements ResourceService {
 
     public List<Resource> getResources(ResourceSearchParameters resourceSearchParameters)
             throws BadRequestServiceEx, InternalErrorServiceEx {
-
-        List<Resource> resources = searchResources(resourceSearchParameters);
-        resources =
-                this.configResourceList(
-                        resources,
-                        resourceSearchParameters.isIncludeAttributes(),
-                        resourceSearchParameters.isIncludeData());
-
-        return resources;
+        return this.configResourceList(
+                searchResources(resourceSearchParameters),
+                resourceSearchParameters.isIncludeAttributes(),
+                resourceSearchParameters.isIncludeData());
     }
 
     /**
-     * @param list
+     * @param resources
      * @param includeAttributes
      * @param includeData
      * @return List<Resource>
      */
     private List<Resource> configResourceList(
-            List<Resource> list, boolean includeAttributes, boolean includeData) {
-        List<Resource> rList = new LinkedList<>();
+            List<Resource> resources, boolean includeAttributes, boolean includeData) {
+        return resources.stream()
+                .map(r -> configResource(r, includeAttributes, includeData, false))
+                .collect(Collectors.toList());
+    }
 
-        for (Resource resource : list) {
-            Resource res = new Resource();
+    private Resource configResource(
+            Resource resource,
+            boolean includeAttributes,
+            boolean includeData,
+            boolean includePermissions) {
 
-            res.setCategory(resource.getCategory());
-            res.setCreation(resource.getCreation());
-            res.setDescription(resource.getDescription());
-            res.setAdvertised(resource.isAdvertised());
-            res.setId(resource.getId());
-            res.setLastUpdate(resource.getLastUpdate());
-            res.setName(resource.getName());
-            res.setCreator(resource.getCreator());
-            res.setEditor(resource.getEditor());
+        Resource configuredResource = new Resource();
 
-            if (includeData) {
-                res.setData(resource.getData());
-            }
+        configuredResource.setCategory(resource.getCategory());
+        configuredResource.setCreation(resource.getCreation());
+        configuredResource.setDescription(resource.getDescription());
+        configuredResource.setAdvertised(resource.isAdvertised());
+        configuredResource.setId(resource.getId());
+        configuredResource.setLastUpdate(resource.getLastUpdate());
+        configuredResource.setName(resource.getName());
+        configuredResource.setCreator(resource.getCreator());
+        configuredResource.setEditor(resource.getEditor());
 
-            if (includeAttributes) {
-                res.setAttribute(resource.getAttribute());
-            }
-
-            rList.add(res);
+        if (includeData) {
+            configuredResource.setData(resource.getData());
         }
 
-        return rList;
+        if (includeAttributes) {
+            configuredResource.setAttribute(resource.getAttribute());
+        }
+
+        if (includePermissions) {
+            configuredResource.setSecurity(getSecurityRules(resource.getId()));
+        }
+
+        return configuredResource;
     }
 
     @Override
@@ -703,7 +710,7 @@ public class ResourceServiceImpl implements ResourceService {
     private ShortResource createShortResource(User user, Resource resource) {
         ShortResource shortResource = new ShortResource(resource);
 
-        if (user != null && permissionService.canUserAccessResource(user, resource)) {
+        if (user != null && permissionService.canUserWriteResource(user, resource)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
         }
