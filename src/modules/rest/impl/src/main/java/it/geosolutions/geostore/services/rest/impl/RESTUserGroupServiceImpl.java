@@ -35,7 +35,11 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.core.SecurityContext;
@@ -160,34 +164,35 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
         }
     }
 
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.RESTUserGroupService#getAll(javax.ws.rs.core.SecurityContext, java.lang.Integer, java.lang.Integer)
-     */
     @Override
     public UserGroupList getAll(
-            SecurityContext sc, Integer page, Integer entries, boolean all, boolean includeUsers)
+            SecurityContext sc,
+            Integer page,
+            Integer entries,
+            boolean all,
+            boolean includeUsers,
+            String nameLike)
             throws BadRequestWebEx {
         try {
-            List<UserGroup> returnList = userGroupService.getAll(page, entries);
-            List<RESTUserGroup> ugl = new ArrayList<>(returnList.size());
-            for (UserGroup ug : returnList) {
-                if (all || GroupReservedNames.isAllowedName(ug.getGroupName())) {
-                    Collection<User> users =
-                            includeUsers ? userService.getByGroup(ug) : new HashSet<User>();
-                    RESTUserGroup rug =
-                            new RESTUserGroup(
-                                    ug.getId(),
-                                    ug.getGroupName(),
-                                    new HashSet<>(users),
-                                    ug.getDescription());
-                    ugl.add(rug);
-                }
-            }
-            return new UserGroupList(ugl);
+            List<RESTUserGroup> restUserGroups =
+                    userGroupService.getAll(page, entries, nameLike, all).stream()
+                            .map(ug -> createRestUserGroup(ug, includeUsers))
+                            .collect(Collectors.toList());
+            return new UserGroupList(restUserGroups);
         } catch (BadRequestServiceEx e) {
             LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());
         }
+    }
+
+    private RESTUserGroup createRestUserGroup(UserGroup userGroup, boolean includeUsers) {
+        return new RESTUserGroup(
+                userGroup.getId(),
+                userGroup.getGroupName(),
+                includeUsers
+                        ? new HashSet<>(userService.getByGroup(userGroup))
+                        : Collections.emptySet(),
+                userGroup.getDescription());
     }
 
     /* (non-Javadoc)

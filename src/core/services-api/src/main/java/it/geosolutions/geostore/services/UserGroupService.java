@@ -60,20 +60,12 @@ public interface UserGroupService {
     void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx;
 
     /**
-     * @param page
-     * @param entries
-     * @return
-     * @throws BadRequestServiceEx
-     */
-    List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
-
-    /**
      * Returns a list of groups that match searching criteria with pagination.
      *
      * @param user the user that performs the research
      * @param page the requested page number
      * @param entries max entries for page.
-     * @param nameLike a sub-string to search in group name
+     * @param nameLike a sub-string to filter groups names with ILIKE operator
      * @param all if <code>true</code> adds to result the 'everyone' group if it matches the
      *     searching criteria
      * @return a list of groups that match searching criteria with pagination.
@@ -83,7 +75,32 @@ public interface UserGroupService {
             User user, Integer page, Integer entries, String nameLike, boolean all)
             throws BadRequestServiceEx;
 
+    /**
+     * Returns a list of groups that match searching criteria with pagination.
+     *
+     * @param page the requested page number
+     * @param entries max entries for page.
+     * @return a list of groups that match searching criteria with pagination.
+     * @throws BadRequestServiceEx
+     */
+    List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
+
+    /**
+     * Returns a list of groups that match searching criteria with pagination.
+     *
+     * @param page the requested page number
+     * @param entries max entries for page.
+     * @param nameLike a sub-string to filter groups names with ILIKE operator
+     * @param all if <code>true</code> adds to result the 'everyone' group if it matches the
+     *     searching criteria
+     * @return a list of groups that match searching criteria with pagination.
+     * @throws BadRequestServiceEx
+     */
+    List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx;
+
     UserGroup get(long id) throws BadRequestServiceEx;
+
     /**
      * @param groupId
      * @param resourcesToSet
@@ -91,8 +108,7 @@ public interface UserGroupService {
      * @param canWrite
      * @return
      * @throws BadRequestServiceEx
-     * @throws BadRequestWebEx
-     * @throws NotFoundWebEx
+     * @throws NotFoundServiceEx
      */
     List<ShortResource> updateSecurityRules(
             Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite)
@@ -101,26 +117,27 @@ public interface UserGroupService {
     /**
      * Persist the special UserGroups, those that implies special behavior
      *
-     * <p>For obvious reasons this Method MUST NOT exposed through the rest interface.
+     * <p>For obvious reasons this Method MUST NOT be exposed through the rest interface.
      *
      * @return true if the persist operation finish with success, false otherwise
      */
-    public boolean insertSpecialUsersGroups();
+    boolean insertSpecialUsersGroups();
 
     /**
      * Remove the special UserGroups, those that implies special behavior
      *
-     * <p>For obvious reasons this Method MUST NOT exposed through the rest interface.
+     * <p>For obvious reasons this Method MUST NOT be exposed through the rest interface.
      *
      * @return true if the removal operation finish with success, false otherwise
      */
-    public boolean removeSpecialUsersGroups();
+    boolean removeSpecialUsersGroups();
+
     /**
      * Get The UserGroup from the name
      *
      * @param name
      */
-    public UserGroup get(String name);
+    UserGroup get(String name);
 
     /**
      * Returns the amount of groups that match searching criteria. The 'everyone' group is never

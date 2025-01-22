@@ -71,6 +71,12 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
+    public List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx {
+        return null;
+    }
+
+    @Override
     public List<UserGroup> getAllAllowed(
             User user, Integer page, Integer entries, String nameLike, boolean all)
             throws BadRequestServiceEx {
