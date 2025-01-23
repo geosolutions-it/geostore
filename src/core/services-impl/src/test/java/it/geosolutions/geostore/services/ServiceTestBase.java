@@ -24,6 +24,7 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
+import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -58,6 +59,8 @@ public class ServiceTestBase extends TestCase {
 
     protected static UserGroupService userGroupService;
 
+    protected static TagService tagService;
+
     protected static ResourceDAO resourceDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
@@ -78,6 +81,7 @@ public class ServiceTestBase extends TestCase {
                 categoryService = (CategoryService) ctx.getBean("categoryService");
                 userService = (UserService) ctx.getBean("userService");
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
+                tagService = (TagService) ctx.getBean("tagService");
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
             }
         }
@@ -401,15 +405,19 @@ public class ServiceTestBase extends TestCase {
         return userGroupService.insert(group);
     }
 
+    protected long createTag(String name, String color, String description) throws Exception {
+        return tagService.insert(new Tag(name, color, description));
+    }
+
     protected User buildFakeAdminUser() {
         User user = new User();
         user.setRole(Role.ADMIN);
         user.setName("ThisIsNotARealUser");
         return user;
     }
-
     // SecurityRuleBuilder class
     protected class SecurityRuleBuilder {
+
         private SecurityRule rule;
 
         public SecurityRuleBuilder() {

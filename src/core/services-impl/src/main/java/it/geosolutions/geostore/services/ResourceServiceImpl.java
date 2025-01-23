@@ -88,32 +88,26 @@ public class ResourceServiceImpl implements ResourceService {
     private UserService userService;
     private PermissionService permissionService;
 
-    /** @param securityDAO the securityDAO to set */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }
 
-    /** @param storedDataDAO the storedDataDAO to set */
     public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
         this.storedDataDAO = storedDataDAO;
     }
 
-    /** @param resourceDAO */
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
-    /** @param attributeDAO */
     public void setAttributeDAO(AttributeDAO attributeDAO) {
         this.attributeDAO = attributeDAO;
     }
 
-    /** @param categoryDAO the categoryDAO to set */
     public void setCategoryDAO(CategoryDAO categoryDAO) {
         this.categoryDAO = categoryDAO;
     }
 
-    /** @param userGroupDAO the userGroupDAO to set */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }

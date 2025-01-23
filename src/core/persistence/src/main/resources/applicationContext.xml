@@ -70,8 +70,10 @@
 		<property name="searchProcessor" ref="geostoreSearchProcessor" />
 	</bean>
 
+	<bean id="tagDAO" class="it.geosolutions.geostore.core.dao.impl.TagDAOImpl" >
+		<property name="searchProcessor" ref="geostoreSearchProcessor" />
+	</bean>
 
-	
 	<bean id="securityDAO" class="it.geosolutions.geostore.core.dao.impl.SecurityDAOImpl" >
 		<property name="searchProcessor" ref="geostoreSearchProcessor" />
 		<property name="userGroupDAO" ref="userGroupDAO"/>

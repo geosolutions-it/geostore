@@ -62,6 +62,9 @@
           class="it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl">
         <property name="sessionTimeout" value="86400"/>
     </bean>
+    <bean id="restTagService"
+          class="it.geosolutions.geostore.services.rest.impl.RESTTagServiceImpl">
+    </bean>
 
     <bean id="sessionServiceDelegate"
           class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
@@ -134,6 +137,7 @@
     <jaxrs:server id="geoStoreRESTResource" address="/resources">
         <jaxrs:serviceBeans>
             <ref bean="restResourceService"/>
+            <ref bean="restTagService"/>
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
@@ -150,6 +154,26 @@
             <ref bean="noCacheInterceptor"/>
         </jaxrs:outInterceptors>
     </jaxrs:server>
+
+<!--    <jaxrs:server id="geoStoreRESTTag" address="/tags">-->
+<!--        <jaxrs:serviceBeans>-->
+<!--            <ref bean="restTagService"/>-->
+<!--        </jaxrs:serviceBeans>-->
+
+<!--        <jaxrs:features>-->
+<!--            <cxf:logging/>-->
+<!--        </jaxrs:features>-->
+
+<!--        <jaxrs:providers>-->
+<!--            <ref bean="jaxbXmlProvider"/>-->
+<!--            <ref bean="jsonProvider"/>-->
+<!--            <ref bean="jaxbContextResolver"/>-->
+<!--            <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>-->
+<!--        </jaxrs:providers>-->
+<!--        <jaxrs:outInterceptors>-->
+<!--            <ref bean="noCacheInterceptor"/>-->
+<!--        </jaxrs:outInterceptors>-->
+<!--    </jaxrs:server>-->
 
     <jaxrs:server id="geoStoreRESTCategory" address="/categories">
         <jaxrs:serviceBeans>

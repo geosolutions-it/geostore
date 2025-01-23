@@ -31,7 +31,9 @@ package it.geosolutions.geostore.core.model;
 import com.sun.xml.bind.CycleRecoverable;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,6 +41,9 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -117,6 +122,13 @@ public class Resource implements Serializable, CycleRecoverable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
+    @ManyToMany
+    @JoinTable(
+            name = "gs_resource_tags",
+            joinColumns = @JoinColumn(name = "resource_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<Tag> tags = new HashSet<>();
+
     /** @return the id */
     public Long getId() {
         return id;
@@ -165,6 +177,26 @@ public class Resource implements Serializable, CycleRecoverable {
     /** @param lastUpdate the lastUpdate to set */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    /** @return the creator username */
+    public String getCreator() {
+        return creator;
+    }
+
+    /** @param creator the creator username */
+    public void setCreator(String creator) {
+        this.creator = creator;
+    }
+
+    /** @return the editor username */
+    public String getEditor() {
+        return editor;
+    }
+
+    /** @param editor the creator username */
+    public void setEditor(String editor) {
+        this.editor = editor;
     }
 
     /** @return the advertised */
@@ -230,24 +262,12 @@ public class Resource implements Serializable, CycleRecoverable {
         this.security = security;
     }
 
-    /** @return the creator username */
-    public String getCreator() {
-        return creator;
+    public Set<Tag> getTags() {
+        return tags;
     }
 
-    /** @param creator the creator username */
-    public void setCreator(String creator) {
-        this.creator = creator;
-    }
-
-    /** @return the editor username */
-    public String getEditor() {
-        return editor;
-    }
-
-    /** @param editor the creator username */
-    public void setEditor(String editor) {
-        this.editor = editor;
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
     }
 
     /*
