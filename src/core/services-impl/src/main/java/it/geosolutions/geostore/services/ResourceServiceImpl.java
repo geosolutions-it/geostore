@@ -352,25 +352,21 @@ public class ResourceServiceImpl implements ResourceService {
         return validName;
     }
 
-    /*
-     * @param id
-     *
-     * @return the Resource or null if none was found with given id
-     *
-     * @see it.geosolutions.geostore.services.ResourceService#get(long)
-     */
     @Override
     public Resource get(long id) {
         return resourceDAO.find(id);
     }
 
     @Override
-    public Resource getResource(long id, boolean includeAttributes, boolean includePermissions) {
+    public Resource getResource(
+            long id, boolean includeAttributes, boolean includePermissions, boolean includeTags) {
 
         Resource resource = resourceDAO.find(id);
 
         if (resource != null) {
-            resource = configResource(resource, includeAttributes, false, includePermissions);
+            resource =
+                    configResource(
+                            resource, includeAttributes, false, includePermissions, includeTags);
         }
 
         return resource;
@@ -597,7 +593,8 @@ public class ResourceServiceImpl implements ResourceService {
         return this.configResourceList(
                 searchResources(resourceSearchParameters),
                 resourceSearchParameters.isIncludeAttributes(),
-                resourceSearchParameters.isIncludeData());
+                resourceSearchParameters.isIncludeData(),
+                resourceSearchParameters.isIncludeTags());
     }
 
     /**
@@ -607,9 +604,12 @@ public class ResourceServiceImpl implements ResourceService {
      * @return List<Resource>
      */
     private List<Resource> configResourceList(
-            List<Resource> resources, boolean includeAttributes, boolean includeData) {
+            List<Resource> resources,
+            boolean includeAttributes,
+            boolean includeData,
+            boolean includeTags) {
         return resources.stream()
-                .map(r -> configResource(r, includeAttributes, includeData, false))
+                .map(r -> configResource(r, includeAttributes, includeData, false, includeTags))
                 .collect(Collectors.toList());
     }
 
@@ -617,7 +617,8 @@ public class ResourceServiceImpl implements ResourceService {
             Resource resource,
             boolean includeAttributes,
             boolean includeData,
-            boolean includePermissions) {
+            boolean includePermissions,
+            boolean includeTags) {
 
         Resource configuredResource = new Resource();
 
@@ -641,6 +642,10 @@ public class ResourceServiceImpl implements ResourceService {
 
         if (includePermissions) {
             configuredResource.setSecurity(getSecurityRules(resource.getId()));
+        }
+
+        if (includeTags) {
+            configuredResource.setTags(resource.getTags());
         }
 
         return configuredResource;

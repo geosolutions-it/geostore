@@ -31,7 +31,6 @@ package it.geosolutions.geostore.core.model;
 import com.sun.xml.bind.CycleRecoverable;
 import java.io.Serializable;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.persistence.CascadeType;
@@ -41,8 +40,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -122,12 +119,8 @@ public class Resource implements Serializable, CycleRecoverable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<SecurityRule> security;
 
-    @ManyToMany
-    @JoinTable(
-            name = "gs_resource_tags",
-            joinColumns = @JoinColumn(name = "resource_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    private Set<Tag> tags = new HashSet<>();
+    @ManyToMany(mappedBy = "resources", fetch = FetchType.EAGER)
+    private Set<Tag> tags;
 
     /** @return the id */
     public Long getId() {
@@ -330,6 +323,11 @@ public class Resource implements Serializable, CycleRecoverable {
         if (advertised != null) {
             builder.append(", ");
             builder.append("advertised=").append(advertised);
+        }
+
+        if (tags != null) {
+            builder.append(", ");
+            builder.append("tags=").append(tags);
         }
 
         builder.append(']');

@@ -62,18 +62,21 @@ public interface RESTTagService {
     long insert(@Context SecurityContext sc, @Multipart("tag") Tag tag) throws BadRequestServiceEx;
 
     /**
-     * @param page
-     * @param entries
+     * @param sc the security context
+     * @param page the requested page number
+     * @param entries max entries for page
+     * @param nameLike a sub-string to search in tah name with ILIKE operator
      * @return Tag
      * @throws BadRequestWebEx
      */
     @GET
     @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @Secured({"ROLE_ADMIN"})
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     TagList getAll(
             @Context SecurityContext sc,
             @QueryParam("page") Integer page,
-            @QueryParam("entries") Integer entries)
+            @QueryParam("entries") Integer entries,
+            @QueryParam("nameLike") String nameLike)
             throws BadRequestWebEx;
 
     /**
@@ -84,7 +87,7 @@ public interface RESTTagService {
     @GET
     @Path("{id}")
     @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @Secured({"ROLE_ADMIN"})
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
     Tag get(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
 
     /**
@@ -92,6 +95,7 @@ public interface RESTTagService {
      * @param tag
      * @return long
      * @throws NotFoundWebEx
+     * @throws BadRequestWebEx
      */
     @PUT
     @Path("{id}")
@@ -99,7 +103,7 @@ public interface RESTTagService {
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN"})
     long update(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("tag") Tag tag)
-            throws NotFoundWebEx;
+            throws NotFoundWebEx, BadRequestWebEx;
 
     /**
      * @param id
@@ -109,4 +113,32 @@ public interface RESTTagService {
     @Path("{id}")
     @Secured({"ROLE_ADMIN"})
     void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
+
+    /**
+     * @param id tag identifier
+     * @param resourceId resource identifier
+     * @throws NotFoundWebEx
+     */
+    @POST
+    @Path("/{id}/resource/{resourceId}")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    void addToResource(
+            @Context SecurityContext sc,
+            @PathParam("id") long id,
+            @PathParam("resourceId") long resourceId)
+            throws NotFoundWebEx;
+
+    /**
+     * @param id tag identifier
+     * @param resourceId resource identifier
+     * @throws NotFoundWebEx
+     */
+    @DELETE
+    @Path("/{id}/resource/{resourceId}")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    void removeFromResource(
+            @Context SecurityContext sc,
+            @PathParam("id") long id,
+            @PathParam("resourceId") long resourceId)
+            throws NotFoundWebEx;
 }

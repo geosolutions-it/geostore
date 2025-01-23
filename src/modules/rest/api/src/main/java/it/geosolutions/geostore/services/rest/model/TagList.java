@@ -29,23 +29,23 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.Tag;
-import java.util.List;
+import java.util.Collection;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "TagList")
 public class TagList {
 
-    private List<Tag> list;
+    private Collection<Tag> list;
 
     public TagList() {}
 
-    public TagList(List<Tag> list) {
+    public TagList(Collection<Tag> list) {
         this.list = list;
     }
 
     @XmlElement(name = "Tag")
-    public List<Tag> getList() {
+    public Collection<Tag> getList() {
         return list;
     }
 }

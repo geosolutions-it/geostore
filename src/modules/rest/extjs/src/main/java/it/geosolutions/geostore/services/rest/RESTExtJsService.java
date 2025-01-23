@@ -126,9 +126,10 @@ public interface RESTExtJsService {
      * @param start the n-th group shown as first in results
      * @param limit max entries per page
      * @param sort the sorting parameters for the results (includes <code>sortBy</code> and <code>
-     *     sortOrder</code>)
+     *                          sortOrder</code>)
      * @param includeAttributes whether to include attributes in the returned results
      * @param includeData whether to include data in the returned results
+     * @param includeTags whether to include tags in the returned results
      * @param filter the multipart filter object to apply for resource filtering
      * @return
      * @throws BadRequestWebEx
@@ -147,6 +148,7 @@ public interface RESTExtJsService {
             @BeanParam Sort sort,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeData") @DefaultValue("false") boolean includeData,
+            @QueryParam("includeTags") @DefaultValue("false") boolean includeTags,
             @Multipart("filter") SearchFilter filter)
             throws BadRequestWebEx, InternalErrorWebEx;
 
@@ -192,6 +194,7 @@ public interface RESTExtJsService {
      * @param id the id of the resource to fetch
      * @param includeAttributes whether to include attributes in the returned resource
      * @param includePermissions whether to include permissions in the returned resource
+     * @param includeTags whether to include tags in the returned resource
      * @return the resource
      * @throws ForbiddenErrorWebEx if the resource is protected
      * @throws NotFoundWebEx if the resource is not found
@@ -204,5 +207,6 @@ public interface RESTExtJsService {
             @Context SecurityContext sc,
             @PathParam("id") long id,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
-            @QueryParam("includePermissions") @DefaultValue("false") boolean includePermissions);
+            @QueryParam("includePermissions") @DefaultValue("false") boolean includePermissions,
+            @QueryParam("includeTags") @DefaultValue("false") boolean includeTags);
 }

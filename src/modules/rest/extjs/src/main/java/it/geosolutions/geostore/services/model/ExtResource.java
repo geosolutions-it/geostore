@@ -32,6 +32,7 @@ public class ExtResource extends Resource {
         this.setData(builder.resource.getData());
         this.setCategory(builder.resource.getCategory());
         this.setSecurity(builder.resource.getSecurity());
+        this.setTags(builder.resource.getTags());
 
         this.canEdit = builder.canEdit;
         this.canDelete = builder.canDelete;

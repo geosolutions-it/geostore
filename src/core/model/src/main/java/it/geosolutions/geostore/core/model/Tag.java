@@ -36,15 +36,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 @Entity(name = "Tag")
 @Table(
         name = "gs_tag",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})},
         indexes = {@Index(name = "idx_tag_name", columnList = "name")})
 @XmlRootElement(name = "Tag")
 public class Tag implements Serializable {
@@ -62,7 +63,11 @@ public class Tag implements Serializable {
     @Column(name = "description")
     private String description;
 
-    @ManyToMany(mappedBy = "tags")
+    @ManyToMany
+    @JoinTable(
+            name = "gs_resource_tags",
+            joinColumns = @JoinColumn(name = "tag_id"),
+            inverseJoinColumns = @JoinColumn(name = "resource_id"))
     private Set<Resource> resources = new HashSet<>();
 
     public Tag() {}
@@ -105,6 +110,7 @@ public class Tag implements Serializable {
         this.description = description;
     }
 
+    @XmlTransient
     public Set<Resource> getResources() {
         return resources;
     }
@@ -150,7 +156,6 @@ public class Tag implements Serializable {
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
         result = (prime * result) + ((color == null) ? 0 : color.hashCode());
         result = (prime * result) + ((description == null) ? 0 : description.hashCode());
-        //        result = (prime * result) + ((resource == null) ? 0 : resource.hashCode());
 
         return result;
     }
@@ -182,14 +187,6 @@ public class Tag implements Serializable {
         } else if (!name.equals(other.name)) {
             return false;
         }
-        //        if (resource == null) {
-        //            if (other.resource != null) {
-        //                return false;
-        //            }
-        //        } else if (!resource.equals(other.resource)) {
-        //            return false;
-        //        }
-
         return true;
     }
 }

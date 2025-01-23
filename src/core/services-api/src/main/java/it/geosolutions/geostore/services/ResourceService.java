@@ -87,7 +87,7 @@ public interface ResourceService extends SecurityService {
 
     /**
      * @param id
-     * @return long
+     * @return the Resource or null if none was found with given id
      */
     Resource get(long id);
 
@@ -95,9 +95,11 @@ public interface ResourceService extends SecurityService {
      * @param id
      * @param includeAttributes
      * @param includePermissions
+     * @param includeTags
      * @return long
      */
-    Resource getResource(long id, boolean includeAttributes, boolean includePermissions);
+    Resource getResource(
+            long id, boolean includeAttributes, boolean includePermissions, boolean includeTags);
 
     /**
      * @param resourceSearchParameters the object encapsulating search criteria such as pagination,

@@ -45,10 +45,11 @@ public interface TagService {
     /**
      * @param page
      * @param entries
+     * @param nameLike
      * @return List<Tag>
      * @throws BadRequestServiceEx
      */
-    List<Tag> getAll(Integer page, Integer entries) throws BadRequestServiceEx;
+    List<Tag> getAll(Integer page, Integer entries, String nameLike) throws BadRequestServiceEx;
 
     /**
      * @param id
@@ -69,17 +70,9 @@ public interface TagService {
      * @param id
      * @return
      */
-    boolean delete(long id);
-    //    /**
-    //     * @return the tag with the exact name requested, or null if none was found
-    //     * @throws BadRequestServiceEx is a null name was given
-    //     */
+    void delete(long id) throws NotFoundServiceEx;
 
-    //    Tag get(String name) throws BadRequestServiceEx;
+    void addToResource(long id, long resourceId) throws NotFoundServiceEx;
 
-//    /**
-//     * @param nameLike
-//     * @return long
-//     */
-//    long getCount(String nameLike);
+    void removeFromResource(long id, long resourceId) throws NotFoundServiceEx;
 }

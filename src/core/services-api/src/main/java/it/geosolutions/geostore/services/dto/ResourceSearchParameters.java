@@ -12,6 +12,7 @@ public class ResourceSearchParameters {
     private final String nameLike;
     private final boolean includeAttributes;
     private final boolean includeData;
+    private final boolean includeTags;
     private final User authUser;
 
     private ResourceSearchParameters(
@@ -23,6 +24,7 @@ public class ResourceSearchParameters {
             String nameLike,
             boolean includeAttributes,
             boolean includeData,
+            boolean includeTags,
             User authUser) {
         this.filter = filter;
         this.page = page;
@@ -32,6 +34,7 @@ public class ResourceSearchParameters {
         this.nameLike = nameLike;
         this.includeAttributes = includeAttributes;
         this.includeData = includeData;
+        this.includeTags = includeTags;
         this.authUser = authUser;
     }
 
@@ -67,6 +70,10 @@ public class ResourceSearchParameters {
         return includeData;
     }
 
+    public boolean isIncludeTags() {
+        return includeTags;
+    }
+
     public User getAuthUser() {
         return authUser;
     }
@@ -84,6 +91,7 @@ public class ResourceSearchParameters {
         private String nameLike;
         private boolean includeAttributes;
         private boolean includeData;
+        private boolean includeTags;
         private User authUser;
 
         private Builder() {}
@@ -128,6 +136,11 @@ public class ResourceSearchParameters {
             return this;
         }
 
+        public Builder includeTags(boolean includeTags) {
+            this.includeTags = includeTags;
+            return this;
+        }
+
         public Builder authUser(User authUser) {
             this.authUser = authUser;
             return this;
@@ -143,6 +156,7 @@ public class ResourceSearchParameters {
                     nameLike,
                     includeAttributes,
                     includeData,
+                    includeTags,
                     authUser);
         }
     }

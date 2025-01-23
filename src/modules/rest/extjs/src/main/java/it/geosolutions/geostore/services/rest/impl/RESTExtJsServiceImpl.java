@@ -59,6 +59,7 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.Sort;
+import it.geosolutions.geostore.services.rest.model.TagList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -328,6 +329,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             Sort sort,
             boolean includeAttributes,
             boolean includeData,
+            boolean includeTags,
             SearchFilter filter)
             throws BadRequestWebEx {
 
@@ -337,12 +339,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
-                    "getResourcesList(start="
-                            + start
-                            + ", limit="
-                            + limit
-                            + ", includeAttributes="
-                            + includeAttributes);
+                    "getResourcesList(start={}, limit={}, includeAttributes={}, includeData={}, includeTags={}",
+                    start,
+                    limit,
+                    includeAttributes,
+                    includeData,
+                    includeTags);
         }
 
         User authUser = null;
@@ -372,6 +374,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                                             .sortOrder(sort.getSortOrder())
                                             .includeAttributes(includeAttributes)
                                             .includeData(includeData)
+                                            .includeTags(includeTags)
                                             .authUser(authUser)
                                             .build()),
                             authUser);
@@ -673,9 +676,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     @Override
     public ExtShortResource getExtResource(
-            SecurityContext sc, long id, boolean includeAttributes, boolean includePermissions) {
+            SecurityContext sc,
+            long id,
+            boolean includeAttributes,
+            boolean includePermissions,
+            boolean includeTags) {
 
-        Resource resource = resourceService.getResource(id, includeAttributes, includePermissions);
+        Resource resource =
+                resourceService.getResource(id, includeAttributes, includePermissions, includeTags);
 
         if (resource == null) {
             throw new NotFoundWebEx("Resource not found");
@@ -697,6 +705,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         return ExtShortResource.builder(shortResource)
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
                 .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
+                .withTagList(new TagList(resource.getTags()))
                 .build();
     }
 

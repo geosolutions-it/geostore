@@ -47,30 +47,25 @@ public class ExtResourceList {
 
     public ExtResourceList() {}
 
-    /** @param list */
     public ExtResourceList(long count, List<ExtResource> list) {
         this.count = count;
         this.list = list;
     }
 
-    /** @return the count */
     @XmlElement(name = "ResourceCount")
     public long getCount() {
         return count;
     }
 
-    /** @param count the count to set */
     public void setCount(long count) {
         this.count = count;
     }
 
-    /** @return List<ShortResource> */
     @XmlElement(name = "Resource")
     public List<ExtResource> getList() {
         return list;
     }
 
-    /** @param list */
     public void setList(List<ExtResource> list) {
         this.list = list;
     }
