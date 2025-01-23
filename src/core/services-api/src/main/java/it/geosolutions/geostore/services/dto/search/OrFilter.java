@@ -36,10 +36,9 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlRootElement(name = "OR")
 public class OrFilter extends SearchFilter {
 
-    /** The Constant serialVersionUID. */
     private static final long serialVersionUID = -1319295933578215551L;
 
-    private List<SearchFilter> filters = new ArrayList<SearchFilter>();
+    private List<SearchFilter> filters = new ArrayList<>();
 
     public OrFilter() {}
 
@@ -55,7 +54,8 @@ public class OrFilter extends SearchFilter {
         @XmlElement(name = "OR", type = OrFilter.class),
         @XmlElement(name = "AND", type = AndFilter.class),
         @XmlElement(name = "FIELD", type = FieldFilter.class),
-        @XmlElement(name = "CATEGORY", type = CategoryFilter.class)
+        @XmlElement(name = "CATEGORY", type = CategoryFilter.class),
+        @XmlElement(name = "GROUP", type = GroupFilter.class)
     })
     public List<SearchFilter> getFilters() {
         return filters;
@@ -76,6 +76,6 @@ public class OrFilter extends SearchFilter {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[" + filters + '}';
+        return getClass().getSimpleName() + "[" + filters + ']';
     }
 }
