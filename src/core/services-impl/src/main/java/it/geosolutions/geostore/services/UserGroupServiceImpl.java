@@ -204,40 +204,14 @@ public class UserGroupServiceImpl implements UserGroupService {
         }
     }
 
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.UserGroupService#getAll(java.lang.Integer, java.lang.Integer)
-     */
-    @Override
-    public List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
-        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
-            throw new BadRequestServiceEx("Page and entries params should be declared together.");
-        }
-        Search searchCriteria = new Search(UserGroup.class);
-        if (page != null) {
-            searchCriteria.setMaxResults(entries);
-            searchCriteria.setPage(page);
-        }
-        searchCriteria.addSortAsc("groupName");
-        List<UserGroup> found = userGroupDAO.search(searchCriteria);
-        return remapWithoutAttributes(found);
-    }
-
     @Override
     public List<UserGroup> getAllAllowed(
             User user, Integer page, Integer entries, String nameLike, boolean all)
             throws BadRequestServiceEx {
+
         if (user == null) throw new BadRequestServiceEx("User must be defined.");
 
-        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
-            throw new BadRequestServiceEx("Page and entries params should be declared together.");
-        }
-
-        Search searchCriteria = new Search(UserGroup.class);
-        if (page != null) {
-            searchCriteria.setMaxResults(entries);
-            searchCriteria.setPage(page);
-        }
-        searchCriteria.addSortAsc("groupName");
+        Search searchCriteria = createGetAllSearchCriteria(page, entries, nameLike, all);
 
         if (user.getRole() == Role.USER) {
             Set<UserGroup> userGrp = user.getGroups();
@@ -248,14 +222,47 @@ public class UserGroupServiceImpl implements UserGroupService {
             searchCriteria.addFilterIn("id", grpIds);
         }
 
-        if (nameLike != null) searchCriteria.addFilterILike("groupName", nameLike);
+        return remapWithoutAttributes(userGroupDAO.search(searchCriteria));
+    }
 
-        if (!all)
+    @Override
+    public List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
+        return getAll(page, entries, null, true);
+    }
+
+    @Override
+    public List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx {
+        return remapWithoutAttributes(
+                userGroupDAO.search(createGetAllSearchCriteria(page, entries, nameLike, all)));
+    }
+
+    private Search createGetAllSearchCriteria(
+            Integer page, Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx {
+
+        if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
+            throw new BadRequestServiceEx("Page and entries params should be declared together.");
+        }
+
+        Search searchCriteria = new Search(UserGroup.class);
+
+        searchCriteria.addSortAsc("groupName");
+
+        if (page != null) {
+            searchCriteria.setMaxResults(entries);
+            searchCriteria.setPage(page);
+        }
+
+        if (nameLike != null) {
+            searchCriteria.addFilterILike("groupName", nameLike);
+        }
+
+        if (!all) {
             searchCriteria.addFilterNotEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        }
 
-        List<UserGroup> found = userGroupDAO.search(searchCriteria);
-
-        return remapWithoutAttributes(found);
+        return searchCriteria;
     }
 
     /* (non-Javadoc)

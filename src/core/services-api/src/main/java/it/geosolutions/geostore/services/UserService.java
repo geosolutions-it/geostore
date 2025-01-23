@@ -130,8 +130,8 @@ public interface UserService {
     public Collection<User> getByGroup(UserGroup group);
 
     /**
-     * Update the user entity by fetching its security rules and group security rules
-     * from the database.
+     * Update the user entity by fetching its security rules and group security rules from the
+     * database.
      *
      * @param user
      */

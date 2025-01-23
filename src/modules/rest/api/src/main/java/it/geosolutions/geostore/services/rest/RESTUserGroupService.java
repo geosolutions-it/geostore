@@ -95,6 +95,19 @@ public interface RESTUserGroupService {
             @PathParam("groupid") long groupId)
             throws NotFoundWebEx;
 
+    /**
+     * Returns groups that match searching criteria with pagination.
+     *
+     * @param sc the security context
+     * @param page the requested page number
+     * @param entries max entries for page
+     * @param nameLike a sub-string to search in group name with ILIKE operator
+     * @param all if <code>true</code> adds to result the 'everyone' group if it matches the
+     *     searching criteria
+     * @param includeUsers if to include group users in the results
+     * @return a list of groups that match searching criteria with pagination.
+     * @throws BadRequestWebEx
+     */
     @GET
     @Path("/")
     @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
@@ -104,7 +117,8 @@ public interface RESTUserGroupService {
             @QueryParam("page") Integer page,
             @QueryParam("entries") Integer entries,
             @QueryParam("all") @DefaultValue("false") boolean all,
-            @QueryParam("users") @DefaultValue("true") boolean includeUsers)
+            @QueryParam("users") @DefaultValue("true") boolean includeUsers,
+            @QueryParam("nameLike") String nameLike)
             throws BadRequestWebEx;
 
     @PUT

@@ -63,7 +63,13 @@ public class MockedUserGroupService implements UserGroupService {
 
     @Override
     public List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
-        return new ArrayList<UserGroup>(GROUPS.values());
+        return new ArrayList<>(GROUPS.values());
+    }
+
+    @Override
+    public List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all)
+            throws BadRequestServiceEx {
+        return new ArrayList<>(GROUPS.values());
     }
 
     @Override

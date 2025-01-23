@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -28,6 +29,7 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +43,7 @@ import org.junit.Test;
 public class RESTUserGroupServiceImplTest extends ServiceTestBase {
 
     RESTUserGroupServiceImpl restService;
-    long adminID;
+    UserGroupDAO userGroupDAO;
 
     @Before
     public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {
@@ -67,7 +69,7 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 
         // retrieve the list of usergroups (with users flag set to true)
-        UserGroupList res = restService.getAll(sc, 0, 1000, true, true);
+        UserGroupList res = restService.getAll(sc, 0, 1000, true, true, null);
         List<RESTUserGroup> groups = res.getUserGroupList();
         assertEquals(1, groups.size());
         RESTUserGroup group = groups.get(0);
@@ -86,10 +88,74 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 
         // retrieve the list of usergroups (with users flag set to false)
-        UserGroupList res = restService.getAll(sc, 0, 1000, true, false);
+        UserGroupList res = restService.getAll(sc, 0, 1000, true, false, null);
         List<RESTUserGroup> groups = res.getUserGroupList();
         assertEquals(1, groups.size());
         RESTUserGroup group = groups.get(0);
         assertEquals(0, group.getRestUsers().getList().size());
+    }
+
+    @Test
+    public void testGetAllPagination() throws Exception {
+
+        final String firstGroupName = "group1";
+        final String secondGroupName = "group2";
+        final String thirdGroupName = "group3";
+
+        long adminID = createUser("admin", Role.ADMIN, "admin");
+
+        createUserGroup(firstGroupName, new long[] {});
+        createUserGroup(secondGroupName, new long[] {});
+        createUserGroup(thirdGroupName, new long[] {});
+
+        SecurityContext sc = new MockSecurityContext(userService.get(adminID));
+
+        UserGroupList firstPage = restService.getAll(sc, 0, 2, false, false, null);
+        List<RESTUserGroup> firstPageGroups = firstPage.getUserGroupList();
+        List<String> firstPageGroupsNames =
+                firstPageGroups.stream()
+                        .map(RESTUserGroup::getGroupName)
+                        .collect(Collectors.toList());
+        assertEquals(List.of(firstGroupName, secondGroupName), firstPageGroupsNames);
+
+        UserGroupList secondPage = restService.getAll(sc, 1, 2, false, false, null);
+        List<RESTUserGroup> secondPageGroups = secondPage.getUserGroupList();
+        List<String> secondPageGroupsNames =
+                secondPageGroups.stream()
+                        .map(RESTUserGroup::getGroupName)
+                        .collect(Collectors.toList());
+        assertEquals(List.of(thirdGroupName), secondPageGroupsNames);
+    }
+
+    @Test
+    public void testGetAllFiltered() throws Exception {
+
+        final String groupAName = "group_A";
+        final String groupBName = "groupB";
+        final String groupCName = "this is group C";
+
+        long adminID = createUser("admin", Role.ADMIN, "admin");
+
+        createUserGroup(groupAName, new long[] {});
+        createUserGroup(groupBName, new long[] {});
+        createUserGroup(groupCName, new long[] {});
+
+        SecurityContext sc = new MockSecurityContext(userService.get(adminID));
+
+        UserGroupList allGroupsMatched = restService.getAll(sc, null, null, false, false, "group%");
+        List<RESTUserGroup> allGroupsMatchedGroups = allGroupsMatched.getUserGroupList();
+        List<String> allGroupsMatchedGroupsNames =
+                allGroupsMatchedGroups.stream()
+                        .map(RESTUserGroup::getGroupName)
+                        .collect(Collectors.toList());
+        assertTrue(List.of(groupAName, groupBName).containsAll(allGroupsMatchedGroupsNames));
+
+        UserGroupList oneGroupMatched = restService.getAll(sc, null, null, false, false, "group_a");
+        List<RESTUserGroup> oneGroupsMatchedGroups = oneGroupMatched.getUserGroupList();
+        List<String> oneGroupMatchedGroupsNames =
+                oneGroupsMatchedGroups.stream()
+                        .map(RESTUserGroup::getGroupName)
+                        .collect(Collectors.toList());
+        assertEquals(List.of(groupAName), oneGroupMatchedGroupsNames);
     }
 }
