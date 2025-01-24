@@ -31,18 +31,20 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class UserGroupList implements Iterable<RESTUserGroup> {
 
     private List<RESTUserGroup> list;
+    private long count;
 
     public UserGroupList() {
-        this.list = new ArrayList<RESTUserGroup>();
+        this.list = new ArrayList<>();
     }
 
     /** @param list */
-    public UserGroupList(List<RESTUserGroup> list) {
+    public UserGroupList(List<RESTUserGroup> list, long count) {
         super();
+        this.count = count;
         if (list != null) {
             this.list = list;
         } else {
-            this.list = new ArrayList<RESTUserGroup>();
+            this.list = new ArrayList<>();
         }
     }
 
@@ -55,6 +57,10 @@ public class UserGroupList implements Iterable<RESTUserGroup> {
     /** @param userGroup the userGroup to set */
     public void setUserGroupList(List<RESTUserGroup> userGroup) {
         this.list = userGroup;
+    }
+
+    public long getCount() {
+        return count;
     }
 
     @Override
