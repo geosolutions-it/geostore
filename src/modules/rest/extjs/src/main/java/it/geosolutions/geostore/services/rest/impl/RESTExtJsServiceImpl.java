@@ -535,7 +535,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            nameLike = nameLike.replaceAll("[*]", "%");
+            if (nameLike != null) {
+                nameLike = nameLike.replaceAll("[*]", "%");
+            }
             List<UserGroup> groups =
                     groupService.getAllAllowed(authUser, page, limit, nameLike, all);
 

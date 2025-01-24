@@ -39,6 +39,7 @@ import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtShortResource;
@@ -1518,6 +1519,38 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     () ->
                             restExtJsService.getExtResource(
                                     user0SecurityContext, protectedGroupResourceId, true, true));
+        }
+    }
+
+    @Test
+    public void testGetGroupsList() throws Exception {
+        final String groupAName = "groupA";
+
+        long groupAId = createGroup(groupAName);
+        UserGroup groupA = userGroupService.get(groupAId);
+
+        createGroup("groupB");
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(groupA), "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, null, 0, 1000, true);
+            List<UserGroup> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(userSecurityContext, null, 0, 1000, true);
+            List<UserGroup> userGroups = response.getList();
+            assertEquals(1, userGroups.size());
+            UserGroup userGroup = userGroups.get(0);
+            assertEquals(groupAName, userGroup.getGroupName());
         }
     }
 
