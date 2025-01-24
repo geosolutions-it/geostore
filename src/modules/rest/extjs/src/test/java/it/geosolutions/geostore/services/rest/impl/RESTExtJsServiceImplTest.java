@@ -28,6 +28,7 @@ import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
@@ -49,6 +50,7 @@ import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -1092,6 +1094,60 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testExtResourcesList_withTags() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        Tag tagA = new Tag("tagA", "#4561aa", "dusky");
+        Tag tagB = new Tag("tagB", "magenta", null);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("ownedResource", "", CAT0_NAME, userId, false);
+        long tagAId = tagService.insert(tagA);
+        long tagBId = tagService.insert(tagB);
+
+        tagService.addToResource(tagAId, resourceId);
+        tagService.addToResource(tagBId, resourceId);
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            true,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource extResource = resources.get(0);
+            Collection<Tag> tags = extResource.getTags();
+            assertEquals(2, tags.size());
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource extResource = resources.get(0);
+            assertNull(extResource.getTags());
+        }
+    }
+
+    @Test
     public void testGetExtResource_userOwnedWithAttributesInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
 
@@ -1561,6 +1617,40 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                                     true,
                                     true,
                                     false));
+        }
+    }
+
+    @Test
+    public void testGetExtResource_withTags() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        Tag tagA = new Tag("tagA", "#4561aa", "dusky");
+        Tag tagB = new Tag("tagB", "magenta", null);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("ownedResource", "", CAT0_NAME, userId, false);
+        long tagAId = tagService.insert(tagA);
+        long tagBId = tagService.insert(tagB);
+
+        tagService.addToResource(tagAId, resourceId);
+        tagService.addToResource(tagBId, resourceId);
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            userSecurityContext, resourceId, false, false, true);
+            Collection<Tag> tags = response.getTagList().getList();
+            assertEquals(2, tags.size());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            userSecurityContext, resourceId, false, false, false);
+            assertNull(response.getTagList().getList());
         }
     }
 

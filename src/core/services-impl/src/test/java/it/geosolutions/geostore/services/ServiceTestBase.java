@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.dao.TagDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -63,6 +64,8 @@ public class ServiceTestBase extends TestCase {
 
     protected static ResourceDAO resourceDAO;
 
+    protected static TagDAO tagDAO;
+
     protected static ClassPathXmlApplicationContext ctx = null;
 
     protected final Logger LOGGER = LogManager.getLogger(getClass());
@@ -83,6 +86,7 @@ public class ServiceTestBase extends TestCase {
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
                 tagService = (TagService) ctx.getBean("tagService");
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
+                tagDAO = (TagDAO) ctx.getBean("tagDAO");
             }
         }
     }
@@ -104,6 +108,7 @@ public class ServiceTestBase extends TestCase {
         assertNotNull(categoryService);
         assertNotNull(userService);
         assertNotNull(userGroupService);
+        assertNotNull(tagService);
     }
 
     /**
@@ -113,11 +118,26 @@ public class ServiceTestBase extends TestCase {
     protected void removeAll()
             throws NotFoundServiceEx, BadRequestServiceEx, InternalErrorServiceEx {
         LOGGER.info("***** removeAll()");
+        removeAllTag();
         removeAllResource();
         removeAllStoredData();
         removeAllCategory();
         removeAllUser();
         removeAllUserGroup();
+    }
+
+    private void removeAllTag() throws BadRequestServiceEx {
+        tagService
+                .getAll(null, null, null)
+                .forEach(
+                        item -> {
+                            LOGGER.info("Removing tag: {}", item.getName());
+                            try {
+                                tagService.delete(item.getId());
+                            } catch (NotFoundServiceEx e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
     }
 
     /**
@@ -415,6 +435,7 @@ public class ServiceTestBase extends TestCase {
         user.setName("ThisIsNotARealUser");
         return user;
     }
+
     // SecurityRuleBuilder class
     protected class SecurityRuleBuilder {
 

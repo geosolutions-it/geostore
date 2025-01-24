@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,21 +19,174 @@
  */
 package it.geosolutions.geostore.services;
 
+import static org.junit.Assert.assertThrows;
+
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import java.util.Collections;
 import java.util.List;
-import org.junit.Test;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TagServiceImplTest extends ServiceTestBase {
 
     public TagServiceImplTest() {}
 
-    @Test
     public void testInsert() throws Exception {
 
-        Tag tag = new Tag("SLD", "#4561aa", "dusky");
+        Tag tagA = new Tag("tag-A", "#4561aa", "dusky");
+        Tag tagB = new Tag("tag-B", "black", null);
 
-        tagService.insert(tag);
+        tagService.insert(tagA);
+        tagService.insert(tagB);
 
-        List<Tag> all = tagService.getAll(null, null);
+        List<Tag> foundTags = tagDAO.findAll();
+        assertEquals(2, foundTags.size());
+        List<Long> foundTagsIds = foundTags.stream().map(Tag::getId).collect(Collectors.toList());
+        assertTrue(foundTagsIds.stream().noneMatch(Objects::isNull));
+    }
+
+    public void testInsertNull() throws Exception {
+        assertThrows(BadRequestServiceEx.class, () -> tagService.insert(null));
+    }
+
+    public void testGetAll() throws Exception {
+
+        final Tag tag_a = new Tag("tag-A", "#4561aa", "dusky");
+        final Tag tag_b = new Tag("tag-B", "black", null);
+
+        tagDAO.persist(tag_a, tag_b);
+
+        List<Tag> foundTags = tagService.getAll(0, 100, null);
+        assertEquals(List.of(tag_a, tag_b), foundTags);
+    }
+
+    public void testGetAllPaginated() throws Exception {
+
+        final Tag tag_a = new Tag("tag-A", "#4561aa", "dusky");
+        final Tag tag_b = new Tag("tag-B", "black", null);
+        final Tag tag_c = new Tag("tag-C", "navy", "kind of blue");
+
+        tagDAO.persist(tag_a, tag_b, tag_c);
+
+        List<Tag> firstPageTags = tagService.getAll(0, 2, null);
+        assertEquals(List.of(tag_a, tag_b), firstPageTags);
+        List<Tag> secondPageTags = tagService.getAll(1, 2, null);
+        assertEquals(List.of(tag_c), secondPageTags);
+    }
+
+    public void testGetAllFiltered() throws Exception {
+
+        final Tag tag_a = new Tag("tag-A", "#4561aa", "dusky");
+        final Tag tag_b = new Tag("tag-B", "black", null);
+        final Tag tag_c = new Tag("C", "navy", "kind of blue");
+
+        tagDAO.persist(tag_a, tag_b, tag_c);
+
+        List<Tag> foundTags = tagService.getAll(0, 100, "tag%");
+        assertEquals(List.of(tag_a, tag_b), foundTags);
+    }
+
+    public void testGet() throws Exception {
+
+        final Tag tag_a = new Tag("tag-A", "#4561aa", "dusky");
+        final Tag tag_b = new Tag("tag-B", "black", null);
+
+        tagDAO.persist(tag_a, tag_b);
+
+        Tag foundTag = tagService.get(tag_a.getId());
+        assertEquals(tag_a, foundTag);
+    }
+
+    public void testUpdate() throws Exception {
+
+        final Tag expected_tag = new Tag("updated name", "black", null);
+
+        Tag tag = new Tag("tag", "#4561aa", "dusky");
+        tagDAO.persist(tag);
+
+        tagService.update(tag.getId(), expected_tag);
+
+        Tag updatedTag = tagDAO.find(tag.getId());
+        assertEquals(expected_tag, updatedTag);
+    }
+
+    public void testUpdateNotFoundTag() throws Exception {
+        assertThrows(NotFoundServiceEx.class, () -> tagService.update(0L, new Tag()));
+    }
+
+    public void testDelete() throws Exception {
+
+        Tag tag = new Tag("tag", "#4561aa", "dusky");
+        tagDAO.persist(tag);
+
+        tagService.delete(tag.getId());
+
+        Tag foundTag = tagDAO.find(tag.getId());
+        assertNull(foundTag);
+    }
+
+    public void testDeleteNotFoundTag() throws Exception {
+        assertThrows(NotFoundServiceEx.class, () -> tagService.delete(0L));
+    }
+
+    public void testAddToResource() throws Exception {
+
+        final Tag tag = new Tag("tag", "#4561aa", "dusky");
+
+        long resourceId = createResource("resource", "description", "category");
+
+        tagDAO.persist(tag);
+
+        tagService.addToResource(tag.getId(), resourceId);
+
+        Resource resource = resourceDAO.find(resourceId);
+        Set<Tag> resourceTags = resource.getTags();
+        assertEquals(1, resourceTags.size());
+        Tag resourceTag = resourceTags.stream().findFirst().orElseThrow();
+        assertEquals(tag, resourceTag);
+    }
+
+    public void testAddToResourceNotFoundTag() throws Exception {
+        long resourceId = createResource("resource", "description", "category");
+        assertThrows(NotFoundServiceEx.class, () -> tagService.addToResource(0L, resourceId));
+    }
+
+    public void testAddToResourceNotFoundResource() throws Exception {
+        Tag tag = new Tag("tag", "#4561aa", "dusky");
+        tagDAO.persist(tag);
+        assertThrows(NotFoundServiceEx.class, () -> tagService.addToResource(tag.getId(), 0L));
+    }
+
+    public void testRemoveFromResource() throws Exception {
+
+        Tag tag = new Tag("tag", "#4561aa", "dusky");
+        long resourceId = createResource("resource", "description", "category");
+
+        tagDAO.persist(tag);
+
+        Resource resource = resourceDAO.find(resourceId);
+        resource.setTags(Collections.singleton(tag));
+        resourceService.update(resource);
+
+        tagService.removeFromResource(tag.getId(), resourceId);
+
+        resource = resourceDAO.find(resourceId);
+        Set<Tag> resourceTags = resource.getTags();
+        assertTrue(resourceTags.isEmpty());
+    }
+
+    public void testRemoveFromResourceNotFoundTag() throws Exception {
+        long resourceId = createResource("resource", "description", "category");
+        assertThrows(NotFoundServiceEx.class, () -> tagService.removeFromResource(0L, resourceId));
+    }
+
+    public void testRemoveFromResourceNotFoundResource() throws Exception {
+        Tag tag = new Tag("tag", "#4561aa", "dusky");
+        tagDAO.persist(tag);
+        assertThrows(NotFoundServiceEx.class, () -> tagService.removeFromResource(tag.getId(), 0L));
     }
 }
