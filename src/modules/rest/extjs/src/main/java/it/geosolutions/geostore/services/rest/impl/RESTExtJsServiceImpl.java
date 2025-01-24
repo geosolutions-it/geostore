@@ -97,7 +97,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         this.groupService = userGroupService;
     }
 
-    public void setPermissionService(ResourcePermissionService resourcePermissionService) {
+    public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
         this.resourcePermissionService = resourcePermissionService;
     }
 

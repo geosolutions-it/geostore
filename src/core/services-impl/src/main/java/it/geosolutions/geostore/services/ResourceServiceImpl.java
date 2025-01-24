@@ -123,7 +123,7 @@ public class ResourceServiceImpl implements ResourceService {
         this.userService = userService;
     }
 
-    public void setPermissionService(ResourcePermissionService resourcePermissionService) {
+    public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
         this.resourcePermissionService = resourcePermissionService;
     }
 
