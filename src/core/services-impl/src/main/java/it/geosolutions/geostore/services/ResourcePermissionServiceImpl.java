@@ -7,7 +7,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.List;
 import java.util.function.BiFunction;
 
-public class PermissionServiceImpl implements PermissionService {
+public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
     private final BiFunction<SecurityRule, Resource, Boolean> resourceOwnership =
             (rule, resource) -> resource.getId().equals(rule.getResource().getId());

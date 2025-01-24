@@ -86,7 +86,8 @@ public class ResourceServiceImpl implements ResourceService {
     private SecurityDAO securityDAO;
 
     private UserService userService;
-    private PermissionService permissionService;
+
+    private ResourcePermissionService resourcePermissionService;
 
     /** @param securityDAO the securityDAO to set */
     public void setSecurityDAO(SecurityDAO securityDAO) {
@@ -122,8 +123,8 @@ public class ResourceServiceImpl implements ResourceService {
         this.userService = userService;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
+    public void setPermissionService(ResourcePermissionService resourcePermissionService) {
+        this.resourcePermissionService = resourcePermissionService;
     }
 
     /*
@@ -702,7 +703,7 @@ public class ResourceServiceImpl implements ResourceService {
         userService.fetchSecurityRules(user);
 
         return resources.stream()
-                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
+                .filter(r -> resourcePermissionService.isResourceAvailableForUser(r, user))
                 .map(r -> createShortResource(user, r))
                 .collect(Collectors.toList());
     }
@@ -710,7 +711,7 @@ public class ResourceServiceImpl implements ResourceService {
     private ShortResource createShortResource(User user, Resource resource) {
         ShortResource shortResource = new ShortResource(resource);
 
-        if (user != null && permissionService.canUserWriteResource(user, resource)) {
+        if (user != null && resourcePermissionService.canUserWriteResource(user, resource)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
         }
