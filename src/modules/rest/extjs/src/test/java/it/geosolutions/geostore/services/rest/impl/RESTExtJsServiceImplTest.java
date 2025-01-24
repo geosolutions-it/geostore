@@ -505,7 +505,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             sc,
                             0,
                             1000,
-                            new Sort("unknown field", "desc"),
+                            new Sort("unknownfield", "desc"),
                             false,
                             false,
                             new AndFilter());
