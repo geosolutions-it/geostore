@@ -57,12 +57,13 @@ public class RESTTagServiceImpl extends RESTServiceImpl implements RESTTagServic
 
     @Override
     public long insert(SecurityContext sc, Tag tag) {
-        if (tag == null) throw new BadRequestWebEx("Tag is null");
-        if (tag.getId() != null) throw new BadRequestWebEx("Id should be null");
-
         try {
+            if (tag == null) throw new BadRequestWebEx("Tag is null");
+            if (tag.getId() != null) throw new BadRequestWebEx("Id should be null");
+
             return tagService.insert(tag);
         } catch (BadRequestServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());
         }
     }
@@ -72,8 +73,9 @@ public class RESTTagServiceImpl extends RESTServiceImpl implements RESTTagServic
             throws BadRequestWebEx {
         try {
             return new TagList(tagService.getAll(page, entries, nameLike));
-        } catch (BadRequestServiceEx ex) {
-            throw new BadRequestWebEx(ex.getMessage());
+        } catch (BadRequestServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new BadRequestWebEx(e.getMessage());
         }
     }
 
@@ -93,6 +95,7 @@ public class RESTTagServiceImpl extends RESTServiceImpl implements RESTTagServic
         try {
             return tagService.update(id, tag);
         } catch (BadRequestServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
