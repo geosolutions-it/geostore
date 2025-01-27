@@ -47,6 +47,10 @@ import javax.ws.rs.core.SecurityContext;
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
+/**
+ * REST service mapped under the <code>/resources</code> path. For example, to call the "get all"
+ * operation, use the endpoint: <code>GET /rest/resources/tag</code>.
+ */
 @Path("tag")
 public interface RESTTagService {
 

@@ -155,26 +155,6 @@
         </jaxrs:outInterceptors>
     </jaxrs:server>
 
-<!--    <jaxrs:server id="geoStoreRESTTag" address="/tags">-->
-<!--        <jaxrs:serviceBeans>-->
-<!--            <ref bean="restTagService"/>-->
-<!--        </jaxrs:serviceBeans>-->
-
-<!--        <jaxrs:features>-->
-<!--            <cxf:logging/>-->
-<!--        </jaxrs:features>-->
-
-<!--        <jaxrs:providers>-->
-<!--            <ref bean="jaxbXmlProvider"/>-->
-<!--            <ref bean="jsonProvider"/>-->
-<!--            <ref bean="jaxbContextResolver"/>-->
-<!--            <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>-->
-<!--        </jaxrs:providers>-->
-<!--        <jaxrs:outInterceptors>-->
-<!--            <ref bean="noCacheInterceptor"/>-->
-<!--        </jaxrs:outInterceptors>-->
-<!--    </jaxrs:server>-->
-
     <jaxrs:server id="geoStoreRESTCategory" address="/categories">
         <jaxrs:serviceBeans>
             <ref bean="restCategoryService"/>
