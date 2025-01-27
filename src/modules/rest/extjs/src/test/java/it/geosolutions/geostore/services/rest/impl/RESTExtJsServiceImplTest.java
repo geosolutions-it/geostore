@@ -40,6 +40,7 @@ import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.dto.search.TagFilter;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtShortResource;
@@ -813,6 +814,151 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
                             sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_tagFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+        final String TAG_A_NAME = "tagA";
+        final String TAG_B_NAME = "tagB";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        long tagAId = tagService.insert(new Tag(TAG_A_NAME, "", null));
+        long tagBId = tagService.insert(new Tag(TAG_B_NAME, "", null));
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId =
+                restCreateResource(RESOURCE_A_NAME, "description_A", CAT0_NAME, user0Id, true);
+        long resourceBId =
+                restCreateResource(RESOURCE_B_NAME, "description_B", CAT0_NAME, user0Id, true);
+
+        tagService.addToResource(tagAId, resourceAId);
+        tagService.addToResource(tagBId, resourceAId);
+
+        tagService.addToResource(tagBId, resourceBId);
+
+        {
+            /* search for name equality of a single tag */
+            TagFilter tagFilter =
+                    new TagFilter(Collections.singletonList("tagA"), SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity (ignoring case) of multiple tags */
+            TagFilter tagFilter =
+                    new TagFilter(Collections.singletonList("TAG_"), SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* search for name equality of multiple tags */
+            TagFilter tagFilter = new TagFilter(List.of("tagA", "tagB", "TagC"), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* erroneous search for similarity of multiple tags */
+            TagFilter tagFilter = new TagFilter(List.of("a", "b"), SearchOperator.LIKE);
+
+            assertThrows(
+                    IllegalStateException.class,
+                    () ->
+                            restExtJsService.getExtResourcesList(
+                                    sc, 0, 100, new Sort("", ""), false, false, false, tagFilter));
+        }
+
+        {
+            /* erroneous search for equality in empty tag list */
+            TagFilter tagFilter = new TagFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
+
+            assertThrows(
+                    IllegalStateException.class,
+                    () ->
+                            restExtJsService.getExtResourcesList(
+                                    sc, 0, 100, new Sort("", ""), false, false, false, tagFilter));
+        }
+
+        {
+            /* unknown tag */
+            TagFilter tagFilter =
+                    new TagFilter(
+                            Collections.singletonList("unknown tag"), SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_tagFilteredWithInvalidInFilter() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        createCategory(CAT0_NAME);
+
+        restCreateResource("resourceA", "description_A", CAT0_NAME, user0Id, true);
+
+        {
+            TagFilter tagFilter = new TagFilter(null, SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+        }
+
+        {
+            TagFilter tagFilter = new TagFilter(Collections.singletonList(""), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            assertTrue(response.getList().isEmpty());
+        }
+
+        {
+            TagFilter tagFilter = new TagFilter(Collections.singletonList(null), SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
 
             assertTrue(response.getList().isEmpty());
         }

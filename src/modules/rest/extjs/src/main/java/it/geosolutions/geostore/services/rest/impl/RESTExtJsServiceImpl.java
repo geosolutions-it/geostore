@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.PermissionService;
@@ -65,6 +66,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
@@ -705,7 +707,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         return ExtShortResource.builder(shortResource)
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
                 .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
-                .withTagList(new TagList(resource.getTags(), resource.getTags().size()))
+                .withTagList(createTagList(resource.getTags()))
                 .build();
     }
 
@@ -715,6 +717,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
         return new ShortAttributeList(
                 attributes.stream().map(ShortAttribute::new).collect(Collectors.toList()));
+    }
+
+    private TagList createTagList(Set<Tag> tags) {
+        if (tags == null) {
+            return new TagList();
+        }
+        return new TagList(tags, tags.size());
     }
 
     /**

@@ -32,6 +32,7 @@ import it.geosolutions.geostore.services.dto.search.NotFilter;
 import it.geosolutions.geostore.services.dto.search.OrFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.dto.search.TagFilter;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.text.ParseException;
@@ -268,6 +269,36 @@ public class SearchConverter implements FilterVisitor {
         Filter f = new Filter();
         f.setOperator(op);
         f.setProperty("security.group.groupName");
+
+        List<String> names = filter.getNames();
+
+        if (SearchOperator.IN != filter.getOperator() && names.size() != 1) {
+            throw new IllegalStateException("Erroneous search op " + filter.getOperator());
+        }
+
+        if (SearchOperator.IN == filter.getOperator()) {
+            f.setValue(names);
+        } else {
+            f.setValue(names.get(0));
+        }
+
+        trgFilter = f;
+    }
+
+    /** This is a leaf filter. */
+    @Override
+    public void visit(TagFilter filter) {
+        GroupFilter.checkOperator(filter.getOperator());
+
+        Integer op = ops_rest_trg.get(filter.getOperator());
+
+        if (op == null) {
+            throw new IllegalStateException("Unknown op " + filter.getOperator());
+        }
+
+        Filter f = new Filter();
+        f.setOperator(op);
+        f.setProperty("tags.name");
 
         List<String> names = filter.getNames();
 

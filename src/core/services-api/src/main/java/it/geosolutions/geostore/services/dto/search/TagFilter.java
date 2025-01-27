@@ -26,17 +26,17 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** Filter by group name */
-@XmlRootElement(name = "Group")
-public class GroupFilter extends SearchFilter implements Serializable {
+/** Filter by tag name */
+@XmlRootElement(name = "Tag")
+public class TagFilter extends SearchFilter implements Serializable {
 
     private List<String> names = new ArrayList<>();
 
     private SearchOperator operator;
 
-    public GroupFilter() {}
+    public TagFilter() {}
 
-    public GroupFilter(List<String> names, SearchOperator operator) {
+    public TagFilter(List<String> names, SearchOperator operator) {
         this.names = names;
         setOperator(operator);
     }
