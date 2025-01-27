@@ -75,7 +75,7 @@ public interface RESTTagService {
      */
     @GET
     @Produces({MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
-    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     TagList getAll(
             @Context SecurityContext sc,
             @QueryParam("page") Integer page,
