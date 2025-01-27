@@ -28,7 +28,11 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.*;
+import it.geosolutions.geostore.core.model.Attribute;
+import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourceService;
@@ -44,8 +48,18 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTResourceService;
-import it.geosolutions.geostore.services.rest.exception.*;
-import it.geosolutions.geostore.services.rest.model.*;
+import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
+import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
+import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTAttribute;
+import it.geosolutions.geostore.services.rest.model.RESTCategory;
+import it.geosolutions.geostore.services.rest.model.RESTResource;
+import it.geosolutions.geostore.services.rest.model.ResourceList;
+import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
+import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
+import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
 import java.util.ArrayList;
 import java.util.List;
@@ -308,14 +322,12 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     public ShortResourceList getList(
             SecurityContext sc, String nameLike, Integer page, Integer entries)
             throws BadRequestWebEx {
-        User authUser = extractAuthUser(sc);
-        nameLike = nameLike.replaceAll("[*]", "%");
-
         try {
+            User authUser = extractAuthUser(sc);
             return new ShortResourceList(
                     resourceService.getList(
                             ResourceSearchParameters.builder()
-                                    .nameLike(nameLike)
+                                    .nameLike(convertNameLikeToSqlSyntax(nameLike))
                                     .page(page)
                                     .entries(entries)
                                     .authUser(authUser)
@@ -355,8 +367,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
      */
     @Override
     public long getCount(SecurityContext sc, String nameLike) {
-        nameLike = nameLike.replaceAll("[*]", "%");
-        return resourceService.getCount(nameLike);
+        return resourceService.getCount(convertNameLikeToSqlSyntax(nameLike));
     }
 
     /**

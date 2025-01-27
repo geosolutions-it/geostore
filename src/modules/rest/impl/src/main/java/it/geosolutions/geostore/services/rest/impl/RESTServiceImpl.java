@@ -278,4 +278,8 @@ public abstract class RESTServiceImpl {
         guest.setGroups(groups);
         return new UsernamePasswordAuthenticationToken(guest, "", authorities);
     }
+
+    protected String convertNameLikeToSqlSyntax(String nameLike) {
+        return nameLike.replaceAll("[*]", "%");
+    }
 }

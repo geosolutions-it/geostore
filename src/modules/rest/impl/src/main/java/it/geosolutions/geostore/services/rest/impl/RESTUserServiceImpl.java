@@ -300,8 +300,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
      */
     @Override
     public long getCount(SecurityContext sc, String nameLike) {
-        nameLike = nameLike.replaceAll("[*]", "%");
-        return userService.getCount(nameLike);
+        return userService.getCount(convertNameLikeToSqlSyntax(nameLike));
     }
 
     /*
@@ -350,14 +349,13 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             Integer entries,
             boolean includeAttributes)
             throws BadRequestWebEx {
-
-        nameLike = nameLike.replaceAll("[*]", "%");
-
         try {
-            List<User> userList = userService.getAll(page, entries, nameLike, includeAttributes);
+            List<User> userList =
+                    userService.getAll(
+                            page, entries, convertNameLikeToSqlSyntax(nameLike), includeAttributes);
             Iterator<User> iterator = userList.iterator();
 
-            List<RESTUser> restUSERList = new ArrayList<RESTUser>();
+            List<RESTUser> restUserList = new ArrayList<>();
             while (iterator.hasNext()) {
                 User user = iterator.next();
 
@@ -368,10 +366,10 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                                 user.getRole(),
                                 user.getGroups(),
                                 false);
-                restUSERList.add(restUser);
+                restUserList.add(restUser);
             }
 
-            return new UserList(restUSERList);
+            return new UserList(restUserList);
         } catch (BadRequestServiceEx ex) {
             throw new BadRequestWebEx(ex.getMessage());
         }

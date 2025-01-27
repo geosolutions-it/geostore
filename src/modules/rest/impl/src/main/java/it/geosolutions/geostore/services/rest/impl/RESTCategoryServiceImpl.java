@@ -201,7 +201,6 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
      */
     @Override
     public long getCount(SecurityContext sc, String nameLike) {
-        nameLike = nameLike.replaceAll("[*]", "%");
-        return categoryService.getCount(nameLike);
+        return categoryService.getCount(convertNameLikeToSqlSyntax(nameLike));
     }
 }

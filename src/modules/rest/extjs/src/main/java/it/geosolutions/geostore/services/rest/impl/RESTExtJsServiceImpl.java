@@ -143,13 +143,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         int page = start == 0 ? start : start / limit;
 
         try {
-            nameLike = nameLike.replaceAll("[*]", "%");
+            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
             // TODO: implement includeAttributes and includeData
 
             List<ShortResource> resources =
                     resourceService.getList(
                             ResourceSearchParameters.builder()
-                                    .nameLike(nameLike)
+                                    .nameLike(sqlNameLike)
                                     .page(page)
                                     .entries(limit)
                                     .authUser(authUser)
@@ -157,7 +157,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             long count = 0;
             if (resources != null && !resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(nameLike, authUser);
+                count = resourceService.getCountByFilterAndUser(sqlNameLike, authUser);
             }
 
             JSONObject result = makeJSONResult(true, count, resources, authUser);
@@ -271,12 +271,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         try {
             SearchFilter filter = new CategoryFilter(categoryName, SearchOperator.EQUAL_TO);
             if (resourceNameLike != null) {
-                resourceNameLike = resourceNameLike.replaceAll("[*]", "%");
                 filter =
                         new AndFilter(
                                 filter,
                                 new FieldFilter(
-                                        BaseField.NAME, resourceNameLike, SearchOperator.ILIKE));
+                                        BaseField.NAME,
+                                        convertNameLikeToSqlSyntax(resourceNameLike),
+                                        SearchOperator.ILIKE));
             }
 
             boolean shouldIncludeAttributes =
@@ -493,12 +494,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            nameLike = nameLike.replaceAll("[*]", "%");
-            List<User> users = userService.getAll(page, limit, nameLike, includeAttributes);
+            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
+            List<User> users = userService.getAll(page, limit, sqlNameLike, includeAttributes);
 
             long count = 0;
             if (users != null && !users.isEmpty()) {
-                count = userService.getCount(nameLike);
+                count = userService.getCount(sqlNameLike);
             }
 
             return new ExtUserList(count, users);
@@ -540,13 +541,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            nameLike = nameLike.replaceAll("[*]", "%");
+            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
             List<UserGroup> groups =
-                    groupService.getAllAllowed(authUser, page, limit, nameLike, all);
+                    groupService.getAllAllowed(authUser, page, limit, sqlNameLike, all);
 
             long count = 0;
             if (groups != null && !groups.isEmpty()) {
-                count = groupService.getCount(authUser, nameLike, all);
+                count = groupService.getCount(authUser, sqlNameLike, all);
             }
 
             return new ExtGroupList(count, groups);
