@@ -33,7 +33,6 @@
 package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.Tag;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.TagService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -45,7 +44,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class RESTTagServiceImpl extends RESTServiceImpl implements RESTTagService {
+public class RESTTagServiceImpl implements RESTTagService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTTagServiceImpl.class);
 
@@ -128,10 +127,5 @@ public class RESTTagServiceImpl extends RESTServiceImpl implements RESTTagServic
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         }
-    }
-
-    @Override
-    protected SecurityService getSecurityService() {
-        return null;
     }
 }
