@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -66,5 +66,10 @@ public class TagDAOImpl extends BaseDAO<Tag, Long> implements TagDAO {
     @Override
     public boolean removeById(Long id) {
         return super.removeById(id);
+    }
+
+    @Override
+    public int count(ISearch search) {
+        return super.count(search);
     }
 }

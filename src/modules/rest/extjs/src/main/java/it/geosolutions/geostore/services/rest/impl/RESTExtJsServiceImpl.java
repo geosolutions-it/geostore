@@ -705,7 +705,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         return ExtShortResource.builder(shortResource)
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
                 .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
-                .withTagList(new TagList(resource.getTags()))
+                .withTagList(new TagList(resource.getTags(), resource.getTags().size()))
                 .build();
     }
 

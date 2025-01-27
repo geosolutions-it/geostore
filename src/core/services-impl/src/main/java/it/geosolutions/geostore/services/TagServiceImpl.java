@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -104,6 +104,18 @@ public class TagServiceImpl implements TagService {
         if (get(id) == null || !tagDAO.removeById(id)) {
             throw new NotFoundServiceEx("Tag not found");
         }
+    }
+
+    @Override
+    public long count(String nameLike) {
+
+        Search searchCriteria = new Search(Tag.class);
+
+        if (nameLike != null) {
+            searchCriteria.addFilterILike("name", nameLike);
+        }
+
+        return tagDAO.count(searchCriteria);
     }
 
     @Override

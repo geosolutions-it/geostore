@@ -1,11 +1,5 @@
 /*
- * $ Header: it.geosolutions.georepo.services..rest.impl.RESTTagServiceImpl ,v. 0.1 9-set-2011 10.39.58 created by tobaro <tobia.dipisa at geo-solutions.it> $
- * $ Revision: 0.1 $
- * $ Date: 8-set-2011 10.39.58 $
- *
- * ====================================================================
- *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -40,6 +34,7 @@ import it.geosolutions.geostore.services.rest.RESTTagService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.TagList;
+import java.util.List;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,7 +66,14 @@ public class RESTTagServiceImpl implements RESTTagService {
     public TagList getAll(SecurityContext sc, Integer page, Integer entries, String nameLike)
             throws BadRequestWebEx {
         try {
-            return new TagList(tagService.getAll(page, entries, nameLike));
+            List<Tag> tags = tagService.getAll(page, entries, nameLike);
+
+            long count = 0;
+            if (!tags.isEmpty()) {
+                count = tagService.count(nameLike);
+            }
+
+            return new TagList(tags, count);
         } catch (BadRequestServiceEx e) {
             LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());

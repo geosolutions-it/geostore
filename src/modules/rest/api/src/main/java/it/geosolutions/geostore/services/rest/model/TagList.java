@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -37,15 +37,22 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class TagList {
 
     private Collection<Tag> list;
+    private long count;
 
     public TagList() {}
 
-    public TagList(Collection<Tag> list) {
+    public TagList(Collection<Tag> list, long count) {
         this.list = list;
+        this.count = count;
     }
 
     @XmlElement(name = "Tag")
     public Collection<Tag> getList() {
         return list;
+    }
+
+    @XmlElement(name = "Count")
+    public long getCount() {
+        return count;
     }
 }

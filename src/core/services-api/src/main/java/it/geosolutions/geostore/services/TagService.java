@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -71,6 +71,8 @@ public interface TagService {
      * @return
      */
     void delete(long id) throws NotFoundServiceEx;
+
+    long count(String nameLike);
 
     void addToResource(long id, long resourceId) throws NotFoundServiceEx;
 
