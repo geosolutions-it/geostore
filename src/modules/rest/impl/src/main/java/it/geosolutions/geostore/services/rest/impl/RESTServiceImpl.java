@@ -279,7 +279,7 @@ public abstract class RESTServiceImpl {
         return new UsernamePasswordAuthenticationToken(guest, "", authorities);
     }
 
-    protected String convertNameLikeToSqlSyntax(String nameLike) {
+    public static String convertNameLikeToSqlSyntax(String nameLike) {
         if (nameLike == null) {
             return null;
         }

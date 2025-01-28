@@ -69,7 +69,7 @@ public interface RESTTagService {
      * @param sc the security context
      * @param page the requested page number
      * @param entries max entries for page
-     * @param nameLike a sub-string to search in tah name with ILIKE operator
+     * @param nameLike a sub-string to search in tag name with ILIKE operator
      * @return Tag
      * @throws BadRequestWebEx
      */

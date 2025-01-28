@@ -66,11 +66,12 @@ public class RESTTagServiceImpl implements RESTTagService {
     public TagList getAll(SecurityContext sc, Integer page, Integer entries, String nameLike)
             throws BadRequestWebEx {
         try {
-            List<Tag> tags = tagService.getAll(page, entries, nameLike);
+            String sqlNameLike = RESTServiceImpl.convertNameLikeToSqlSyntax(nameLike);
+            List<Tag> tags = tagService.getAll(page, entries, sqlNameLike);
 
             long count = 0;
             if (!tags.isEmpty()) {
-                count = tagService.count(nameLike);
+                count = tagService.count(sqlNameLike);
             }
 
             return new TagList(tags, count);
