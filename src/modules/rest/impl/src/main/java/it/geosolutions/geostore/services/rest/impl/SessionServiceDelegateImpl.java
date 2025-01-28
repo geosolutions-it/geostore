@@ -30,7 +30,7 @@ public class SessionServiceDelegateImpl implements SessionServiceDelegate {
                     "Refresh token was not provided or session is already expired.");
         }
         SessionToken token = new SessionToken();
-        token.setAccessToken(accessToken);
+        token.setAccessToken(sessionToken.getId());
         token.setRefreshToken(sessionToken.getRefreshToken());
         token.setExpires(sessionToken.getExpirationInterval());
         token.setTokenType(BEARER_TYPE);
