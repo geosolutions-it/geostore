@@ -55,7 +55,8 @@ public class AndFilter extends SearchFilter {
         @XmlElement(name = "AND", type = AndFilter.class),
         @XmlElement(name = "FIELD", type = FieldFilter.class),
         @XmlElement(name = "CATEGORY", type = CategoryFilter.class),
-        @XmlElement(name = "GROUP", type = GroupFilter.class)
+        @XmlElement(name = "GROUP", type = GroupFilter.class),
+        @XmlElement(name = "TAG", type = TagFilter.class)
     })
     public List<SearchFilter> getFilters() {
         return filters;

@@ -23,16 +23,15 @@ import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.AssociatedEntityFilter;
 import it.geosolutions.geostore.services.dto.search.AttributeFilter;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.FilterVisitor;
-import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.NotFilter;
 import it.geosolutions.geostore.services.dto.search.OrFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
-import it.geosolutions.geostore.services.dto.search.TagFilter;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.text.ParseException;
@@ -255,61 +254,29 @@ public class SearchConverter implements FilterVisitor {
         trgFilter = f;
     }
 
-    /** This is a leaf filter. */
     @Override
-    public void visit(GroupFilter filter) {
-        GroupFilter.checkOperator(filter.getOperator());
+    public void visit(AssociatedEntityFilter filter) {
 
-        Integer op = ops_rest_trg.get(filter.getOperator());
+        SearchOperator searchOperator = filter.getOperator();
+        List<String> values = filter.values();
 
-        if (op == null) {
-            throw new IllegalStateException("Unknown op " + filter.getOperator());
+        if (SearchOperator.IN != searchOperator && values.size() != 1) {
+            throw new IllegalStateException("Erroneous search op " + searchOperator);
+        }
+
+        Integer operator = ops_rest_trg.get(searchOperator);
+        if (operator == null) {
+            throw new IllegalStateException("Unknown op " + searchOperator);
         }
 
         Filter f = new Filter();
-        f.setOperator(op);
-        f.setProperty("security.group.groupName");
+        f.setOperator(operator);
+        f.setProperty(filter.property());
 
-        List<String> names = filter.getNames();
-
-        if (SearchOperator.IN != filter.getOperator() && names.size() != 1) {
-            throw new IllegalStateException("Erroneous search op " + filter.getOperator());
-        }
-
-        if (SearchOperator.IN == filter.getOperator()) {
-            f.setValue(names);
+        if (SearchOperator.IN == searchOperator) {
+            f.setValue(values);
         } else {
-            f.setValue(names.get(0));
-        }
-
-        trgFilter = f;
-    }
-
-    /** This is a leaf filter. */
-    @Override
-    public void visit(TagFilter filter) {
-        GroupFilter.checkOperator(filter.getOperator());
-
-        Integer op = ops_rest_trg.get(filter.getOperator());
-
-        if (op == null) {
-            throw new IllegalStateException("Unknown op " + filter.getOperator());
-        }
-
-        Filter f = new Filter();
-        f.setOperator(op);
-        f.setProperty("tags.name");
-
-        List<String> names = filter.getNames();
-
-        if (SearchOperator.IN != filter.getOperator() && names.size() != 1) {
-            throw new IllegalStateException("Erroneous search op " + filter.getOperator());
-        }
-
-        if (SearchOperator.IN == filter.getOperator()) {
-            f.setValue(names);
-        } else {
-            f.setValue(names.get(0));
+            f.setValue(values.get(0));
         }
 
         trgFilter = f;

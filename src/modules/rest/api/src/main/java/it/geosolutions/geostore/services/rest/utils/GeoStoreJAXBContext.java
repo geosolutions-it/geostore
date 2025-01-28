@@ -126,6 +126,7 @@ public class GeoStoreJAXBContext {
                 it.geosolutions.geostore.services.dto.search.CategoryFilter.class,
                 it.geosolutions.geostore.services.dto.search.FieldFilter.class,
                 it.geosolutions.geostore.services.dto.search.GroupFilter.class,
+                it.geosolutions.geostore.services.dto.search.TagFilter.class,
                 it.geosolutions.geostore.services.dto.search.NotFilter.class,
                 it.geosolutions.geostore.services.dto.search.OrFilter.class,
                 it.geosolutions.geostore.services.dto.search.SearchFilter.class,

@@ -684,8 +684,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of a single group */
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList("groupA"), SearchOperator.EQUAL_TO);
+            GroupFilter groupFilter = new GroupFilter("groupA", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -699,8 +698,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name similarity (ignoring case) of multiple groups */
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList("GROUP_"), SearchOperator.ILIKE);
+            GroupFilter groupFilter = new GroupFilter("GROUP_", SearchOperator.ILIKE);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -712,8 +710,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of multiple groups */
-            GroupFilter groupFilter =
-                    new GroupFilter(List.of("groupA", "groupB", "groupC"), SearchOperator.IN);
+            GroupFilter groupFilter = new GroupFilter("groupA,groupB,groupC", SearchOperator.IN);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -725,7 +722,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* erroneous search for similarity of multiple groups */
-            GroupFilter groupFilter = new GroupFilter(List.of("a", "b"), SearchOperator.LIKE);
+            GroupFilter groupFilter = new GroupFilter("a,b", SearchOperator.LIKE);
 
             assertThrows(
                     IllegalStateException.class,
@@ -742,63 +739,18 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            /* erroneous search for equality in empty group list */
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
+            /* search for equality in empty group list */
+            GroupFilter groupFilter = new GroupFilter("", SearchOperator.EQUAL_TO);
 
-            assertThrows(
-                    IllegalStateException.class,
-                    () ->
-                            restExtJsService.getExtResourcesList(
-                                    sc,
-                                    0,
-                                    100,
-                                    new Sort("", ""),
-                                    false,
-                                    false,
-                                    false,
-                                    groupFilter));
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
+            assertTrue(response.getList().isEmpty());
         }
 
         {
             /* unknown group */
-            GroupFilter groupFilter =
-                    new GroupFilter(
-                            Collections.singletonList("unknown group"), SearchOperator.EQUAL_TO);
-
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
-
-            assertTrue(response.getList().isEmpty());
-        }
-    }
-
-    @Test
-    public void testExtResourcesList_groupFilteredWithInvalidInFilter() throws Exception {
-        final String CAT0_NAME = "CAT000";
-
-        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
-        SecurityContext sc = new SimpleSecurityContext(user0Id);
-
-        createCategory(CAT0_NAME);
-
-        restCreateResource("resourceA", "description_A", CAT0_NAME, user0Id, true);
-
-        {
-            GroupFilter groupFilter = new GroupFilter(null, SearchOperator.IN);
-
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
-
-            List<ExtResource> resources = response.getList();
-            assertEquals(1, resources.size());
-        }
-
-        {
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList(""), SearchOperator.IN);
+            GroupFilter groupFilter = new GroupFilter("unknown group", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -808,14 +760,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList(null), SearchOperator.IN);
-
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
-
-            assertTrue(response.getList().isEmpty());
+            /* invalid filter */
+            assertThrows(
+                    IllegalArgumentException.class, () -> new GroupFilter(null, SearchOperator.IN));
         }
     }
 
@@ -847,8 +794,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of a single tag */
-            TagFilter tagFilter =
-                    new TagFilter(Collections.singletonList("tagA"), SearchOperator.EQUAL_TO);
+            TagFilter tagFilter = new TagFilter("tagA", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -862,8 +808,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name similarity (ignoring case) of multiple tags */
-            TagFilter tagFilter =
-                    new TagFilter(Collections.singletonList("TAG_"), SearchOperator.ILIKE);
+            TagFilter tagFilter = new TagFilter("TAG_", SearchOperator.ILIKE);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -875,7 +820,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of multiple tags */
-            TagFilter tagFilter = new TagFilter(List.of("tagA", "tagB", "TagC"), SearchOperator.IN);
+            TagFilter tagFilter = new TagFilter("tagA,tagB,TagC", SearchOperator.IN);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -887,7 +832,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* erroneous search for similarity of multiple tags */
-            TagFilter tagFilter = new TagFilter(List.of("a", "b"), SearchOperator.LIKE);
+            TagFilter tagFilter = new TagFilter("a,b", SearchOperator.LIKE);
 
             assertThrows(
                     IllegalStateException.class,
@@ -897,54 +842,18 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            /* erroneous search for equality in empty tag list */
-            TagFilter tagFilter = new TagFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
+            /* search for equality in empty tag list */
+            TagFilter tagFilter = new TagFilter("", SearchOperator.EQUAL_TO);
 
-            assertThrows(
-                    IllegalStateException.class,
-                    () ->
-                            restExtJsService.getExtResourcesList(
-                                    sc, 0, 100, new Sort("", ""), false, false, false, tagFilter));
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+            assertTrue(response.getList().isEmpty());
         }
 
         {
             /* unknown tag */
-            TagFilter tagFilter =
-                    new TagFilter(
-                            Collections.singletonList("unknown tag"), SearchOperator.EQUAL_TO);
-
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
-
-            assertTrue(response.getList().isEmpty());
-        }
-    }
-
-    @Test
-    public void testExtResourcesList_tagFilteredWithInvalidInFilter() throws Exception {
-        final String CAT0_NAME = "CAT000";
-
-        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
-        SecurityContext sc = new SimpleSecurityContext(user0Id);
-
-        createCategory(CAT0_NAME);
-
-        restCreateResource("resourceA", "description_A", CAT0_NAME, user0Id, true);
-
-        {
-            TagFilter tagFilter = new TagFilter(null, SearchOperator.IN);
-
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
-
-            List<ExtResource> resources = response.getList();
-            assertEquals(1, resources.size());
-        }
-
-        {
-            TagFilter tagFilter = new TagFilter(Collections.singletonList(""), SearchOperator.IN);
+            TagFilter tagFilter = new TagFilter("unknown tag", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
@@ -954,13 +863,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            TagFilter tagFilter = new TagFilter(Collections.singletonList(null), SearchOperator.IN);
-
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
-
-            assertTrue(response.getList().isEmpty());
+            /* invalid filter */
+            assertThrows(
+                    IllegalArgumentException.class, () -> new TagFilter(null, SearchOperator.IN));
         }
     }
 

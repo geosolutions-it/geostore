@@ -35,9 +35,7 @@ public interface FilterVisitor {
 
     void visit(CategoryFilter filter) throws InternalErrorServiceEx;
 
-    void visit(GroupFilter filter);
-
-    void visit(TagFilter tagFilter);
+    void visit(AssociatedEntityFilter filter);
 
     void visit(FieldFilter filter) throws InternalErrorServiceEx;
 
