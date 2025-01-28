@@ -280,6 +280,9 @@ public abstract class RESTServiceImpl {
     }
 
     protected String convertNameLikeToSqlSyntax(String nameLike) {
+        if (nameLike == null) {
+            return null;
+        }
         return nameLike.replaceAll("[*]", "%");
     }
 }
