@@ -238,7 +238,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     private Search createGetAllSearchCriteria(
-            Integer page, Integer entries, String nameLike, boolean all)
+            Integer page, Integer entries, String nameLike, boolean includeReserved)
             throws BadRequestServiceEx {
 
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
@@ -258,7 +258,7 @@ public class UserGroupServiceImpl implements UserGroupService {
             searchCriteria.addFilterILike("groupName", nameLike);
         }
 
-        if (!all) {
+        if (!includeReserved) {
             searchCriteria.addFilterNotEqual("groupName", GroupReservedNames.EVERYONE.groupName());
         }
 
@@ -396,12 +396,17 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
+    public long getCount(String nameLike, boolean all) throws BadRequestServiceEx {
+        return userGroupDAO.count(createCountSearchCriteria(nameLike, all));
+    }
+
+    @Override
     public long getCount(User user, String nameLike, boolean all) throws BadRequestServiceEx {
-        if (user == null) throw new BadRequestServiceEx("User must be defined.");
+        if (user == null) {
+            throw new BadRequestServiceEx("User must be defined.");
+        }
 
-        Search searchCriteria = new Search(UserGroup.class);
-
-        searchCriteria.addSortAsc("groupName");
+        Search searchCriteria = createCountSearchCriteria(nameLike, all);
 
         if (user.getRole() == Role.USER) {
             Set<UserGroup> userGrp = user.getGroups();
@@ -412,18 +417,22 @@ public class UserGroupServiceImpl implements UserGroupService {
             searchCriteria.addFilterIn("id", grpIds);
         }
 
+        return userGroupDAO.count(searchCriteria);
+    }
+
+    private Search createCountSearchCriteria(String nameLike, boolean includingReserved) {
+
+        Search searchCriteria = new Search(UserGroup.class);
+
         if (nameLike != null) {
             searchCriteria.addFilterILike("groupName", nameLike);
         }
 
-        if (!all)
+        if (!includingReserved) {
             searchCriteria.addFilterNotEqual("groupName", GroupReservedNames.EVERYONE.groupName());
+        }
 
-        return userGroupDAO.count(searchCriteria);
-    }
-
-    public long getCount(User user, String nameLike) throws BadRequestServiceEx {
-        return getCount(user, nameLike, false);
+        return searchCriteria;
     }
 
     @Override

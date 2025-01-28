@@ -140,15 +140,15 @@ public interface UserGroupService {
     UserGroup get(String name);
 
     /**
-     * Returns the amount of groups that match searching criteria. The 'everyone' group is never
-     * included.
+     * Returns the amount of groups that match searching criteria.
      *
-     * @param authUser the user that performs the research
      * @param nameLike a sub-string to search in group name
+     * @param all if <code>true</code> adds to result the 'everyone' group if it matches the
+     *     searching criteria
      * @return the amount of groups that match searching criteria
      * @throws BadRequestServiceEx
      */
-    long getCount(User authUser, String nameLike) throws BadRequestServiceEx;
+    long getCount(String nameLike, boolean all) throws BadRequestServiceEx;
 
     /**
      * Returns the amount of groups that match searching criteria.

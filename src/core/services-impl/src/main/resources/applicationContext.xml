@@ -17,8 +17,8 @@
 
     <bean id="userSessionService" class="it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl"></bean>
 
-    <bean id="permissionService" class="it.geosolutions.geostore.services.PermissionServiceImpl"></bean>
-
     <bean id="tagService" class="it.geosolutions.geostore.services.TagServiceImpl"></bean>
+
+    <bean id="resourcePermissionService" class="it.geosolutions.geostore.services.ResourcePermissionServiceImpl">    </bean>
 
 </beans>

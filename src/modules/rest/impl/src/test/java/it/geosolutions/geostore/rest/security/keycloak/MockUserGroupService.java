@@ -111,7 +111,8 @@ class MockUserGroupService implements UserGroupService {
     }
 
     @Override
-    public long getCount(User authUser, String nameLike) throws BadRequestServiceEx {
+    public long getCount(String nameLike, boolean all) throws BadRequestServiceEx {
+        // TODO Auto-generated method stub
         return 0;
     }
 

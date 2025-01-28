@@ -111,6 +111,7 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         SecurityContext sc = new MockSecurityContext(userService.get(adminID));
 
         UserGroupList firstPage = restService.getAll(sc, 0, 2, false, false, null);
+        assertEquals(3, firstPage.getCount());
         List<RESTUserGroup> firstPageGroups = firstPage.getUserGroupList();
         List<String> firstPageGroupsNames =
                 firstPageGroups.stream()
@@ -119,6 +120,7 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         assertEquals(List.of(firstGroupName, secondGroupName), firstPageGroupsNames);
 
         UserGroupList secondPage = restService.getAll(sc, 1, 2, false, false, null);
+        assertEquals(3, firstPage.getCount());
         List<RESTUserGroup> secondPageGroups = secondPage.getUserGroupList();
         List<String> secondPageGroupsNames =
                 secondPageGroups.stream()
