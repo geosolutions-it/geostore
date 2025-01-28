@@ -817,6 +817,7 @@ public class ResourceServiceImpl implements ResourceService {
             throws BadRequestServiceEx, InternalErrorServiceEx {
         Search searchCriteria = SearchConverter.convert(filter);
         securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
+        searchCriteria.setDistinct(true);
         return resourceDAO.count(searchCriteria);
     }
 
