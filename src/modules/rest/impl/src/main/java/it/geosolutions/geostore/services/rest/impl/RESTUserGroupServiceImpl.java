@@ -178,7 +178,13 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
                     userGroupService.getAll(page, entries, nameLike, all).stream()
                             .map(ug -> createRestUserGroup(ug, includeUsers))
                             .collect(Collectors.toList());
-            return new UserGroupList(restUserGroups);
+
+            long count = 0;
+            if (!restUserGroups.isEmpty()) {
+                count = userGroupService.getCount(nameLike, all);
+            }
+
+            return new UserGroupList(restUserGroups, count);
         } catch (BadRequestServiceEx e) {
             LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());
@@ -333,7 +339,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
                     groupStream
                             .map(g -> new RESTUserGroup(g, Collections.emptySet()))
                             .collect(Collectors.toList());
-            groupList = new UserGroupList(restGroups);
+            groupList = new UserGroupList(restGroups, restGroups.size());
         } else {
             groupList = new UserGroupList();
         }

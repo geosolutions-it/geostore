@@ -24,6 +24,6 @@
 
     <bean id="userSessionService" class="it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl">    </bean>
 
-    <bean id="permissionService" class="it.geosolutions.geostore.services.PermissionServiceImpl">    </bean>
+    <bean id="resourcePermissionService" class="it.geosolutions.geostore.services.ResourcePermissionServiceImpl">    </bean>
 
 </beans>

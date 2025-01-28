@@ -31,7 +31,7 @@ import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.services.PermissionService;
+import it.geosolutions.geostore.services.ResourcePermissionService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
@@ -86,7 +86,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private UserGroupService groupService;
 
-    private PermissionService permissionService;
+    private ResourcePermissionService resourcePermissionService;
 
     /** @param resourceService */
     public void setResourceService(ResourceService resourceService) {
@@ -97,8 +97,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         this.groupService = userGroupService;
     }
 
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
+    public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
+        this.resourcePermissionService = resourcePermissionService;
     }
 
     /* (non-Javadoc)
@@ -395,7 +395,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         userService.fetchSecurityRules(user);
 
         return resources.stream()
-                .filter(r -> permissionService.isResourceAvailableForUser(r, user))
+                .filter(r -> resourcePermissionService.isResourceAvailableForUser(r, user))
                 .collect(Collectors.toList());
     }
 
@@ -422,7 +422,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                         /* setting copy permission as in ResourceEnvelop.isCanCopy */
                         .withCanCopy(user != null);
 
-        if (permissionService.canUserWriteResource(user, resource)) {
+        if (resourcePermissionService.canUserWriteResource(user, resource)) {
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
@@ -535,7 +535,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            nameLike = nameLike.replaceAll("[*]", "%");
+            if (nameLike != null) {
+                nameLike = nameLike.replaceAll("[*]", "%");
+            }
             List<UserGroup> groups =
                     groupService.getAllAllowed(authUser, page, limit, nameLike, all);
 
@@ -684,12 +686,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         User authUser = extractAuthUser(sc);
         userService.fetchSecurityRules(authUser);
 
-        if (!permissionService.canUserReadResource(authUser, id)) {
+        if (!resourcePermissionService.canUserReadResource(authUser, id)) {
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
 
         ShortResource shortResource = new ShortResource(resource);
-        if (permissionService.canUserWriteResource(authUser, resource)) {
+        if (resourcePermissionService.canUserWriteResource(authUser, resource)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
         }
@@ -755,7 +757,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 canEdit = sr.isCanEdit();
                 return;
             }
-            if (authUser != null && permissionService.canUserWriteResource(authUser, r)) {
+            if (authUser != null && resourcePermissionService.canUserWriteResource(authUser, r)) {
                 canEdit = true;
                 canDelete = true;
             }

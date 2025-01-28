@@ -3,7 +3,7 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 
-public interface PermissionService {
+public interface ResourcePermissionService {
     /**
      * This method allows us to know if we filter out "unadvertised" resources for
      * non-admin/non-owners, keeping only owned resources.
