@@ -397,8 +397,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         userService.fetchSecurityRules(user);
 
-        //        resourceService.(user);
-
         return resources.stream()
                 .filter(r -> resourcePermissionService.isResourceAvailableForUser(r, user))
                 .collect(Collectors.toList());
@@ -414,6 +412,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     private List<ExtResource> convertToExtResources(List<Resource> foundResources, User user) {
 
         userService.fetchSecurityRules(user);
+        userService.fetchFavorites(user);
 
         return foundResources.stream()
                 .map(r -> convertToExtResource(r, user))
@@ -431,7 +430,17 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
+        if (user != null) {
+            extResourceBuilder.withIsFavorite(isResourceUserFavorite(resource, user));
+        }
+
         return extResourceBuilder.build();
+    }
+
+    private boolean isResourceUserFavorite(Resource resource, User user) {
+        return user.getFavorites().stream()
+                .map(Resource::getId)
+                .anyMatch(id -> id.equals(resource.getId()));
     }
 
     /**
@@ -693,6 +702,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         User authUser = extractAuthUser(sc);
         userService.fetchSecurityRules(authUser);
+        userService.fetchFavorites(authUser);
 
         if (!resourcePermissionService.canUserReadResource(authUser, id)) {
             throw new ForbiddenErrorWebEx("Resource is protected");
@@ -708,6 +718,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
                 .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
                 .withTagList(createTagList(resource.getTags()))
+                .withIsFavorite(isResourceUserFavorite(resource, authUser))
                 .build();
     }
 

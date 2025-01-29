@@ -1268,6 +1268,105 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testExtResourcesList_favoritesOnly() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long favoriteResourceId =
+                restCreateResource("favourite_resource", "", CAT0_NAME, userId, true);
+        restCreateResource("other_resource", "", CAT0_NAME, userId, true);
+
+        favoriteService.addFavorite(userId, favoriteResourceId);
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            true,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource resource = resources.get(0);
+            assertEquals(favoriteResourceId, resource.getId().longValue());
+            assertEquals(1, response.getCount());
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+            assertEquals(2, response.getCount());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_withFavoriteInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long favoriteResourceId =
+                restCreateResource("favourite_resource", "", CAT0_NAME, userId, true);
+        long nonFavoriteResourceId =
+                restCreateResource("other_resource", "", CAT0_NAME, userId, true);
+
+        favoriteService.addFavorite(userId, favoriteResourceId);
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            ExtResource favoriteResource =
+                    resources.stream()
+                            .filter(r -> r.getId().equals(favoriteResourceId))
+                            .findFirst()
+                            .orElseThrow();
+            assertTrue(favoriteResource.isFavorite());
+            ExtResource nonFavoriteResource =
+                    resources.stream()
+                            .filter(r -> r.getId().equals(nonFavoriteResourceId))
+                            .findFirst()
+                            .orElseThrow();
+            assertFalse(nonFavoriteResource.isFavorite());
+        }
+    }
+
+    @Test
     public void testGetExtResource_userOwnedWithAttributesInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
 
@@ -1775,56 +1874,33 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testExtResourcesList_favoritesOnly() throws Exception {
+    public void testGetExtResource_withFavoriteInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
-        SecurityContext sc = new SimpleSecurityContext(userId);
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
 
         createCategory(CAT0_NAME);
 
         long favoriteResourceId =
                 restCreateResource("favourite_resource", "", CAT0_NAME, userId, true);
-        restCreateResource("other_resource", "", CAT0_NAME, userId, true);
+        long nonFavoriteResourceId =
+                restCreateResource("other_resource", "", CAT0_NAME, userId, true);
 
         favoriteService.addFavorite(userId, favoriteResourceId);
 
         {
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc,
-                            0,
-                            100,
-                            new Sort("", ""),
-                            false,
-                            false,
-                            false,
-                            true,
-                            new AndFilter());
-
-            List<ExtResource> resources = response.getList();
-            assertEquals(1, resources.size());
-            ExtResource resource = resources.get(0);
-            assertEquals(favoriteResourceId, resource.getId().longValue());
-            assertEquals(1, response.getCount());
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            userSecurityContext, favoriteResourceId, false, false, true);
+            assertTrue(response.isFavorite());
         }
 
         {
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            sc,
-                            0,
-                            100,
-                            new Sort("", ""),
-                            false,
-                            false,
-                            false,
-                            false,
-                            new AndFilter());
-
-            List<ExtResource> resources = response.getList();
-            assertEquals(2, resources.size());
-            assertEquals(2, response.getCount());
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            userSecurityContext, nonFavoriteResourceId, false, false, true);
+            assertFalse(response.isFavorite());
         }
     }
 
