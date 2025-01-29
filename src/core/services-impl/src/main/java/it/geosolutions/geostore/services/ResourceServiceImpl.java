@@ -812,13 +812,13 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public long getCountByFilterAndUser(SearchFilter filter, User user)
+    public long count(SearchFilter filter, User user)
             throws BadRequestServiceEx, InternalErrorServiceEx {
-        return getCountByFilterAndUser(filter, user, false);
+        return count(filter, user, false);
     }
 
     @Override
-    public long getCountByFilterAndUser(SearchFilter filter, User user, boolean favoritesOnly)
+    public long count(SearchFilter filter, User user, boolean favoritesOnly)
             throws BadRequestServiceEx, InternalErrorServiceEx {
 
         Search searchCriteria = SearchConverter.convert(filter);
@@ -832,7 +832,8 @@ public class ResourceServiceImpl implements ResourceService {
         return resourceDAO.count(searchCriteria);
     }
 
-    public long getCountByFilterAndUser(String nameLike, User user) {
+    @Override
+    public long count(String nameLike, User user) {
 
         Search searchCriteria = new Search(Resource.class);
 

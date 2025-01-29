@@ -156,7 +156,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             long count = 0;
             if (resources != null && !resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(sqlNameLike, authUser);
+                count = resourceService.count(sqlNameLike, authUser);
             }
 
             JSONObject result = makeJSONResult(true, count, resources, authUser);
@@ -296,7 +296,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             long count = 0;
             if (!resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(filter, authUser);
+                count = resourceService.count(filter, authUser);
             }
 
             JSONObject result =
@@ -381,7 +381,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             long count = 0;
             if (!resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(filter, authUser, favoritesOnly);
+                count = resourceService.count(filter, authUser, favoritesOnly);
             }
 
             return new ExtResourceList(count, convertToExtResources(resources, authUser));
