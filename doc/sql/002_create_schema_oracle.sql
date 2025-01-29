@@ -125,7 +125,8 @@
     alter table gs_resource_tags
         add constraint fk_resource_tags_resource
         foreign key (resource_id)
-        references gs_resource(id);
+        references gs_resource(id)
+        on delete cascade;
 
     alter table gs_resource_tags
         add constraint fk_resource_tags_tag

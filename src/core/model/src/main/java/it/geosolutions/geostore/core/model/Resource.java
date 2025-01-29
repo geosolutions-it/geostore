@@ -51,6 +51,8 @@ import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 /**
  * Class Resource.
@@ -122,6 +124,7 @@ public class Resource implements Serializable, CycleRecoverable {
     private List<SecurityRule> security;
 
     @ManyToMany(mappedBy = "resources", fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Tag> tags;
 
     /** @return the id */

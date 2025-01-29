@@ -16,7 +16,8 @@ CREATE TABLE gs_resource_tags (
 ALTER TABLE gs_resource_tags
     ADD CONSTRAINT fk_resource_tags_resource
     FOREIGN KEY (resource_id)
-    REFERENCES gs_resource(id);
+    REFERENCES gs_resource(id)
+    ON DELETE CASCADE;
 
 ALTER TABLE gs_resource_tags
     ADD CONSTRAINT fk_resource_tags_tag
