@@ -63,11 +63,11 @@ public class RESTTagServiceImplTest extends ServiceTestBase {
         tagService.insert(tag_c);
 
         TagList firstPage = restService.getAll(sc, 0, 2, null);
-        assertEquals(3, firstPage.getCount());
+        assertEquals(3, (long) firstPage.getCount());
         assertEquals(List.of(tag_a, tag_b), firstPage.getList());
 
         TagList secondPage = restService.getAll(sc, 1, 2, null);
-        assertEquals(3, firstPage.getCount());
+        assertEquals(3, (long) firstPage.getCount());
         assertEquals(List.of(tag_c), secondPage.getList());
     }
 }
