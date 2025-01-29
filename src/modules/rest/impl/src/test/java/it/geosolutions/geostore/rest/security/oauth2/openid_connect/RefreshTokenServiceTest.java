@@ -507,6 +507,83 @@ class RefreshTokenServiceTest {
                 .handleRefreshFailure(anyString(), anyString(), any(OAuth2Configuration.class));
     }
 
+    @Test
+    void testRefreshUpdatesChangedAccessToken() {
+        // Arrange
+        String oldAccessToken = "oldAccessToken";
+        String refreshToken = "validRefreshToken";
+
+        // We’ll pretend the user originally had "oldAccessToken"
+        // and the current OAuth2 token in serviceDelegate is set to the same.
+        DefaultOAuth2AccessToken originalAccessToken = new DefaultOAuth2AccessToken(oldAccessToken);
+        OAuth2RefreshToken existingRefresh = new DefaultOAuth2RefreshToken(refreshToken);
+        originalAccessToken.setRefreshToken(existingRefresh);
+        // Expire in 1 hour
+        originalAccessToken.setExpiration(new Date(System.currentTimeMillis() + 3600 * 1000));
+        serviceDelegate.currentAccessToken = originalAccessToken;
+
+        // Mock the Authentication for the "oldAccessToken" in the cache
+        Authentication mockAuthentication = mock(Authentication.class);
+        when(authenticationCache.get(oldAccessToken)).thenReturn(mockAuthentication);
+
+        // Now we simulate a successful refresh that returns a *new* access token
+        String refreshedAccessTokenValue = "completelyNewAccessToken";
+        DefaultOAuth2AccessToken refreshedAccessToken =
+                new DefaultOAuth2AccessToken(refreshedAccessTokenValue);
+        OAuth2RefreshToken newRefreshToken = new DefaultOAuth2RefreshToken("brandNewRefreshToken");
+        refreshedAccessToken.setRefreshToken(newRefreshToken);
+        refreshedAccessToken.setExpiration(
+                new Date(System.currentTimeMillis() + 7200 * 1000)); // Expires in 2 hours
+
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(refreshedAccessToken, HttpStatus.OK);
+
+        // Mock the exchange call
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        // Mock config so refresh is enabled
+        when(configuration.isEnabled()).thenReturn(true);
+        when(configuration.getClientId()).thenReturn("testClientId");
+        when(configuration.getClientSecret()).thenReturn("testClientSecret");
+        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
+        when(configuration.getMaxRetries()).thenReturn(3);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, oldAccessToken);
+
+        // Assert
+        assertNotNull(sessionToken, "SessionToken should not be null after a successful refresh.");
+        assertEquals(
+                refreshedAccessTokenValue,
+                sessionToken.getAccessToken(),
+                "The SessionToken's accessToken must be updated to the new value.");
+        assertEquals(
+                "brandNewRefreshToken",
+                sessionToken.getRefreshToken(),
+                "The SessionToken's refreshToken must be updated to the new value.");
+
+        // Also verify the old token was removed from the cache and the new one added
+        verify(authenticationCache).removeEntry(eq(oldAccessToken));
+        verify(authenticationCache)
+                .putCacheEntry(eq(refreshedAccessTokenValue), any(Authentication.class));
+
+        // Finally check that the currentAccessToken in serviceDelegate is also updated
+        assertEquals(
+                refreshedAccessTokenValue,
+                serviceDelegate.currentAccessToken.getValue(),
+                "Service delegate must store the new access token internally.");
+        assertEquals(
+                "brandNewRefreshToken",
+                serviceDelegate.currentAccessToken.getRefreshToken().getValue(),
+                "Service delegate must store the new refresh token internally.");
+    }
+
     /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */
     class TestOAuth2SessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
