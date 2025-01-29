@@ -13,6 +13,7 @@ public class ResourceSearchParameters {
     private final boolean includeAttributes;
     private final boolean includeData;
     private final boolean includeTags;
+    private final boolean favoritesOnly;
     private final User authUser;
 
     private ResourceSearchParameters(
@@ -25,6 +26,7 @@ public class ResourceSearchParameters {
             boolean includeAttributes,
             boolean includeData,
             boolean includeTags,
+            boolean favoritesOnly,
             User authUser) {
         this.filter = filter;
         this.page = page;
@@ -35,6 +37,7 @@ public class ResourceSearchParameters {
         this.includeAttributes = includeAttributes;
         this.includeData = includeData;
         this.includeTags = includeTags;
+        this.favoritesOnly = favoritesOnly;
         this.authUser = authUser;
     }
 
@@ -74,6 +77,10 @@ public class ResourceSearchParameters {
         return includeTags;
     }
 
+    public boolean isFavoritesOnly() {
+        return favoritesOnly;
+    }
+
     public User getAuthUser() {
         return authUser;
     }
@@ -92,6 +99,7 @@ public class ResourceSearchParameters {
         private boolean includeAttributes;
         private boolean includeData;
         private boolean includeTags;
+        private boolean favoritesOnly;
         private User authUser;
 
         private Builder() {}
@@ -141,6 +149,11 @@ public class ResourceSearchParameters {
             return this;
         }
 
+        public Builder favoritesOnly(boolean favoritesOnly) {
+            this.favoritesOnly = favoritesOnly;
+            return this;
+        }
+
         public Builder authUser(User authUser) {
             this.authUser = authUser;
             return this;
@@ -157,6 +170,7 @@ public class ResourceSearchParameters {
                     includeAttributes,
                     includeData,
                     includeTags,
+                    favoritesOnly,
                     authUser);
         }
     }

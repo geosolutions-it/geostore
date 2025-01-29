@@ -91,7 +91,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ResourcePermissionService resourcePermissionService;
 
-    /** @param resourceService */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
@@ -318,12 +317,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
-     * java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
-     */
     @Override
     public ExtResourceList getExtResourcesList(
             SecurityContext sc,
@@ -333,6 +326,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             boolean includeAttributes,
             boolean includeData,
             boolean includeTags,
+            boolean favoritesOnly,
             SearchFilter filter)
             throws BadRequestWebEx {
 
@@ -342,12 +336,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
-                    "getResourcesList(start={}, limit={}, includeAttributes={}, includeData={}, includeTags={}",
+                    "getResourcesList(start={}, limit={}, includeAttributes={}, includeData={}, includeTags={}, favoritesOnly={}",
                     start,
                     limit,
                     includeAttributes,
                     includeData,
-                    includeTags);
+                    includeTags,
+                    favoritesOnly);
         }
 
         User authUser = null;
@@ -366,25 +361,27 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
+            ResourceSearchParameters searchParameters =
+                    ResourceSearchParameters.builder()
+                            .filter(filter)
+                            .page(page)
+                            .entries(limit)
+                            .sortBy(sort.getSortBy())
+                            .sortOrder(sort.getSortOrder())
+                            .includeAttributes(includeAttributes)
+                            .includeData(includeData)
+                            .includeTags(includeTags)
+                            .favoritesOnly(favoritesOnly)
+                            .authUser(authUser)
+                            .build();
+
             List<Resource> resources =
                     filterOutUnavailableResources(
-                            resourceService.getResources(
-                                    ResourceSearchParameters.builder()
-                                            .filter(filter)
-                                            .page(page)
-                                            .entries(limit)
-                                            .sortBy(sort.getSortBy())
-                                            .sortOrder(sort.getSortOrder())
-                                            .includeAttributes(includeAttributes)
-                                            .includeData(includeData)
-                                            .includeTags(includeTags)
-                                            .authUser(authUser)
-                                            .build()),
-                            authUser);
+                            resourceService.getResources(searchParameters), authUser);
 
             long count = 0;
             if (!resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(filter, authUser);
+                count = resourceService.getCountByFilterAndUser(filter, authUser, favoritesOnly);
             }
 
             return new ExtResourceList(count, convertToExtResources(resources, authUser));
@@ -399,6 +396,8 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
 
         userService.fetchSecurityRules(user);
+
+        //        resourceService.(user);
 
         return resources.stream()
                 .filter(r -> resourcePermissionService.isResourceAvailableForUser(r, user))

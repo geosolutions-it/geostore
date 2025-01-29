@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services;
 
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.Sort;
 import it.geosolutions.geostore.core.dao.AttributeDAO;
@@ -685,6 +686,11 @@ public class ResourceServiceImpl implements ResourceService {
             searchCriteria.addFilterILike("name", parameters.getNameLike());
         }
 
+        if (parameters.isFavoritesOnly()) {
+            Long userId = parameters.getAuthUser().getId();
+            searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", userId));
+        }
+
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
@@ -805,30 +811,27 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    /**
-     * Get filter count by filter and user
-     *
-     * @param filter
-     * @param user
-     * @return resources' count that the user has access
-     * @throws InternalErrorServiceEx
-     * @throws BadRequestServiceEx
-     */
+    @Override
     public long getCountByFilterAndUser(SearchFilter filter, User user)
             throws BadRequestServiceEx, InternalErrorServiceEx {
+        return getCountByFilterAndUser(filter, user, false);
+    }
+
+    @Override
+    public long getCountByFilterAndUser(SearchFilter filter, User user, boolean favoritesOnly)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+
         Search searchCriteria = SearchConverter.convert(filter);
-        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
         searchCriteria.setDistinct(true);
+
+        if (favoritesOnly) {
+            searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", user.getId()));
+        }
+
+        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
         return resourceDAO.count(searchCriteria);
     }
 
-    /**
-     * Get filter count by nameLike and user
-     *
-     * @param nameLike
-     * @param user
-     * @return resources' count that the user has access
-     */
     public long getCountByFilterAndUser(String nameLike, User user) {
 
         Search searchCriteria = new Search(Resource.class);
