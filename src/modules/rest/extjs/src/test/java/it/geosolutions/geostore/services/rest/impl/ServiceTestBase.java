@@ -19,13 +19,28 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
-import it.geosolutions.geostore.core.model.*;
+import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.StoredData;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserAttribute;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import it.geosolutions.geostore.services.*;
+import it.geosolutions.geostore.services.CategoryService;
+import it.geosolutions.geostore.services.FavoriteService;
+import it.geosolutions.geostore.services.ResourcePermissionService;
+import it.geosolutions.geostore.services.ResourceService;
+import it.geosolutions.geostore.services.StoredDataService;
+import it.geosolutions.geostore.services.TagService;
+import it.geosolutions.geostore.services.UserGroupService;
+import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -69,6 +84,7 @@ public class ServiceTestBase {
     protected static UserService userService;
     protected static UserGroupService userGroupService;
     protected static TagService tagService;
+    protected static FavoriteService favoriteService;
     protected static ResourcePermissionService resourcePermissionService;
 
     protected static ResourceDAO resourceDAO;
@@ -97,6 +113,7 @@ public class ServiceTestBase {
                 userService = (UserService) ctx.getBean("userService");
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
                 tagService = (TagService) ctx.getBean("tagService");
+                favoriteService = (FavoriteService) ctx.getBean("favoriteService");
                 resourcePermissionService =
                         (ResourcePermissionService) ctx.getBean("resourcePermissionService");
 

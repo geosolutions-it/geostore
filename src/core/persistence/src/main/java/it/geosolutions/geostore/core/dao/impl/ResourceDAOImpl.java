@@ -215,4 +215,17 @@ public class ResourceDAOImpl extends BaseDAO<Resource, Long> implements Resource
 
         return resourceNames;
     }
+
+    /**
+     * @param userId
+     * @return List<Resource> the user's favorite resources
+     */
+    @Override
+    public List<Resource> findUserFavorites(Long userId) {
+        Search searchCriteria = new Search(Resource.class);
+
+        searchCriteria.addFilter(Filter.some("favoritedBy", Filter.equal("id", userId)));
+
+        return super.search(searchCriteria);
+    }
 }

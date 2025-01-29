@@ -62,6 +62,8 @@ public class ServiceTestBase extends TestCase {
 
     protected static TagService tagService;
 
+    protected static FavoriteService favoriteService;
+
     protected static ResourceDAO resourceDAO;
 
     protected static TagDAO tagDAO;
@@ -85,6 +87,7 @@ public class ServiceTestBase extends TestCase {
                 userService = (UserService) ctx.getBean("userService");
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
                 tagService = (TagService) ctx.getBean("tagService");
+                favoriteService = (FavoriteService) ctx.getBean("favoriteService");
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
                 tagDAO = (TagDAO) ctx.getBean("tagDAO");
             }

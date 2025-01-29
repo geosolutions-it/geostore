@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
+import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
@@ -60,23 +61,26 @@ public class UserServiceImpl implements UserService {
 
     private SecurityDAO securityDAO;
 
-    /** @param userGroupDAO the userGroupDAO to set */
-    public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
-        this.userGroupDAO = userGroupDAO;
-    }
+    private ResourceDAO resourceDAO;
 
-    /** @param userAttributeDAO the userAttributeDAO to set */
-    public void setUserAttributeDAO(UserAttributeDAO userAttributeDAO) {
-        this.userAttributeDAO = userAttributeDAO;
-    }
-
-    /** @param userDAO the userDAO to set */
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
+    public void setUserAttributeDAO(UserAttributeDAO userAttributeDAO) {
+        this.userAttributeDAO = userAttributeDAO;
+    }
+
+    public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
+        this.userGroupDAO = userGroupDAO;
+    }
+
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
+    }
+
+    public void setResourceDAO(ResourceDAO resourceDAO) {
+        this.resourceDAO = resourceDAO;
     }
 
     /*
@@ -480,5 +484,14 @@ public class UserServiceImpl implements UserService {
                                         securityDAO.findUserGroupSecurityRules(userGroup.getId())));
 
         user.setSecurity(securityDAO.findUserSecurityRules(user.getId()));
+    }
+
+    @Override
+    public void fetchFavorites(User user) {
+        if (user == null || user.getId() == null) {
+            return;
+        }
+
+        user.setFavorites(new HashSet<>(resourceDAO.findUserFavorites(user.getId())));
     }
 }
