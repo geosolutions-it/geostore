@@ -271,6 +271,7 @@ public class GeoStoreClientTest extends BaseGeoStoreClientTest {
             assertEquals("value4", attMap.get("string4"));
 
             assertEquals("USER1Updated", loaded.getCreator());
+            /* TOFIX: this assertion fails */
             assertEquals("USER2Updated", loaded.getEditor());
         }
 
