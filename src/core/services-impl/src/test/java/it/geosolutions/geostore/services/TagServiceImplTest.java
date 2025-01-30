@@ -114,6 +114,30 @@ public class TagServiceImplTest extends ServiceTestBase {
         assertEquals(expected_tag, updatedTag);
     }
 
+    public void testUpdateWithResource() throws Exception {
+
+        Tag update_tag = new Tag("updated name", "black", null);
+
+        Tag tag = new Tag("tag", "#4561aa", "dusky");
+
+        long resourceId = createResource("resource", "description", "category");
+        Resource resource = resourceService.get(resourceId);
+
+        tag.setResources(Collections.singleton(resource));
+        tagDAO.persist(tag);
+
+        tagService.update(tag.getId(), update_tag);
+
+        Tag updatedTag = tagDAO.find(tag.getId());
+
+        /* check if resource is still tagged */
+        Resource updatedTagResource = resourceService.get(resourceId);
+        Set<Tag> updatedTagResourceTags = updatedTagResource.getTags();
+        assertEquals(1, updatedTagResourceTags.size());
+        Tag resourceTag = updatedTagResourceTags.stream().findFirst().orElseThrow();
+        assertEquals(updatedTag, resourceTag);
+    }
+
     public void testUpdateNotFoundTag() throws Exception {
         assertThrows(NotFoundServiceEx.class, () -> tagService.update(0L, new Tag()));
     }
