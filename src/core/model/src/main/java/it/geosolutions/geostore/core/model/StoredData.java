@@ -123,7 +123,7 @@ public class StoredData implements Serializable {
         int result = 1;
         result = (prime * result) + ((data == null) ? 0 : data.hashCode());
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
-        result = (prime * result) + ((resource == null) ? 0 : resource.hashCode());
+        result = (int) ((prime * result) + ((resource == null) ? 0 : resource.getId()));
 
         return result;
     }
