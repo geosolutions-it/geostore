@@ -37,11 +37,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 public class TagList {
 
     private Collection<Tag> list;
-    private long count;
+    private Long count;
 
     public TagList() {}
 
-    public TagList(Collection<Tag> list, long count) {
+    public TagList(Collection<Tag> list, Long count) {
         this.list = list;
         this.count = count;
     }
@@ -52,7 +52,7 @@ public class TagList {
     }
 
     @XmlElement(name = "Count")
-    public long getCount() {
+    public Long getCount() {
         return count;
     }
 }

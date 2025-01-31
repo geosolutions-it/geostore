@@ -734,7 +734,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         if (tags == null) {
             return new TagList();
         }
-        return new TagList(tags, tags.size());
+        return new TagList(tags, (long) tags.size());
     }
 
     /**

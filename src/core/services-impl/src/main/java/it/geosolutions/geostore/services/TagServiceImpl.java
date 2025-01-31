@@ -91,11 +91,16 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public long update(long id, Tag tag) throws BadRequestServiceEx, NotFoundServiceEx {
-        if (get(id) == null) {
+        Tag original = get(id);
+        if (original == null) {
             throw new NotFoundServiceEx("Tag not found");
         }
+
         tag.setId(id);
+        tag.setResources(original.getResources());
+
         tagDAO.merge(tag);
+
         return id;
     }
 
