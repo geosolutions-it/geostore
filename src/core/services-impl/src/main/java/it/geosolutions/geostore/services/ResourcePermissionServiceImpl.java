@@ -22,20 +22,6 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
                                     && resourceOwnershipWithReadPermission.apply(rule, resource);
 
     @Override
-    public boolean isResourceAvailableForUser(Resource resource, User user) {
-        return resource.isAdvertised()
-                || user.getRole().equals(Role.ADMIN)
-                || isUserOwner(user, resource);
-    }
-
-    @Override
-    public boolean isUserOwner(User user, Resource resource) {
-        checkUserSecurityRules(user);
-        return user.getSecurity().stream()
-                .anyMatch(rule -> resourceOwnership.apply(rule, resource));
-    }
-
-    @Override
     public boolean canUserReadResource(User user, Long resourceId) {
         Resource resource = new Resource();
         resource.setId(resourceId);
