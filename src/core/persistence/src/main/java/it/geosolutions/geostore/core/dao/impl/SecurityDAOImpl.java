@@ -185,7 +185,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         Filter userFiltering = Filter.equal("user.name", user.getName());
 
         // Combine owner and advertisedFilter using OR
-        /** The user is the owner of the resource or the resource is advertised. */
+        /* The user is the owner of the resource or the resource is advertised. */
         Filter advertisedFiltering =
                 Filter.or(
                         Filter.equal("user.name", user.getName()),

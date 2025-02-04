@@ -774,25 +774,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            /* erroneous search for similarity of multiple groups */
-            GroupFilter groupFilter = new GroupFilter("a,b", SearchOperator.LIKE);
-
-            assertThrows(
-                    IllegalStateException.class,
-                    () ->
-                            restExtJsService.getExtResourcesList(
-                                    sc,
-                                    0,
-                                    100,
-                                    new Sort("", ""),
-                                    false,
-                                    false,
-                                    false,
-                                    false,
-                                    groupFilter));
-        }
-
-        {
             /* search for equality in empty group list */
             GroupFilter groupFilter = new GroupFilter("", SearchOperator.EQUAL_TO);
 
@@ -817,6 +798,81 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             /* invalid filter */
             assertThrows(
                     IllegalArgumentException.class, () -> new GroupFilter(null, SearchOperator.IN));
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_filteredForGroupNameWithCommas() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+        final String GROUP_NAME_WITH_COMMAS = ",groupA,B,C,";
+        final String OTHER_GROUP_NAME = "group";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource(RESOURCE_A_NAME, "", CAT0_NAME, user0Id, true);
+        long resourceBId = restCreateResource(RESOURCE_B_NAME, "", CAT0_NAME, user0Id, true);
+
+        SecurityRule securityRuleGroupA = new SecurityRule();
+        securityRuleGroupA.setGroup(userGroupService.get(createGroup(GROUP_NAME_WITH_COMMAS)));
+        securityRuleGroupA.setCanWrite(true);
+
+        List<SecurityRule> securityRulesResourceA = resourceService.getSecurityRules(resourceAId);
+        securityRulesResourceA.add(securityRuleGroupA);
+        restResourceService.updateSecurityRules(
+                sc, resourceAId, new SecurityRuleList(securityRulesResourceA));
+
+        SecurityRule securityRuleGroupB = new SecurityRule();
+        securityRuleGroupB.setGroup(userGroupService.get(createGroup(OTHER_GROUP_NAME)));
+        securityRuleGroupB.setCanRead(true);
+
+        List<SecurityRule> securityRulesResourceB = resourceService.getSecurityRules(resourceBId);
+        securityRulesResourceB.add(securityRuleGroupB);
+        restResourceService.updateSecurityRules(
+                sc, resourceBId, new SecurityRuleList(securityRulesResourceB));
+
+        {
+            /* search for name equality */
+            GroupFilter groupFilter = new GroupFilter(",groupA,B,C,", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity */
+            GroupFilter groupFilter = new GroupFilter(",%,", SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name equality of multiple groups */
+            GroupFilter groupFilter = new GroupFilter("group,\",groupA,B,C,\"", SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
         }
     }
 
@@ -885,25 +941,6 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
 
         {
-            /* erroneous search for similarity of multiple tags */
-            TagFilter tagFilter = new TagFilter("a,b", SearchOperator.LIKE);
-
-            assertThrows(
-                    IllegalStateException.class,
-                    () ->
-                            restExtJsService.getExtResourcesList(
-                                    sc,
-                                    0,
-                                    100,
-                                    new Sort("", ""),
-                                    false,
-                                    false,
-                                    false,
-                                    false,
-                                    tagFilter));
-        }
-
-        {
             /* search for equality in empty tag list */
             TagFilter tagFilter = new TagFilter("", SearchOperator.EQUAL_TO);
 
@@ -928,6 +965,69 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             /* invalid filter */
             assertThrows(
                     IllegalArgumentException.class, () -> new TagFilter(null, SearchOperator.IN));
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_filteredForTagNameWithCommas() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        long tagWithCommas = tagService.insert(new Tag(",a,b,c,d,", "", null));
+        long tag = tagService.insert(new Tag("tag", "", null));
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource(RESOURCE_A_NAME, "", CAT0_NAME, user0Id, true);
+        long resourceBId = restCreateResource(RESOURCE_B_NAME, "", CAT0_NAME, user0Id, true);
+
+        tagService.addToResource(tagWithCommas, resourceAId);
+        tagService.addToResource(tag, resourceAId);
+
+        tagService.addToResource(tag, resourceBId);
+
+        {
+            /* search for name equality */
+            TagFilter tagFilter = new TagFilter(",a,b,c,d,", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity */
+            TagFilter tagFilter = new TagFilter(",%,", SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name equality of multiple tags */
+            TagFilter tagFilter = new TagFilter("tag,\",a,b,c,d,\"", SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
         }
     }
 

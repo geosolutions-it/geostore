@@ -694,7 +694,7 @@ public class ResourceServiceImpl implements ResourceService {
         searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
 
-        securityDAO.addReadSecurityConstraints(searchCriteria, parameters.getAuthUser());
+        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, parameters.getAuthUser());
         return this.search(searchCriteria);
     }
 
@@ -708,7 +708,6 @@ public class ResourceServiceImpl implements ResourceService {
         userService.fetchSecurityRules(user);
 
         return resources.stream()
-                .filter(r -> resourcePermissionService.isResourceAvailableForUser(r, user))
                 .map(r -> createShortResource(user, r))
                 .collect(Collectors.toList());
     }

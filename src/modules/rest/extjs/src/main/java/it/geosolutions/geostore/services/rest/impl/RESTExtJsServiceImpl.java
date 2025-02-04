@@ -282,17 +282,15 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             boolean shouldIncludeAttributes =
                     includeAttributes || (extraAttributes != null && !extraAttributes.isEmpty());
             List<Resource> resources =
-                    filterOutUnavailableResources(
-                            resourceService.getResources(
-                                    ResourceSearchParameters.builder()
-                                            .filter(filter)
-                                            .page(page)
-                                            .entries(limit)
-                                            .includeAttributes(shouldIncludeAttributes)
-                                            .includeData(includeData)
-                                            .authUser(authUser)
-                                            .build()),
-                            authUser);
+                    resourceService.getResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .page(page)
+                                    .entries(limit)
+                                    .includeAttributes(shouldIncludeAttributes)
+                                    .includeData(includeData)
+                                    .authUser(authUser)
+                                    .build());
 
             long count = 0;
             if (!resources.isEmpty()) {
@@ -376,8 +374,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                             .build();
 
             List<Resource> resources =
-                    filterOutUnavailableResources(
-                            resourceService.getResources(searchParameters), authUser);
+                            resourceService.getResources(searchParameters);
 
             long count = 0;
             if (!resources.isEmpty()) {
@@ -391,15 +388,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             return null;
         }
-    }
-
-    private List<Resource> filterOutUnavailableResources(List<Resource> resources, User user) {
-
-        userService.fetchSecurityRules(user);
-
-        return resources.stream()
-                .filter(r -> resourcePermissionService.isResourceAvailableForUser(r, user))
-                .collect(Collectors.toList());
     }
 
     /**
@@ -784,6 +772,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 canEdit = sr.isCanEdit();
                 return;
             }
+
+            userService.fetchSecurityRules(authUser);
+
             if (authUser != null && resourcePermissionService.canUserWriteResource(authUser, r)) {
                 canEdit = true;
                 canDelete = true;

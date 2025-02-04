@@ -260,10 +260,6 @@ public class SearchConverter implements FilterVisitor {
         SearchOperator searchOperator = filter.getOperator();
         List<String> values = filter.values();
 
-        if (SearchOperator.IN != searchOperator && values.size() != 1) {
-            throw new IllegalStateException("Erroneous search op " + searchOperator);
-        }
-
         Integer operator = ops_rest_trg.get(searchOperator);
         if (operator == null) {
             throw new IllegalStateException("Unknown op " + searchOperator);

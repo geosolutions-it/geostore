@@ -22,9 +22,10 @@ package it.geosolutions.geostore.services.dto.search;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.xml.bind.annotation.XmlElement;
 
 /**
@@ -33,6 +34,7 @@ import javax.xml.bind.annotation.XmlElement;
  */
 public abstract class AssociatedEntityFilter extends SearchFilter implements Serializable {
 
+    private static final Pattern NAMES_PATTERN = Pattern.compile("\"([^\"]*)\"|([^,]+)");
     private static final List<SearchOperator> VALID_OPERATORS =
             List.of(
                     SearchOperator.EQUAL_TO,
@@ -46,14 +48,15 @@ public abstract class AssociatedEntityFilter extends SearchFilter implements Ser
     public AssociatedEntityFilter() {}
 
     public AssociatedEntityFilter(String names, SearchOperator operator) {
-        setNames(names);
         setOperator(operator);
+        setNames(names);
     }
 
     /**
      * Setter to map the deserialized filter names.
      *
-     * <p>The names (comma-separated) are then split in individual strings.
+     * <p>To search for multiple names, use a comma-separated list. If a name contains a comma, wrap
+     * it in double quotes (e.g. "name,with,commas").
      *
      * @param names a comma-separated list of names to filter the resource with
      */
@@ -64,7 +67,16 @@ public abstract class AssociatedEntityFilter extends SearchFilter implements Ser
             throw new IllegalArgumentException("filter names should not be null");
         }
 
-        this.values = new ArrayList<>(Arrays.asList(names.split(",")));
+        if (operator == SearchOperator.IN) {
+            this.values =
+                    NAMES_PATTERN
+                            .matcher(names)
+                            .results()
+                            .map(r -> r.group(1) != null ? r.group(1) : r.group(2))
+                            .collect(Collectors.toList());
+        } else {
+            this.values = Collections.singletonList(names);
+        }
     }
 
     public SearchOperator getOperator() {
