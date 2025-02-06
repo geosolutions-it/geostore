@@ -130,6 +130,7 @@ public interface RESTExtJsService {
      * @param includeAttributes whether to include attributes in the returned results
      * @param includeData whether to include data in the returned results
      * @param includeTags whether to include tags in the returned results
+     * @param favoritesOnly whether to return only user favorite resources
      * @param filter the multipart filter object to apply for resource filtering
      * @return
      * @throws BadRequestWebEx
@@ -149,6 +150,7 @@ public interface RESTExtJsService {
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeData") @DefaultValue("false") boolean includeData,
             @QueryParam("includeTags") @DefaultValue("false") boolean includeTags,
+            @QueryParam("favoritesOnly") @DefaultValue("false") boolean favoritesOnly,
             @Multipart("filter") SearchFilter filter)
             throws BadRequestWebEx, InternalErrorWebEx;
 

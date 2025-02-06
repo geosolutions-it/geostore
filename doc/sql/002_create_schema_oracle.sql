@@ -133,6 +133,23 @@
         foreign key (tag_id)
         references gs_tag(id);
 
+    create table gs_user_favorites (
+    	user_id number(19,0) not null,
+    	resource_id number(19,0) not null,
+    	primary key (user_id, resource_id)
+    );
+
+    alter table gs_user_favorites
+        add constraint fk_user_favorites_resource
+        foreign key (resource_id)
+        references gs_resource(id)
+        on delete cascade;
+
+    alter table gs_user_favorites
+        add constraint fk_user_favorites_user
+        foreign key (user_id)
+        references gs_user(id);
+
     create index idx_attribute_name on gs_attribute (name);
 
     create index idx_attribute_resource on gs_attribute (resource_id);

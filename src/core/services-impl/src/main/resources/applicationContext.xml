@@ -5,20 +5,22 @@
 	   		http://www.springframework.org/schema/beans/spring-beans-2.5.xsd"
        default-autowire="byName">
 
-    <bean id="storedDataService" class="it.geosolutions.geostore.services.StoredDataServiceImpl"></bean>
+    <bean id="storedDataService" class="it.geosolutions.geostore.services.StoredDataServiceImpl"/>
 
-    <bean id="resourceService" class="it.geosolutions.geostore.services.ResourceServiceImpl"></bean>
+    <bean id="resourceService" class="it.geosolutions.geostore.services.ResourceServiceImpl"/>
 
-    <bean id="categoryService" class="it.geosolutions.geostore.services.CategoryServiceImpl"></bean>
+    <bean id="categoryService" class="it.geosolutions.geostore.services.CategoryServiceImpl"/>
 
-    <bean id="userService" class="it.geosolutions.geostore.services.UserServiceImpl"></bean>
+    <bean id="userService" class="it.geosolutions.geostore.services.UserServiceImpl"/>
 
-    <bean id="userGroupService" class="it.geosolutions.geostore.services.UserGroupServiceImpl"></bean>
+    <bean id="userGroupService" class="it.geosolutions.geostore.services.UserGroupServiceImpl"/>
 
-    <bean id="userSessionService" class="it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl"></bean>
+    <bean id="userSessionService" class="it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl"/>
 
-    <bean id="tagService" class="it.geosolutions.geostore.services.TagServiceImpl"></bean>
+    <bean id="tagService" class="it.geosolutions.geostore.services.TagServiceImpl"/>
 
-    <bean id="resourcePermissionService" class="it.geosolutions.geostore.services.ResourcePermissionServiceImpl">    </bean>
+    <bean id="favoriteService" class="it.geosolutions.geostore.services.FavoriteServiceImpl"/>
+
+    <bean id="resourcePermissionService" class="it.geosolutions.geostore.services.ResourcePermissionServiceImpl"/>
 
 </beans>

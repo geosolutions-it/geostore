@@ -91,7 +91,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ResourcePermissionService resourcePermissionService;
 
-    /** @param resourceService */
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
@@ -157,7 +156,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             long count = 0;
             if (resources != null && !resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(sqlNameLike, authUser);
+                count = resourceService.count(sqlNameLike, authUser);
             }
 
             JSONObject result = makeJSONResult(true, count, resources, authUser);
@@ -295,7 +294,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
             long count = 0;
             if (!resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(filter, authUser);
+                count = resourceService.count(filter, authUser);
             }
 
             JSONObject result =
@@ -316,12 +315,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.rest.RESTExtJsService#getResourcesList(javax.ws.rs.core.SecurityContext, java.lang.Integer,
-     * java.lang.Integer, java.lang.String, java.lang.String, boolean, boolean, it.geosolutions.geostore.services.dto.search.SearchFilter)
-     */
     @Override
     public ExtResourceList getExtResourcesList(
             SecurityContext sc,
@@ -331,6 +324,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             boolean includeAttributes,
             boolean includeData,
             boolean includeTags,
+            boolean favoritesOnly,
             SearchFilter filter)
             throws BadRequestWebEx {
 
@@ -340,12 +334,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
-                    "getResourcesList(start={}, limit={}, includeAttributes={}, includeData={}, includeTags={}",
+                    "getResourcesList(start={}, limit={}, includeAttributes={}, includeData={}, includeTags={}, favoritesOnly={}",
                     start,
                     limit,
                     includeAttributes,
                     includeData,
-                    includeTags);
+                    includeTags,
+                    favoritesOnly);
         }
 
         User authUser = null;
@@ -364,23 +359,25 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            List<Resource> resources =
-                    resourceService.getResources(
-                            ResourceSearchParameters.builder()
-                                    .filter(filter)
-                                    .page(page)
-                                    .entries(limit)
-                                    .sortBy(sort.getSortBy())
-                                    .sortOrder(sort.getSortOrder())
-                                    .includeAttributes(includeAttributes)
-                                    .includeData(includeData)
-                                    .includeTags(includeTags)
-                                    .authUser(authUser)
-                                    .build());
+            ResourceSearchParameters searchParameters =
+                    ResourceSearchParameters.builder()
+                            .filter(filter)
+                            .page(page)
+                            .entries(limit)
+                            .sortBy(sort.getSortBy())
+                            .sortOrder(sort.getSortOrder())
+                            .includeAttributes(includeAttributes)
+                            .includeData(includeData)
+                            .includeTags(includeTags)
+                            .favoritesOnly(favoritesOnly)
+                            .authUser(authUser)
+                            .build();
+
+            List<Resource> resources = resourceService.getResources(searchParameters);
 
             long count = 0;
             if (!resources.isEmpty()) {
-                count = resourceService.getCountByFilterAndUser(filter, authUser);
+                count = resourceService.count(filter, authUser, favoritesOnly);
             }
 
             return new ExtResourceList(count, convertToExtResources(resources, authUser));
@@ -402,6 +399,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     private List<ExtResource> convertToExtResources(List<Resource> foundResources, User user) {
 
         userService.fetchSecurityRules(user);
+        userService.fetchFavorites(user);
 
         return foundResources.stream()
                 .map(r -> convertToExtResource(r, user))
@@ -419,7 +417,17 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
+        if (user != null) {
+            extResourceBuilder.withIsFavorite(isResourceUserFavorite(resource, user));
+        }
+
         return extResourceBuilder.build();
+    }
+
+    private boolean isResourceUserFavorite(Resource resource, User user) {
+        return user.getFavorites().stream()
+                .map(Resource::getId)
+                .anyMatch(id -> id.equals(resource.getId()));
     }
 
     /**
@@ -681,6 +689,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         User authUser = extractAuthUser(sc);
         userService.fetchSecurityRules(authUser);
+        userService.fetchFavorites(authUser);
 
         if (!resourcePermissionService.canUserReadResource(authUser, id)) {
             throw new ForbiddenErrorWebEx("Resource is protected");
@@ -696,6 +705,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
                 .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
                 .withTagList(createTagList(resource.getTags()))
+                .withIsFavorite(isResourceUserFavorite(resource, authUser))
                 .build();
     }
 

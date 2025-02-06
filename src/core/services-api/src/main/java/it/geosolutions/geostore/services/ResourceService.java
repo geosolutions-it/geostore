@@ -218,30 +218,38 @@ public interface ResourceService extends SecurityService {
             throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx;
 
     /**
-     * Get filter count by filter and user
+     * Count resources by filter and user
      *
      * @param filter
      * @param user
      * @return resources' count that the user has access
      * @throws InternalErrorServiceEx
      * @throws BadRequestServiceEx
-     * @deprecated rename into count()
      */
-    @Deprecated
-    long getCountByFilterAndUser(SearchFilter filter, User user)
+    long count(SearchFilter filter, User user) throws BadRequestServiceEx, InternalErrorServiceEx;
+
+    /**
+     * Count resources by filter and user, eventually limited to user's favorites
+     *
+     * @param filter
+     * @param user
+     * @param favoritesOnly
+     * @return resources' count that the user has access
+     * @throws InternalErrorServiceEx
+     * @throws BadRequestServiceEx
+     */
+    long count(SearchFilter filter, User user, boolean favoritesOnly)
             throws BadRequestServiceEx, InternalErrorServiceEx;
 
     /**
-     * Get filter count by nameLike and user
+     * Count resources by nameLike and user
      *
      * @param nameLike
      * @param user
      * @return resources' count that the user has access
      * @throws BadRequestServiceEx
-     * @deprecated rename into count()
      */
-    @Deprecated
-    long getCountByFilterAndUser(String nameLike, User user) throws BadRequestServiceEx;
+    long count(String nameLike, User user) throws BadRequestServiceEx;
 
     long insertAttribute(long id, String name, String value, DataType type)
             throws InternalErrorServiceEx;

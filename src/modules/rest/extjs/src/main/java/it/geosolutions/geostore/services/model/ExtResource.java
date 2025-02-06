@@ -6,8 +6,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * An extended version of the {@link Resource} class that includes additional permission flags to
- * indicate whether the resource can be edited, deleted, or copied.
+ * An extended version of the {@link Resource} class that includes additional flags to indicate
+ * whether the resource can be edited, deleted, or copied and if the resource is a user favorite.
  */
 @XmlRootElement(name = "Resource")
 public class ExtResource extends Resource {
@@ -15,6 +15,7 @@ public class ExtResource extends Resource {
     @XmlElement private boolean canEdit;
     @XmlElement private boolean canDelete;
     @XmlElement private boolean canCopy;
+    @XmlElement private boolean isFavorite;
 
     public ExtResource() {}
 
@@ -37,6 +38,7 @@ public class ExtResource extends Resource {
         this.canEdit = builder.canEdit;
         this.canDelete = builder.canDelete;
         this.canCopy = builder.canCopy;
+        this.isFavorite = builder.isFavorite;
     }
 
     public boolean isCanEdit() {
@@ -51,6 +53,10 @@ public class ExtResource extends Resource {
         return canCopy;
     }
 
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
     public static Builder builder(Resource resource) {
         return new Builder(resource);
     }
@@ -60,6 +66,7 @@ public class ExtResource extends Resource {
         private boolean canEdit;
         private boolean canDelete;
         private boolean canCopy;
+        private boolean isFavorite;
 
         private Builder(Resource resource) {
             this.resource = resource;
@@ -80,6 +87,11 @@ public class ExtResource extends Resource {
             return this;
         }
 
+        public Builder withIsFavorite(boolean isFavorite) {
+            this.isFavorite = isFavorite;
+            return this;
+        }
+
         public ExtResource build() {
             return new ExtResource(this);
         }
@@ -91,11 +103,14 @@ public class ExtResource extends Resource {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         ExtResource that = (ExtResource) o;
-        return canEdit == that.canEdit && canDelete == that.canDelete && canCopy == that.canCopy;
+        return canEdit == that.canEdit
+                && canDelete == that.canDelete
+                && canCopy == that.canCopy
+                && isFavorite == that.isFavorite;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), canEdit, canDelete, canCopy);
+        return Objects.hash(super.hashCode(), canEdit, canDelete, canCopy, isFavorite);
     }
 }

@@ -74,10 +74,8 @@ import org.hibernate.annotations.Type;
 @XmlRootElement(name = "User")
 public class User implements Serializable {
 
-    /** The Constant serialVersionUID. */
     private static final long serialVersionUID = -138056245004697133L;
 
-    /** The id. */
     @Id @GeneratedValue private Long id;
 
     @Column(nullable = false, updatable = false, length = 255)
@@ -90,20 +88,12 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    public User() {};
-
-    public User(User user) {
-        this.id = user.id;
-        this.name = user.name;
-        this.password = user.password;
-        this.role = user.role;
-        this.newPassword = user.newPassword;
-        this.trusted = user.trusted;
-        this.attribute = user.attribute;
-        this.security = user.security;
-        this.groups = user.groups;
-        this.enabled = user.enabled;
-    }
+    @ManyToMany
+    @JoinTable(
+            name = "gs_user_favorites",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "resource_id"))
+    private Set<Resource> favorites;
 
     /*
      * NOT to be saved on DB
@@ -133,6 +123,21 @@ public class User implements Serializable {
     @Type(type = "yes_no")
     @Column(nullable = false, updatable = true)
     private boolean enabled = true;
+
+    public User() {};
+
+    public User(User user) {
+        this.id = user.id;
+        this.name = user.name;
+        this.password = user.password;
+        this.role = user.role;
+        this.newPassword = user.newPassword;
+        this.trusted = user.trusted;
+        this.attribute = user.attribute;
+        this.security = user.security;
+        this.groups = user.groups;
+        this.enabled = user.enabled;
+    }
 
     /** @return the id */
     // @XmlTransient
@@ -273,6 +278,14 @@ public class User implements Serializable {
 
     public void setTrusted(boolean trusted) {
         this.trusted = trusted;
+    }
+
+    public Set<Resource> getFavorites() {
+        return favorites;
+    }
+
+    public void setFavorites(Set<Resource> favorites) {
+        this.favorites = favorites;
     }
 
     /*

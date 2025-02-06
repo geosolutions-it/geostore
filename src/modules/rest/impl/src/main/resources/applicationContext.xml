@@ -58,12 +58,18 @@
     <bean id="restUserGroupService"
           class="it.geosolutions.geostore.services.rest.impl.RESTUserGroupServiceImpl">
     </bean>
+
     <bean id="restSessionService"
           class="it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl">
         <property name="sessionTimeout" value="86400"/>
     </bean>
+
     <bean id="restTagService"
           class="it.geosolutions.geostore.services.rest.impl.RESTTagServiceImpl">
+    </bean>
+
+    <bean id="restFavoriteService"
+          class="it.geosolutions.geostore.services.rest.impl.RESTFavoriteServiceImpl">
     </bean>
 
     <bean id="sessionServiceDelegate"
@@ -177,6 +183,7 @@
     <jaxrs:server id="geoStoreRESTUser" address="/users">
         <jaxrs:serviceBeans>
             <ref bean="restUserService"/>
+            <ref bean="restFavoriteService"/>
         </jaxrs:serviceBeans>
 
         <jaxrs:features>

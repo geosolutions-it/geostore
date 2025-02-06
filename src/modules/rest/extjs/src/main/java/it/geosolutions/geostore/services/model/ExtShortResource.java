@@ -9,7 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * An extended version of the {@link ShortResource} class that includes {@link ShortAttributeList}
- * and {@link SecurityRuleList} for the resource.
+ * and {@link SecurityRuleList} for the resource along its favourite status.
  */
 @XmlRootElement(name = "ShortResource")
 public class ExtShortResource extends ShortResource {
@@ -17,6 +17,7 @@ public class ExtShortResource extends ShortResource {
     @XmlElement private ShortAttributeList attributeList;
     @XmlElement private SecurityRuleList securityRuleList;
     @XmlElement private TagList tagList;
+    @XmlElement private boolean isFavorite;
 
     public ExtShortResource() {}
 
@@ -35,6 +36,7 @@ public class ExtShortResource extends ShortResource {
         this.attributeList = builder.attributeList;
         this.securityRuleList = builder.securityRuleList;
         this.tagList = builder.tagList;
+        this.isFavorite = builder.isFavorite;
     }
 
     public ShortAttributeList getAttributeList() {
@@ -49,15 +51,20 @@ public class ExtShortResource extends ShortResource {
         return tagList;
     }
 
+    public boolean isFavorite() {
+        return isFavorite;
+    }
+
     public static Builder builder(ShortResource resource) {
         return new Builder(resource);
     }
 
     public static class Builder {
         private final ShortResource shortResource;
-        public ShortAttributeList attributeList;
-        public SecurityRuleList securityRuleList;
-        public TagList tagList;
+        private ShortAttributeList attributeList;
+        private SecurityRuleList securityRuleList;
+        private TagList tagList;
+        private boolean isFavorite;
 
         private Builder(ShortResource shortResource) {
             this.shortResource = shortResource;
@@ -75,6 +82,11 @@ public class ExtShortResource extends ShortResource {
 
         public Builder withTagList(TagList tagList) {
             this.tagList = tagList;
+            return this;
+        }
+
+        public Builder withIsFavorite(boolean isFavorite) {
+            this.isFavorite = isFavorite;
             return this;
         }
 

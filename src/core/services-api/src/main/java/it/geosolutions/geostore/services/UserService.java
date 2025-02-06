@@ -76,7 +76,7 @@ public interface UserService {
      * @return User
      * @throws NotFoundServiceEx
      */
-    public User get(String name) throws NotFoundServiceEx;
+    User get(String name) throws NotFoundServiceEx;
 
     /**
      * @param page
@@ -117,7 +117,7 @@ public interface UserService {
      *
      * @return true if the persist operation finish with success, false otherwise
      */
-    public boolean insertSpecialUsers();
+    boolean insertSpecialUsers();
 
     /**
      * Returns all user with the specified attribute (name / value).
@@ -125,9 +125,9 @@ public interface UserService {
      * @param attribute
      * @return
      */
-    public Collection<User> getByAttribute(UserAttribute attribute);
+    Collection<User> getByAttribute(UserAttribute attribute);
 
-    public Collection<User> getByGroup(UserGroup group);
+    Collection<User> getByGroup(UserGroup group);
 
     /**
      * Update the user entity by fetching its security rules and group security rules from the
@@ -136,6 +136,15 @@ public interface UserService {
      * @param user
      */
     default void fetchSecurityRules(User user) {
+        /* no-op */
+    }
+
+    /**
+     * Update the user entity by fetching its favorites resources from the database.
+     *
+     * @param user
+     */
+    default void fetchFavorites(User user) {
         /* no-op */
     }
 }
