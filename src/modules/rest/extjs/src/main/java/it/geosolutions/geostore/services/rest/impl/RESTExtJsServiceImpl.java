@@ -373,8 +373,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                             .authUser(authUser)
                             .build();
 
-            List<Resource> resources =
-                            resourceService.getResources(searchParameters);
+            List<Resource> resources = resourceService.getResources(searchParameters);
 
             long count = 0;
             if (!resources.isEmpty()) {

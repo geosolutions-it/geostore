@@ -828,6 +828,7 @@ public class ResourceServiceImpl implements ResourceService {
         }
 
         securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
+        searchCriteria.setDistinct(true);
         return resourceDAO.count(searchCriteria);
     }
 
