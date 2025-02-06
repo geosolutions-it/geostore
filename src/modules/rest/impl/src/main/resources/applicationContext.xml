@@ -63,9 +63,6 @@
           class="it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl">
         <property name="sessionTimeout" value="86400"/>
     </bean>
-    <bean id="restTagService"
-          class="it.geosolutions.geostore.services.rest.impl.RESTTagServiceImpl">
-    </bean>
 
     <bean id="restTagService"
           class="it.geosolutions.geostore.services.rest.impl.RESTTagServiceImpl">
