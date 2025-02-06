@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -35,7 +35,7 @@ public interface FilterVisitor {
 
     void visit(CategoryFilter filter) throws InternalErrorServiceEx;
 
-    void visit(GroupFilter filter) throws InternalErrorServiceEx;
+    void visit(AssociatedEntityFilter filter);
 
     void visit(FieldFilter filter) throws InternalErrorServiceEx;
 

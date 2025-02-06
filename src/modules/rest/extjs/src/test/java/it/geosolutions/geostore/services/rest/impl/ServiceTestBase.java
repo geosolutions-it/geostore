@@ -68,6 +68,7 @@ public class ServiceTestBase {
     protected static CategoryService categoryService;
     protected static UserService userService;
     protected static UserGroupService userGroupService;
+    protected static TagService tagService;
     protected static ResourcePermissionService resourcePermissionService;
 
     protected static ResourceDAO resourceDAO;
@@ -95,6 +96,7 @@ public class ServiceTestBase {
                 categoryService = (CategoryService) ctx.getBean("categoryService");
                 userService = (UserService) ctx.getBean("userService");
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
+                tagService = (TagService) ctx.getBean("tagService");
                 resourcePermissionService =
                         (ResourcePermissionService) ctx.getBean("resourcePermissionService");
 
@@ -105,7 +107,7 @@ public class ServiceTestBase {
     }
 
     @Before
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         testCheckServices();
 
         LOGGER.info(
@@ -126,6 +128,7 @@ public class ServiceTestBase {
         assertNotNull(categoryService);
         assertNotNull(userService);
         assertNotNull(userGroupService);
+        assertNotNull(tagService);
         assertNotNull(resourcePermissionService);
 
         assertNotNull(resourceDAO);
@@ -139,11 +142,26 @@ public class ServiceTestBase {
     protected void removeAll()
             throws NotFoundServiceEx, BadRequestServiceEx, InternalErrorServiceEx {
         LOGGER.info("***** removeAll()");
+        removeAllTag();
         removeAllResource();
         removeAllStoredData();
         removeAllCategory();
         removeAllUser();
         removeAllUserGroup();
+    }
+
+    private void removeAllTag() throws BadRequestServiceEx {
+        tagService
+                .getAll(null, null, null)
+                .forEach(
+                        item -> {
+                            LOGGER.info("Removing tag: {}", item.getName());
+                            try {
+                                tagService.delete(item.getId());
+                            } catch (NotFoundServiceEx e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
     }
 
     /**

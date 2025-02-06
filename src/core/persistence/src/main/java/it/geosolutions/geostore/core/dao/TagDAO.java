@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2025 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -17,22 +17,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.services.dto.search;
+package it.geosolutions.geostore.core.dao;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import it.geosolutions.geostore.core.model.Tag;
 
-/** Filter by group name */
-@XmlRootElement(name = "Group")
-public class GroupFilter extends AssociatedEntityFilter {
-
-    public GroupFilter() {}
-
-    public GroupFilter(String names, SearchOperator operator) {
-        super(names, operator);
-    }
-
-    @Override
-    public String property() {
-        return "security.group.groupName";
-    }
-}
+public interface TagDAO extends RestrictedGenericDAO<Tag> {}

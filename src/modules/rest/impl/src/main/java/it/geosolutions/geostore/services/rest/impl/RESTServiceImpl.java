@@ -71,7 +71,7 @@ public abstract class RESTServiceImpl {
      * @param groups
      * @return
      */
-    public static List<String> extratcGroupNames(Set<UserGroup> groups) {
+    public static List<String> extractGroupNames(Set<UserGroup> groups) {
         List<String> groupNames = new ArrayList<>(groups.size() + 1);
         for (UserGroup ug : groups) {
             groupNames.add(ug.getGroupName());
@@ -182,7 +182,7 @@ public abstract class RESTServiceImpl {
                 }
             }
 
-            List<String> groupNames = extratcGroupNames(authUser.getGroups());
+            List<String> groupNames = extractGroupNames(authUser.getGroups());
             if (!groupNames.isEmpty()) {
                 List<SecurityRule> groupSecurityRules =
                         getSecurityService().getGroupSecurityRule(groupNames, resourceId);
@@ -231,7 +231,7 @@ public abstract class RESTServiceImpl {
                 }
             }
 
-            List<String> groupNames = extratcGroupNames(authUser.getGroups());
+            List<String> groupNames = extractGroupNames(authUser.getGroups());
             if (!groupNames.isEmpty()) {
                 List<SecurityRule> groupSecurityRules =
                         getSecurityService().getGroupSecurityRule(groupNames, resourceId);
@@ -277,5 +277,12 @@ public abstract class RESTServiceImpl {
         groups.add(everyoneGroup);
         guest.setGroups(groups);
         return new UsernamePasswordAuthenticationToken(guest, "", authorities);
+    }
+
+    public static String convertNameLikeToSqlSyntax(String nameLike) {
+        if (nameLike == null) {
+            return null;
+        }
+        return nameLike.replaceAll("[*]", "%");
     }
 }

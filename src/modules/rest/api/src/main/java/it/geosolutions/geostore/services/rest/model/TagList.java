@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -26,52 +26,33 @@
  *
  */
 
-package it.geosolutions.geostore.services.model;
+package it.geosolutions.geostore.services.rest.model;
 
-import java.util.List;
+import it.geosolutions.geostore.core.model.Tag;
+import java.util.Collection;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
-/**
- * Class ExtResourceList.
- *
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- */
-@XmlRootElement(name = "ExtResourceList")
-public class ExtResourceList {
+@XmlRootElement(name = "TagList")
+public class TagList {
 
-    private long count;
+    private Collection<Tag> list;
+    private Long count;
 
-    private List<ExtResource> list;
+    public TagList() {}
 
-    public ExtResourceList() {}
-
-    public ExtResourceList(long count, List<ExtResource> list) {
-        this.count = count;
+    public TagList(Collection<Tag> list, Long count) {
         this.list = list;
-    }
-
-    @XmlElement(name = "ResourceCount")
-    public long getCount() {
-        return count;
-    }
-
-    public void setCount(long count) {
         this.count = count;
     }
 
-    @XmlElement(name = "Resource")
-    public List<ExtResource> getList() {
+    @XmlElement(name = "Tag")
+    public Collection<Tag> getList() {
         return list;
     }
 
-    public void setList(List<ExtResource> list) {
-        this.list = list;
-    }
-
-    @XmlTransient
-    public boolean isEmpty() {
-        return list == null || list.isEmpty();
+    @XmlElement(name = "Count")
+    public Long getCount() {
+        return count;
     }
 }

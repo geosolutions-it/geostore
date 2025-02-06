@@ -28,6 +28,7 @@ import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
@@ -39,6 +40,7 @@ import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
+import it.geosolutions.geostore.services.dto.search.TagFilter;
 import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
@@ -50,6 +52,7 @@ import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -294,7 +297,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, result.total);
             assertEquals(1, result.returnedCount);
 
-            ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false);
+            ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false, false);
             assertEquals(RES_NAME, resource.getName());
             assertEquals("u0", resource.getCreator());
             assertEquals("u0", resource.getEditor());
@@ -306,7 +309,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             realResource.setName("new name");
             restResourceService.update(sc, r0Id, createRESTResource(realResource));
 
-            ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false);
+            ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false, false);
             assertEquals(realResource.getName(), resource.getName());
             assertEquals("u0", resource.getCreator());
             assertEquals("a0", resource.getEditor());
@@ -456,6 +459,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             new Sort("description", "asc"),
                             false,
                             false,
+                            false,
                             new AndFilter());
 
             List<ExtResource> resources = response.getList();
@@ -476,6 +480,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             new Sort("creation", "desc"),
                             false,
                             false,
+                            false,
                             new AndFilter());
 
             List<ExtResource> resources = response.getList();
@@ -489,7 +494,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 1000, new Sort(null, null), false, false, new AndFilter());
+                            sc,
+                            0,
+                            1000,
+                            new Sort(null, null),
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
 
             List<ExtResource> resources = response.getList();
             assertEquals(3, resources.size());
@@ -506,6 +518,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             0,
                             1000,
                             new Sort("unknownfield", "desc"),
+                            false,
                             false,
                             false,
                             new AndFilter());
@@ -542,7 +555,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, editorFieldFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -556,7 +569,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, editorFieldFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -568,7 +581,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, editorFieldFilter);
 
             assertTrue(response.isEmpty());
         }
@@ -602,7 +615,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, editorFieldFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -616,7 +629,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, editorFieldFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -628,7 +641,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, editorFieldFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, editorFieldFilter);
 
             assertTrue(response.isEmpty());
         }
@@ -672,12 +685,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of a single group */
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList("groupA"), SearchOperator.EQUAL_TO);
+            GroupFilter groupFilter = new GroupFilter("groupA", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -687,12 +699,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name similarity (ignoring case) of multiple groups */
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList("GROUP_"), SearchOperator.ILIKE);
+            GroupFilter groupFilter = new GroupFilter("GROUP_", SearchOperator.ILIKE);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -700,96 +711,271 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         {
             /* search for name equality of multiple groups */
-            GroupFilter groupFilter =
-                    new GroupFilter(List.of("groupA", "groupB", "groupC"), SearchOperator.IN);
+            GroupFilter groupFilter = new GroupFilter("groupA,groupB,groupC", SearchOperator.IN);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(2, resources.size());
         }
 
         {
-            /* erroneous search for similarity of multiple groups */
-            GroupFilter groupFilter = new GroupFilter(List.of("a", "b"), SearchOperator.LIKE);
+            /* search for equality in empty group list */
+            GroupFilter groupFilter = new GroupFilter("", SearchOperator.EQUAL_TO);
 
-            assertThrows(
-                    IllegalStateException.class,
-                    () ->
-                            restExtJsService.getExtResourcesList(
-                                    sc, 0, 100, new Sort("", ""), false, false, groupFilter));
-        }
-
-        {
-            /* erroneous search for equality in empty group list */
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.emptyList(), SearchOperator.EQUAL_TO);
-
-            assertThrows(
-                    IllegalStateException.class,
-                    () ->
-                            restExtJsService.getExtResourcesList(
-                                    sc, 0, 100, new Sort("", ""), false, false, groupFilter));
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
+            assertTrue(response.getList().isEmpty());
         }
 
         {
             /* unknown group */
-            GroupFilter groupFilter =
-                    new GroupFilter(
-                            Collections.singletonList("unknown group"), SearchOperator.EQUAL_TO);
+            GroupFilter groupFilter = new GroupFilter("unknown group", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
 
             assertTrue(response.getList().isEmpty());
+        }
+
+        {
+            /* invalid filter */
+            assertThrows(
+                    IllegalArgumentException.class, () -> new GroupFilter(null, SearchOperator.IN));
         }
     }
 
     @Test
-    public void testExtResourcesList_groupFilteredWithInvalidInFilter() throws Exception {
+    public void testExtResourcesList_filteredForGroupNameWithCommas() throws Exception {
         final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+        final String GROUP_NAME_WITH_COMMAS = ",groupA,B,C,";
+        final String OTHER_GROUP_NAME = "group";
 
         long user0Id = restCreateUser("u0", Role.USER, null, "p0");
         SecurityContext sc = new SimpleSecurityContext(user0Id);
 
         createCategory(CAT0_NAME);
 
-        restCreateResource("resourceA", "description_A", CAT0_NAME, user0Id, true);
+        long resourceAId = restCreateResource(RESOURCE_A_NAME, "", CAT0_NAME, user0Id, true);
+        long resourceBId = restCreateResource(RESOURCE_B_NAME, "", CAT0_NAME, user0Id, true);
+
+        SecurityRule securityRuleGroupA = new SecurityRule();
+        securityRuleGroupA.setGroup(userGroupService.get(createGroup(GROUP_NAME_WITH_COMMAS)));
+        securityRuleGroupA.setCanWrite(true);
+
+        List<SecurityRule> securityRulesResourceA = resourceService.getSecurityRules(resourceAId);
+        securityRulesResourceA.add(securityRuleGroupA);
+        restResourceService.updateSecurityRules(
+                sc, resourceAId, new SecurityRuleList(securityRulesResourceA));
+
+        SecurityRule securityRuleGroupB = new SecurityRule();
+        securityRuleGroupB.setGroup(userGroupService.get(createGroup(OTHER_GROUP_NAME)));
+        securityRuleGroupB.setCanRead(true);
+
+        List<SecurityRule> securityRulesResourceB = resourceService.getSecurityRules(resourceBId);
+        securityRulesResourceB.add(securityRuleGroupB);
+        restResourceService.updateSecurityRules(
+                sc, resourceBId, new SecurityRuleList(securityRulesResourceB));
 
         {
-            GroupFilter groupFilter = new GroupFilter(null, SearchOperator.IN);
+            /* search for name equality */
+            GroupFilter groupFilter = new GroupFilter(",groupA,B,C,", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
         }
 
         {
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList(""), SearchOperator.IN);
+            /* search for name similarity */
+            GroupFilter groupFilter = new GroupFilter(",%,", SearchOperator.ILIKE);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name equality of multiple groups */
+            GroupFilter groupFilter = new GroupFilter("group,\",groupA,B,C,\"", SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, groupFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_tagFiltered() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+        final String TAG_A_NAME = "tagA";
+        final String TAG_B_NAME = "tagB";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        long tagAId = tagService.insert(new Tag(TAG_A_NAME, "", null));
+        long tagBId = tagService.insert(new Tag(TAG_B_NAME, "", null));
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId =
+                restCreateResource(RESOURCE_A_NAME, "description_A", CAT0_NAME, user0Id, true);
+        long resourceBId =
+                restCreateResource(RESOURCE_B_NAME, "description_B", CAT0_NAME, user0Id, true);
+
+        tagService.addToResource(tagAId, resourceAId);
+        tagService.addToResource(tagBId, resourceAId);
+
+        tagService.addToResource(tagBId, resourceBId);
+
+        {
+            /* search for name equality of a single tag */
+            TagFilter tagFilter = new TagFilter("tagA", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity (ignoring case) of multiple tags */
+            TagFilter tagFilter = new TagFilter("TAG_", SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* search for name equality of multiple tags */
+            TagFilter tagFilter = new TagFilter("tagA,tagB,TagC", SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+        }
+
+        {
+            /* search for equality in empty tag list */
+            TagFilter tagFilter = new TagFilter("", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+            assertTrue(response.getList().isEmpty());
+        }
+
+        {
+            /* unknown tag */
+            TagFilter tagFilter = new TagFilter("unknown tag", SearchOperator.EQUAL_TO);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
 
             assertTrue(response.getList().isEmpty());
         }
 
         {
-            GroupFilter groupFilter =
-                    new GroupFilter(Collections.singletonList(null), SearchOperator.IN);
+            /* invalid filter */
+            assertThrows(
+                    IllegalArgumentException.class, () -> new TagFilter(null, SearchOperator.IN));
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_filteredForTagNameWithCommas() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String RESOURCE_A_NAME = "resourceA";
+        final String RESOURCE_B_NAME = "resourceB";
+
+        long user0Id = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(user0Id);
+
+        long tagWithCommas = tagService.insert(new Tag(",a,b,c,d,", "", null));
+        long tag = tagService.insert(new Tag("tag", "", null));
+
+        createCategory(CAT0_NAME);
+
+        long resourceAId = restCreateResource(RESOURCE_A_NAME, "", CAT0_NAME, user0Id, true);
+        long resourceBId = restCreateResource(RESOURCE_B_NAME, "", CAT0_NAME, user0Id, true);
+
+        tagService.addToResource(tagWithCommas, resourceAId);
+        tagService.addToResource(tag, resourceAId);
+
+        tagService.addToResource(tag, resourceBId);
+
+        {
+            /* search for name equality */
+            TagFilter tagFilter = new TagFilter(",a,b,c,d,", SearchOperator.EQUAL_TO);
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, groupFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
 
-            assertTrue(response.getList().isEmpty());
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name similarity */
+            TagFilter tagFilter = new TagFilter(",%,", SearchOperator.ILIKE);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            Resource resource = resources.get(0);
+            assertEquals(RESOURCE_A_NAME, resource.getName());
+        }
+
+        {
+            /* search for name equality of multiple tags */
+            TagFilter tagFilter = new TagFilter("tag,\",a,b,c,d,\"", SearchOperator.IN);
+
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            sc, 0, 100, new Sort("", ""), false, false, false, tagFilter);
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
         }
     }
 
@@ -822,7 +1008,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, ltDateFilter);
+                            sc, 0, 100, new Sort("", ""), false, false, false, ltDateFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(1, resources.size());
@@ -847,7 +1033,14 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            sc, 0, 100, new Sort("", ""), false, false, betweenDatesFieldFilter);
+                            sc,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            betweenDatesFieldFilter);
 
             List<ExtResource> resources = response.getList();
             assertEquals(2, resources.size());
@@ -906,6 +1099,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             new Sort("", ""),
                             false,
                             false,
+                            false,
                             new AndFilter());
             List<ExtResource> resources = response.getList();
             assertEquals(5, resources.size());
@@ -921,6 +1115,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             0,
                             1000,
                             new Sort("", ""),
+                            false,
                             false,
                             false,
                             new AndFilter());
@@ -1016,6 +1211,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             new Sort("", ""),
                             false,
                             false,
+                            false,
                             new AndFilter());
             List<ExtResource> resources = response.getList();
             assertEquals(3, resources.size());
@@ -1031,6 +1227,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             0,
                             1000,
                             new Sort("", ""),
+                            false,
                             false,
                             false,
                             new AndFilter());
@@ -1054,6 +1251,60 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertFalse(readOnlyResource.isCanEdit());
             assertFalse(readOnlyResource.isCanDelete());
             assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_withTags() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        Tag tagA = new Tag("tagA", "#4561aa", "dusky");
+        Tag tagB = new Tag("tagB", "magenta", null);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("ownedResource", "", CAT0_NAME, userId, false);
+        long tagAId = tagService.insert(tagA);
+        long tagBId = tagService.insert(tagB);
+
+        tagService.addToResource(tagAId, resourceId);
+        tagService.addToResource(tagBId, resourceId);
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            true,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource extResource = resources.get(0);
+            Collection<Tag> tags = extResource.getTags();
+            assertEquals(2, tags.size());
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource extResource = resources.get(0);
+            assertNull(extResource.getTags());
         }
     }
 
@@ -1116,7 +1367,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, userOwnedResourceId, true, true);
+                            adminSecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
@@ -1130,7 +1381,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, userOwnedResourceId, false, false);
+                            adminSecurityContext, userOwnedResourceId, false, false, false);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertNull(attributes);
         }
@@ -1138,7 +1389,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, userOwnedResourceId, true, true);
+                            user0SecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
@@ -1152,7 +1403,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, readOnlyResourceId, true, true);
+                            user0SecurityContext, readOnlyResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
@@ -1166,7 +1417,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, noAttributesResourceId, true, true);
+                            user0SecurityContext, noAttributesResourceId, true, true, false);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertTrue(attributes.isEmpty());
         }
@@ -1176,7 +1427,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     ForbiddenErrorWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext, protectedResourceId, true, true));
+                                    user0SecurityContext, protectedResourceId, true, true, false));
         }
 
         {
@@ -1184,7 +1435,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     NotFoundWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext, Long.MAX_VALUE, true, true));
+                                    user0SecurityContext, Long.MAX_VALUE, true, true, false));
         }
     }
 
@@ -1264,7 +1515,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, groupOwnedResourceId, true, true);
+                            adminSecurityContext, groupOwnedResourceId, true, true, false);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1276,7 +1527,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, groupOwnedResourceId, true, true);
+                            user0SecurityContext, groupOwnedResourceId, true, true, false);
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1288,7 +1539,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, readOnlyGroupResourceId, true, true);
+                            user0SecurityContext, readOnlyGroupResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
@@ -1304,7 +1555,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     ForbiddenErrorWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext, protectedGroupResourceId, true, true));
+                                    user0SecurityContext,
+                                    protectedGroupResourceId,
+                                    true,
+                                    true,
+                                    false));
         }
     }
 
@@ -1356,7 +1611,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, noPermissionsResourceId, true, true);
+                            adminSecurityContext, noPermissionsResourceId, true, true, false);
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertTrue(securityRules.isEmpty());
         }
@@ -1364,7 +1619,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, userOwnedResourceId, true, true);
+                            adminSecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
@@ -1374,7 +1629,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, userOwnedResourceId, false, false);
+                            adminSecurityContext, userOwnedResourceId, false, false, false);
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertNull(securityRules);
         }
@@ -1382,7 +1637,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, userOwnedResourceId, true, true);
+                            user0SecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
@@ -1396,7 +1651,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, readOnlyResourceId, true, true);
+                            user0SecurityContext, readOnlyResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
@@ -1412,7 +1667,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     ForbiddenErrorWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext, protectedResourceId, true, true));
+                                    user0SecurityContext, protectedResourceId, true, true, false));
         }
 
         {
@@ -1420,7 +1675,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     NotFoundWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext, Long.MAX_VALUE, true, true));
+                                    user0SecurityContext, Long.MAX_VALUE, true, true, false));
         }
     }
 
@@ -1478,7 +1733,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            adminSecurityContext, groupOwnedResourceId, true, true);
+                            adminSecurityContext, groupOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
@@ -1488,7 +1743,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, groupOwnedResourceId, true, true);
+                            user0SecurityContext, groupOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
@@ -1502,7 +1757,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, readOnlyGroupResourceId, true, true);
+                            user0SecurityContext, readOnlyGroupResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
@@ -1518,7 +1773,45 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     ForbiddenErrorWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext, protectedGroupResourceId, true, true));
+                                    user0SecurityContext,
+                                    protectedGroupResourceId,
+                                    true,
+                                    true,
+                                    false));
+        }
+    }
+
+    @Test
+    public void testGetExtResource_withTags() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        Tag tagA = new Tag("tagA", "#4561aa", "dusky");
+        Tag tagB = new Tag("tagB", "magenta", null);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("ownedResource", "", CAT0_NAME, userId, false);
+        long tagAId = tagService.insert(tagA);
+        long tagBId = tagService.insert(tagB);
+
+        tagService.addToResource(tagAId, resourceId);
+        tagService.addToResource(tagBId, resourceId);
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            userSecurityContext, resourceId, false, false, true);
+            Collection<Tag> tags = response.getTagList().getList();
+            assertEquals(2, tags.size());
+        }
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            userSecurityContext, resourceId, false, false, false);
+            assertNull(response.getTagList().getList());
         }
     }
 

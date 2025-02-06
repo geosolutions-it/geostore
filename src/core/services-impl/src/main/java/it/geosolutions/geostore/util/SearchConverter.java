@@ -23,11 +23,11 @@ import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.dto.search.AndFilter;
+import it.geosolutions.geostore.services.dto.search.AssociatedEntityFilter;
 import it.geosolutions.geostore.services.dto.search.AttributeFilter;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.FilterVisitor;
-import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.NotFilter;
 import it.geosolutions.geostore.services.dto.search.OrFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -254,31 +254,25 @@ public class SearchConverter implements FilterVisitor {
         trgFilter = f;
     }
 
-    /** This is a leaf filter. */
     @Override
-    public void visit(GroupFilter filter) {
-        GroupFilter.checkOperator(filter.getOperator());
+    public void visit(AssociatedEntityFilter filter) {
 
-        Integer op = ops_rest_trg.get(filter.getOperator());
+        SearchOperator searchOperator = filter.getOperator();
+        List<String> values = filter.values();
 
-        if (op == null) {
-            throw new IllegalStateException("Unknown op " + filter.getOperator());
+        Integer operator = ops_rest_trg.get(searchOperator);
+        if (operator == null) {
+            throw new IllegalStateException("Unknown op " + searchOperator);
         }
 
         Filter f = new Filter();
-        f.setOperator(op);
-        f.setProperty("security.group.groupName");
+        f.setOperator(operator);
+        f.setProperty(filter.property());
 
-        List<String> names = filter.getNames();
-
-        if (SearchOperator.IN != filter.getOperator() && names.size() != 1) {
-            throw new IllegalStateException("Erroneous search op " + filter.getOperator());
-        }
-
-        if (SearchOperator.IN == filter.getOperator()) {
-            f.setValue(names);
+        if (SearchOperator.IN == searchOperator) {
+            f.setValue(values);
         } else {
-            f.setValue(names.get(0));
+            f.setValue(values.get(0));
         }
 
         trgFilter = f;

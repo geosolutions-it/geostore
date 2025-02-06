@@ -21,18 +21,18 @@ package it.geosolutions.geostore.services.dto.search;
 
 import javax.xml.bind.annotation.XmlRootElement;
 
-/** Filter by group name */
-@XmlRootElement(name = "Group")
-public class GroupFilter extends AssociatedEntityFilter {
+/** Filter by tag name */
+@XmlRootElement(name = "Tag")
+public class TagFilter extends AssociatedEntityFilter {
 
-    public GroupFilter() {}
+    public TagFilter() {}
 
-    public GroupFilter(String names, SearchOperator operator) {
-        super(names, operator);
+    public TagFilter(String values, SearchOperator operator) {
+        super(values, operator);
     }
 
     @Override
     public String property() {
-        return "security.group.groupName";
+        return "tags.name";
     }
 }
