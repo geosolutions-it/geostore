@@ -90,8 +90,6 @@ public class ResourceServiceImpl implements ResourceService {
 
     private SecurityDAO securityDAO;
 
-    private UserService userService;
-
     private ResourcePermissionService resourcePermissionService;
 
     public void setUserDAO(UserDAO userDAO) {
@@ -120,10 +118,6 @@ public class ResourceServiceImpl implements ResourceService {
 
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
-    }
-
-    public void setUserService(UserService userService) {
-        this.userService = userService;
     }
 
     public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
