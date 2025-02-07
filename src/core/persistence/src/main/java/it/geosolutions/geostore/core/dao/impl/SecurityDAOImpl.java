@@ -246,39 +246,6 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         return super.search(searchCriteria);
     }
 
-    /**
-     * @param userId
-     * @return List<SecurityRule>
-     */
-    @Override
-    public List<SecurityRule> findUserSecurityRules(long userId) {
-        Search searchCriteria = new Search(SecurityRule.class);
-
-        Filter securityFilter = Filter.equal("user.id", userId);
-
-        searchCriteria.addFilter(securityFilter);
-
-        return super.search(searchCriteria);
-    }
-
-    /**
-     * @param userGroupId
-     * @return List<SecurityRule>
-     */
-    @Override
-    public List<SecurityRule> findUserGroupSecurityRules(long userGroupId) {
-        Search searchCriteria = new Search(SecurityRule.class);
-
-        Filter securityFilter = Filter.equal("group.id", userGroupId);
-
-        searchCriteria.addFilter(securityFilter);
-
-        return super.search(searchCriteria);
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.core.dao.ResourceDAO#findGroupSecurityRule(java.lang.String, long)
-     */
     @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
         List<SecurityRule> rules = findResourceSecurityRules(resourceId);

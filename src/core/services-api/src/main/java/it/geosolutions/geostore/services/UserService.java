@@ -130,16 +130,6 @@ public interface UserService {
     Collection<User> getByGroup(UserGroup group);
 
     /**
-     * Update the user entity by fetching its security rules and group security rules from the
-     * database.
-     *
-     * @param user
-     */
-    default void fetchSecurityRules(User user) {
-        /* no-op */
-    }
-
-    /**
      * Update the user entity by fetching its favorites resources from the database.
      *
      * @param user

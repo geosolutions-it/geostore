@@ -472,21 +472,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void fetchSecurityRules(User user) {
-        if (user == null || user.getId() == null) {
-            return;
-        }
-
-        user.getGroups()
-                .forEach(
-                        userGroup ->
-                                userGroup.setSecurity(
-                                        securityDAO.findUserGroupSecurityRules(userGroup.getId())));
-
-        user.setSecurity(securityDAO.findUserSecurityRules(user.getId()));
-    }
-
-    @Override
     public void fetchFavorites(User user) {
         if (user == null || user.getId() == null) {
             return;

@@ -35,6 +35,7 @@ import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
+import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
@@ -56,6 +57,7 @@ import it.geosolutions.geostore.util.SearchConverter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -74,6 +76,8 @@ public class ResourceServiceImpl implements ResourceService {
 
     private static final Logger LOGGER = LogManager.getLogger(ResourceServiceImpl.class);
 
+    private UserDAO userDAO;
+
     private UserGroupDAO userGroupDAO;
 
     private ResourceDAO resourceDAO;
@@ -90,28 +94,32 @@ public class ResourceServiceImpl implements ResourceService {
 
     private ResourcePermissionService resourcePermissionService;
 
-    public void setSecurityDAO(SecurityDAO securityDAO) {
-        this.securityDAO = securityDAO;
+    public void setUserDAO(UserDAO userDAO) {
+        this.userDAO = userDAO;
     }
 
-    public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
-        this.storedDataDAO = storedDataDAO;
-    }
-
-    public void setResourceDAO(ResourceDAO resourceDAO) {
-        this.resourceDAO = resourceDAO;
+    public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
+        this.userGroupDAO = userGroupDAO;
     }
 
     public void setAttributeDAO(AttributeDAO attributeDAO) {
         this.attributeDAO = attributeDAO;
     }
 
+    public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
+        this.storedDataDAO = storedDataDAO;
+    }
+
     public void setCategoryDAO(CategoryDAO categoryDAO) {
         this.categoryDAO = categoryDAO;
     }
 
-    public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
-        this.userGroupDAO = userGroupDAO;
+    public void setSecurityDAO(SecurityDAO securityDAO) {
+        this.securityDAO = securityDAO;
+    }
+
+    public void setResourceDAO(ResourceDAO resourceDAO) {
+        this.resourceDAO = resourceDAO;
     }
 
     public void setUserService(UserService userService) {
@@ -704,9 +712,6 @@ public class ResourceServiceImpl implements ResourceService {
      * @return List<ShortResource>
      */
     private List<ShortResource> convertToShortResourceList(List<Resource> resources, User user) {
-
-        userService.fetchSecurityRules(user);
-
         return resources.stream()
                 .map(r -> createShortResource(user, r))
                 .collect(Collectors.toList());
@@ -715,7 +720,7 @@ public class ResourceServiceImpl implements ResourceService {
     private ShortResource createShortResource(User user, Resource resource) {
         ShortResource shortResource = new ShortResource(resource);
 
-        if (user != null && resourcePermissionService.canUserWriteResource(user, resource)) {
+        if (user != null && resourcePermissionService.canResourceBeWrittenByUser(resource, user)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
         }
@@ -843,5 +848,23 @@ public class ResourceServiceImpl implements ResourceService {
         securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
 
         return resourceDAO.count(searchCriteria);
+    }
+
+    @Override
+    public void fetchSecurityRules(Resource resource) {
+        if (resource == null || resource.getId() == null) {
+            return;
+        }
+
+        resource.setSecurity(securityDAO.findResourceSecurityRules(resource.getId()));
+    }
+
+    @Override
+    public void fetchFavoritedBy(Resource resource) {
+        if (resource == null || resource.getId() == null) {
+            return;
+        }
+
+        resource.setFavoritedBy(new HashSet<>(userDAO.findFavoritedBy(resource.getId())));
     }
 }

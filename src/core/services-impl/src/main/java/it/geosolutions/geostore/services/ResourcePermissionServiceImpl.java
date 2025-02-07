@@ -3,47 +3,65 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.List;
 import java.util.function.BiFunction;
 
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
-    private final BiFunction<SecurityRule, Resource, Boolean> resourceOwnership =
-            (rule, resource) -> resource.getId().equals(rule.getResource().getId());
-    private final BiFunction<SecurityRule, Resource, Boolean> resourceOwnershipWithReadPermission =
-            (rule, resource) -> resourceOwnership.apply(rule, resource) && rule.isCanRead();
-    private final BiFunction<SecurityRule, Resource, Boolean> resourceOwnershipWithWritePermission =
-            (rule, resource) -> resourceOwnership.apply(rule, resource) && rule.isCanWrite();
-    private final BiFunction<SecurityRule, Resource, Boolean>
-            resourceOwnershipWithReadAndWritePermission =
-                    (rule, resource) ->
-                            resourceOwnershipWithWritePermission.apply(rule, resource)
-                                    && resourceOwnershipWithReadPermission.apply(rule, resource);
+    private final BiFunction<SecurityRule, User, Boolean> resourceUserOwnership =
+            (rule, user) -> user.getId().equals(rule.getUser().getId());
+
+    private final BiFunction<SecurityRule, UserGroup, Boolean> resourceGroupOwnership =
+            (rule, group) -> group.getId().equals(rule.getGroup().getId());
+
+    private final BiFunction<SecurityRule, User, Boolean> resourceUserOwnershipWithReadPermission =
+            (rule, user) ->
+                    rule.getUser() != null
+                            && resourceUserOwnership.apply(rule, user)
+                            && rule.isCanRead();
+
+    private final BiFunction<SecurityRule, UserGroup, Boolean>
+            resourceGroupOwnershipWithReadPermission =
+                    (rule, group) ->
+                            rule.getGroup() != null
+                                    && resourceGroupOwnership.apply(rule, group)
+                                    && rule.isCanRead();
+
+    private final BiFunction<SecurityRule, User, Boolean> resourceUserOwnershipWithWritePermission =
+            (rule, user) ->
+                    rule.getUser() != null
+                            && resourceUserOwnership.apply(rule, user)
+                            && rule.isCanWrite();
+
+    private final BiFunction<SecurityRule, UserGroup, Boolean>
+            resourceGroupOwnershipWithWritePermission =
+                    (rule, group) ->
+                            rule.getGroup() != null
+                                    && resourceGroupOwnership.apply(rule, group)
+                                    && rule.isCanWrite();
 
     @Override
-    public boolean canUserReadResource(User user, Long resourceId) {
-        Resource resource = new Resource();
-        resource.setId(resourceId);
-
+    public boolean canResourceBeReadByUser(Resource resource, User user) {
         return user.getRole().equals(Role.ADMIN)
                 || isUserOwnerWithReadPermission(user, resource)
                 || haveUserGroupsOwnershipWithReadPermission(user, resource);
     }
 
     private boolean isUserOwnerWithReadPermission(User user, Resource resource) {
-        checkUserSecurityRules(user);
-        return checkSecurityRulesAgainstResource(
-                user.getSecurity(), resource, resourceOwnershipWithReadPermission);
+        checkResourceSecurityRules(resource);
+        return checkSecurityRulesAgainstUser(
+                resource.getSecurity(), user, resourceUserOwnershipWithReadPermission);
     }
 
     private boolean haveUserGroupsOwnershipWithReadPermission(User user, Resource resource) {
-        return checkUserGroupsSecurityRulesAgainstResource(
-                user, resource, resourceOwnershipWithReadPermission);
+        return checkResourceSecurityRulesAgainstUserGroup(
+                user, resource, resourceGroupOwnershipWithReadPermission);
     }
 
     @Override
-    public boolean canUserWriteResource(User user, Resource resource) {
+    public boolean canResourceBeWrittenByUser(Resource resource, User user) {
         return !user.getRole().equals(Role.GUEST)
                 && (user.getRole().equals(Role.ADMIN)
                         || isUserOwnerWithWritePermission(user, resource)
@@ -51,54 +69,41 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     }
 
     private boolean isUserOwnerWithWritePermission(User user, Resource resource) {
-        checkUserSecurityRules(user);
-        return checkSecurityRulesAgainstResource(
-                user.getSecurity(), resource, resourceOwnershipWithWritePermission);
+        checkResourceSecurityRules(resource);
+        return checkSecurityRulesAgainstUser(
+                resource.getSecurity(), user, resourceUserOwnershipWithWritePermission);
     }
 
-    private boolean haveUserGroupsOwnershipWithWritePermission(User user, Resource resource) {
-        return checkUserGroupsSecurityRulesAgainstResource(
-                user, resource, resourceOwnershipWithWritePermission);
-    }
-
-    @Override
-    public boolean canUserReadAndWriteResource(User user, Resource resource) {
-        return user.getRole().equals(Role.ADMIN)
-                || isUserOwnerWithReadAndWritePermission(user, resource)
-                || haveUserGroupOwnershipWithReadAndWritePermission(user, resource);
-    }
-
-    private boolean isUserOwnerWithReadAndWritePermission(User user, Resource resource) {
-        checkUserSecurityRules(user);
-        return checkSecurityRulesAgainstResource(
-                user.getSecurity(), resource, resourceOwnershipWithReadAndWritePermission);
-    }
-
-    private void checkUserSecurityRules(User user) {
-        if (user.getSecurity() == null) {
+    private void checkResourceSecurityRules(Resource resource) {
+        if (resource.getSecurity() == null) {
             throw new IllegalArgumentException(
-                    "set user security rules prior checking for permissions");
+                    "set resource security rules prior checking for permissions");
         }
     }
 
-    private boolean haveUserGroupOwnershipWithReadAndWritePermission(User user, Resource resource) {
-        return checkUserGroupsSecurityRulesAgainstResource(
-                user, resource, resourceOwnershipWithReadAndWritePermission);
+    private boolean haveUserGroupsOwnershipWithWritePermission(User user, Resource resource) {
+        return checkResourceSecurityRulesAgainstUserGroup(
+                user, resource, resourceGroupOwnershipWithWritePermission);
     }
 
-    private boolean checkUserGroupsSecurityRulesAgainstResource(
-            User user, Resource resource, BiFunction<SecurityRule, Resource, Boolean> check) {
+    private boolean checkResourceSecurityRulesAgainstUserGroup(
+            User user, Resource resource, BiFunction<SecurityRule, UserGroup, Boolean> check) {
         return user.getGroups().stream()
                 .anyMatch(
                         group ->
-                                checkSecurityRulesAgainstResource(
-                                        group.getSecurity(), resource, check));
+                                checkSecurityRulesAgainstUserGroup(
+                                        resource.getSecurity(), group, check));
     }
 
-    private boolean checkSecurityRulesAgainstResource(
+    private boolean checkSecurityRulesAgainstUser(
+            List<SecurityRule> rules, User user, BiFunction<SecurityRule, User, Boolean> check) {
+        return rules.stream().anyMatch(rule -> check.apply(rule, user));
+    }
+
+    private boolean checkSecurityRulesAgainstUserGroup(
             List<SecurityRule> rules,
-            Resource resource,
-            BiFunction<SecurityRule, Resource, Boolean> check) {
-        return rules.stream().anyMatch(rule -> check.apply(rule, resource));
+            UserGroup group,
+            BiFunction<SecurityRule, UserGroup, Boolean> check) {
+        return rules.stream().anyMatch(rule -> check.apply(rule, group));
     }
 }
