@@ -19,7 +19,9 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
@@ -166,5 +168,15 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
         }
 
         return super.save(entities);
+    }
+
+    @Override
+    public List<User> findFavoritedBy(Long resourceId) {
+
+        Search searchCriteria = new Search(User.class);
+
+        searchCriteria.addFilter(Filter.some("favorites", Filter.equal("id", resourceId)));
+
+        return super.search(searchCriteria);
     }
 }

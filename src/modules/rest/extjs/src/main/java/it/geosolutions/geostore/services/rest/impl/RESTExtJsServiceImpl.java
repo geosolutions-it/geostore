@@ -397,10 +397,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return
      */
     private List<ExtResource> convertToExtResources(List<Resource> foundResources, User user) {
-
-        userService.fetchSecurityRules(user);
-        userService.fetchFavorites(user);
-
         return foundResources.stream()
                 .map(r -> convertToExtResource(r, user))
                 .collect(Collectors.toList());
@@ -408,12 +404,15 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ExtResource convertToExtResource(Resource resource, User user) {
 
+        resourceService.fetchSecurityRules(resource);
+        resourceService.fetchFavoritedBy(resource);
+
         ExtResource.Builder extResourceBuilder =
                 ExtResource.builder(resource)
                         /* setting copy permission as in ResourceEnvelop.isCanCopy */
                         .withCanCopy(user != null);
 
-        if (resourcePermissionService.canUserWriteResource(user, resource)) {
+        if (resourcePermissionService.canResourceBeWrittenByUser(resource, user)) {
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
@@ -425,9 +424,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     }
 
     private boolean isResourceUserFavorite(Resource resource, User user) {
-        return user.getFavorites().stream()
-                .map(Resource::getId)
-                .anyMatch(id -> id.equals(resource.getId()));
+        return resource.getFavoritedBy().stream()
+                .map(User::getId)
+                .anyMatch(id -> id.equals(user.getId()));
     }
 
     /**
@@ -687,25 +686,30 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             throw new NotFoundWebEx("Resource not found");
         }
 
-        User authUser = extractAuthUser(sc);
-        userService.fetchSecurityRules(authUser);
-        userService.fetchFavorites(authUser);
+        User user = extractAuthUser(sc);
+        resourceService.fetchSecurityRules(resource);
+        resourceService.fetchFavoritedBy(resource);
 
-        if (!resourcePermissionService.canUserReadResource(authUser, id)) {
+        if (!resourcePermissionService.canResourceBeReadByUser(resource, user)) {
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
 
         ShortResource shortResource = new ShortResource(resource);
-        if (resourcePermissionService.canUserWriteResource(authUser, resource)) {
+        if (resourcePermissionService.canResourceBeWrittenByUser(resource, user)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
+        }
+
+        if (!includePermissions) {
+            /* clear fetched security rules */
+            resource.setSecurity(null);
         }
 
         return ExtShortResource.builder(shortResource)
                 .withAttributes(createShortAttributeList(resource.getAttribute()))
                 .withSecurityRules(new SecurityRuleList(resource.getSecurity()))
                 .withTagList(createTagList(resource.getTags()))
-                .withIsFavorite(isResourceUserFavorite(resource, authUser))
+                .withIsFavorite(isResourceUserFavorite(resource, user))
                 .build();
     }
 
@@ -772,9 +776,10 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 return;
             }
 
-            userService.fetchSecurityRules(authUser);
+            resourceService.fetchSecurityRules(r);
 
-            if (authUser != null && resourcePermissionService.canUserWriteResource(authUser, r)) {
+            if (authUser != null
+                    && resourcePermissionService.canResourceBeWrittenByUser(r, authUser)) {
                 canEdit = true;
                 canDelete = true;
             }

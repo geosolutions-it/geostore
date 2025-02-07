@@ -253,4 +253,23 @@ public interface ResourceService extends SecurityService {
 
     long insertAttribute(long id, String name, String value, DataType type)
             throws InternalErrorServiceEx;
+
+    /**
+     * Update the resource entity by fetching its security rules from the database.
+     *
+     * @param resource
+     */
+    default void fetchSecurityRules(Resource resource) {
+        /* no-op */
+    }
+
+    /**
+     * Update the resource entity by fetching from the database the users who marked it as a
+     * favorite.
+     *
+     * @param resource
+     */
+    default void fetchFavoritedBy(Resource resource) {
+        /* no-op */
+    }
 }

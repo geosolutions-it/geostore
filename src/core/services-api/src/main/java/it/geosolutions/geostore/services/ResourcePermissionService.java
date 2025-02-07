@@ -6,48 +6,35 @@ import it.geosolutions.geostore.core.model.User;
 public interface ResourcePermissionService {
 
     /**
-     * Verifies whether the user or any of their groups is the owner of the resource and has read
+     * Verifies whether the user or any of its groups is the owner of the resource and has read
      * permissions on it.
      *
-     * <p>Be aware to fetch the user security rules prior to call this method.
+     * <p>Be aware to fetch the resource security rules prior to call this method.
      *
+     * @param resource
      * @param user
-     * @param resourceId
-     * @return <code>true</code> if the user can read the resource, <code>false</code> otherwise
-     * @throws IllegalArgumentException if the user security rules have not been initialized
+     * @return <code>true</code> if the resource can be read by the user, <code>false</code>
+     *     otherwise
+     * @throws IllegalArgumentException if the resource security rules have not been initialized
      *     properly
      */
-    boolean canUserReadResource(User user, Long resourceId);
+    boolean canResourceBeReadByUser(Resource resource, User user);
 
     /**
-     * Verifies whether the user or any of their groups is the owner of the resource and has write
+     * Verifies whether the user or any of its groups is the owner of the resource and has write
      * permissions on it.
      *
      * <p>GUEST users can not access to the delete and edit (resource, data blob is editable)
      * services, so only admins and authenticated users with write permissions can.
      *
-     * <p>Be aware to fetch the user security rules prior to call this method.
+     * <p>Be aware to fetch the resource security rules prior to call this method.
      *
-     * @param user
      * @param resource
-     * @return <code>true</code> if the user can write the resource, <code>false</code> otherwise
-     * @throws IllegalArgumentException if the user security rules have not been initialized
-     *     properly
-     */
-    boolean canUserWriteResource(User user, Resource resource);
-
-    /**
-     * Verifies whether the user or any of their groups is the owner of the resource and has both
-     * read and write permissions on it.
-     *
-     * <p>Be aware to fetch the user security rules prior to call this method.
-     *
      * @param user
-     * @param resource
-     * @return <code>true</code> if the user can read and write the resource, <code>false</code>
+     * @return <code>true</code> if the resource can be written by the user, <code>false</code>
      *     otherwise
-     * @throws IllegalArgumentException if the user security rules have not been initialized
+     * @throws IllegalArgumentException if the resource security rules have not been initialized
      *     properly
      */
-    boolean canUserReadAndWriteResource(User user, Resource resource);
+    boolean canResourceBeWrittenByUser(Resource resource, User user);
 }

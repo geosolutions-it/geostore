@@ -22,7 +22,6 @@ package it.geosolutions.geostore.services;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
-import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
@@ -59,8 +58,6 @@ public class UserServiceImpl implements UserService {
 
     private UserGroupDAO userGroupDAO;
 
-    private SecurityDAO securityDAO;
-
     private ResourceDAO resourceDAO;
 
     public void setUserDAO(UserDAO userDAO) {
@@ -73,10 +70,6 @@ public class UserServiceImpl implements UserService {
 
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
-    }
-
-    public void setSecurityDAO(SecurityDAO securityDAO) {
-        this.securityDAO = securityDAO;
     }
 
     public void setResourceDAO(ResourceDAO resourceDAO) {
@@ -469,21 +462,6 @@ public class UserServiceImpl implements UserService {
             searchByGroup.addFilterSome("groups", Filter.equal("id", group.getId()));
         }
         return userDAO.search(searchByGroup);
-    }
-
-    @Override
-    public void fetchSecurityRules(User user) {
-        if (user == null || user.getId() == null) {
-            return;
-        }
-
-        user.getGroups()
-                .forEach(
-                        userGroup ->
-                                userGroup.setSecurity(
-                                        securityDAO.findUserGroupSecurityRules(userGroup.getId())));
-
-        user.setSecurity(securityDAO.findUserSecurityRules(user.getId()));
     }
 
     @Override
