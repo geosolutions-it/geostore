@@ -727,9 +727,10 @@ public class ResourceServiceImpl implements ResourceService {
             throws BadRequestServiceEx, InternalErrorServiceEx {
 
         Search searchCriteria = SearchConverter.convert(resourceSearchParameters.getFilter());
-        searchCriteria.addFetch("security");
         searchCriteria.setDistinct(true);
+        searchCriteria.addFetch("security");
         searchCriteria.addFetch("data");
+        searchCriteria.addFetch("favoritedBy");
 
         securityDAO.addReadSecurityConstraints(
                 searchCriteria, resourceSearchParameters.getAuthUser());
