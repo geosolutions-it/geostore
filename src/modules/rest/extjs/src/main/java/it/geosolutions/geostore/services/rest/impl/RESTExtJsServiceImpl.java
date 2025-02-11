@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourcePermissionService;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
@@ -404,23 +405,28 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ExtResource convertToExtResource(Resource resource, User user) {
 
-        resourceService.fetchSecurityRules(resource);
-        resourceService.fetchFavoritedBy(resource);
-
         ExtResource.Builder extResourceBuilder =
                 ExtResource.builder(resource)
                         /* setting copy permission as in ResourceEnvelop.isCanCopy */
                         .withCanCopy(user != null);
 
-        if (resourcePermissionService.canResourceBeWrittenByUser(resource, user)) {
+        if (user != null && hasUserEditAndDeletePermissionsOnResource(user, resource)) {
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
-        if (user != null) {
-            extResourceBuilder.withIsFavorite(isResourceUserFavorite(resource, user));
-        }
+        resourceService.fetchFavoritedBy(resource);
+        extResourceBuilder.withIsFavorite(isResourceUserFavorite(resource, user));
 
         return extResourceBuilder.build();
+    }
+
+    private boolean hasUserEditAndDeletePermissionsOnResource(User user, Resource resource) {
+        if (user.getRole() == Role.ADMIN) {
+            return true;
+        }
+
+        resourceService.fetchSecurityRules(resource);
+        return resourcePermissionService.canResourceBeWrittenByUser(resource, user);
     }
 
     private boolean isResourceUserFavorite(Resource resource, User user) {
