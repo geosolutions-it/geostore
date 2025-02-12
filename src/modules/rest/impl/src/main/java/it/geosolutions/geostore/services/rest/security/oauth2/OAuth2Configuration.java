@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import java.util.Collections;
+import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
@@ -67,6 +68,8 @@ public class OAuth2Configuration extends IdPConfiguration {
     protected String principalKey;
     protected String rolesClaim;
     protected String groupsClaim;
+    private String uniqueUsername;
+    private boolean groupNamesUppercase = false;
 
     /**
      * Get an authentication entry point instance meant to handle redirect to the authorization
@@ -462,6 +465,25 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
+     * Whether we would like to use another claim to extract the actual "username" from the token
+     * claims.
+     *
+     * @return the unique username claim key.
+     */
+    public String getUniqueUsername() {
+        return uniqueUsername;
+    }
+
+    /**
+     * Set the unique username claim key.
+     *
+     * @param uniqueUsername the unique username claim key.
+     */
+    public void setUniqueUsername(String uniqueUsername) {
+        this.uniqueUsername = uniqueUsername;
+    }
+
+    /**
      * The roles claim name.
      *
      * @return the roles claim name.
@@ -491,6 +513,125 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public void setGroupsClaim(String groupsClaim) {
         this.groupsClaim = groupsClaim;
+    }
+
+    public boolean isGroupNamesUppercase() {
+        return groupNamesUppercase;
+    }
+
+    public void setGroupNamesUppercase(boolean groupNamesUppercase) {
+        this.groupNamesUppercase = groupNamesUppercase;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof OAuth2Configuration)) return false;
+        OAuth2Configuration that = (OAuth2Configuration) o;
+        return isGlobalLogoutEnabled() == that.isGlobalLogoutEnabled()
+                && isEnableRedirectEntryPoint() == that.isEnableRedirectEntryPoint()
+                && isGroupNamesUppercase() == that.isGroupNamesUppercase()
+                && getInitialBackoffDelay() == that.getInitialBackoffDelay()
+                && Double.compare(getBackoffMultiplier(), that.getBackoffMultiplier()) == 0
+                && getMaxRetries() == that.getMaxRetries()
+                && Objects.equals(getClientId(), that.getClientId())
+                && Objects.equals(getClientSecret(), that.getClientSecret())
+                && Objects.equals(getAccessTokenUri(), that.getAccessTokenUri())
+                && Objects.equals(getAuthorizationUri(), that.getAuthorizationUri())
+                && Objects.equals(getCheckTokenEndpointUrl(), that.getCheckTokenEndpointUrl())
+                && Objects.equals(getLogoutUri(), that.getLogoutUri())
+                && Objects.equals(getRevokeEndpoint(), that.getRevokeEndpoint())
+                && Objects.equals(getScopes(), that.getScopes())
+                && Objects.equals(getIdTokenUri(), that.getIdTokenUri())
+                && Objects.equals(getDiscoveryUrl(), that.getDiscoveryUrl())
+                && Objects.equals(getPrincipalKey(), that.getPrincipalKey())
+                && Objects.equals(getUniqueUsername(), that.getUniqueUsername())
+                && Objects.equals(getRolesClaim(), that.getRolesClaim())
+                && Objects.equals(getGroupsClaim(), that.getGroupsClaim());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                getClientId(),
+                getClientSecret(),
+                getAccessTokenUri(),
+                getAuthorizationUri(),
+                getCheckTokenEndpointUrl(),
+                getLogoutUri(),
+                getRevokeEndpoint(),
+                isGlobalLogoutEnabled(),
+                getScopes(),
+                getIdTokenUri(),
+                getDiscoveryUrl(),
+                isEnableRedirectEntryPoint(),
+                getPrincipalKey(),
+                getUniqueUsername(),
+                getRolesClaim(),
+                getGroupsClaim(),
+                isGroupNamesUppercase(),
+                getInitialBackoffDelay(),
+                getBackoffMultiplier(),
+                getMaxRetries());
+    }
+
+    @Override
+    public String toString() {
+        return "OAuth2Configuration{"
+                + "clientId='"
+                + clientId
+                + '\''
+                + ", clientSecret='"
+                + clientSecret
+                + '\''
+                + ", accessTokenUri='"
+                + accessTokenUri
+                + '\''
+                + ", authorizationUri='"
+                + authorizationUri
+                + '\''
+                + ", checkTokenEndpointUrl='"
+                + checkTokenEndpointUrl
+                + '\''
+                + ", logoutUri='"
+                + logoutUri
+                + '\''
+                + ", revokeEndpoint='"
+                + revokeEndpoint
+                + '\''
+                + ", globalLogoutEnabled="
+                + globalLogoutEnabled
+                + ", scopes='"
+                + scopes
+                + '\''
+                + ", idTokenUri='"
+                + idTokenUri
+                + '\''
+                + ", discoveryUrl='"
+                + discoveryUrl
+                + '\''
+                + ", enableRedirectEntryPoint="
+                + enableRedirectEntryPoint
+                + ", principalKey='"
+                + principalKey
+                + '\''
+                + ", uniqueUsername='"
+                + uniqueUsername
+                + '\''
+                + ", rolesClaim='"
+                + rolesClaim
+                + '\''
+                + ", groupsClaim='"
+                + groupsClaim
+                + '\''
+                + ", groupNamesUppercase="
+                + groupNamesUppercase
+                + ", initialBackoffDelay="
+                + initialBackoffDelay
+                + ", backoffMultiplier="
+                + backoffMultiplier
+                + ", maxRetries="
+                + maxRetries
+                + '}';
     }
 
     /** Class the representing and endpoint with a HTTP method. */
