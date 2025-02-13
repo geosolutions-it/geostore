@@ -178,7 +178,10 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
         SessionToken token = new SessionToken();
         token.setAccessToken(accessToken.getId());
         token.setRefreshToken(accessToken.getRefreshToken());
-        token.setExpires(accessToken.getExpirationInterval());
+        token.setExpires(
+                accessToken.getExpirationInterval() > 0
+                        ? accessToken.getExpirationInterval()
+                        : sessionToken.getExpirationInterval());
         token.setTokenType(BEARER_TYPE);
         return token;
     }
