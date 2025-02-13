@@ -143,14 +143,12 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
      * @return
      * @throws ParseException
      */
-    public String createSession(String expires, SecurityContext sc) throws ParseException {
+    public UserSession createSession(String expires, SecurityContext sc) throws ParseException {
         User user = extractAuthUser(sc);
         if (user != null) {
             Calendar expiration = getExpiration(expires);
             UserSession session = null;
-            if (user instanceof User) {
-                session = new UserSessionImpl(null, user, expiration);
-            }
+            session = new UserSessionImpl(null, user, expiration);
             return userSessionService.registerNewSession(session);
         }
 
@@ -163,7 +161,6 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
         expires.add(Calendar.SECOND, (int) getSessionTimeout());
         User user = extractAuthUser(sc);
         if (user != null) {
-
             UserSession session = null;
             if (user instanceof User) {
                 session = new UserSessionImpl(null, user, expires);
@@ -174,14 +171,14 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
         return null;
     }
 
-    private SessionToken toSessionToken(String accessToken, UserSession sessionToken) {
+    private SessionToken toSessionToken(UserSession accessToken, UserSession sessionToken) {
         if (sessionToken == null) {
             return null;
         }
         SessionToken token = new SessionToken();
-        token.setAccessToken(sessionToken.getId());
-        token.setRefreshToken(sessionToken.getRefreshToken());
-        token.setExpires(sessionToken.getExpirationInterval());
+        token.setAccessToken(accessToken.getId());
+        token.setRefreshToken(accessToken.getRefreshToken());
+        token.setExpires(accessToken.getExpirationInterval());
         token.setTokenType(BEARER_TYPE);
         return token;
     }
@@ -189,7 +186,9 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
     @Override
     public SessionToken refresh(SecurityContext sc, String sessionId, String refreshToken) {
         String provider =
-                (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+                (String)
+                        Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                .getAttribute(PROVIDER_KEY, 0);
         SessionServiceDelegate delegate = getDelegate(provider);
         return delegate.refresh(refreshToken, sessionId);
     }
