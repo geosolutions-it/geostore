@@ -43,39 +43,105 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /**
- * This class represents the geostore configuration for an OAuth2/OpenId provider. An
- * OAuth2Configuration bean should be provided for each OAuth2 provider. The bean id has to be
+ * This class represents the OAuth2/OpenID Connect configuration for GeoStore. It includes settings
+ * for endpoints, client credentials, and other OAuth2 provider details. Each OAuth2 provider
+ * requires a specific OAuth2Configuration bean, identified with the naming convention
  * {providerName}OAuth2Config.
  */
 public class OAuth2Configuration extends IdPConfiguration {
 
+    private static final Logger LOGGER = LogManager.getLogger(OAuth2Configuration.class);
+
+    // Constants
     public static final String CONFIG_NAME_SUFFIX = "OAuth2Config";
     public static final String CONFIGURATION_NAME = "CONFIGURATION_NAME";
-    private static final Logger LOGGER =
-            LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
-    protected String clientId;
-    protected String clientSecret;
-    protected String accessTokenUri;
-    protected String authorizationUri;
-    protected String checkTokenEndpointUrl;
-    protected String logoutUri;
-    protected boolean globalLogoutEnabled = false;
-    protected String scopes;
-    protected String idTokenUri;
-    protected String discoveryUrl;
-    protected String revokeEndpoint;
-    protected boolean enableRedirectEntryPoint = false;
-    protected String principalKey;
-    protected String rolesClaim;
-    protected String groupsClaim;
+
+    // OAuth2 provider client details
+    private String clientId;
+    private String clientSecret;
+
+    // OAuth2 URIs and endpoints
+    private String accessTokenUri;
+    private String authorizationUri;
+    private String checkTokenEndpointUrl;
+    private String logoutUri;
+    private String revokeEndpoint;
+
+    // Additional settings
+    private boolean globalLogoutEnabled = false;
+    private String scopes;
+    private String idTokenUri;
+    private String discoveryUrl;
+    private boolean enableRedirectEntryPoint = false;
+    private String principalKey;
     private String uniqueUsername;
+    private String rolesClaim;
+    private String groupsClaim;
     private boolean groupNamesUppercase = false;
 
+    // Retry and backoff configurations
+    private long initialBackoffDelay = 1000; // Default: 1 second
+    private double backoffMultiplier = 2.0; // Default multiplier
+    private int maxRetries = 3; // Default max retries
+
     /**
-     * Get an authentication entry point instance meant to handle redirect to the authorization
-     * page.
+     * Gets the maximum number of retries allowed for refreshing tokens.
      *
-     * @return the authentication entry point.
+     * @return maxRetries - the maximum retry attempts.
+     */
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
+    /**
+     * Sets the maximum number of retries allowed for refreshing tokens.
+     *
+     * @param maxRetries - the maximum retry attempts to set.
+     */
+    public void setMaxRetries(int maxRetries) {
+        this.maxRetries = maxRetries;
+    }
+
+    /**
+     * Gets the initial backoff delay (in milliseconds) for retry attempts.
+     *
+     * @return initialBackoffDelay - the initial delay in milliseconds.
+     */
+    public long getInitialBackoffDelay() {
+        return initialBackoffDelay;
+    }
+
+    /**
+     * Sets the initial backoff delay (in milliseconds) for retry attempts.
+     *
+     * @param initialBackoffDelay - the initial delay in milliseconds.
+     */
+    public void setInitialBackoffDelay(long initialBackoffDelay) {
+        this.initialBackoffDelay = initialBackoffDelay;
+    }
+
+    /**
+     * Gets the multiplier applied to backoff delay for each retry attempt.
+     *
+     * @return backoffMultiplier - the multiplier for exponential backoff.
+     */
+    public double getBackoffMultiplier() {
+        return backoffMultiplier;
+    }
+
+    /**
+     * Sets the multiplier for exponential backoff delay between retry attempts.
+     *
+     * @param backoffMultiplier - the multiplier for backoff.
+     */
+    public void setBackoffMultiplier(double backoffMultiplier) {
+        this.backoffMultiplier = backoffMultiplier;
+    }
+
+    /**
+     * Provides an entry point to redirect to the authorization page for authentication.
+     *
+     * @return the AuthenticationEntryPoint handling authorization redirection.
      */
     public AuthenticationEntryPoint getAuthenticationEntryPoint() {
         return (request, response, authException) -> {
@@ -85,77 +151,80 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
-     * Build the authorization uri to the OAuth2 provider.
+     * Builds the authorization URI, adding response type, client ID, scope, and redirect URI.
      *
-     * @return the authorization uri completed with the various query strings.
+     * @return the complete authorization URI.
      */
     public String buildLoginUri() {
         return buildLoginUri(null, new String[] {});
     }
 
     /**
-     * Build the authorization uri to the OAuth2 provider.
+     * Builds the authorization URI with an optional access type.
      *
-     * @param accessType the access type request param value. Can be null.
-     * @return the authorization uri completed with the various query strings.
+     * @param accessType - the access type, e.g., "offline" or "online"; can be null.
+     * @return the complete authorization URI.
      */
     public String buildLoginUri(String accessType) {
         return buildLoginUri(accessType, new String[] {});
     }
 
     /**
-     * @param accessType the access type request param value. Can be null.
-     * @param additionalScopes additional scopes aren't set at from geostore-ovr.properties. Can be
-     *     null.
-     * @return the
+     * Builds the authorization URI with access type and additional scopes.
+     *
+     * @param accessType - the type of access requested, can be null.
+     * @param additionalScopes - additional scopes required beyond configured scopes.
+     * @return the complete authorization URI.
      */
     public String buildLoginUri(String accessType, String... additionalScopes) {
-        final StringBuilder loginUri = new StringBuilder(getAuthorizationUri());
-        loginUri.append("?")
-                .append("response_type=code")
-                .append("&")
-                .append("client_id=")
+        StringBuilder loginUri = new StringBuilder(getAuthorizationUri());
+        loginUri.append("?response_type=code")
+                .append("&client_id=")
                 .append(getClientId())
-                .append("&")
-                .append("scope=")
+                .append("&scope=")
                 .append(getScopes().replace(",", "%20"));
-        for (String s : additionalScopes) {
-            loginUri.append("%20").append(s);
+
+        for (String scope : additionalScopes) {
+            loginUri.append("%20").append(scope);
         }
-        loginUri.append("&").append("redirect_uri=").append(getRedirectUri());
-        if (accessType != null) loginUri.append("&").append("access_type=").append(accessType);
-        String finalUrl = loginUri.toString();
-        if (LOGGER.isDebugEnabled())
-            LOGGER.info("Going to request authorization to this endpoint {}", finalUrl);
-        return finalUrl;
+
+        loginUri.append("&redirect_uri=").append(getRedirectUri());
+
+        if (accessType != null) {
+            loginUri.append("&access_type=").append(accessType);
+        }
+
+        LOGGER.debug("Authorization endpoint URI built: {}", loginUri);
+        return loginUri.toString();
     }
 
     /**
-     * Builds the refresh token URI.
+     * Constructs a URI to refresh the access token.
      *
-     * @return the complete refresh token uri.
+     * @return the refresh token URI.
      */
     public String buildRefreshTokenURI() {
         return buildRefreshTokenURI(null);
     }
 
     /**
-     * Builds the refresh token URI.
+     * Constructs a URI to refresh the access token with an optional access type.
      *
-     * @param accessType the access type request param.
-     * @return the complete refresh token uri.
+     * @param accessType - access type to be appended to the URI.
+     * @return the complete refresh token URI.
      */
     public String buildRefreshTokenURI(String accessType) {
-        final StringBuilder refreshUri = new StringBuilder(getAccessTokenUri());
-        refreshUri
-                .append("?")
-                .append("&")
-                .append("client_id=")
-                .append(getClientId())
-                .append("&")
-                .append("scope=")
-                .append(getScopes().replace(",", "%20"));
-        if (accessType != null) refreshUri.append("&").append("access_type=").append(accessType);
+        StringBuilder refreshUri =
+                new StringBuilder(getAccessTokenUri())
+                        .append("?client_id=")
+                        .append(getClientId())
+                        .append("&scope=")
+                        .append(getScopes().replace(",", "%20"));
+
+        if (accessType != null) {
+            refreshUri.append("&access_type=").append(accessType);
+        }
+
         return refreshUri.toString();
     }
 
@@ -340,16 +409,14 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
-     * Append the request params to the URL.
+     * Appends query parameters to a URL.
      *
-     * @param params the request params.
-     * @param url the url.
-     * @return the complete url.
+     * @param params - the request parameters.
+     * @param url - the base URL.
+     * @return the URL with appended parameters.
      */
     protected String appendParameters(MultiValueMap<String, String> params, String url) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(url);
-        builder.queryParams(params);
-        return builder.build().toUriString();
+        return UriComponentsBuilder.fromHttpUrl(url).queryParams(params).build().toUriString();
     }
 
     protected static void getLogoutRequestParams(
@@ -361,28 +428,25 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
-     * Build the revoke endpoint.
+     * Builds the endpoint for token revocation.
      *
-     * @param token the access_token to revoke.
-     * @return the revoke endpoint.
+     * @param token - the token to be revoked.
+     * @param accessToken - the access token for authorization.
+     * @param configuration - OAuth2 configuration.
+     * @return the configured revoke endpoint, or null if not available.
      */
     public Endpoint buildRevokeEndpoint(
             String token, String accessToken, OAuth2Configuration configuration) {
-        Endpoint result = null;
-        if (revokeEndpoint != null) {
-            HttpHeaders headers = getHttpHeaders(accessToken, configuration);
+        if (revokeEndpoint == null) return null;
 
-            MultiValueMap<String, String> bodyParams = new LinkedMultiValueMap<>();
-            bodyParams.add("token", token);
-            bodyParams.add("client_id", clientId);
+        HttpHeaders headers = getHttpHeaders(accessToken, configuration);
+        MultiValueMap<String, String> bodyParams = new LinkedMultiValueMap<>();
+        bodyParams.add("token", token);
+        bodyParams.add("client_id", clientId);
 
-            HttpEntity<MultiValueMap<String, String>> requestEntity =
-                    new HttpEntity<>(bodyParams, headers);
-
-            result = new Endpoint(HttpMethod.POST, revokeEndpoint);
-            result.setRequestEntity(requestEntity);
-        }
-        return result;
+        HttpEntity<MultiValueMap<String, String>> requestEntity =
+                new HttpEntity<>(bodyParams, headers);
+        return new Endpoint(HttpMethod.POST, revokeEndpoint, requestEntity);
     }
 
     private static HttpHeaders getHttpHeaders(
@@ -393,27 +457,23 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
-     * Build the logout endpoint.
+     * Builds the endpoint for logout.
      *
-     * @param token the current access_token.
-     * @return the logout endpoint.
+     * @param token - the token for the session to end.
+     * @param accessToken - access token to authorize the logout.
+     * @param configuration - OAuth2 configuration.
+     * @return the logout endpoint with parameters appended, or null if logoutUri is null.
      */
     public Endpoint buildLogoutEndpoint(
             String token, String accessToken, OAuth2Configuration configuration) {
-        Endpoint result = null;
-        if (logoutUri != null) {
-            HttpHeaders headers = getHeaders(accessToken, configuration);
+        if (logoutUri == null) return null;
 
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            getLogoutRequestParams(token, clientId, params);
+        HttpHeaders headers = getHeaders(accessToken, configuration);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        getLogoutRequestParams(token, clientId, params);
 
-            HttpEntity<MultiValueMap<String, String>> requestEntity =
-                    new HttpEntity<>(null, headers);
-
-            result = new Endpoint(HttpMethod.GET, appendParameters(params, logoutUri));
-            result.setRequestEntity(requestEntity);
-        }
-        return result;
+        return new Endpoint(
+                HttpMethod.GET, appendParameters(params, logoutUri), new HttpEntity<>(headers));
     }
 
     private static HttpHeaders getHeaders(String accessToken, OAuth2Configuration configuration) {
@@ -634,18 +694,17 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + '}';
     }
 
-    /** Class the representing and endpoint with a HTTP method. */
+    /** Represents a configurable HTTP endpoint with method and request entity. */
     public static class Endpoint {
 
-        private String url;
+        private final String url;
+        private final HttpMethod method;
+        private final HttpEntity<?> requestEntity;
 
-        private HttpMethod method;
-
-        private HttpEntity<?> requestEntity;
-
-        public Endpoint(HttpMethod method, String url) {
+        public Endpoint(HttpMethod method, String url, HttpEntity<?> requestEntity) {
             this.method = method;
             this.url = url;
+            this.requestEntity = requestEntity;
         }
 
         /** @return the url. */
@@ -653,37 +712,14 @@ public class OAuth2Configuration extends IdPConfiguration {
             return url;
         }
 
-        /**
-         * Set the url.
-         *
-         * @param url the url.
-         */
-        public void setUrl(String url) {
-            this.url = url;
-        }
-
         /** @return the HttpMethod. */
         public HttpMethod getMethod() {
             return method;
         }
 
-        /**
-         * Set the HttpMethod.
-         *
-         * @param method the HttpMethod.
-         */
-        public void setMethod(HttpMethod method) {
-            this.method = method;
-        }
-
         /** @return */
         public HttpEntity<?> getRequestEntity() {
             return requestEntity;
-        }
-
-        /** @param requestEntity */
-        public void setRequestEntity(HttpEntity<?> requestEntity) {
-            this.requestEntity = requestEntity;
         }
     }
 }
