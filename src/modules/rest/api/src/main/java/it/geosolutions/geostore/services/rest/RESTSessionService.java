@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import java.text.ParseException;
 import javax.ws.rs.Consumes;
@@ -87,7 +88,7 @@ public interface RESTSessionService {
     @Path("/")
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
-    public String createSession(
+    public UserSession createSession(
             @DefaultValue("") @QueryParam("expires") String expires, @Context SecurityContext sc)
             throws ParseException;
 

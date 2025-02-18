@@ -92,13 +92,13 @@ public class InMemoryUserSessionServiceImpl implements UserSessionService {
     }
 
     @Override
-    public String registerNewSession(UserSession session) {
+    public UserSession registerNewSession(UserSession session) {
         String sessionId = createSessionId();
         String refreshToken = createSessionId();
         session.setId(sessionId);
         session.setRefreshToken(refreshToken);
         registerNewSession(sessionId, session);
-        return sessionId;
+        return session;
     }
 
     private String createSessionId() {
