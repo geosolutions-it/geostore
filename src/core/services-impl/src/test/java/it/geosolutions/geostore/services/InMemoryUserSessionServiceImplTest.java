@@ -56,18 +56,18 @@ public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
         u.setId(1L);
         u.setName("TEST");
         UserSession session = new UserSessionImpl(u, new GregorianCalendar(3000, 1, 1));
-        String sessionId = service.registerNewSession(session);
-        User sessUser = service.getUserData(sessionId);
+        session = service.registerNewSession(session);
+        User sessUser = service.getUserData(session.getId());
         assertEquals(sessUser, u);
-        assertTrue(service.isOwner(sessionId, u));
+        assertTrue(service.isOwner(session.getId(), u));
         UserSession session2 = new UserSessionImpl(u, new GregorianCalendar(3000, 1, 1));
         service.registerNewSession("ID_SESSION", session2);
         assertTrue(service.isOwner("ID_SESSION", u));
-        service.refreshSession(sessionId, service.getRefreshToken(sessionId));
+        service.refreshSession(session.getId(), service.getRefreshToken(session.getId()));
         service.removeSession("ID_SESSION");
         assertFalse(service.isOwner("ID_SESSION", u));
         service.removeAllSessions();
-        assertFalse(service.isOwner(sessionId, u));
+        assertFalse(service.isOwner(session.getId(), u));
     }
 
     @Test
@@ -77,10 +77,10 @@ public class InMemoryUserSessionServiceImplTest extends ServiceTestBase {
         u.setId(1L);
         u.setName("TEST");
         UserSession session = new UserSessionImpl(u, new GregorianCalendar(3000, 1, 1));
-        String sessionId = service.registerNewSession(session);
-        User sessUser = service.getUserData(sessionId);
+        session = service.registerNewSession(session);
+        User sessUser = service.getUserData(session.getId());
         assertEquals(sessUser, u);
-        assertTrue(service.isOwner(sessionId, u));
+        assertTrue(service.isOwner(session.getId(), u));
         assertNull(service.getRefreshToken("NOT_A SESSION"));
         assertNull(service.getUserData("NOT_A SESSION"));
     }

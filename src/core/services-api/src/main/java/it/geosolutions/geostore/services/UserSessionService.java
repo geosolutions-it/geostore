@@ -76,7 +76,7 @@ public interface UserSessionService {
      * @param session
      * @return the generated session id
      */
-    public String registerNewSession(UserSession session);
+    public UserSession registerNewSession(UserSession session);
 
     /**
      * Remove a session, given its id.
