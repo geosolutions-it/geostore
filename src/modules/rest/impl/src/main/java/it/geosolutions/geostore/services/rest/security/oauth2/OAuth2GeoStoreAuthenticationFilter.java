@@ -25,7 +25,6 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -442,17 +441,23 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
      */
     protected PreAuthenticatedAuthenticationToken createPreAuthentication(
             String username, HttpServletRequest request, HttpServletResponse response) {
+        String idToken = OAuth2Utils.getIdToken();
+        JWTHelper jwtHelper = decodeAndValidateIdToken(idToken);
+        // Remap the username if the idToken is valid and the configuration is set
+        username = remapUsername(username, jwtHelper);
+        LOGGER.info("Retrieving user with authorities for username: {}", username);
         User user = retrieveUserWithAuthorities(username, request, response);
-        if (user == null) return null;
+        if (user == null) {
+            LOGGER.error("User retrieval failed for username: {}", username);
+            return null;
+        }
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
         PreAuthenticatedAuthenticationToken authenticationToken =
                 new PreAuthenticatedAuthenticationToken(
                         user, null, Collections.singletonList(authority));
-        String idToken = OAuth2Utils.getIdToken();
-        if (user != null
-                && (StringUtils.isNotBlank(configuration.getGroupsClaim())
-                        || StringUtils.isNotBlank(configuration.getRolesClaim()))) {
+        if (StringUtils.isNotBlank(configuration.getGroupsClaim())
+                || StringUtils.isNotBlank(configuration.getRolesClaim())) {
             addAuthoritiesFromToken(user, idToken);
         }
         OAuth2AccessToken accessToken = restTemplate.getOAuth2ClientContext().getAccessToken();
@@ -462,10 +467,63 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     /**
-     * Add authorities from the idToken claims if found.
+     * Decodes and validates the given idToken.
+     *
+     * <p>If the token is null or fails to decode, this method logs an appropriate message and
+     * returns null, causing the authentication to fall back to using the original username.
+     *
+     * @param idToken the idToken to decode.
+     * @return a {@link JWTHelper} instance if the token is valid, or null otherwise.
+     */
+    protected JWTHelper decodeAndValidateIdToken(String idToken) {
+        if (idToken == null) {
+            LOGGER.warn("No idToken provided for decoding. Skipping username remapping.");
+            return null;
+        }
+        try {
+            // Optionally add additional validation logic for the token here (e.g. signature,
+            // expiration)
+            return new JWTHelper(idToken);
+        } catch (Exception e) {
+            LOGGER.error("Failed to decode or validate idToken: {}", idToken, e);
+            return null;
+        }
+    }
+
+    /**
+     * Remaps the provided username based on idToken claims if applicable.
+     *
+     * @param username the original username.
+     * @param jwtHelper the {@link JWTHelper} instance for decoding idToken claims, may be null.
+     * @return the remapped username if claims match; otherwise, the original username.
+     */
+    private String remapUsername(String username, JWTHelper jwtHelper) {
+        if (jwtHelper != null
+                && StringUtils.isNotBlank(configuration.getPrincipalKey())
+                && StringUtils.isNotBlank(configuration.getUniqueUsername())) {
+            String principalClaim =
+                    jwtHelper.getClaim(configuration.getPrincipalKey(), String.class);
+            if (StringUtils.isNotBlank(principalClaim)
+                    && StringUtils.equals(username, principalClaim)) {
+                String uniqueUsername =
+                        jwtHelper.getClaim(configuration.getUniqueUsername(), String.class);
+                if (StringUtils.isNotBlank(uniqueUsername)) {
+                    LOGGER.info(
+                            "Username remapped from {} to {} based on idToken claims.",
+                            username,
+                            uniqueUsername);
+                    return uniqueUsername;
+                }
+            }
+        }
+        return username;
+    }
+
+    /**
+     * Adds authorities to the user based on idToken claims.
      *
      * @param user the user instance.
-     * @param idToken the id token.
+     * @param idToken the idToken containing claims.
      */
     protected void addAuthoritiesFromToken(User user, String idToken) {
         JWTHelper helper = new JWTHelper(idToken);
@@ -481,14 +539,56 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         for (String r : roles) {
             if (r.equals(Role.ADMIN.name())) user.setRole(Role.ADMIN);
         }
-        for (String g : groups) {
+
+        Set<UserGroup> userGroups = user.getGroups();
+        for (String groupName : groups) {
             UserGroup group = null;
-            if (userGroupService != null) group = userGroupService.get(g);
+            if (userGroupService != null) {
+                if (configuration.isGroupNamesUppercase()) {
+                    group = userGroupService.get(groupName.toUpperCase());
+                }
+                if (group == null) {
+                    group = userGroupService.get(groupName);
+                }
+            }
             if (group == null) {
                 group = new UserGroup();
-                group.setGroupName(g);
+                group.setGroupName(
+                        configuration.isGroupNamesUppercase()
+                                ? groupName.toUpperCase()
+                                : groupName);
+                long groupId = -1;
+                if (userGroupService != null) {
+                    try {
+                        groupId = userGroupService.insert(group);
+                        group = userGroupService.get(groupId);
+                        LOGGER.debug("inserted group id: {}", group.getGroupName());
+                    } catch (BadRequestServiceEx e) {
+                        LOGGER.error("Saving new group found in claims failed");
+                    }
+                }
             }
-            user.getGroups().add(group);
+            if (!userGroups.contains(group)) {
+                try {
+                    if (userGroupService != null)
+                        userGroupService.assignUserGroup(user.getId(), group.getId());
+                    userGroups.add(group);
+                } catch (NotFoundServiceEx e) {
+                    LOGGER.error(
+                            "Assignment of user {} to group {} failed... skipping it!",
+                            user,
+                            group);
+                }
+            }
+        }
+
+        user.setGroups(userGroups);
+        try {
+            if (userService != null) userService.update(user);
+        } catch (BadRequestServiceEx | NotFoundServiceEx e) {
+            LOGGER.error("Updating user with synchronized groups found in claims failed");
+        } finally {
+            LOGGER.info("User updated with the following groups: {}", userGroups);
         }
     }
 

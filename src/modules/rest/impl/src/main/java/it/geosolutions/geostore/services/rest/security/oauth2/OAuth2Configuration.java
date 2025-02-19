@@ -65,8 +65,10 @@ public class OAuth2Configuration extends IdPConfiguration {
     protected String revokeEndpoint;
     protected boolean enableRedirectEntryPoint = false;
     protected String principalKey;
+    private String uniqueUsername;
     protected String rolesClaim;
     protected String groupsClaim;
+    private boolean groupNamesUppercase = false;
 
     /**
      * Get an authentication entry point instance meant to handle redirect to the authorization
@@ -462,6 +464,25 @@ public class OAuth2Configuration extends IdPConfiguration {
     }
 
     /**
+     * Whether we would like to use another claim to extract the actual "username" from the token
+     * claims.
+     *
+     * @return the unique username claim key.
+     */
+    public String getUniqueUsername() {
+        return uniqueUsername;
+    }
+
+    /**
+     * Set the unique username claim key.
+     *
+     * @param uniqueUsername the unique username claim key.
+     */
+    public void setUniqueUsername(String uniqueUsername) {
+        this.uniqueUsername = uniqueUsername;
+    }
+
+    /**
      * The roles claim name.
      *
      * @return the roles claim name.
@@ -492,6 +513,15 @@ public class OAuth2Configuration extends IdPConfiguration {
     public void setGroupsClaim(String groupsClaim) {
         this.groupsClaim = groupsClaim;
     }
+
+    public boolean isGroupNamesUppercase() {
+        return groupNamesUppercase;
+    }
+
+    public void setGroupNamesUppercase(boolean groupNamesUppercase) {
+        this.groupNamesUppercase = groupNamesUppercase;
+    }
+
 
     /** Class the representing and endpoint with a HTTP method. */
     public static class Endpoint {
