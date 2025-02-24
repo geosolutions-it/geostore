@@ -4,7 +4,8 @@ CREATE TABLE gs_tag (
     color VARCHAR(255) NOT NULL,
     description VARCHAR(255),
     name VARCHAR(255) NOT NULL,
-    CONSTRAINT gs_tag_pkey PRIMARY KEY (id)
+    CONSTRAINT gs_tag_pkey PRIMARY KEY (id),
+    CONSTRAINT gs_tag_name_unique UNIQUE (name)
 );
 
 CREATE TABLE gs_resource_tags (

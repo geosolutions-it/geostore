@@ -24,6 +24,7 @@ import static org.junit.Assert.assertThrows;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedTagNameServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +48,19 @@ public class TagServiceImplTest extends ServiceTestBase {
         assertEquals(2, foundTags.size());
         List<Long> foundTagsIds = foundTags.stream().map(Tag::getId).collect(Collectors.toList());
         assertTrue(foundTagsIds.stream().noneMatch(Objects::isNull));
+    }
+
+    public void testInsertDuplicate() throws Exception {
+
+        Tag tag = new Tag("tag-A", "#4561aa", "dusky");
+        Tag duplicateTag = new Tag(tag.getName(), "black", null);
+
+        tagService.insert(tag);
+
+        DuplicatedTagNameServiceException ex =
+                assertThrows(
+                        DuplicatedTagNameServiceException.class, () -> tagService.insert(duplicateTag));
+        assertTrue(ex.getMessage().contains("create"));
     }
 
     public void testInsertNull() throws Exception {
@@ -112,6 +126,22 @@ public class TagServiceImplTest extends ServiceTestBase {
 
         Tag updatedTag = tagDAO.find(tag.getId());
         assertEquals(expected_tag, updatedTag);
+    }
+
+    public void testUpdateWithDuplicate() throws Exception {
+
+        Tag tagA = new Tag("tag-A", "#4561aa", "dusky");
+        Tag tagB = new Tag("tag-B", "black", null);
+
+        tagDAO.persist(tagA, tagB);
+
+        tagB.setName(tagA.getName());
+
+        DuplicatedTagNameServiceException ex =
+                assertThrows(
+                        DuplicatedTagNameServiceException.class,
+                        () -> tagService.update(tagB.getId(), tagB));
+        assertTrue(ex.getMessage().contains("update"));
     }
 
     public void testUpdateWithResource() throws Exception {

@@ -29,9 +29,11 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.services.TagService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedTagNameServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTTagService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.TagList;
 import java.util.List;
@@ -59,6 +61,8 @@ public class RESTTagServiceImpl implements RESTTagService {
         } catch (BadRequestServiceEx e) {
             LOGGER.error(e.getMessage(), e);
             throw new BadRequestWebEx(e.getMessage());
+        } catch (DuplicatedTagNameServiceException e) {
+            throw new ConflictWebEx(e.getMessage());
         }
     }
 
@@ -101,6 +105,8 @@ public class RESTTagServiceImpl implements RESTTagService {
             throw new BadRequestWebEx(e.getMessage());
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
+        } catch (DuplicatedTagNameServiceException e) {
+            throw new ConflictWebEx(e.getMessage());
         }
     }
 
