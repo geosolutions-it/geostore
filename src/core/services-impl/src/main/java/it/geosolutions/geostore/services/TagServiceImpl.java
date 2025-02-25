@@ -25,6 +25,7 @@ import it.geosolutions.geostore.core.dao.TagDAO;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedTagNameServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
@@ -47,7 +48,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public long insert(Tag tag) throws BadRequestServiceEx {
+    public long insert(Tag tag) throws BadRequestServiceEx, DuplicatedTagNameServiceException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting Tag ... ");
         }
@@ -55,6 +56,8 @@ public class TagServiceImpl implements TagService {
         if (tag == null) {
             throw new BadRequestServiceEx("Tag must be specified");
         }
+
+        checkForDuplicates(tag, false);
 
         tagDAO.persist(tag);
 
@@ -90,11 +93,14 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
-    public long update(long id, Tag tag) throws BadRequestServiceEx, NotFoundServiceEx {
+    public long update(long id, Tag tag)
+            throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedTagNameServiceException {
         Tag original = get(id);
         if (original == null) {
             throw new NotFoundServiceEx("Tag not found");
         }
+
+        checkForDuplicates(tag, true);
 
         tag.setId(id);
         tag.setResources(original.getResources());
@@ -102,6 +108,17 @@ public class TagServiceImpl implements TagService {
         tagDAO.merge(tag);
 
         return id;
+    }
+
+    private void checkForDuplicates(Tag tag, boolean isUpdate) throws DuplicatedTagNameServiceException {
+        int duplicatesCount =
+                tagDAO.count(new Search().addFilterEqual("name", tag.getName()).setMaxResults(1));
+        if (duplicatesCount > 0) {
+            throw new DuplicatedTagNameServiceException(
+                    String.format(
+                            "Cannot %s the tag: a tag with the same name already exists.",
+                            isUpdate ? "update" : "create"));
+        }
     }
 
     @Override

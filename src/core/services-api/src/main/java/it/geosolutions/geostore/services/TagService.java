@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedTagNameServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.List;
 
@@ -39,8 +40,9 @@ public interface TagService {
      * @param tag
      * @return long
      * @throws BadRequestServiceEx
+     * @throws DuplicatedTagNameServiceException
      */
-    long insert(Tag tag) throws BadRequestServiceEx;
+    long insert(Tag tag) throws BadRequestServiceEx, DuplicatedTagNameServiceException;
 
     /**
      * @param page
@@ -63,8 +65,10 @@ public interface TagService {
      * @return long
      * @throws NotFoundServiceEx
      * @throws BadRequestServiceEx
+     * @throws DuplicatedTagNameServiceException
      */
-    long update(long id, Tag tag) throws BadRequestServiceEx, NotFoundServiceEx;
+    long update(long id, Tag tag)
+            throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedTagNameServiceException;
 
     /**
      * @param id

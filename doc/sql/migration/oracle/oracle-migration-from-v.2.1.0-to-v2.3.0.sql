@@ -4,7 +4,8 @@ create table gs_tag (
     color varchar2(255 char) not null,
     description varchar2(255 char),
     "name" varchar2(255 char) not null,
-    primary key (id)
+    primary key (id),
+    constraint gs_tag_name_unique unique (name)
 );
 
 create table gs_resource_tags (

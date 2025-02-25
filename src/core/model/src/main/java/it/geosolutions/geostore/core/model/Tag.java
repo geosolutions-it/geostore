@@ -51,7 +51,7 @@ public class Tag implements Serializable {
 
     @Id @GeneratedValue private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
 
     @Column(name = "color", nullable = false)
