@@ -272,6 +272,7 @@ public class Resource implements Serializable, CycleRecoverable {
         this.tags = tags;
     }
 
+    @XmlTransient
     public Set<User> getFavoritedBy() {
         return favoritedBy;
     }
