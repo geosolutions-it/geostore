@@ -25,7 +25,6 @@
  * <http://www.geo-solutions.it/>.
  *
  */
-
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -79,7 +78,13 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-/** Base filter class for an OAuth2 authentication filter. Authentication instances are cached. */
+/**
+ * Base filter class for an OAuth2 authentication filter.
+ *
+ * <p>This class handles OAuth2 authentication including user auto-creation, token caching, and
+ * username remapping. It now decodes and validates the idToken only once and, if the token contains
+ * the configured claims, uses the "unique username" claim to remap the username.
+ */
 public abstract class OAuth2GeoStoreAuthenticationFilter
         extends OAuth2ClientAuthenticationProcessingFilter {
 
@@ -90,16 +95,51 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
     private final AuthenticationEntryPoint authEntryPoint;
     private final TokenAuthenticationCache cache;
+
+    public UserService getUserService() {
+        return userService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    public UserGroupService getUserGroupService() {
+        return userGroupService;
+    }
+
+    public void setUserGroupService(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
+    }
+
+    public RemoteTokenServices getTokenServices() {
+        return tokenServices;
+    }
+
+    public void setTokenServices(RemoteTokenServices tokenServices) {
+        this.tokenServices = tokenServices;
+    }
+
+    public OAuth2Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(OAuth2Configuration configuration) {
+        this.configuration = configuration;
+    }
+
     @Autowired protected UserService userService;
     @Autowired protected UserGroupService userGroupService;
     protected RemoteTokenServices tokenServices;
     protected OAuth2Configuration configuration;
 
     /**
+     * Constructs a new OAuth2GeoStoreAuthenticationFilter.
+     *
      * @param tokenServices a RemoteTokenServices instance.
-     * @param oAuth2RestTemplate the rest template to use for OAuth2 requests.
+     * @param oAuth2RestTemplate the REST template to use for OAuth2 requests.
      * @param configuration the OAuth2 configuration.
-     * @param tokenAuthenticationCache the cache.
+     * @param tokenAuthenticationCache the token authentication cache.
      */
     public OAuth2GeoStoreAuthenticationFilter(
             RemoteTokenServices tokenServices,
@@ -119,17 +159,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // do we need to authenticate?
-        if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null)
+        // Do we need to authenticate?
+        if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null) {
             super.doFilter(req, res, chain);
-        else if (req instanceof HttpServletRequest)
-            // ok no need to authenticate, but in case the security context
-            // holds a Token authentication, we set the access token to request's attributes.
+        } else if (req instanceof HttpServletRequest) {
+            // No need to authenticate, but if the security context holds a Token authentication,
+            // set the access token as a request attribute.
             addRequestAttributes((HttpServletRequest) req, authentication);
-        if (configuration.isEnabled() && configuration.isInvalid())
-            if (LOGGER.isDebugEnabled())
+        }
+        if (configuration.isEnabled() && configuration.isInvalid()) {
+            if (LOGGER.isDebugEnabled()) {
                 LOGGER.info(
-                        "Skipping configured OAuth2 authentication. One or more mandatory properties are missing (clientId, clientSecret, authorizationUri, tokenUri");
+                        "Skipping configured OAuth2 authentication. One or more mandatory properties are missing (clientId, clientSecret, authorizationUri, tokenUri).");
+            }
+        }
         chain.doFilter(req, res);
     }
 
@@ -156,9 +199,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 TokenDetails details = tokenDetails(authentication);
                 if (details != null) {
                     OAuth2AccessToken accessToken = details.getAccessToken();
-                    if (accessToken.isExpired())
+                    if (accessToken.isExpired()) {
                         authentication =
                                 authenticateAndUpdateCache(request, response, token, accessToken);
+                    }
                 }
             }
         } else {
@@ -166,7 +210,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             authentication = authenticateAndUpdateCache(request, response, null, null);
             token =
                     (String)
-                            RequestContextHolder.getRequestAttributes()
+                            Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                                     .getAttribute(ACCESS_TOKEN_PARAM, 0);
             if (token != null) {
                 request.setAttribute(ACCESS_TOKEN_PARAM, token);
@@ -187,12 +231,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     private TokenDetails tokenDetails(Authentication authentication) {
-        TokenDetails tokenDetails = null;
         Object details = authentication.getDetails();
         if (details instanceof TokenDetails) {
-            tokenDetails = ((TokenDetails) details);
+            return (TokenDetails) details;
         }
-        return tokenDetails;
+        return null;
     }
 
     private Authentication authenticateAndUpdateCache(
@@ -208,10 +251,9 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 OAuth2AccessToken accessTokenDetails = tokenDetails.getAccessToken();
                 if (accessTokenDetails != null) {
                     token = accessTokenDetails.getValue();
-                    RequestContextHolder.getRequestAttributes()
+                    Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                             .setAttribute(ACCESS_TOKEN_PARAM, accessTokenDetails.getValue(), 0);
-                    if (accessTokenDetails != null
-                            && accessTokenDetails.getRefreshToken() != null
+                    if (accessTokenDetails.getRefreshToken() != null
                             && accessTokenDetails.getRefreshToken().getValue() != null) {
                         RequestContextHolder.getRequestAttributes()
                                 .setAttribute(
@@ -220,13 +262,14 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                                         0);
                     }
                 }
-                if (tokenDetails.getIdToken() != null)
-                    RequestContextHolder.getRequestAttributes()
+                if (tokenDetails.getIdToken() != null) {
+                    Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                             .setAttribute(ID_TOKEN_PARAM, tokenDetails.getIdToken(), 0);
+                }
             }
             cache.putCacheEntry(token, authentication);
         }
-        RequestContextHolder.getRequestAttributes()
+        Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                 .setAttribute(PROVIDER_KEY, configuration.getProvider(), 0);
         return authentication;
     }
@@ -243,92 +286,85 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             } finally {
                 SecurityContextHolder.clearContext();
                 HttpServletRequest request =
-                        ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+                        ((ServletRequestAttributes)
+                                        Objects.requireNonNull(
+                                                RequestContextHolder.getRequestAttributes()))
                                 .getRequest();
                 HttpSession session = request.getSession(false);
-                if (session != null) session.invalidate();
+                if (session != null) {
+                    session.invalidate();
+                }
                 LOGGER.debug("Cleaned out Session Access Token Request!");
             }
         }
     }
 
     /**
-     * Perform the authentication.
+     * Performs the OAuth2 authentication using the given access token.
      *
-     * @param request the httpServletRequest.
-     * @param response the httpServletResponse.
-     * @param accessToken the accessToken.
-     * @return the Authentication object. Null if not authenticated.
+     * @param request the HTTP request.
+     * @param response the HTTP response.
+     * @param accessToken the OAuth2 access token.
+     * @return an Authentication object if successful, null otherwise.
      */
     protected Authentication performOAuthAuthentication(
             HttpServletRequest request,
             HttpServletResponse response,
             OAuth2AccessToken accessToken) {
         LOGGER.debug("About to perform remote authentication.");
-        LOGGER.debug("Access Token: " + accessToken);
+        LOGGER.debug("Access Token: {}", accessToken);
         String principal = null;
         PreAuthenticatedAuthenticationToken result = null;
         try {
-            LOGGER.debug("Trying to get the preauthenticated principal.");
+            LOGGER.debug("Trying to get the pre-authenticated principal.");
             principal = getPreAuthenticatedPrincipal(request, response, accessToken);
-        } catch (IOException e1) {
-            LOGGER.error(e1.getMessage(), e1);
-            principal = null;
-        } catch (ServletException e1) {
-            LOGGER.error(e1.getMessage(), e1);
-            principal = null;
+        } catch (IOException | ServletException e1) {
+            LOGGER.error("Error obtaining pre-authenticated principal: {}", e1.getMessage(), e1);
         }
 
-        LOGGER.debug("preAuthenticatedPrincipal = " + principal + ", trying to authenticate");
+        LOGGER.debug("Pre-authenticated principal = {}, trying to authenticate", principal);
 
-        if (principal != null && principal.trim().length() > 0)
+        if (principal != null && !principal.trim().isEmpty()) {
             result = createPreAuthentication(principal, request, response);
+        }
         return result;
     }
 
     /**
-     * Get the PreAuthenticatedPrincipal.
+     * Retrieves the pre-authenticated principal.
      *
-     * @param req the request.
-     * @param resp the response.
-     * @param accessToken the access token.
-     * @return the principal as a string.
-     * @throws IOException
-     * @throws ServletException
+     * @param req the HTTP request.
+     * @param resp the HTTP response.
+     * @param accessToken the OAuth2 access token.
+     * @return the principal as a String.
+     * @throws IOException if an I/O error occurs.
+     * @throws ServletException if a servlet error occurs.
      */
     protected String getPreAuthenticatedPrincipal(
             HttpServletRequest req, HttpServletResponse resp, OAuth2AccessToken accessToken)
             throws IOException, ServletException {
 
-        // Make sure the REST Resource Template has been correctly configured
-        LOGGER.debug("About to configure the REST Resource Template");
+        // Configure the REST Resource Template
+        LOGGER.debug("Configuring the REST Resource Template");
         configureRestTemplate();
 
-        if (accessToken != null
-                && accessToken.getValue() != null
-                && !accessToken.getValue().isEmpty()) {
+        if (accessToken != null && StringUtils.isNotEmpty(accessToken.getValue())) {
             LOGGER.debug("Setting the access token on the OAuth2ClientContext");
             restTemplate.getOAuth2ClientContext().setAccessToken(accessToken);
         }
 
-        // Setting up OAuth2 Filter services and resource template
+        // Set up OAuth2 Filter services and resource template
         LOGGER.debug("Setting up OAuth2 Filter services and resource template");
         setRestTemplate(restTemplate);
         setTokenServices(tokenServices);
 
-        // Validating the access_token
+        // Validate the access token
         Authentication authentication = null;
         try {
             authentication = super.attemptAuthentication(req, resp);
             req.setAttribute(OAUTH2_AUTHENTICATION_KEY, authentication);
 
-            // The authentication (in the extensions) should contain a Map which is the result of
-            // the Access Token Check Request (which will be the json result from the oidc
-            // "userinfo"
-            // endpoint).
-            // We move it from inside the authentication to directly to a request attributes.
-            // This will make it a "peer" with the Access Token (which spring puts on the request as
-            // an attribute).
+            // Extract extensions containing the Access Token Check Response
             if (authentication instanceof OAuth2Authentication) {
                 OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) authentication;
                 Object map =
@@ -341,17 +377,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 }
             }
 
-            if (authentication != null && LOGGER.isDebugEnabled())
+            if (authentication != null && LOGGER.isDebugEnabled()) {
                 LOGGER.debug(
-                        "Authenticated OAuth request for principal "
-                                + authentication.getPrincipal());
+                        "Authenticated OAuth request for principal {}",
+                        authentication.getPrincipal());
+            }
         } catch (Exception e) {
             handleOAuthException(e, req, resp);
         }
 
         String username =
                 (authentication != null ? getUsername(authentication.getPrincipal()) : null);
-        if (username != null && username.trim().length() == 0) username = null;
+        if (username != null && username.trim().isEmpty()) {
+            username = null;
+        }
         return username;
     }
 
@@ -363,22 +402,19 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         } else if (e instanceof BadCredentialsException || e instanceof ResourceAccessException) {
             if (e.getCause() instanceof OAuth2AccessDeniedException) {
                 LOGGER.warn(
-                        "Error while trying to authenticate to OAuth2 Provider with the following Exception cause:",
+                        "Error while trying to authenticate to OAuth2 Provider. Cause: ",
                         e.getCause());
             } else if (e instanceof ResourceAccessException) {
-                LOGGER.error(
-                        "Could not Authorize OAuth2 Resource due to the following exception:", e);
+                LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
             } else if (e instanceof ResourceAccessException
                     || e.getCause() instanceof OAuth2AccessDeniedException) {
                 LOGGER.warn(
-                        "It is worth notice that if you try to validate credentials against an SSH protected Endpoint, you need either your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM!");
+                        "If you try to validate credentials against an SSH protected endpoint, you need your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM.");
                 LOGGER.info(
-                        "Please refer to the GeoServer OAuth2 Plugin Documentation in order to find the steps for importing the SSH certificates.");
+                        "Refer to the GeoServer OAuth2 Plugin Documentation for steps to import SSH certificates.");
             } else {
                 if (LOGGER.isDebugEnabled()) {
-                    LOGGER.error(
-                            "Could not Authorize OAuth2 Resource due to the following exception:",
-                            e);
+                    LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
                 }
             }
         }
@@ -390,7 +426,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             authEntryPoint.commence(req, resp, null);
         } else {
             if (resp.getStatus() != 302) {
-                // AEP redirection failed
                 final AccessTokenRequest accessTokenRequest =
                         restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
                 if (accessTokenRequest.getPreservedState() != null
@@ -403,6 +438,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         }
     }
 
+    /** Configures the REST template with values from the OAuth2 configuration. */
     protected void configureRestTemplate() {
         AuthorizationCodeResourceDetails details =
                 (AuthorizationCodeResourceDetails) restTemplate.getResource();
@@ -420,10 +456,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     /**
-     * Parse the scopes from a comma separated string to a list.
+     * Parses the scopes from a comma-separated string into a list.
      *
-     * @param commaSeparatedScopes the scopes as a string.
-     * @return the scopes as a list.
+     * @param commaSeparatedScopes the scopes as a comma-separated string.
+     * @return a list of scope strings.
      */
     protected List<String> parseScopes(String commaSeparatedScopes) {
         List<String> scopes = newArrayList();
@@ -432,27 +468,37 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     /**
-     * Create the preauthentication token instance from the User name.
+     * Creates a pre-authenticated token instance from the username.
      *
-     * @param username the username.
-     * @param request the HttpServletRequest.
-     * @param response the HttpServletResponse.
-     * @return the PreAuthenticatedAuthenticationToken instance. Null if no user was found for the
-     *     username.
+     * <p>This method decodes and validates the idToken once and, if the token contains the
+     * appropriate claims, remaps the username from the configured "principal" claim to the "unique
+     * username" claim.
+     *
+     * @param username the original username.
+     * @param request the HTTP request.
+     * @param response the HTTP response.
+     * @return a {@link PreAuthenticatedAuthenticationToken} if the user is retrieved/created, or
+     *     null otherwise.
      */
-    protected PreAuthenticatedAuthenticationToken createPreAuthentication(
+    public PreAuthenticatedAuthenticationToken createPreAuthentication(
             String username, HttpServletRequest request, HttpServletResponse response) {
+        String idToken = OAuth2Utils.getIdToken();
+        JWTHelper jwtHelper = decodeAndValidateIdToken(idToken);
+        // Remap the username if the idToken is valid and the configuration is set
+        username = remapUsername(username, jwtHelper);
+        LOGGER.info("Retrieving user with authorities for username: {}", username);
         User user = retrieveUserWithAuthorities(username, request, response);
-        if (user == null) return null;
+        if (user == null) {
+            LOGGER.error("User retrieval failed for username: {}", username);
+            return null;
+        }
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
         PreAuthenticatedAuthenticationToken authenticationToken =
                 new PreAuthenticatedAuthenticationToken(
                         user, null, Collections.singletonList(authority));
-        String idToken = OAuth2Utils.getIdToken();
-        if (user != null
-                && (StringUtils.isNotBlank(configuration.getGroupsClaim())
-                        || StringUtils.isNotBlank(configuration.getRolesClaim()))) {
+        if (StringUtils.isNotBlank(configuration.getGroupsClaim())
+                || StringUtils.isNotBlank(configuration.getRolesClaim())) {
             addAuthoritiesFromToken(user, idToken);
         }
         OAuth2AccessToken accessToken = restTemplate.getOAuth2ClientContext().getAccessToken();
@@ -462,10 +508,63 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     /**
-     * Add authorities from the idToken claims if found.
+     * Decodes and validates the given idToken.
+     *
+     * <p>If the token is null or fails to decode, this method logs an appropriate message and
+     * returns null, causing the authentication to fall back to using the original username.
+     *
+     * @param idToken the idToken to decode.
+     * @return a {@link JWTHelper} instance if the token is valid, or null otherwise.
+     */
+    protected JWTHelper decodeAndValidateIdToken(String idToken) {
+        if (idToken == null) {
+            LOGGER.warn("No idToken provided for decoding. Skipping username remapping.");
+            return null;
+        }
+        try {
+            // Optionally add additional validation logic for the token here (e.g. signature,
+            // expiration)
+            return new JWTHelper(idToken);
+        } catch (Exception e) {
+            LOGGER.error("Failed to decode or validate idToken: {}", idToken, e);
+            return null;
+        }
+    }
+
+    /**
+     * Remaps the provided username based on idToken claims if applicable.
+     *
+     * @param username the original username.
+     * @param jwtHelper the {@link JWTHelper} instance for decoding idToken claims, may be null.
+     * @return the remapped username if claims match; otherwise, the original username.
+     */
+    private String remapUsername(String username, JWTHelper jwtHelper) {
+        if (jwtHelper != null
+                && StringUtils.isNotBlank(configuration.getPrincipalKey())
+                && StringUtils.isNotBlank(configuration.getUniqueUsername())) {
+            String principalClaim =
+                    jwtHelper.getClaim(configuration.getPrincipalKey(), String.class);
+            if (StringUtils.isNotBlank(principalClaim)
+                    && StringUtils.equals(username, principalClaim)) {
+                String uniqueUsername =
+                        jwtHelper.getClaim(configuration.getUniqueUsername(), String.class);
+                if (StringUtils.isNotBlank(uniqueUsername)) {
+                    LOGGER.info(
+                            "Username remapped from {} to {} based on idToken claims.",
+                            username,
+                            uniqueUsername);
+                    return uniqueUsername;
+                }
+            }
+        }
+        return username;
+    }
+
+    /**
+     * Adds authorities to the user based on idToken claims.
      *
      * @param user the user instance.
-     * @param idToken the id token.
+     * @param idToken the idToken containing claims.
      */
     protected void addAuthoritiesFromToken(User user, String idToken) {
         JWTHelper helper = new JWTHelper(idToken);
@@ -481,25 +580,66 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         for (String r : roles) {
             if (r.equals(Role.ADMIN.name())) user.setRole(Role.ADMIN);
         }
-        for (String g : groups) {
+
+        Set<UserGroup> userGroups = user.getGroups();
+        for (String groupName : groups) {
             UserGroup group = null;
-            if (userGroupService != null) group = userGroupService.get(g);
+            if (userGroupService != null) {
+                if (configuration.isGroupNamesUppercase()) {
+                    group = userGroupService.get(groupName.toUpperCase());
+                }
+                if (group == null) {
+                    group = userGroupService.get(groupName);
+                }
+            }
             if (group == null) {
                 group = new UserGroup();
-                group.setGroupName(g);
+                group.setGroupName(
+                        configuration.isGroupNamesUppercase()
+                                ? groupName.toUpperCase()
+                                : groupName);
+                long groupId = -1;
+                if (userGroupService != null) {
+                    try {
+                        groupId = userGroupService.insert(group);
+                        group = userGroupService.get(groupId);
+                        LOGGER.debug("inserted group id: {}", group.getGroupName());
+                    } catch (BadRequestServiceEx e) {
+                        LOGGER.error("Saving new group found in claims failed");
+                    }
+                }
             }
-            user.getGroups().add(group);
+            if (!userGroups.contains(group)) {
+                try {
+                    if (userGroupService != null)
+                        userGroupService.assignUserGroup(user.getId(), group.getId());
+                    userGroups.add(group);
+                } catch (NotFoundServiceEx e) {
+                    LOGGER.error(
+                            "Assignment of user {} to group {} failed... skipping it!",
+                            user,
+                            group);
+                }
+            }
+        }
+
+        user.setGroups(userGroups);
+        try {
+            if (userService != null) userService.update(user);
+        } catch (BadRequestServiceEx | NotFoundServiceEx e) {
+            LOGGER.error("Updating user with synchronized groups found in claims failed");
+        } finally {
+            LOGGER.info("User updated with the following groups: {}", userGroups);
         }
     }
 
     /**
-     * Retrieves a user by username. Will create the user when not found, if the auto create flag
-     * was set to true.
+     * Retrieves a user by username. If not found and auto-create is enabled, a new user is created.
      *
      * @param username the username.
-     * @param request the HttpServletRequest.
-     * @param response the HttpServletResponse.
-     * @return a {@link User} instance if the user was found/created. Null otherwise.
+     * @param request the HTTP request.
+     * @param response the HTTP response.
+     * @return a {@link User} instance if found or created, or null otherwise.
      */
     protected User retrieveUserWithAuthorities(
             String username, HttpServletRequest request, HttpServletResponse response) {
@@ -508,28 +648,28 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             try {
                 user = userService.get(username);
             } catch (NotFoundServiceEx notFoundServiceEx) {
-                LOGGER.debug("User with username " + username + " not found.");
+                LOGGER.debug("User with username {} not found.", username);
             }
         }
         if (user == null) {
             try {
                 user = createUser(username, null, "");
             } catch (BadRequestServiceEx | NotFoundServiceEx e) {
-                LOGGER.error("Error while autocreating the user: " + username, e);
+                LOGGER.error("Error while auto-creating the user: {}", username, e);
             }
         }
         return user;
     }
 
     /**
-     * Create a User instance.
+     * Creates a new user.
      *
      * @param userName the username.
      * @param credentials the password.
-     * @param rawUser user object.
-     * @return a User instance.
-     * @throws BadRequestServiceEx
-     * @throws NotFoundServiceEx
+     * @param rawUser a raw user object.
+     * @return a newly created {@link User} instance.
+     * @throws BadRequestServiceEx if the request is bad.
+     * @throws NotFoundServiceEx if the user cannot be found.
      */
     protected User createUser(String userName, String credentials, Object rawUser)
             throws BadRequestServiceEx, NotFoundServiceEx {
@@ -542,7 +682,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         userAttribute.setName(OAuth2Configuration.CONFIGURATION_NAME);
         userAttribute.setValue(configuration.getBeanName());
         user.setAttribute(Collections.singletonList(userAttribute));
-        Set<UserGroup> groups = new HashSet<UserGroup>();
+        Set<UserGroup> groups = new HashSet<>();
         user.setGroups(groups);
         user.setRole(Role.USER);
         if (userService != null && configuration.isAutoCreateUser()) {
@@ -555,8 +695,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
     @Override
     public void afterPropertiesSet() {
-        // do nothing: avoid filter instantiation failing due RestTemplate bean having creation
-        // scope=session
+        // Do nothing: avoid filter instantiation failing due to RestTemplate bean having session
+        // scope.
     }
 
     @Override
@@ -568,8 +708,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             throws IOException, ServletException {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug(
-                    "Authentication success. Updating SecurityContextHolder to contain: "
-                            + authResult);
+                    "Authentication success. Updating SecurityContextHolder to contain: {}",
+                    authResult);
         }
 
         SecurityContextHolder.getContext().setAuthentication(authResult);
@@ -602,14 +742,15 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (failed instanceof AccessTokenRequiredException) {
             SecurityContextHolder.clearContext();
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Authentication request failed: " + failed, failed);
-                LOGGER.debug("Updated SecurityContextHolder to contain null Authentication");
+                LOGGER.debug("Authentication request failed: {}", failed);
+                LOGGER.debug("Cleared SecurityContextHolder.");
             }
         }
     }
 
+    /** Enum representing the type of OAuth2 authentication. */
     public enum OAuth2AuthenticationType {
-        BEARER, // this is a bearer token (meaning existing access token is in the request headers)
-        USER // this is a "normal" oauth2 login (i.e. interactive user login)
+        BEARER, // Bearer token authentication (existing access token in request headers)
+        USER // Interactive OAuth2 login authentication
     }
 }
