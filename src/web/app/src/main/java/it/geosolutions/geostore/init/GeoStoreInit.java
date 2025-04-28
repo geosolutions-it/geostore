@@ -22,9 +22,7 @@ package it.geosolutions.geostore.init;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.security.password.GeoStoreAESEncoder;
 import it.geosolutions.geostore.core.security.password.GeoStorePasswordEncoder;
-import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserGroupService;
@@ -70,8 +68,6 @@ public class GeoStoreInit implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
 
         LOGGER.info("===== Starting GeoStore services =====");
-        // initialize password encoding
-        initPasswordEncoding();
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
             LOGGER.warn("No category found.");
@@ -109,65 +105,6 @@ public class GeoStoreInit implements InitializingBean {
             }
         } else {
             LOGGER.info("Users already in db: " + userCnt);
-        }
-    }
-
-    private void initPasswordEncoding() {
-        LOGGER.info("=== Set up the security system   ====");
-        LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
-
-        PwEncoder.setEncoder(this.passwordEncoder);
-        // check and convert passwords
-        try {
-            List<User> users = userService.getAll(0, 1);
-            if (users != null && users.size() > 0) {
-                // check password encription of the first user availabe
-                boolean responsible =
-                        this.passwordEncoder.isResponsibleForEncoding(users.get(0).getPassword());
-
-                // if the current password encoder is the responsible for the encoding of the
-                // password
-                // we suppose the conversion is already happended
-                if (responsible) return;
-                LOGGER.warn(
-                        "=======================================================================================");
-                LOGGER.warn(
-                        "   WARNING: USERS PASSWORDS ARE NOT SYNCRONIZED WITH THE CONFIGURED PASSWORD ENCODER   ");
-                LOGGER.warn(
-                        "=======================================================================================");
-                // check if the password is old legacy, so GeoStoreAESEncoder is the responsible for
-                // the encoding
-                GeoStoreAESEncoder e = new GeoStoreAESEncoder();
-                boolean isLegacy = e.isResponsibleForEncoding(users.get(0).getPassword());
-                if (isLegacy) {
-                    if (!allowPasswordRecoding) {
-                        LOGGER.warn(
-                                "To convert old passwords to new ones use geostoreInitializer.allowPasswordRecoding=true");
-                        return;
-                    }
-                    LOGGER.info("Starting password conversion...");
-                    for (User u : userService.getAll(null, null)) {
-                        String p = u.getPassword();
-                        if (e.isResponsibleForEncoding(p)) {
-                            String dec = e.decode(p);
-                            String enc =
-                                    this.passwordEncoder.encodePassword(dec.toCharArray(), null);
-                            u.setPassword(enc);
-                            try {
-                                userService.update(u);
-                                LOGGER.info("UPDATED USER PASSWORD for the user:" + u.getName());
-                            } catch (NotFoundServiceEx e1) {
-                                LOGGER.error(
-                                        "===> ERROR updating user password for user" + u.getName());
-                            }
-                        }
-                    }
-                    LOGGER.info("Password conversion finished!");
-                }
-            }
-        } catch (BadRequestServiceEx e) {
-            // error getting users is not a problem at this stage.
-            // e.printStackTrace();
         }
     }
 
