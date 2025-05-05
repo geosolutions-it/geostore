@@ -205,6 +205,7 @@ public class GeoStoreInit implements InitializingBean {
             throw new RuntimeException("Error while initting usersgroup.");
         }
     }
+
     private void initPasswordEncoding() {
         LOGGER.info("=== Set up the security system   ====");
         LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
