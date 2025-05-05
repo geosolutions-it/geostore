@@ -58,7 +58,7 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
                 throw new DisabledException(USER_NOT_FOUND_MSG);
             }
         } catch (Exception e) {
-            LOGGER.info(USER_NOT_FOUND_MSG);
+            LOGGER.info("Error while authenticating user", e);
             user = null;
         }
 
