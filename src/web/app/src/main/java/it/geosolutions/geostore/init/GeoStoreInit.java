@@ -23,6 +23,7 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.security.password.GeoStorePasswordEncoder;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserGroupService;
@@ -66,7 +67,7 @@ public class GeoStoreInit implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-
+        initPasswordEncoding();
         LOGGER.info("===== Starting GeoStore services =====");
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
@@ -205,6 +206,12 @@ public class GeoStoreInit implements InitializingBean {
         }
     }
 
+    private void initPasswordEncoding() {
+        LOGGER.info("=== Set up the security system   ====");
+        LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
+
+        PwEncoder.setEncoder(this.passwordEncoder);
+    }
     private static JAXBContext getUserContext() {
 
         List<Class> allClasses = GeoStoreJAXBContext.getGeoStoreClasses();
