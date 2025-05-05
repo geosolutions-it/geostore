@@ -23,6 +23,7 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.security.password.GeoStorePasswordEncoder;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.init.model.InitUserList;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserGroupService;
