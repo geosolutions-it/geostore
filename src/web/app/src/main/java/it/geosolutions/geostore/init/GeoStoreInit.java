@@ -66,7 +66,7 @@ public class GeoStoreInit implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-
+        initPasswordEncoding();
         LOGGER.info("===== Starting GeoStore services =====");
         long catCnt = categoryService.getCount(null);
         if (catCnt == 0) {
@@ -204,7 +204,12 @@ public class GeoStoreInit implements InitializingBean {
             throw new RuntimeException("Error while initting usersgroup.");
         }
     }
+    private void initPasswordEncoding() {
+        LOGGER.info("=== Set up the security system   ====");
+        LOGGER.info("Encoding Type:" + passwordEncoder.getEncodingType());
 
+        PwEncoder.setEncoder(this.passwordEncoder);
+    }
     private static JAXBContext getUserContext() {
 
         List<Class> allClasses = GeoStoreJAXBContext.getGeoStoreClasses();
