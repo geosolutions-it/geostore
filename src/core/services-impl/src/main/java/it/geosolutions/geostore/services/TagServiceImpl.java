@@ -110,7 +110,8 @@ public class TagServiceImpl implements TagService {
         return id;
     }
 
-    private void checkForDuplicates(Tag tag, boolean isUpdate) throws DuplicatedTagNameServiceException {
+    private void checkForDuplicates(Tag tag, boolean isUpdate)
+            throws DuplicatedTagNameServiceException {
         int duplicatesCount =
                 tagDAO.count(new Search().addFilterEqual("name", tag.getName()).setMaxResults(1));
         if (duplicatesCount > 0) {
