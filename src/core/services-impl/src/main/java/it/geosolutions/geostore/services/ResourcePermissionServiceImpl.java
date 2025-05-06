@@ -11,10 +11,15 @@ import java.util.function.BiFunction;
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
     private final BiFunction<SecurityRule, User, Boolean> resourceUserOwnership =
-            (rule, user) -> user.getId().equals(rule.getUser().getId());
+            (rule, user) ->
+                    (user.getId().equals(rule.getUser().getId())
+                            || user.getName() != null && user.getName().equals(rule.getUsername()));
 
     private final BiFunction<SecurityRule, UserGroup, Boolean> resourceGroupOwnership =
-            (rule, group) -> group.getId().equals(rule.getGroup().getId());
+            (rule, group) ->
+                    (group.getId().equals(rule.getGroup().getId())
+                            || group.getGroupName() != null
+                                    && group.getGroupName().equals(rule.getGroupname()));
 
     private final BiFunction<SecurityRule, User, Boolean> resourceUserOwnershipWithReadPermission =
             (rule, user) ->
