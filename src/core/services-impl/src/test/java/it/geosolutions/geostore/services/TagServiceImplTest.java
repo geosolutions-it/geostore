@@ -59,7 +59,8 @@ public class TagServiceImplTest extends ServiceTestBase {
 
         DuplicatedTagNameServiceException ex =
                 assertThrows(
-                        DuplicatedTagNameServiceException.class, () -> tagService.insert(duplicateTag));
+                        DuplicatedTagNameServiceException.class,
+                        () -> tagService.insert(duplicateTag));
         assertTrue(ex.getMessage().contains("create"));
     }
 
