@@ -157,7 +157,10 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         }
 
         // User filtering based on user and groups
-        Filter userFiltering = Filter.equal("user.name", user.getName());
+        Filter userFiltering =
+                Filter.or(
+                        Filter.equal("username", user.getName()),
+                        Filter.equal("user.name", user.getName()));
 
         if (user.getGroups() != null && !user.getGroups().isEmpty()) {
             List<Long> groupsId = new ArrayList<>();
@@ -182,12 +185,16 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         }
 
         // User filtering based on user and groups
-        Filter userFiltering = Filter.equal("user.name", user.getName());
+        Filter userFiltering =
+                Filter.or(
+                        Filter.equal("username", user.getName()),
+                        Filter.equal("user.name", user.getName()));
 
         // Combine owner and advertisedFilter using OR
         /* The user is the owner of the resource or the resource is advertised. */
         Filter advertisedFiltering =
                 Filter.or(
+                        Filter.equal("username", user.getName()),
                         Filter.equal("user.name", user.getName()),
                         Filter.equal("resource.advertised", true));
 
@@ -219,9 +226,13 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         Search searchCriteria = new Search(SecurityRule.class);
 
         Filter securityFilter =
-                Filter.and(
-                        Filter.equal("resource.id", resourceId),
-                        Filter.equal("user.name", userName));
+                Filter.or(
+                        Filter.and(
+                                Filter.equal("resource.id", resourceId),
+                                Filter.equal("username", userName)),
+                        Filter.and(
+                                Filter.equal("resource.id", resourceId),
+                                Filter.equal("user.name", userName)));
         searchCriteria.addFilter(securityFilter);
         // now rules are not properly filtered.
         // so no user rules have to be removed externally (see RESTServiceImpl >
