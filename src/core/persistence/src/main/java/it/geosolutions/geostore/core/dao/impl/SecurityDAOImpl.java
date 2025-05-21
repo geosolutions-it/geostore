@@ -63,7 +63,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         }
         for (SecurityRule rule : entities) {
             validateGroup(rule);
-            validateCreatorAndEditor(rule);
+            updateResourceCreatorIfEmpty(rule);
         }
         super.persist(entities);
     }
@@ -78,17 +78,12 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         }
     }
 
-    private void validateCreatorAndEditor(SecurityRule rule) {
+    private void updateResourceCreatorIfEmpty(SecurityRule rule) {
         if (rule.getResource() != null && (rule.getUser() != null || rule.getUsername() != null)) {
             Resource resource = rule.getResource();
             boolean updated = false;
             if (resource.getCreator() == null) {
                 resource.setCreator(
-                        rule.getUser() != null ? rule.getUser().getName() : rule.getUsername());
-                updated = true;
-            }
-            if (rule.getUser() != null || !rule.getUsername().isEmpty()) {
-                resource.setEditor(
                         rule.getUser() != null ? rule.getUser().getName() : rule.getUsername());
                 updated = true;
             }

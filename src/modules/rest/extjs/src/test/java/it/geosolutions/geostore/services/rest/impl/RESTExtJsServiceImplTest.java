@@ -300,7 +300,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             ShortResource resource = restExtJsService.getExtResource(sc, r0Id, false, false, false);
             assertEquals(RES_NAME, resource.getName());
             assertEquals("u0", resource.getCreator());
-            assertEquals("u0", resource.getEditor());
+            assertNull(resource.getEditor());
         }
 
         {
@@ -1053,9 +1053,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             FieldFilter ltDateFilter =
                     new FieldFilter(
-                            BaseField.LASTUPDATE,
+                            BaseField.CREATION,
                             new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-                                    .format(resourceB.getLastUpdate()),
+                                    .format(resourceB.getCreation()),
                             SearchOperator.LESS_THAN);
 
             ExtResourceList response =
