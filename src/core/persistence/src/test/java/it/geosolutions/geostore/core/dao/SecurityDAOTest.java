@@ -228,10 +228,8 @@ public class SecurityDAOTest extends BaseDAOTest {
 
             Resource loaded = resourceDAO.find(resourceId);
             assertNotNull(loaded.getCreator());
-            assertNotNull(loaded.getEditor());
             assertEquals("testuser", loaded.getCreator());
-            assertEquals("testuser", loaded.getEditor());
-
+            assertNull(loaded.getEditor());
             securityDAO.removeById(securityId);
         }
 
@@ -262,9 +260,8 @@ public class SecurityDAOTest extends BaseDAOTest {
 
             loaded = resourceDAO.find(resourceId);
             assertNotNull(loaded.getCreator());
-            assertNotNull(loaded.getEditor());
             assertEquals("testuser", loaded.getCreator());
-            assertEquals(testUser.getName(), loaded.getEditor());
+            assertNull(loaded.getEditor());
 
             securityDAO.removeById(securityId);
         }

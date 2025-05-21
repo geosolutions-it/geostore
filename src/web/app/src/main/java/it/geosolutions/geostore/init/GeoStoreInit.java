@@ -212,6 +212,7 @@ public class GeoStoreInit implements InitializingBean {
 
         PwEncoder.setEncoder(this.passwordEncoder);
     }
+
     private static JAXBContext getUserContext() {
 
         List<Class> allClasses = GeoStoreJAXBContext.getGeoStoreClasses();
