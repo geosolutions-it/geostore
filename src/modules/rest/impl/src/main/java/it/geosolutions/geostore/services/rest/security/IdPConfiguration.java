@@ -1,7 +1,7 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.enums.Role;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
 /**
