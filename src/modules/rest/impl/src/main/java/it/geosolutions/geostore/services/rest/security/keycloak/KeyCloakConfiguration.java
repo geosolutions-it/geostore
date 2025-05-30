@@ -30,7 +30,7 @@ package it.geosolutions.geostore.services.rest.security.keycloak;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
 import org.keycloak.enums.TokenStore;
 import org.keycloak.representations.adapters.config.AdapterConfig;
