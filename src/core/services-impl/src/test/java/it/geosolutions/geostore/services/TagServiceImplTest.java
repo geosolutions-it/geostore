@@ -129,19 +129,34 @@ public class TagServiceImplTest extends ServiceTestBase {
         assertEquals(expected_tag, updatedTag);
     }
 
-    public void testUpdateWithDuplicate() throws Exception {
+    public void testUpdateDoesNotCreateDuplicate() throws Exception {
 
-        Tag tagA = new Tag("tag-A", "#4561aa", "dusky");
-        Tag tagB = new Tag("tag-B", "black", null);
+        final Tag tag = new Tag("tag", "black", null);
 
-        tagDAO.persist(tagA, tagB);
+        tagDAO.persist(tag);
 
-        tagB.setName(tagA.getName());
+        tag.setColor("#4561aa");
+        tag.setDescription("dusky");
+
+        tagService.update(tag.getId(), tag);
+
+        Tag updatedTag = tagDAO.find(tag.getId());
+        assertEquals(tag, updatedTag);
+    }
+
+    public void testUpdateDoesCreateDuplicate() {
+
+        final Tag existing_tag = new Tag("existing", "#4561aa", "dusky");
+        final Tag another_tag = new Tag("another", "black", null);
+
+        tagDAO.persist(existing_tag, another_tag);
+
+        another_tag.setName(existing_tag.getName());
 
         DuplicatedTagNameServiceException ex =
                 assertThrows(
                         DuplicatedTagNameServiceException.class,
-                        () -> tagService.update(tagB.getId(), tagB));
+                        () -> tagService.update(another_tag.getId(), another_tag));
         assertTrue(ex.getMessage().contains("update"));
     }
 
