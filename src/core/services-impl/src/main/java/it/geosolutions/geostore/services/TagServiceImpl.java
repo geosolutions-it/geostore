@@ -57,7 +57,7 @@ public class TagServiceImpl implements TagService {
             throw new BadRequestServiceEx("Tag must be specified");
         }
 
-        checkForDuplicates(tag, false);
+        checkForDuplicates(null, tag.getName());
 
         tagDAO.persist(tag);
 
@@ -100,7 +100,7 @@ public class TagServiceImpl implements TagService {
             throw new NotFoundServiceEx("Tag not found");
         }
 
-        checkForDuplicates(tag, true);
+        checkForDuplicates(id, tag.getName());
 
         tag.setId(id);
         tag.setResources(original.getResources());
@@ -110,11 +110,17 @@ public class TagServiceImpl implements TagService {
         return id;
     }
 
-    private void checkForDuplicates(Tag tag, boolean isUpdate)
-            throws DuplicatedTagNameServiceException {
-        int duplicatesCount =
-                tagDAO.count(new Search().addFilterEqual("name", tag.getName()).setMaxResults(1));
-        if (duplicatesCount > 0) {
+    private void checkForDuplicates(Long id, String name) throws DuplicatedTagNameServiceException {
+
+        boolean isUpdate = id != null;
+
+        Search duplicatesSearch = new Search().addFilterEqual("name", name).setMaxResults(1);
+
+        if (isUpdate) {
+            duplicatesSearch.addFilterNotEqual("id", id);
+        }
+
+        if (tagDAO.count(duplicatesSearch) > 0) {
             throw new DuplicatedTagNameServiceException(
                     String.format(
                             "Cannot %s the tag: a tag with the same name already exists.",
