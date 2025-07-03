@@ -567,19 +567,27 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
      * @param idToken the idToken containing claims.
      */
     protected void addAuthoritiesFromToken(User user, String idToken) {
+        LOGGER.debug(" --------- OIDC - ID_TOKEN: {}", idToken);
         JWTHelper helper = new JWTHelper(idToken);
+
         List<String> roles = null;
         List<String> groups = null;
-        if (configuration.getRolesClaim() != null)
+        if (configuration.getRolesClaim() != null) {
             roles = helper.getClaimAsList(configuration.getRolesClaim(), String.class);
-        else roles = Collections.emptyList();
+            LOGGER.debug(" --------- OIDC - ROLES: {}", roles);
+        }
+        if (roles == null) roles = Collections.emptyList();
 
-        if (configuration.getGroupsClaim() != null)
+        if (configuration.getGroupsClaim() != null) {
             groups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+            LOGGER.debug(" --------- OIDC - GROUPS: {}", groups);
+        }
         if (groups == null) groups = Collections.emptyList();
+
         for (String r : roles) {
             if (r.equals(Role.ADMIN.name())) user.setRole(Role.ADMIN);
         }
+        LOGGER.info("User updated with the following roles: {}", user.getRole());
 
         Set<UserGroup> userGroups = user.getGroups();
         for (String groupName : groups) {
