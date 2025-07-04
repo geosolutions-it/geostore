@@ -549,7 +549,7 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the roles claim name.
      */
     public String getRolesClaim() {
-        return rolesClaim;
+        return rolesClaim != null ? rolesClaim.trim() : null;
     }
 
     /**
@@ -558,12 +558,12 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @param rolesClaim the roles claim name.
      */
     public void setRolesClaim(String rolesClaim) {
-        this.rolesClaim = rolesClaim;
+        this.rolesClaim = rolesClaim != null && !rolesClaim.isEmpty() ? rolesClaim.trim() : null;
     }
 
     /** @return the groups claim name. */
     public String getGroupsClaim() {
-        return groupsClaim;
+        return groupsClaim != null ? groupsClaim.trim() : null;
     }
 
     /**
@@ -572,7 +572,7 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @param groupsClaim the groups claim name.
      */
     public void setGroupsClaim(String groupsClaim) {
-        this.groupsClaim = groupsClaim;
+        this.groupsClaim = groupsClaim != null && !groupsClaim.isEmpty() ? groupsClaim.trim() : null;
     }
 
     public boolean isGroupNamesUppercase() {
