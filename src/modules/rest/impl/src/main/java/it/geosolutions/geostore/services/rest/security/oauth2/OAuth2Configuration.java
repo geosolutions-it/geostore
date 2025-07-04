@@ -572,7 +572,8 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @param groupsClaim the groups claim name.
      */
     public void setGroupsClaim(String groupsClaim) {
-        this.groupsClaim = groupsClaim != null && !groupsClaim.isEmpty() ? groupsClaim.trim() : null;
+        this.groupsClaim =
+                groupsClaim != null && !groupsClaim.isEmpty() ? groupsClaim.trim() : null;
     }
 
     public boolean isGroupNamesUppercase() {
