@@ -196,71 +196,19 @@ public class UserGroup implements Serializable {
         return builder.toString();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = (prime * result) + ((groupName == null) ? 0 : groupName.hashCode());
-        result = (prime * result) + ((id == null) ? 0 : id.hashCode());
-        result = (prime * result) + ((security == null) ? 0 : security.hashCode());
-        result = (prime * result) + ((attributes == null) ? 0 : attributes.hashCode());
-
-        return result;
-    }
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
         UserGroup other = (UserGroup) obj;
-        if (groupName == null) {
-            if (other.groupName != null) {
-                return false;
-            }
-        } else if (!groupName.equals(other.groupName)) {
-            return false;
-        }
-        if (id == null) {
-            if (other.id != null) {
-                return false;
-            }
-        } else if (!id.equals(other.id)) {
-            return false;
-        }
-        if (security == null) {
-            if (other.security != null) {
-                return false;
-            }
-        } else if (!security.equals(other.security)) {
-            return false;
-        }
+        if (id != null && other.id != null) return id.equals(other.id);
+        // fallback if id is null (unsaved entities)
+        return groupName != null && groupName.equals(other.groupName);
+    }
 
-        if (attributes == null) {
-            if (other.attributes != null) {
-                return false;
-            }
-        } else if (!attributes.equals(other.attributes)) {
-            return false;
-        }
-
-        return true;
+    @Override
+    public int hashCode() {
+        if (id != null) return id.hashCode();
+        return groupName != null ? groupName.hashCode() : 0;
     }
 }

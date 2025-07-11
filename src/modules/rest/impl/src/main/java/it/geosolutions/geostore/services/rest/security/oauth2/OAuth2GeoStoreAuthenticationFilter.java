@@ -56,6 +56,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -631,13 +632,24 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             }
         }
 
-        user.setGroups(userGroups);
+        Set<UserGroup> sanitizedGroups =
+                new TreeSet<>(Comparator.comparing(UserGroup::getGroupName));
+        sanitizedGroups.addAll(userGroups);
+        user.setGroups(sanitizedGroups);
         try {
             if (userService != null) userService.update(user);
         } catch (BadRequestServiceEx | NotFoundServiceEx e) {
-            LOGGER.error("Updating user with synchronized groups found in claims failed");
+            LOGGER.error(
+                    "Updating user with synchronized groups found in claims failed: {}",
+                    e.getMessage(),
+                    e);
+        } catch (DataIntegrityViolationException e) {
+            LOGGER.error(
+                    "Updating user with synchronized groups found in claims data integrity violation: {}",
+                    e.getMessage(),
+                    e);
         } finally {
-            LOGGER.info("User updated with the following groups: {}", userGroups);
+            LOGGER.info("User updated with the following groups: {}", sanitizedGroups);
         }
     }
 
