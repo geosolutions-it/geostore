@@ -29,16 +29,13 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
+import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-/**
- * @author DamianoG
- */
+/** @author DamianoG */
 public class UserGroupServiceImpl implements UserGroupService {
 
     private static final Logger LOGGER = LogManager.getLogger(UserGroupServiceImpl.class);
@@ -53,30 +50,22 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     private UserGroupAttributeDAO userGroupAttributeDAO;
 
-    /**
-     * @param userGroupDAO the userGroupDAO to set
-     */
+    /** @param userGroupDAO the userGroupDAO to set */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }
 
-    /**
-     * @param userDAO the userDAO to set
-     */
+    /** @param userDAO the userDAO to set */
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
-    /**
-     * @param resourceDAO the resourceDAO to set
-     */
+    /** @param resourceDAO the resourceDAO to set */
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
-    /**
-     * @param securityDAO the securityDAO to set
-     */
+    /** @param securityDAO the securityDAO to set */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }
