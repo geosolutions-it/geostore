@@ -21,33 +21,24 @@ package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
-import it.geosolutions.geostore.core.dao.ResourceDAO;
-import it.geosolutions.geostore.core.dao.SecurityDAO;
-import it.geosolutions.geostore.core.dao.UserDAO;
-import it.geosolutions.geostore.core.dao.UserGroupAttributeDAO;
-import it.geosolutions.geostore.core.dao.UserGroupDAO;
-import it.geosolutions.geostore.core.model.Resource;
-import it.geosolutions.geostore.core.model.SecurityRule;
-import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.core.model.UserGroup;
-import it.geosolutions.geostore.core.model.UserGroupAttribute;
+import it.geosolutions.geostore.core.dao.*;
+import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/** @author DamianoG */
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @author DamianoG
+ */
 public class UserGroupServiceImpl implements UserGroupService {
 
     private static final Logger LOGGER = LogManager.getLogger(UserGroupServiceImpl.class);
@@ -62,22 +53,30 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     private UserGroupAttributeDAO userGroupAttributeDAO;
 
-    /** @param userGroupDAO the userGroupDAO to set */
+    /**
+     * @param userGroupDAO the userGroupDAO to set
+     */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }
 
-    /** @param userDAO the userDAO to set */
+    /**
+     * @param userDAO the userDAO to set
+     */
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
-    /** @param resourceDAO the resourceDAO to set */
+    /**
+     * @param resourceDAO the resourceDAO to set
+     */
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
-    /** @param securityDAO the securityDAO to set */
+    /**
+     * @param securityDAO the securityDAO to set
+     */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }
@@ -111,7 +110,7 @@ public class UserGroupServiceImpl implements UserGroupService {
 
         userGroupDAO.persist(userGroup);
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("UserGroup '" + userGroup.getGroupName() + "' persisted!");
+            LOGGER.debug("UserGroup '{}' persisted!", userGroup.getGroupName());
         }
 
         List<UserGroupAttribute> attributes = userGroup.getAttributes();
@@ -132,7 +131,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
         UserGroup group = userGroupDAO.find(id);
         if (group == null) {
-            LOGGER.error("Can't find usergroup with id '" + id + "'");
+            LOGGER.error("Can't find usergroup with id '{}'", id);
             throw new NotFoundServiceEx("Can't find usergroup with id '" + id + "'");
         }
         if (!GroupReservedNames.isAllowedName(group.getGroupName())) {
@@ -195,7 +194,7 @@ public class UserGroupServiceImpl implements UserGroupService {
                     "You can't remove the group EVERYONE or any other reserved groups from the users group list...");
         }
         User targetUser = userDAO.find(userId);
-        if (groupToAssign == null || targetUser == null) {
+        if (targetUser == null) {
             throw new NotFoundServiceEx("The userGroup or the user you provide doesn't exist");
         }
 
@@ -283,11 +282,9 @@ public class UserGroupServiceImpl implements UserGroupService {
         if (group.getGroupName().equals(GroupReservedNames.EVERYONE.groupName())) {
             if (!canRead || canWrite) {
                 LOGGER.error(
-                        "You are trying to assign to a resource the following permissions for the group EVERYONE: [canRead='"
-                                + canRead
-                                + "',canWrite'"
-                                + canWrite
-                                + "'] but...");
+                        "You are trying to assign to a resource the following permissions for the group EVERYONE: [canRead='{}',canWrite'{}'] but...",
+                        canRead,
+                        canWrite);
                 LOGGER.error(
                         "...the group EVERYONE can be set only in this way: [canRead='true',canWrite='false'] .");
                 throw new BadRequestServiceEx(
@@ -361,7 +358,7 @@ public class UserGroupServiceImpl implements UserGroupService {
         ug.setGroupName(GroupReservedNames.EVERYONE.groupName());
         userGroupDAO.persist(ug);
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' persisted!");
+            LOGGER.debug("Special UserGroup '{}' persisted!", ug.getGroupName());
         }
         return true;
     }
@@ -378,7 +375,7 @@ public class UserGroupServiceImpl implements UserGroupService {
             UserGroup ug = ugEveryone.get(0);
             boolean res = userGroupDAO.removeById(ug.getId());
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Special UserGroup '" + ug.getGroupName() + "' removed!");
+                LOGGER.debug("Special UserGroup '{}' removed!", ug.getGroupName());
             }
             return res;
         }
@@ -486,8 +483,8 @@ public class UserGroupServiceImpl implements UserGroupService {
         searchCriteria.addFetch("userGroup");
         List<UserGroupAttribute> attributes = userGroupAttributeDAO.search(searchCriteria);
         return attributes.stream()
-                .map(a -> a.getUserGroup())
-                .filter(u -> u != null)
+                .map(UserGroupAttribute::getUserGroup)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
     }
 
