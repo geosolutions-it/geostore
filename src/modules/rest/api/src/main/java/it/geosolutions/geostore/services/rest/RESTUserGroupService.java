@@ -24,18 +24,15 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
-import org.springframework.security.access.annotation.Secured;
-
+import java.util.List;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.SecurityContext;
-import java.util.List;
+import org.apache.cxf.jaxrs.ext.multipart.Multipart;
+import org.springframework.security.access.annotation.Secured;
 
-/**
- * @author DamianoG
- */
+/** @author DamianoG */
 public interface RESTUserGroupService {
 
     @POST
@@ -92,12 +89,12 @@ public interface RESTUserGroupService {
     /**
      * Returns groups that match searching criteria with pagination.
      *
-     * @param sc           the security context
-     * @param page         the requested page number
-     * @param entries      max entries for page
-     * @param nameLike     a sub-string to search in group name with ILIKE operator
-     * @param all          if <code>true</code> adds to result the 'everyone' group if it matches the
-     *                     searching criteria
+     * @param sc the security context
+     * @param page the requested page number
+     * @param entries max entries for page
+     * @param nameLike a sub-string to search in group name with ILIKE operator
+     * @param all if <code>true</code> adds to result the 'everyone' group if it matches the
+     *     searching criteria
      * @param includeUsers if to include group users in the results
      * @return a list of groups that match searching criteria with pagination.
      * @throws BadRequestWebEx Exception
