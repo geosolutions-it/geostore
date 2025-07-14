@@ -18,5 +18,6 @@
     <mapping class="it.geosolutions.geostore.core.model.UserGroup"/>
     <mapping class="it.geosolutions.geostore.core.model.UserGroupAttribute"/>
     <mapping class="it.geosolutions.geostore.core.model.Tag"/>
+    <mapping class="it.geosolutions.geostore.core.model.IPRange"/>
   </session-factory>
 </hibernate-configuration>
