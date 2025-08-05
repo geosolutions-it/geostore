@@ -693,7 +693,7 @@ public class ResourceServiceImpl implements ResourceService {
             searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", userId));
         }
 
-        searchCriteria.addFetch("security");
+        searchCriteria.addFetches("security", "security.ipRanges");
         searchCriteria.setDistinct(true);
 
         securityDAO.addAdvertisedSecurityConstraints(searchCriteria, parameters.getAuthUser());

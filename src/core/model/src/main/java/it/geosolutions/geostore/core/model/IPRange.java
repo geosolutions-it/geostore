@@ -17,10 +17,7 @@ public class IPRange implements Serializable {
     @Column(nullable = false, length = 50, unique = true)
     private String cidr;
 
-    @Column(nullable = true, length = 255)
-    private String description;
-
-    // Getters and setters...
+    @Column private String description;
 
     public Long getId() {
         return id;
@@ -45,7 +42,6 @@ public class IPRange implements Serializable {
     public void setDescription(String description) {
         this.description = description;
     }
-    // equals/hashCode/toString...
 
     @Override
     public boolean equals(Object o) {

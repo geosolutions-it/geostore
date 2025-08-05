@@ -28,9 +28,23 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Index;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -229,14 +243,14 @@ public class SecurityRule implements Serializable {
                 @Index(name = "idx_security_ip_range_ip_range_id", columnList = "ip_range_id")
             },
             uniqueConstraints = {@UniqueConstraint(columnNames = {"security_id", "ip_range_id"})})
-    private List<IPRange> ipRanges = new ArrayList<>();
+    private Set<IPRange> ipRanges = new HashSet<>();
 
     @XmlTransient
-    public List<IPRange> getIpRanges() {
+    public Set<IPRange> getIpRanges() {
         return ipRanges;
     }
 
-    public void setIpRanges(List<IPRange> ipRanges) {
+    public void setIpRanges(Set<IPRange> ipRanges) {
         this.ipRanges = ipRanges;
     }
 
