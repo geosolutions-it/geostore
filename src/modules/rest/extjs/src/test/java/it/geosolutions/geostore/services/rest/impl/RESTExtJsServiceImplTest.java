@@ -17,6 +17,7 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -447,7 +448,9 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         createCategory(CAT0_NAME);
 
         restCreateResource(RES_ATTRIBUTE_A, RES_ATTRIBUTE_A, CAT0_NAME, u0, true);
+        sleep(10);
         restCreateResource(RES_ATTRIBUTE_B, RES_ATTRIBUTE_B, CAT0_NAME, u0, true);
+        sleep(10);
         restCreateResource(RES_ATTRIBUTE_C, RES_ATTRIBUTE_C, CAT0_NAME, u0, true);
 
         {
@@ -1041,12 +1044,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         createCategory(CAT0_NAME);
 
         long resourceAId = restCreateResource("name_A", "", CAT0_NAME, u0, true);
+        sleep(1000);
         long resourceBId = restCreateResource("name_B", "", CAT0_NAME, u0, true);
 
         Resource resourceA = resourceService.get(resourceAId);
-
         Resource resourceB = resourceService.get(resourceBId);
-        Thread.sleep(1000);
         resourceB.setDescription("posticipated");
         resourceService.update(resourceB);
 
