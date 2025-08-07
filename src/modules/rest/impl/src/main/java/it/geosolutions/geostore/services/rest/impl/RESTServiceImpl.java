@@ -42,6 +42,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +51,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * Class RESTServiceImpl.
@@ -126,17 +129,38 @@ public abstract class RESTServiceImpl {
             //            }
             if (usrToken.getPrincipal() instanceof User) {
                 User user = (User) usrToken.getPrincipal();
+                user.setIpAddress(extractClientIp());
 
                 LOGGER.info(
-                        "Accessing service with user {} and role {}",
+                        "Accessing service with user '{}', role '{}', and IP '{}'",
                         user.getName(),
-                        user.getRole());
+                        user.getRole(),
+                        user.getIpAddress());
 
                 return user;
             }
             logMismatchedPrincipal();
             throw new InternalErrorWebEx("Mismatching auth principal (not a GeoStore User)");
         }
+    }
+
+    public String extractClientIp() {
+        HttpServletRequest request =
+                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                        .getRequest();
+        return extractClientIpFromRequest(request);
+    }
+
+    private String extractClientIpFromRequest(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0];
+        }
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 
     private static void logMismatchedPrincipal() {
@@ -164,9 +188,10 @@ public abstract class RESTServiceImpl {
      * This operation is responsible for check if a resource is accessible to a user to perform READ
      * operations. This operation checks both user and user's group permissions on the resource.
      *
-     * @param user
-     * @param resourceId
-     * @return boolean
+     * @param user the user to check access for
+     * @param resourceId the resource to check access on
+     * @return <code>true</code> if the user has read access on the resource, <code>false</code>
+     *     otherwise
      */
     public boolean resourceAccessRead(User user, long resourceId) {
         Resource resource = resourceService.getResource(resourceId, false, true, false);

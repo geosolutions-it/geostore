@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018 GeoSolutions S.A.S.
+ *  Copyright (C) 2018 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,17 +19,31 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
+import it.geosolutions.geostore.core.model.Attribute;
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.ResourcePermissionService;
+import it.geosolutions.geostore.services.ResourcePermissionServiceImpl;
+import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserService;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
+import it.geosolutions.geostore.services.dto.ShortAttribute;
+import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
+import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.impl.RESTServiceImpl;
 import java.security.Principal;
@@ -51,10 +65,12 @@ public class RESTServiceImplTest {
     TESTRESTServiceImpl restService;
     TestSecurityService securityService;
     TestUserService userService;
+    TestResourceService testResourceService;
+    ResourcePermissionService resourcePermissionService;
+
     User user;
     UserGroup group;
     UserGroup everyone;
-    UserGroup extGroup;
 
     private SecurityRule createSecurityRule(
             long id, User user, UserGroup group, boolean canRead, boolean canWrite) {
@@ -70,11 +86,15 @@ public class RESTServiceImplTest {
     @Before
     public void setUp() {
         // set up services
-        restService = new TESTRESTServiceImpl();
         securityService = new TestSecurityService();
+        restService = new TESTRESTServiceImpl();
         userService = new TestUserService();
+        testResourceService = new TestResourceService();
+        resourcePermissionService = new ResourcePermissionServiceImpl();
         restService.setSecurityService(securityService);
         restService.setUserService(userService);
+        restService.setResourceService(testResourceService);
+        restService.setResourcePermissionService(resourcePermissionService);
 
         // set up users and groups
         user = new User();
@@ -97,25 +117,22 @@ public class RESTServiceImplTest {
     @Test
     public void testRulesReadWrite() {
 
-        // set up rules for group write access
-        List<SecurityRule> groupSecurityRules = new ArrayList<SecurityRule>();
-        groupSecurityRules.add(createSecurityRule(1, null, group, true, true));
+        Resource resource = new Resource();
+        resource.setId(1L);
+        testResourceService.resources = List.of(resource);
 
-        List<SecurityRule> userSecurityRules = new ArrayList<SecurityRule>();
-        userSecurityRules.add(createSecurityRule(1, user, null, true, false));
-        securityService.setGroupSecurityRules(groupSecurityRules);
-        securityService.setUserSecurityRules(userSecurityRules);
+        SecurityRule groupSecurityReadWriteRule = createSecurityRule(1, null, group, true, true);
+        SecurityRule userSecurityReadRule = createSecurityRule(1, user, null, true, false);
+
+        resource.setSecurity(List.of(groupSecurityReadWriteRule, userSecurityReadRule));
 
         assertTrue(restService.resourceAccessRead(user, 1));
         assertTrue(restService.resourceAccessWrite(user, 1));
 
-        groupSecurityRules = new ArrayList<SecurityRule>();
-        groupSecurityRules.add(createSecurityRule(1, null, group, true, false));
+        SecurityRule groupSecurityReadRule = createSecurityRule(1, null, group, true, false);
+        SecurityRule userSecurityReadWriteRule = createSecurityRule(1, user, null, true, true);
 
-        userSecurityRules = new ArrayList<SecurityRule>();
-        userSecurityRules.add(createSecurityRule(1, user, null, true, true));
-        securityService.setGroupSecurityRules(groupSecurityRules);
-        securityService.setUserSecurityRules(userSecurityRules);
+        resource.setSecurity(List.of(groupSecurityReadRule, userSecurityReadWriteRule));
 
         assertTrue(restService.resourceAccessRead(user, 1));
         assertTrue(restService.resourceAccessWrite(user, 1));
@@ -123,14 +140,14 @@ public class RESTServiceImplTest {
 
     @Test
     public void testRulesReadOnly() {
-        // set up rules
-        List<SecurityRule> groupSecurityRules = new ArrayList<SecurityRule>();
-        groupSecurityRules.add(createSecurityRule(1, null, group, true, false));
+        SecurityRule groupSecurityRule = createSecurityRule(1, null, group, true, false);
+        SecurityRule userSecurityRule = createSecurityRule(1, user, null, true, false);
 
-        List<SecurityRule> userSecurityRules = new ArrayList<SecurityRule>();
-        userSecurityRules.add(createSecurityRule(1, user, null, true, false));
-        securityService.setGroupSecurityRules(groupSecurityRules);
-        securityService.setUserSecurityRules(userSecurityRules);
+        Resource resource = new Resource();
+        resource.setId(1L);
+        resource.setSecurity(List.of(groupSecurityRule, userSecurityRule));
+
+        testResourceService.resources = List.of(resource);
 
         assertTrue(restService.resourceAccessRead(user, 1));
         assertFalse(restService.resourceAccessWrite(user, 1));
@@ -138,14 +155,14 @@ public class RESTServiceImplTest {
 
     @Test
     public void testRulesAccessDenied() {
-        // set up rules
-        List<SecurityRule> groupSecurityRules = new ArrayList<SecurityRule>();
-        groupSecurityRules.add(createSecurityRule(1, null, group, false, false));
+        SecurityRule groupSecurityRule = createSecurityRule(1, null, group, false, false);
+        SecurityRule userSecurityRule = createSecurityRule(1, user, null, false, false);
 
-        List<SecurityRule> userSecurityRules = new ArrayList<SecurityRule>();
-        userSecurityRules.add(createSecurityRule(1, user, null, false, false));
-        securityService.setGroupSecurityRules(groupSecurityRules);
-        securityService.setUserSecurityRules(userSecurityRules);
+        Resource resource = new Resource();
+        resource.setId(1L);
+        resource.setSecurity(List.of(groupSecurityRule, userSecurityRule));
+
+        testResourceService.resources = List.of(resource);
 
         assertFalse(restService.resourceAccessRead(user, 1));
         assertFalse(restService.resourceAccessWrite(user, 1));
@@ -153,16 +170,15 @@ public class RESTServiceImplTest {
 
     @Test
     public void testIgnoreNotValidUserRules() {
-        // set up rules
-        List<SecurityRule> groupSecurityRules = new ArrayList<SecurityRule>();
-        groupSecurityRules.add(createSecurityRule(1, null, group, false, false));
+        SecurityRule groupSecurityRule = createSecurityRule(1, null, group, false, false);
+        SecurityRule invalidSecurityRule = createSecurityRule(1, null, group, true, false);
+        SecurityRule userSecurityRule = createSecurityRule(1, user, null, true, true);
 
-        List<SecurityRule> userSecurityRules = new ArrayList<SecurityRule>();
-        userSecurityRules.add(
-                createSecurityRule(1, null, group, true, false)); // this should be skipped
-        userSecurityRules.add(createSecurityRule(1, user, null, true, true));
-        securityService.setGroupSecurityRules(groupSecurityRules);
-        securityService.setUserSecurityRules(userSecurityRules);
+        Resource resource = new Resource();
+        resource.setId(1L);
+        resource.setSecurity(List.of(groupSecurityRule, invalidSecurityRule, userSecurityRule));
+
+        testResourceService.resources = List.of(resource);
 
         assertTrue(restService.resourceAccessRead(user, 1));
         assertTrue(restService.resourceAccessWrite(user, 1));
@@ -182,7 +198,7 @@ public class RESTServiceImplTest {
                 user.getGroups().iterator().next().getGroupName());
     }
 
-    private class TestUserService implements UserService {
+    private static class TestUserService implements UserService {
 
         @Override
         public long insert(User user) throws BadRequestServiceEx, NotFoundServiceEx {
@@ -259,7 +275,7 @@ public class RESTServiceImplTest {
         }
     }
 
-    private class TestSecurityService implements SecurityService {
+    private static class TestSecurityService implements SecurityService {
         private List<SecurityRule> userSecurityRules = null;
         private List<SecurityRule> groupSecurityRules = null;
 
@@ -282,13 +298,155 @@ public class RESTServiceImplTest {
         }
     }
 
-    private class TESTRESTServiceImpl extends RESTServiceImpl {
-        private SecurityService securityService = null;
+    private static class TestResourceService implements ResourceService {
+
+        List<Resource> resources = new ArrayList<>();
 
         @Override
-        protected SecurityService getSecurityService() {
-            return securityService;
+        public long insert(Resource resource)
+                throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx {
+            return 0;
         }
+
+        @Override
+        public long update(Resource resource)
+                throws NotFoundServiceEx, DuplicatedResourceNameServiceEx {
+            return 0;
+        }
+
+        @Override
+        public boolean delete(long id) {
+            return false;
+        }
+
+        @Override
+        public void deleteResources(SearchFilter filter)
+                throws BadRequestServiceEx, InternalErrorServiceEx {}
+
+        @Override
+        public Resource get(long id) {
+            return null;
+        }
+
+        @Override
+        public Resource getResource(
+                long id,
+                boolean includeAttributes,
+                boolean includePermissions,
+                boolean includeTags) {
+            return this.resources.stream()
+                    .filter(r -> r.getId().equals(id))
+                    .findFirst()
+                    .orElseThrow();
+        }
+
+        @Override
+        public List<ShortResource> getList(ResourceSearchParameters resourceSearchParameters)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return List.of();
+        }
+
+        @Override
+        public List<ShortResource> getAll(ResourceSearchParameters resourceSearchParameters)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return List.of();
+        }
+
+        @Override
+        public long getCount(String nameLike) {
+            return 0;
+        }
+
+        @Override
+        public long getCountByFilter(SearchFilter filter)
+                throws InternalErrorServiceEx, BadRequestServiceEx {
+            return 0;
+        }
+
+        @Override
+        public void updateAttributes(long id, List<Attribute> attributes)
+                throws NotFoundServiceEx {}
+
+        @Override
+        public List<ShortAttribute> getAttributes(long id) {
+            return List.of();
+        }
+
+        @Override
+        public ShortAttribute getAttribute(long id, String name) {
+            return null;
+        }
+
+        @Override
+        public long updateAttribute(long id, String name, String value)
+                throws InternalErrorServiceEx {
+            return 0;
+        }
+
+        @Override
+        public List<Resource> getResources(ResourceSearchParameters resourceSearchParameters)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return List.of();
+        }
+
+        @Override
+        public List<ShortResource> getShortResources(
+                ResourceSearchParameters resourceSearchParameters)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return List.of();
+        }
+
+        @Override
+        public List<Resource> getResourcesFull(ResourceSearchParameters resourceSearchParameters)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return List.of();
+        }
+
+        @Override
+        public List<SecurityRule> getSecurityRules(long id) {
+            return List.of();
+        }
+
+        @Override
+        public void updateSecurityRules(long id, List<SecurityRule> rules)
+                throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx {}
+
+        @Override
+        public long count(SearchFilter filter, User user)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return 0;
+        }
+
+        @Override
+        public long count(SearchFilter filter, User user, boolean favoritesOnly)
+                throws BadRequestServiceEx, InternalErrorServiceEx {
+            return 0;
+        }
+
+        @Override
+        public long count(String nameLike, User user) throws BadRequestServiceEx {
+            return 0;
+        }
+
+        @Override
+        public long insertAttribute(long id, String name, String value, DataType type)
+                throws InternalErrorServiceEx {
+            return 0;
+        }
+
+        @Override
+        public List<SecurityRule> getUserSecurityRule(String userName, long entityId) {
+            return List.of();
+        }
+
+        @Override
+        public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long entityId) {
+            return List.of();
+        }
+    }
+
+    private static class TESTRESTServiceImpl extends RESTServiceImpl {
+        private SecurityService securityService = null;
 
         public void setSecurityService(SecurityService s) {
             securityService = s;

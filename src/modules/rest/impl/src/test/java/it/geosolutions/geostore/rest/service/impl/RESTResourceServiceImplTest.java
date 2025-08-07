@@ -40,8 +40,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.ws.rs.core.SecurityContext;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.web.context.request.RequestContextHolder;
 
 /**
  * Class ResourceServiceImplTest.
@@ -58,6 +60,12 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         restService = new RESTResourceServiceImpl();
         restService.setResourceService(resourceService);
         restService.setResourcePermissionService(resourcePermissionService);
+        mockHttpRequestIpAddressAttribute("localhost");
+    }
+
+    @After
+    public void cleanup() {
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test

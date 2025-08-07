@@ -56,10 +56,6 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.dao.DataIntegrityViolationException;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -70,6 +66,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Class ResourceServiceImpl.
@@ -192,7 +191,7 @@ public class ResourceServiceImpl implements ResourceService {
         if (rules != null) {
             for (SecurityRule securityRule : rules) {
                 if ((securityRule.getUser() != null || securityRule.getUsername() != null)
-                    && securityRule.isCanWrite()) {
+                        && securityRule.isCanWrite()) {
                     final String owner =
                             securityRule.getUser() != null
                                     ? securityRule.getUser().getName()
@@ -321,7 +320,7 @@ public class ResourceServiceImpl implements ResourceService {
             throws DuplicatedResourceNameServiceEx {
         Resource existentResource = resourceDAO.findByName(resource.getName());
         if (existentResource != null
-            && !(isUpdate && existentResource.getId().equals(resource.getId()))) {
+                && !(isUpdate && existentResource.getId().equals(resource.getId()))) {
             String validResourceName = suggestValidResourceName(resource.getName());
 
             throw new DuplicatedResourceNameServiceEx(validResourceName);
@@ -679,7 +678,7 @@ public class ResourceServiceImpl implements ResourceService {
             throws BadRequestServiceEx, InternalErrorServiceEx {
 
         if (((parameters.getPage() != null) && (parameters.getEntries() == null))
-            || ((parameters.getPage() == null) && (parameters.getEntries() != null))) {
+                || ((parameters.getPage() == null) && (parameters.getEntries() != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
         }
 
@@ -827,9 +826,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     private Set<IPRange> calculateRuleUpdatedIPRanges(SecurityRule rule) {
-        return rule.getIpRanges().stream()
-                .map(this::fetchIPRange)
-                .collect(Collectors.toSet());
+        return rule.getIpRanges().stream().map(this::fetchIPRange).collect(Collectors.toSet());
     }
 
     private IPRange fetchIPRange(IPRange ipRange) {

@@ -8,12 +8,11 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
@@ -22,37 +21,37 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
                     (user.getId().equals(rule.getUser().getId())
-                     || user.getName() != null && user.getName().equals(rule.getUsername()));
+                            || user.getName() != null && user.getName().equals(rule.getUsername()));
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
             (rule, group) ->
                     (group.getId().equals(rule.getGroup().getId())
-                     || group.getGroupName() != null
-                        && group.getGroupName().equals(rule.getGroupname()));
+                            || group.getGroupName() != null
+                                    && group.getGroupName().equals(rule.getGroupname()));
 
     private final BiPredicate<SecurityRule, User> resourceUserAccessWithReadPermission =
             (rule, user) ->
                     rule.getUser() != null
-                    && resourceUserOwnership.test(rule, user)
-                    && rule.isCanRead();
+                            && resourceUserOwnership.test(rule, user)
+                            && rule.isCanRead();
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnershipWithReadPermission =
             (rule, group) ->
                     rule.getGroup() != null
-                    && resourceGroupOwnership.test(rule, group)
-                    && rule.isCanRead();
+                            && resourceGroupOwnership.test(rule, group)
+                            && rule.isCanRead();
 
     private final BiPredicate<SecurityRule, User> resourceUserAccessWithWritePermission =
             (rule, user) ->
                     rule.getUser() != null
-                    && resourceUserOwnership.test(rule, user)
-                    && rule.isCanWrite();
+                            && resourceUserOwnership.test(rule, user)
+                            && rule.isCanWrite();
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnershipWithWritePermission =
             (rule, group) ->
                     rule.getGroup() != null
-                    && resourceGroupOwnership.test(rule, group)
-                    && rule.isCanWrite();
+                            && resourceGroupOwnership.test(rule, group)
+                            && rule.isCanWrite();
 
     @Override
     public boolean canResourceBeReadByUser(Resource resource, User user) {
@@ -61,7 +60,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
         }
         checkResourceSecurityRules(resource);
         return canUserAccessWithReadPermission(user, resource)
-               || haveUserGroupsOwnershipWithReadPermission(user, resource);
+                || haveUserGroupsOwnershipWithReadPermission(user, resource);
     }
 
     private boolean canUserAccessWithReadPermission(User user, Resource resource) {
@@ -81,7 +80,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
         }
         checkResourceSecurityRules(resource);
         return canUserAccessWithWritePermission(user, resource)
-               || haveUserGroupsOwnershipWithWritePermission(user, resource);
+                || haveUserGroupsOwnershipWithWritePermission(user, resource);
     }
 
     private void checkResourceSecurityRules(Resource resource) {
@@ -135,7 +134,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
         boolean userAllowed =
                 ipRanges.stream()
                         .peek(System.out::println)
-                        .anyMatch(ipRange -> isUserIpInRange(user, ipRange));
+                        .anyMatch(ipRange -> isUserIpInRange(user.getIpAddress(), ipRange));
 
         if (!userAllowed) {
             LOGGER.debug("User not allowed to access resource due to IP address restriction");
@@ -144,10 +143,16 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
         return userAllowed;
     }
 
-    private boolean isUserIpInRange(User user, IPRange ipRange) {
+    private boolean isUserIpInRange(String userIpAddress, IPRange ipRange) {
         try {
+            if (userIpAddress == null || userIpAddress.isBlank()) {
+                throw new IllegalStateException(
+                        "Missing IP address for the requesting user. Cannot proceed.");
+            }
+
+            IPAddress userIPAddress = new IPAddressString(userIpAddress).getAddress();
             IPAddress cidr = new IPAddressString(ipRange.getCidr()).getAddress().toPrefixBlock();
-            IPAddress userIPAddress = new IPAddressString(user.getIpAddress()).getAddress();
+
             return cidr.contains(userIPAddress);
         } catch (Exception e) {
             throw new RuntimeException(
