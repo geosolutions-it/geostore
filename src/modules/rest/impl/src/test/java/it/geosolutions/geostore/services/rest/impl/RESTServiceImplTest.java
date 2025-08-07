@@ -19,10 +19,6 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -36,6 +32,7 @@ import it.geosolutions.geostore.services.ResourcePermissionService;
 import it.geosolutions.geostore.services.ResourcePermissionServiceImpl;
 import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.SecurityService;
+import it.geosolutions.geostore.services.ServiceTestBase;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -45,7 +42,6 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,7 +57,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
  *
  * @author Lorenzo Natali, GeoSolutions S.a.s.
  */
-public class RESTServiceImplTest {
+public class RESTServiceImplTest extends ServiceTestBase {
     TESTRESTServiceImpl restService;
     TestSecurityService securityService;
     TestUserService userService;
@@ -196,6 +192,69 @@ public class RESTServiceImplTest {
         assertEquals(
                 GroupReservedNames.EVERYONE.groupName(),
                 user.getGroups().iterator().next().getGroupName());
+    }
+
+    public void testExtractUserIp() {
+
+        String remoteIP = "4.88.132.112";
+
+        mockHttpRequestIpAddressAttribute(remoteIP, List.of(), "");
+
+        String ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals(remoteIP, ipAddress);
+    }
+
+    public void testExtractUserIpWhenForwarded() {
+
+        String forwardedIP = "12.12.12.12";
+
+        mockHttpRequestIpAddressAttribute("localhost", List.of(forwardedIP), "");
+
+        String ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals(forwardedIP, ipAddress);
+    }
+
+    public void testExtractUserIpWhenForwardedMultipleTimes() {
+
+        String forwardedIPA = "152.221.232.124";
+        String forwardedIPB = "54.36.51.65";
+
+        mockHttpRequestIpAddressAttribute("localhost", List.of(forwardedIPA, forwardedIPB), "");
+
+        String ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals(forwardedIPA, ipAddress);
+    }
+
+    public void testExtractUserIpWhenForwardedWithRealIP() {
+
+        String realIP = "112.112.112.1";
+
+        mockHttpRequestIpAddressAttribute("localhost", List.of(), realIP);
+
+        String ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals(realIP, ipAddress);
+    }
+
+    public void testExtractUserIpPrecedence() {
+
+        String ipA = "76.41.15.54";
+        String ipB = "12.6.0.3";
+        String ipC = "1922.12.45.5";
+
+        mockHttpRequestIpAddressAttribute(ipA, List.of(ipB), ipC);
+
+        String ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals(ipB, ipAddress);
     }
 
     private static class TestUserService implements UserService {

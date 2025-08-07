@@ -37,13 +37,16 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import java.security.Principal;
 import java.util.List;
 import java.util.Set;
+import javax.ws.rs.core.SecurityContext;
 import junit.framework.TestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -446,19 +449,26 @@ public class ServiceTestBase extends TestCase {
         return user;
     }
 
-    protected void mockHttpRequestIpAddressAttribute(String remoteAddress) {
-        mockHttpRequestIpAddressAttribute(remoteAddress, "");
+    protected void mockHttpRequestIpAddressAttribute() {
+        mockHttpRequestIpAddressAttribute("localhost", List.of(), "");
     }
 
     protected void mockHttpRequestIpAddressAttribute(
-            String remoteAddress, String xForwardedForHeaderAddress) {
+            String remoteAddress,
+            List<String> xForwardedForHeaderAddress,
+            String xRealIPHeaderAddress) {
 
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setRemoteAddr(remoteAddress);
 
-        if (xForwardedForHeaderAddress != null && !xForwardedForHeaderAddress.isBlank()) {
+        if (xForwardedForHeaderAddress != null) {
             request.addHeader("X-Forwarded-For", xForwardedForHeaderAddress);
         }
+
+        if (xRealIPHeaderAddress != null && !xRealIPHeaderAddress.isBlank()) {
+            request.addHeader("X-Real-IP", xRealIPHeaderAddress);
+        }
+
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 
@@ -492,6 +502,41 @@ public class ServiceTestBase extends TestCase {
 
         public SecurityRule build() {
             return rule;
+        }
+    }
+
+    protected static class SimpleSecurityContext implements SecurityContext {
+
+        private Principal userPrincipal;
+
+        public SimpleSecurityContext() {}
+
+        public SimpleSecurityContext(User user) {
+            userPrincipal = new UsernamePasswordAuthenticationToken(user, null);
+        }
+
+        @Override
+        public Principal getUserPrincipal() {
+            return userPrincipal;
+        }
+
+        public void setUserPrincipal(Principal userPrincipal) {
+            this.userPrincipal = userPrincipal;
+        }
+
+        @Override
+        public boolean isUserInRole(String role) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean isSecure() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getAuthenticationScheme() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

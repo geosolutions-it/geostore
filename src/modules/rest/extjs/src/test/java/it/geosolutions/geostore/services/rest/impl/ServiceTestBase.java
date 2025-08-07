@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2016 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -508,23 +508,17 @@ public class ServiceTestBase {
 
         @Override
         public boolean isUserInRole(String role) {
-            throw new UnsupportedOperationException(
-                    "Not supported yet."); // To change body of generated methods, choose Tools |
-            // Templates.
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
         public boolean isSecure() {
-            throw new UnsupportedOperationException(
-                    "Not supported yet."); // To change body of generated methods, choose Tools |
-            // Templates.
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
         public String getAuthenticationScheme() {
-            throw new UnsupportedOperationException(
-                    "Not supported yet."); // To change body of generated methods, choose Tools |
-            // Templates.
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

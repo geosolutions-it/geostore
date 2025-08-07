@@ -59,7 +59,7 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         restService = new RESTResourceServiceImpl();
         restService.setResourceService(resourceService);
         restService.setResourcePermissionService(resourcePermissionService);
-        mockHttpRequestIpAddressAttribute("localhost");
+        mockHttpRequestIpAddressAttribute();
     }
 
     @After

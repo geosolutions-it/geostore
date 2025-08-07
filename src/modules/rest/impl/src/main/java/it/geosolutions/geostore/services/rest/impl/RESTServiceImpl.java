@@ -107,26 +107,6 @@ public abstract class RESTServiceImpl {
 
             Authentication usrToken = (Authentication) principal;
 
-            // DamianoG 06/03/2014 Why create a new Instance when we can deal with the object taken
-            // from the DB? Being the instance taken from DB Transient we avoid problems saving
-            // security rules...
-            //            User user = new User();
-            //            user.setName(usrToken.getName());
-            //            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-            //                if (authority != null) {
-            //                    if (authority.getAuthority() != null
-            //                            && authority.getAuthority().contains("ADMIN"))
-            //                        user.setRole(Role.ADMIN);
-            //
-            //                    if (authority.getAuthority() != null
-            //                            && authority.getAuthority().contains("USER") &&
-            // user.getRole() == null)
-            //                        user.setRole(Role.USER);
-            //
-            //                    if (user.getRole() == null)
-            //                        user.setRole(Role.GUEST);
-            //                }
-            //            }
             if (usrToken.getPrincipal() instanceof User) {
                 User user = (User) usrToken.getPrincipal();
                 user.setIpAddress(extractClientIp());
@@ -145,10 +125,9 @@ public abstract class RESTServiceImpl {
     }
 
     public String extractClientIp() {
-        HttpServletRequest request =
+        return extractClientIpFromRequest(
                 ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                        .getRequest();
-        return extractClientIpFromRequest(request);
+                        .getRequest());
     }
 
     private String extractClientIpFromRequest(HttpServletRequest request) {
