@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -250,6 +250,8 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         searchCriteria.addFilter(securityFilter);
 
         searchCriteria.addFetch("ipRanges");
+
+        searchCriteria.setDistinct(true);
 
         return super.search(searchCriteria);
     }

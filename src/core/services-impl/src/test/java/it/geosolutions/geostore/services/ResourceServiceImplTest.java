@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
@@ -33,7 +34,15 @@ import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -154,6 +163,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
                                         .build())
                         .size());
     }
+
     /**
      * Tests if the results are sorted by name
      *
@@ -443,6 +453,91 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
         writtenRules = resourceService.getSecurityRules(resourceId);
         assertEquals(3, writtenRules.size());
+    }
+
+    @Test
+    public void testUpdateIpRangesInSecurityRules() throws Exception {
+
+        long resourceId = createResource("name1", "description1", "MAP");
+
+        assertTrue(resourceService.getSecurityRules(resourceId).isEmpty());
+
+        IPRange ipRangeA = new IPRange();
+        ipRangeA.setCidr("127.0.0.1/11");
+        ipRangeA.setDescription("rangeA");
+
+        IPRange ipRangeB = new IPRange();
+        ipRangeB.setCidr("192.168.1.1/24");
+        ipRangeB.setDescription("rangeB");
+
+        /* initialize security rules for resource */
+        SecurityRule ruleA = new SecurityRuleBuilder().ipRanges(Set.of(ipRangeA)).build();
+        SecurityRule ruleB = new SecurityRuleBuilder().ipRanges(Set.of()).build();
+
+        resourceService.updateSecurityRules(resourceId, List.of(ruleA, ruleB));
+
+        List<SecurityRule> initialSecurityRules = resourceService.getSecurityRules(resourceId);
+
+        /* check rule number */
+        assertEquals(2, initialSecurityRules.size());
+        /* check IP ranges number */
+        assertEquals(
+                1,
+                initialSecurityRules.stream()
+                        .map(SecurityRule::getIpRanges)
+                        .mapToLong(Set::size)
+                        .sum());
+
+        /* update security rules for resource */
+        SecurityRule ruleC =
+                new SecurityRuleBuilder()
+                        .canRead(true)
+                        .ipRanges(Set.of(ipRangeA, ipRangeB))
+                        .build();
+        SecurityRule ruleD =
+                new SecurityRuleBuilder().canRead(false).ipRanges(Set.of(ipRangeA)).build();
+
+        resourceService.updateSecurityRules(resourceId, List.of(ruleC, ruleD));
+
+        List<SecurityRule> finalSecurityRules = resourceService.getSecurityRules(resourceId);
+
+        /* check rule number after update */
+        assertEquals(2, finalSecurityRules.size());
+
+        /* check ruleC ranges */
+        assertTrue(
+                finalSecurityRules.stream()
+                        .filter(SecurityRule::isCanRead)
+                        .flatMap(rule -> rule.getIpRanges().stream())
+                        .map(IPRange::getDescription)
+                        .collect(Collectors.toList())
+                        .containsAll(List.of("rangeA", "rangeB")));
+
+        /* check ruleD ranges */
+        assertTrue(
+                finalSecurityRules.stream()
+                        .filter(Predicate.not(SecurityRule::isCanRead))
+                        .flatMap(rule -> rule.getIpRanges().stream())
+                        .map(IPRange::getDescription)
+                        .collect(Collectors.toList())
+                        .contains("rangeA"));
+    }
+
+    @Test
+    public void testUpdateSecurityRuleWithInvalidIpRange() throws Exception {
+
+        long resourceId = createResource("name1", "description1", "MAP");
+
+        IPRange invalidIPRange = new IPRange();
+        invalidIPRange.setCidr("666.555.444.333/0");
+        invalidIPRange.setDescription("invalid");
+
+        SecurityRule securityRule =
+                new SecurityRuleBuilder().ipRanges(Set.of(invalidIPRange)).build();
+
+        resourceService.updateSecurityRules(resourceId, List.of(securityRule));
+
+        resourceService.getSecurityRules(resourceId).forEach(System.err::println);
     }
 
     @Test

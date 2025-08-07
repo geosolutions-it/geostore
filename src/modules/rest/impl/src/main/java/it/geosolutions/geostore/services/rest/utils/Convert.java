@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,17 +19,30 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
-import it.geosolutions.geostore.core.model.*;
+import inet.ipaddr.AddressStringException;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
+import it.geosolutions.geostore.core.model.Attribute;
+import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.IPRange;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.StoredData;
+import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTIPRange;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.collections.CollectionUtils;
 
 /** @author ETj (etj at geo-solutions.it) */
@@ -120,9 +133,9 @@ public class Convert {
     public static List<SecurityRule> convertSecurityRuleList(
             List<RESTSecurityRule> list, Long resourceId) {
         if (list == null) {
-            list = new ArrayList<RESTSecurityRule>();
+            list = new ArrayList<>();
         }
-        List<SecurityRule> rules = new ArrayList<SecurityRule>(list.size());
+        List<SecurityRule> rules = new ArrayList<>(list.size());
         for (RESTSecurityRule rule : list) {
             SecurityRule securityRule = new SecurityRule();
             Resource resource = new Resource();
@@ -143,11 +156,57 @@ public class Convert {
                 securityRule.setGroup(group);
             }
 
+            if (rule.getIpRanges() != null) {
+                securityRule.setIpRanges(
+                        rule.getIpRanges().stream()
+                                .map(Convert::convertIPRange)
+                                .collect(Collectors.toSet()));
+            }
+
             securityRule.setCanRead(rule.isCanRead());
             securityRule.setCanWrite(rule.isCanWrite());
 
             rules.add(securityRule);
         }
         return rules;
+    }
+
+    private static IPRange convertIPRange(RESTIPRange restipRange) {
+        try {
+            String cidr = restipRange.getCidr();
+            System.out.println(cidr);
+
+            IPRange ipRange = new IPRange();
+            ipRange.setCidr(parseCidr(cidr));
+            ipRange.setDescription(restipRange.getDescription());
+            return ipRange;
+        } catch (NumberFormatException ex) {
+            throw new BadRequestWebEx("Error parsing IP range. Malformed IP address.");
+        } catch (Exception ex) {
+            throw new BadRequestWebEx("Error parsing IP range. " + ex.getMessage());
+        }
+    }
+
+    private static String parseCidr(String cidr) throws AddressStringException {
+
+        String[] parts = cidr.split("/");
+        if (parts.length != 2) {
+            throw new IllegalArgumentException("Invalid CIDR format");
+        }
+
+        String ip = parts[0].trim();
+        String prefix = parts[1].trim();
+
+        String sanitizedIp =
+                Arrays.stream(ip.split("\\."))
+                        .map(s -> String.valueOf(Integer.parseInt(s)))
+                        .collect(Collectors.joining("."));
+        String sanitizedCidr = sanitizedIp + "/" + prefix;
+
+        IPAddress parsedCidr = new IPAddressString(sanitizedCidr).toAddress();
+
+        System.err.println(parsedCidr);
+
+        return sanitizedCidr;
     }
 }

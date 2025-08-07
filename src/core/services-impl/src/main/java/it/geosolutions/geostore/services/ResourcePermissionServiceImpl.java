@@ -13,47 +13,45 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
     private static final Logger LOGGER = LogManager.getLogger(ResourcePermissionServiceImpl.class);
 
-    private final BiFunction<SecurityRule, User, Boolean> resourceUserOwnership =
+    private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
                     (user.getId().equals(rule.getUser().getId())
                      || user.getName() != null && user.getName().equals(rule.getUsername()));
 
-    private final BiFunction<SecurityRule, UserGroup, Boolean> resourceGroupOwnership =
+    private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
             (rule, group) ->
                     (group.getId().equals(rule.getGroup().getId())
                      || group.getGroupName() != null
                         && group.getGroupName().equals(rule.getGroupname()));
 
-    private final BiFunction<SecurityRule, User, Boolean> resourceUserAccessWithReadPermission =
+    private final BiPredicate<SecurityRule, User> resourceUserAccessWithReadPermission =
             (rule, user) ->
                     rule.getUser() != null
-                    && resourceUserOwnership.apply(rule, user)
+                    && resourceUserOwnership.test(rule, user)
                     && rule.isCanRead();
 
-    private final BiFunction<SecurityRule, UserGroup, Boolean>
-            resourceGroupOwnershipWithReadPermission =
+    private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnershipWithReadPermission =
             (rule, group) ->
                     rule.getGroup() != null
-                    && resourceGroupOwnership.apply(rule, group)
+                    && resourceGroupOwnership.test(rule, group)
                     && rule.isCanRead();
 
-    private final BiFunction<SecurityRule, User, Boolean> resourceUserAccessWithWritePermission =
+    private final BiPredicate<SecurityRule, User> resourceUserAccessWithWritePermission =
             (rule, user) ->
                     rule.getUser() != null
-                    && resourceUserOwnership.apply(rule, user)
+                    && resourceUserOwnership.test(rule, user)
                     && rule.isCanWrite();
 
-    private final BiFunction<SecurityRule, UserGroup, Boolean>
-            resourceGroupOwnershipWithWritePermission =
+    private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnershipWithWritePermission =
             (rule, group) ->
                     rule.getGroup() != null
-                    && resourceGroupOwnership.apply(rule, group)
+                    && resourceGroupOwnership.test(rule, group)
                     && rule.isCanWrite();
 
     @Override
@@ -99,9 +97,9 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     }
 
     private boolean checkSecurityRulesAgainstUser(
-            List<SecurityRule> rules, User user, BiFunction<SecurityRule, User, Boolean> check) {
+            List<SecurityRule> rules, User user, BiPredicate<SecurityRule, User> check) {
         return rules.stream()
-                .filter(rule -> check.apply(rule, user))
+                .filter(rule -> check.test(rule, user))
                 .anyMatch(rule -> isUserIPAllowed(user, rule.getIpRanges()));
     }
 
@@ -111,7 +109,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     }
 
     private boolean checkResourceSecurityRulesAgainstUserGroup(
-            User user, Resource resource, BiFunction<SecurityRule, UserGroup, Boolean> check) {
+            User user, Resource resource, BiPredicate<SecurityRule, UserGroup> check) {
         return user.getGroups().stream()
                 .anyMatch(
                         group ->
@@ -123,14 +121,13 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
             List<SecurityRule> rules,
             User user,
             UserGroup group,
-            BiFunction<SecurityRule, UserGroup, Boolean> check) {
+            BiPredicate<SecurityRule, UserGroup> check) {
         return rules.stream()
-                .filter(rule -> check.apply(rule, group))
+                .filter(rule -> check.test(rule, group))
                 .anyMatch(rule -> isUserIPAllowed(user, rule.getIpRanges()));
     }
 
     private boolean isUserIPAllowed(User user, Set<IPRange> ipRanges) {
-
         if (ipRanges == null || ipRanges.isEmpty()) {
             return true;
         }
@@ -150,13 +147,9 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     private boolean isUserIpInRange(User user, IPRange ipRange) {
         try {
             IPAddress cidr = new IPAddressString(ipRange.getCidr()).getAddress().toPrefixBlock();
-
             IPAddress userIPAddress = new IPAddressString(user.getIpAddress()).getAddress();
-            System.out.println(userIPAddress);
-
-            boolean contains = cidr.contains(userIPAddress);
-            return contains;
-        } catch (Throwable e) {
+            return cidr.contains(userIPAddress);
+        } catch (Exception e) {
             throw new RuntimeException(
                     "An error occurred while checking IP-based security constraints", e);
         }
