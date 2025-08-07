@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -31,7 +31,6 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.ResourceService;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
@@ -52,7 +51,6 @@ import it.geosolutions.geostore.services.rest.utils.Convert;
 import java.util.List;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -211,19 +209,12 @@ public class RESTBackupServiceImpl extends RESTServiceImpl implements RESTBackup
 
     // =========================================================================
 
+    @Override
     public void setResourceService(ResourceService resourceService) {
         this.resourceService = resourceService;
     }
 
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
-     */
-    @Override
-    protected SecurityService getSecurityService() {
-        throw new NotImplementedException("This method is not implemented yet...");
     }
 }

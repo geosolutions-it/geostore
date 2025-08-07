@@ -43,8 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -53,14 +51,6 @@ import org.junit.Test;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
 public class ResourceServiceImplTest extends ServiceTestBase {
-
-    @BeforeClass
-    public static void setUpClass() throws Exception {}
-
-    @AfterClass
-    public static void tearDownClass() throws Exception {}
-
-    public ResourceServiceImplTest() {}
 
     @Test
     public void testInsertDeleteResource() throws Exception {
@@ -381,13 +371,15 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
         assertEquals(2, writtenRules.size());
 
-        SecurityRule userRule = writtenRules.get(0);
+        SecurityRule userRule =
+                writtenRules.stream().filter(sr -> sr.getUser() != null).findFirst().orElseThrow();
         assertNotNull(userRule.getUser());
         assertNull(userRule.getGroup());
         assertEquals((Long) userId, userRule.getUser().getId());
         assertEquals((Long) resourceId, userRule.getResource().getId());
 
-        SecurityRule groupRule = writtenRules.get(1);
+        SecurityRule groupRule =
+                writtenRules.stream().filter(sr -> sr.getGroup() != null).findFirst().orElseThrow();
         assertNotNull(groupRule.getGroup());
         assertNull(groupRule.getUser());
         assertEquals((Long) groupId, groupRule.getGroup().getId());

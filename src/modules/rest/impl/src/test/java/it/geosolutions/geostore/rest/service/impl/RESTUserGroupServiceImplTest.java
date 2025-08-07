@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,7 +19,6 @@
  */
 package it.geosolutions.geostore.rest.service.impl;
 
-import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -43,7 +42,6 @@ import org.junit.Test;
 public class RESTUserGroupServiceImplTest extends ServiceTestBase {
 
     RESTUserGroupServiceImpl restService;
-    UserGroupDAO userGroupDAO;
 
     @Before
     public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {

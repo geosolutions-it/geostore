@@ -5,7 +5,7 @@
  *
  * ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -35,7 +35,6 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.CategoryService;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTCategoryService;
@@ -61,14 +60,6 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
     /** @param categoryService the categoryService to set */
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
-     */
-    @Override
-    protected SecurityService getSecurityService() {
-        return categoryService;
     }
 
     /*
