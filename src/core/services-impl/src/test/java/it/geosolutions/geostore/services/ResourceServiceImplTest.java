@@ -516,23 +516,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testUpdateSecurityRuleWithInvalidIpRange() throws Exception {
-
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("666.555.444.333/0");
-        invalidIPRange.setDescription("invalid");
-
-        SecurityRule securityRule =
-                new SecurityRuleBuilder().ipRanges(Set.of(invalidIPRange)).build();
-
-        resourceService.updateSecurityRules(resourceId, List.of(securityRule));
-
-        resourceService.getSecurityRules(resourceId).forEach(System.err::println);
-    }
-
-    @Test
     public void testInsertTooBigResource() throws Exception {
         final String ORIG_RES_NAME = "testRes";
         final String DESCRIPTION = "description";

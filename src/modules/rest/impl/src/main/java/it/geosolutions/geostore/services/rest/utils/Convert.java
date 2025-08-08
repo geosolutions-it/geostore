@@ -20,7 +20,6 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import inet.ipaddr.AddressStringException;
-import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
@@ -173,11 +172,8 @@ public class Convert {
 
     private static IPRange convertIPRange(RESTIPRange restipRange) {
         try {
-            String cidr = restipRange.getCidr();
-            System.out.println(cidr);
-
             IPRange ipRange = new IPRange();
-            ipRange.setCidr(parseCidr(cidr));
+            ipRange.setCidr(parseCidr(restipRange.getCidr()));
             ipRange.setDescription(restipRange.getDescription());
             return ipRange;
         } catch (NumberFormatException ex) {
@@ -203,10 +199,6 @@ public class Convert {
                         .collect(Collectors.joining("."));
         String sanitizedCidr = sanitizedIp + "/" + prefix;
 
-        IPAddress parsedCidr = new IPAddressString(sanitizedCidr).toAddress();
-
-        System.err.println(parsedCidr);
-
-        return sanitizedCidr;
+        return new IPAddressString(sanitizedCidr).toAddress().toString();
     }
 }
