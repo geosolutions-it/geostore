@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -21,7 +21,6 @@ package it.geosolutions.geostore.services.rest.impl;
 
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.StoredDataService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTStoredDataService;
@@ -80,14 +79,6 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     /** @param storedDataService */
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
-     */
-    @Override
-    protected SecurityService getSecurityService() {
-        return storedDataService;
     }
 
     /*

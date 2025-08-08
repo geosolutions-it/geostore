@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2016 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -66,7 +66,10 @@ import org.junit.rules.TestName;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * Class ServiceTestBase.
@@ -94,7 +97,6 @@ public class ServiceTestBase {
     protected final Logger LOGGER = LogManager.getLogger(getClass());
     @Rule public TestName testName = new TestName();
 
-    /** */
     public ServiceTestBase() {
 
         synchronized (ServiceTestBase.class) {
@@ -288,8 +290,7 @@ public class ServiceTestBase {
     }
 
     protected long restCreateResource(
-            String name, String description, String catName, long userId, boolean advertised)
-            throws Exception {
+            String name, String description, String catName, long userId, boolean advertised) {
         RESTResource resource = new RESTResource();
         resource.setName(name);
         resource.setDescription(description);
@@ -470,7 +471,23 @@ public class ServiceTestBase {
         return user;
     }
 
-    class SimpleSecurityContext implements SecurityContext {
+    protected void mockHttpRequestIpAddressAttribute(String remoteAddress) {
+        mockHttpRequestIpAddressAttribute(remoteAddress, "");
+    }
+
+    protected void mockHttpRequestIpAddressAttribute(
+            String remoteAddress, String xForwardedForHeaderAddress) {
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr(remoteAddress);
+
+        if (xForwardedForHeaderAddress != null && !xForwardedForHeaderAddress.isBlank()) {
+            request.addHeader("X-Forwarded-For", xForwardedForHeaderAddress);
+        }
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+    }
+
+    static class SimpleSecurityContext implements SecurityContext {
 
         private Principal userPrincipal;
 
@@ -491,23 +508,17 @@ public class ServiceTestBase {
 
         @Override
         public boolean isUserInRole(String role) {
-            throw new UnsupportedOperationException(
-                    "Not supported yet."); // To change body of generated methods, choose Tools |
-            // Templates.
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
         public boolean isSecure() {
-            throw new UnsupportedOperationException(
-                    "Not supported yet."); // To change body of generated methods, choose Tools |
-            // Templates.
+            throw new UnsupportedOperationException("Not supported yet.");
         }
 
         @Override
         public String getAuthenticationScheme() {
-            throw new UnsupportedOperationException(
-                    "Not supported yet."); // To change body of generated methods, choose Tools |
-            // Templates.
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

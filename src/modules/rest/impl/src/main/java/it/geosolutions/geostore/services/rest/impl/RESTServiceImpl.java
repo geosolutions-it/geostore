@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2012 - 2016 GeoSolutions S.A.S.
+ * Copyright (C) 2012 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -27,13 +27,14 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
-import it.geosolutions.geostore.services.SecurityService;
+import it.geosolutions.geostore.services.ResourcePermissionService;
+import it.geosolutions.geostore.services.ResourceService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
@@ -41,7 +42,7 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +51,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * Class RESTServiceImpl.
@@ -64,25 +67,19 @@ public abstract class RESTServiceImpl {
     private static final Logger LOGGER = LogManager.getLogger(RESTServiceImpl.class);
 
     @Autowired UserService userService;
-
-    /**
-     * Given a Group Set returns a List that contains all the group names
-     *
-     * @param groups
-     * @return
-     */
-    public static List<String> extractGroupNames(Set<UserGroup> groups) {
-        List<String> groupNames = new ArrayList<>(groups.size() + 1);
-        for (UserGroup ug : groups) {
-            groupNames.add(ug.getGroupName());
-        }
-        return groupNames;
-    }
-
-    protected abstract SecurityService getSecurityService();
+    @Autowired ResourceService resourceService;
+    @Autowired ResourcePermissionService resourcePermissionService;
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setResourceService(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
+    public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
+        this.resourcePermissionService = resourcePermissionService;
     }
 
     /**
@@ -110,39 +107,39 @@ public abstract class RESTServiceImpl {
 
             Authentication usrToken = (Authentication) principal;
 
-            // DamianoG 06/03/2014 Why create a new Instance when we can deal with the object taken
-            // from the DB? Being the instance taken from DB Transient we avoid problems saving
-            // security rules...
-            //            User user = new User();
-            //            user.setName(usrToken.getName());
-            //            for (GrantedAuthority authority : usrToken.getAuthorities()) {
-            //                if (authority != null) {
-            //                    if (authority.getAuthority() != null
-            //                            && authority.getAuthority().contains("ADMIN"))
-            //                        user.setRole(Role.ADMIN);
-            //
-            //                    if (authority.getAuthority() != null
-            //                            && authority.getAuthority().contains("USER") &&
-            // user.getRole() == null)
-            //                        user.setRole(Role.USER);
-            //
-            //                    if (user.getRole() == null)
-            //                        user.setRole(Role.GUEST);
-            //                }
-            //            }
             if (usrToken.getPrincipal() instanceof User) {
                 User user = (User) usrToken.getPrincipal();
+                user.setIpAddress(extractClientIp());
 
                 LOGGER.info(
-                        "Accessing service with user {} and role {}",
+                        "Accessing service with user '{}', role '{}', and IP '{}'",
                         user.getName(),
-                        user.getRole());
+                        user.getRole(),
+                        user.getIpAddress());
 
                 return user;
             }
             logMismatchedPrincipal();
             throw new InternalErrorWebEx("Mismatching auth principal (not a GeoStore User)");
         }
+    }
+
+    public String extractClientIp() {
+        return extractClientIpFromRequest(
+                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
+                        .getRequest());
+    }
+
+    private String extractClientIpFromRequest(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip.split(",")[0];
+        }
+        ip = request.getHeader("X-Real-IP");
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 
     private static void logMismatchedPrincipal() {
@@ -153,100 +150,31 @@ public abstract class RESTServiceImpl {
 
     /**
      * This operation is responsible for check if a resource is accessible to a user to perform
-     * WRITE operations (update/delete). This operation must check first if the user has the right
-     * permissions then, if not, check if its group is allowed.
+     * WRITE operations (update/delete). This operation checks both user and user's group
+     * permissions on the resource.
      *
-     * @param resourceId
-     * @return boolean
+     * @param user the user to check access for
+     * @param resourceId the resource to check access on
+     * @return <code>true</code> if the user has write access on the resource, <code>false</code>
+     *     otherwise
      */
-    public boolean resourceAccessWrite(User authUser, long resourceId) {
-        if (authUser.getRole().equals(Role.ADMIN)) {
-            return true;
-        }
-        //        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
-        //            return true;
-        //        }
-        else {
-            List<SecurityRule> userSecurityRules =
-                    getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
-
-            if (userSecurityRules != null && !userSecurityRules.isEmpty()) {
-                for (SecurityRule sr : userSecurityRules) {
-                    // The getUserSecurityRules returns all rules instead of user rules.
-                    // So the username check is necessary until a problem with DAO is solved
-                    if (sr.isCanWrite()
-                            && sr.getUser() != null
-                            && sr.getUser().getName().equals(authUser.getName())) {
-                        return true;
-                    }
-                }
-            }
-
-            List<String> groupNames = extractGroupNames(authUser.getGroups());
-            if (!groupNames.isEmpty()) {
-                List<SecurityRule> groupSecurityRules =
-                        getSecurityService().getGroupSecurityRule(groupNames, resourceId);
-
-                if (groupSecurityRules != null && !groupSecurityRules.isEmpty()) {
-                    // Check if at least one user group has write permission
-                    for (SecurityRule sr : groupSecurityRules) {
-                        if (sr.isCanWrite()) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+    public boolean resourceAccessWrite(User user, long resourceId) {
+        Resource resource = resourceService.getResource(resourceId, false, true, false);
+        return resourcePermissionService.canResourceBeWrittenByUser(resource, user);
     }
 
     /**
-     * This operation is responsible for check if a resource is accessible to an user to perform
-     * READ operations. This operation must check first if the user has the right permissions then,
-     * if not, check if its group is allowed.
+     * This operation is responsible for check if a resource is accessible to a user to perform READ
+     * operations. This operation checks both user and user's group permissions on the resource.
      *
-     * @param resourceId
-     * @return boolean
+     * @param user the user to check access for
+     * @param resourceId the resource to check access on
+     * @return <code>true</code> if the user has read access on the resource, <code>false</code>
+     *     otherwise
      */
-    public boolean resourceAccessRead(User authUser, long resourceId) {
-        if (authUser.getRole().equals(Role.ADMIN)) {
-            return true;
-        }
-        //        else if(belongTo(authUser, GroupReservedNames.ALLRESOURCES.toString())){
-        //            return true;
-        //        }
-        else {
-            List<SecurityRule> userSecurityRules =
-                    getSecurityService().getUserSecurityRule(authUser.getName(), resourceId);
-
-            if (userSecurityRules != null && !userSecurityRules.isEmpty()) {
-                // The getUserSecurityRules returns all rules instead of user rules.
-                // So the username check is necessary until a problem with DAO is solved
-                for (SecurityRule sr : userSecurityRules) {
-                    if (sr.isCanRead()
-                            && sr.getUser() != null
-                            && sr.getUser().getName().equals(authUser.getName())) {
-                        return true;
-                    }
-                }
-            }
-
-            List<String> groupNames = extractGroupNames(authUser.getGroups());
-            if (!groupNames.isEmpty()) {
-                List<SecurityRule> groupSecurityRules =
-                        getSecurityService().getGroupSecurityRule(groupNames, resourceId);
-
-                if (groupSecurityRules != null && !groupSecurityRules.isEmpty()) {
-                    // Check if at least one user group has read permission
-                    for (SecurityRule sr : groupSecurityRules) {
-                        if (sr.isCanRead()) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+    public boolean resourceAccessRead(User user, long resourceId) {
+        Resource resource = resourceService.getResource(resourceId, false, true, false);
+        return resourcePermissionService.canResourceBeReadByUser(resource, user);
     }
 
     /**

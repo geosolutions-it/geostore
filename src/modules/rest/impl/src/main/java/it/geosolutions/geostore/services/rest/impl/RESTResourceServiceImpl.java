@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -35,8 +35,6 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
-import it.geosolutions.geostore.services.ResourceService;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
 import it.geosolutions.geostore.services.dto.search.BaseField;
@@ -78,21 +76,6 @@ import org.apache.logging.log4j.Logger;
 public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTResourceService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTResourceServiceImpl.class);
-
-    private ResourceService resourceService;
-
-    /** @param resourceService */
-    public void setResourceService(ResourceService resourceService) {
-        this.resourceService = resourceService;
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
-     */
-    @Override
-    protected SecurityService getSecurityService() {
-        return resourceService;
-    }
 
     /*
      * (non-Javadoc)
@@ -439,11 +422,6 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.rest.RESTResourceService#insertAttribute(long, java.lang.String, java.lang.String,it.geosolutions.geostore.core.model.enums.DataType)
-     */
     @Override
     public long updateAttribute(
             SecurityContext sc, long id, String name, String value, DataType type)
@@ -567,22 +545,21 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     }
 
     @Override
-    public void updateSecurityRules(SecurityContext sc, long id, SecurityRuleList securityRules) {
-        //
-        // Authorization check.
-        //
-        boolean canWrite = false;
+    public void updateSecurityRules(
+            SecurityContext sc, long resourceId, SecurityRuleList securityRules) {
+        boolean canWrite;
         User authUser = extractAuthUser(sc);
-        canWrite = resourceAccessWrite(authUser, id);
+        canWrite = resourceAccessWrite(authUser, resourceId);
 
         if (canWrite) {
-            ShortAttribute owner = resourceService.getAttribute(id, "owner");
+            ShortAttribute owner = resourceService.getAttribute(resourceId, "owner");
             if ((authUser.getRole() == Role.ADMIN)
                     || (owner == null)
                     || (owner.getValue().equals(authUser.getName()))) {
                 try {
                     resourceService.updateSecurityRules(
-                            id, Convert.convertSecurityRuleList(securityRules.getList(), id));
+                            resourceId,
+                            Convert.convertSecurityRuleList(securityRules.getList(), resourceId));
                 } catch (BadRequestServiceEx e) {
                     if (LOGGER.isInfoEnabled()) LOGGER.info(e.getMessage());
                     throw new BadRequestWebEx(e.getMessage());
@@ -603,20 +580,20 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
     }
 
     @Override
-    public SecurityRuleList getSecurityRules(SecurityContext sc, long id) {
+    public SecurityRuleList getSecurityRules(SecurityContext sc, long resourceId) {
         //
         // Authorization check.
         //
         boolean canRead = false;
         User authUser = extractAuthUser(sc);
-        canRead = resourceAccessRead(authUser, id);
+        canRead = resourceAccessRead(authUser, resourceId);
 
         if (canRead) {
-            ShortAttribute owner = resourceService.getAttribute(id, "owner");
+            ShortAttribute owner = resourceService.getAttribute(resourceId, "owner");
             if ((authUser.getRole() == Role.ADMIN)
                     || (owner == null)
                     || (owner.getValue().equals(authUser.getName()))) {
-                return new SecurityRuleList(resourceService.getSecurityRules(id));
+                return new SecurityRuleList(resourceService.getSecurityRules(resourceId));
             } else {
                 throw new ForbiddenErrorWebEx("This user cannot read this resource permissions!");
             }

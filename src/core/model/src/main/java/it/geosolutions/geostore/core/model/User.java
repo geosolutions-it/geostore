@@ -100,6 +100,7 @@ public class User implements Serializable {
      */
     private transient String newPassword = null;
     private transient boolean trusted = false;
+    private transient String ipAddress;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @Fetch(FetchMode.SUBSELECT)
@@ -239,6 +240,14 @@ public class User implements Serializable {
     /** @param attribute the attribute to set */
     public void setAttribute(List<UserAttribute> attribute) {
         this.attribute = attribute;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
     }
 
     /** @return the enabled flag */
