@@ -6,7 +6,7 @@ CREATE TABLE gs_ip_range (
 	CONSTRAINT gs_ip_range_unique_cidr UNIQUE (cidr)
 );
 
-CREATE TABLE geostore.gs_security_ip_range (
+CREATE TABLE gs_security_ip_range (
 	security_id int8 NOT NULL,
 	ip_range_id int8 NOT NULL,
 	CONSTRAINT gs_security_ip_range_unique_security_id_ip_range_id UNIQUE (security_id, ip_range_id),
