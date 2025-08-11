@@ -133,7 +133,6 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
         boolean userAllowed =
                 ipRanges.stream()
-                        .peek(System.out::println)
                         .anyMatch(ipRange -> isUserIpInRange(user.getIpAddress(), ipRange));
 
         if (!userAllowed) {

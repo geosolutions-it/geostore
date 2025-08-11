@@ -19,6 +19,8 @@
  */
 package it.geosolutions.geostore.services;
 
+import static org.junit.Assert.assertThrows;
+
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
@@ -34,6 +36,7 @@ import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
+import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -513,6 +516,26 @@ public class ResourceServiceImplTest extends ServiceTestBase {
                         .map(IPRange::getDescription)
                         .collect(Collectors.toList())
                         .contains("rangeA"));
+    }
+
+    @Test
+    public void testUpdateIpRangesInSecurityRulesWithInvalidCidr() throws Exception {
+
+        long resourceId = createResource("name1", "description1", "MAP");
+
+        IPRange invalidIPRange = new IPRange();
+        invalidIPRange.setCidr("555.000.xxx.1111/1a1");
+
+        SecurityRule rule = new SecurityRuleBuilder().ipRanges(Set.of(invalidIPRange)).build();
+
+        InternalErrorServiceEx internalErrorServiceEx =
+                assertThrows(
+                        InternalErrorServiceEx.class,
+                        () -> resourceService.updateSecurityRules(resourceId, List.of(rule)));
+        assertTrue(
+                internalErrorServiceEx
+                        .getMessage()
+                        .contains("Error parsing security rule IP ranges"));
     }
 
     @Test

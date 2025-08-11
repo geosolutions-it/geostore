@@ -30,6 +30,8 @@ package it.geosolutions.geostore.services;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.Sort;
+import inet.ipaddr.AddressStringException;
+import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.dao.AttributeDAO;
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
@@ -791,7 +793,7 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void updateSecurityRules(long id, List<SecurityRule> rules)
-            throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx {
+            throws InternalErrorServiceEx, NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
 
         if (resource != null) {
@@ -825,8 +827,21 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    private Set<IPRange> calculateRuleUpdatedIPRanges(SecurityRule rule) {
-        return rule.getIpRanges().stream().map(this::fetchIPRange).collect(Collectors.toSet());
+    private Set<IPRange> calculateRuleUpdatedIPRanges(SecurityRule rule)
+            throws InternalErrorServiceEx {
+        try {
+            validateSecurityRuleIPRanges(rule.getIpRanges());
+            return rule.getIpRanges().stream().map(this::fetchIPRange).collect(Collectors.toSet());
+        } catch (AddressStringException ex) {
+            throw new InternalErrorServiceEx(
+                    "Error parsing security rule IP ranges. " + ex.getMessage());
+        }
+    }
+
+    private void validateSecurityRuleIPRanges(Set<IPRange> ipRanges) throws AddressStringException {
+        for (IPRange ipRange : ipRanges) {
+            new IPAddressString(ipRange.getCidr()).toAddress();
+        }
     }
 
     private IPRange fetchIPRange(IPRange ipRange) {
