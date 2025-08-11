@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2014 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -31,7 +31,12 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * Class RESTSecurityRule.
@@ -49,6 +54,10 @@ public class RESTSecurityRule {
 
     private boolean canWrite = false;
 
+    @XmlElementWrapper(name = "ipRanges")
+    @XmlElement(name = "ipRange")
+    private List<RESTIPRange> ipRanges = null;
+
     public RESTSecurityRule(SecurityRule rule) {
         if (rule.getUser() != null) {
             User ruleUser = rule.getUser();
@@ -64,23 +73,13 @@ public class RESTSecurityRule {
         }
         canRead = rule.isCanRead();
         canWrite = rule.isCanWrite();
+        if (rule.getIpRanges() != null) {
+            ipRanges =
+                    rule.getIpRanges().stream().map(RESTIPRange::new).collect(Collectors.toList());
+        }
     }
 
     public RESTSecurityRule() {}
-
-    public RESTSecurityRule(RESTUser user, boolean canRead, boolean canWrite) {
-        super();
-        this.user = user;
-        this.canRead = canRead;
-        this.canWrite = canWrite;
-    }
-
-    public RESTSecurityRule(RESTUserGroup group, boolean canRead, boolean canWrite) {
-        super();
-        this.group = group;
-        this.canRead = canRead;
-        this.canWrite = canWrite;
-    }
 
     public RESTUser getUser() {
         return user;
@@ -112,5 +111,14 @@ public class RESTSecurityRule {
 
     public void setCanWrite(boolean canWrite) {
         this.canWrite = canWrite;
+    }
+
+    @XmlTransient
+    public List<RESTIPRange> getIpRanges() {
+        return ipRanges;
+    }
+
+    public void setIpRanges(List<RESTIPRange> ipRanges) {
+        this.ipRanges = ipRanges;
     }
 }

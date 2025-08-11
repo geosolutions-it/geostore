@@ -83,5 +83,8 @@
         <property name="searchProcessor" ref="geostoreSearchProcessor" />
         <property name="userGroupDAO" ref="userGroupDAO"/>
     </bean>
-	
+
+	<bean id="ipRangeDAO" class="it.geosolutions.geostore.core.dao.impl.IpRangeDAOImpl" >
+		<property name="searchProcessor" ref="geostoreSearchProcessor" />
+	</bean>
 </beans>

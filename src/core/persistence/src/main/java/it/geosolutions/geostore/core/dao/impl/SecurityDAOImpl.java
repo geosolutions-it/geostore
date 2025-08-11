@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -249,6 +249,10 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
 
         searchCriteria.addFilter(securityFilter);
 
+        searchCriteria.addFetch("ipRanges");
+
+        searchCriteria.setDistinct(true);
+
         return super.search(searchCriteria);
     }
 
@@ -256,7 +260,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
         List<SecurityRule> rules = findResourceSecurityRules(resourceId);
         // WORKAROUND
-        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
+        List<SecurityRule> filteredRules = new ArrayList<>();
         for (SecurityRule sr : rules) {
             if (sr.getGroup() != null && groupNames.contains(sr.getGroup().getGroupName())) {
                 filteredRules.add(sr);

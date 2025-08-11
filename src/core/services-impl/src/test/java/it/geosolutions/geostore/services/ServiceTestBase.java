@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -19,13 +19,14 @@
  */
 package it.geosolutions.geostore.services;
 
+import it.geosolutions.geostore.core.dao.IpRangeDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.TagDAO;
 import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
-import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -36,11 +37,18 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import java.security.Principal;
 import java.util.List;
+import java.util.Set;
+import javax.ws.rs.core.SecurityContext;
 import junit.framework.TestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
  * Class ServiceTestBase.
@@ -64,15 +72,18 @@ public class ServiceTestBase extends TestCase {
 
     protected static FavoriteService favoriteService;
 
+    protected static ResourcePermissionService resourcePermissionService;
+
     protected static ResourceDAO resourceDAO;
 
     protected static TagDAO tagDAO;
+
+    protected static IpRangeDAO ipRangeDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
 
     protected final Logger LOGGER = LogManager.getLogger(getClass());
 
-    /** */
     public ServiceTestBase() {
         synchronized (ServiceTestBase.class) {
             if (ctx == null) {
@@ -88,8 +99,11 @@ public class ServiceTestBase extends TestCase {
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
                 tagService = (TagService) ctx.getBean("tagService");
                 favoriteService = (FavoriteService) ctx.getBean("favoriteService");
+                resourcePermissionService =
+                        (ResourcePermissionService) ctx.getBean("resourcePermissionService");
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
                 tagDAO = (TagDAO) ctx.getBean("tagDAO");
+                ipRangeDAO = (IpRangeDAO) ctx.getBean("ipRangeDAO");
             }
         }
     }
@@ -428,10 +442,6 @@ public class ServiceTestBase extends TestCase {
         return userGroupService.insert(group);
     }
 
-    protected long createTag(String name, String color, String description) throws Exception {
-        return tagService.insert(new Tag(name, color, description));
-    }
-
     protected User buildFakeAdminUser() {
         User user = new User();
         user.setRole(Role.ADMIN);
@@ -439,10 +449,32 @@ public class ServiceTestBase extends TestCase {
         return user;
     }
 
-    // SecurityRuleBuilder class
-    protected class SecurityRuleBuilder {
+    protected void mockHttpRequestIpAddressAttribute() {
+        mockHttpRequestIpAddressAttribute("localhost", List.of(), "");
+    }
 
-        private SecurityRule rule;
+    protected void mockHttpRequestIpAddressAttribute(
+            String remoteAddress,
+            List<String> xForwardedForHeaderAddress,
+            String xRealIPHeaderAddress) {
+
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRemoteAddr(remoteAddress);
+
+        if (xForwardedForHeaderAddress != null) {
+            request.addHeader("X-Forwarded-For", xForwardedForHeaderAddress);
+        }
+
+        if (xRealIPHeaderAddress != null && !xRealIPHeaderAddress.isBlank()) {
+            request.addHeader("X-Real-IP", xRealIPHeaderAddress);
+        }
+
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+    }
+
+    protected static class SecurityRuleBuilder {
+
+        private final SecurityRule rule;
 
         public SecurityRuleBuilder() {
             rule = new SecurityRule();
@@ -463,8 +495,48 @@ public class ServiceTestBase extends TestCase {
             return this;
         }
 
+        public SecurityRuleBuilder ipRanges(Set<IPRange> ipRanges) {
+            rule.setIpRanges(ipRanges);
+            return this;
+        }
+
         public SecurityRule build() {
             return rule;
+        }
+    }
+
+    protected static class SimpleSecurityContext implements SecurityContext {
+
+        private Principal userPrincipal;
+
+        public SimpleSecurityContext() {}
+
+        public SimpleSecurityContext(User user) {
+            userPrincipal = new UsernamePasswordAuthenticationToken(user, null);
+        }
+
+        @Override
+        public Principal getUserPrincipal() {
+            return userPrincipal;
+        }
+
+        public void setUserPrincipal(Principal userPrincipal) {
+            this.userPrincipal = userPrincipal;
+        }
+
+        @Override
+        public boolean isUserInRole(String role) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean isSecure() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getAuthenticationScheme() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
     }
 }

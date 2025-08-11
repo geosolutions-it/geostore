@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -30,8 +30,11 @@ package it.geosolutions.geostore.services;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.Sort;
+import inet.ipaddr.AddressStringException;
+import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.dao.AttributeDAO;
 import it.geosolutions.geostore.core.dao.CategoryDAO;
+import it.geosolutions.geostore.core.dao.IpRangeDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
@@ -39,6 +42,7 @@ import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
@@ -59,6 +63,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -90,6 +96,8 @@ public class ResourceServiceImpl implements ResourceService {
 
     private SecurityDAO securityDAO;
 
+    private IpRangeDAO ipRangeDAO;
+
     private ResourcePermissionService resourcePermissionService;
 
     public void setUserDAO(UserDAO userDAO) {
@@ -98,6 +106,10 @@ public class ResourceServiceImpl implements ResourceService {
 
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
+    }
+
+    public void setResourceDAO(ResourceDAO resourceDAO) {
+        this.resourceDAO = resourceDAO;
     }
 
     public void setAttributeDAO(AttributeDAO attributeDAO) {
@@ -116,8 +128,8 @@ public class ResourceServiceImpl implements ResourceService {
         this.securityDAO = securityDAO;
     }
 
-    public void setResourceDAO(ResourceDAO resourceDAO) {
-        this.resourceDAO = resourceDAO;
+    public void setIpRangeDAO(IpRangeDAO ipRangeDAO) {
+        this.ipRangeDAO = ipRangeDAO;
     }
 
     public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
@@ -693,7 +705,7 @@ public class ResourceServiceImpl implements ResourceService {
             searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", userId));
         }
 
-        searchCriteria.addFetch("security");
+        searchCriteria.addFetches("security", "security.ipRanges");
         searchCriteria.setDistinct(true);
 
         securityDAO.addAdvertisedSecurityConstraints(searchCriteria, parameters.getAuthUser());
@@ -781,17 +793,17 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public void updateSecurityRules(long id, List<SecurityRule> rules)
-            throws BadRequestServiceEx, InternalErrorServiceEx, NotFoundServiceEx {
+            throws InternalErrorServiceEx, NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
 
         if (resource != null) {
             Search searchCriteria = new Search();
             searchCriteria.addFilterEqual("resource.id", id);
 
-            List<SecurityRule> resourceRules = this.securityDAO.search(searchCriteria);
+            List<SecurityRule> resourceActualRules = this.securityDAO.search(searchCriteria);
 
             // remove previous rules
-            for (SecurityRule rule : resourceRules) {
+            for (SecurityRule rule : resourceActualRules) {
                 securityDAO.remove(rule);
             }
             // insert new rules
@@ -803,11 +815,42 @@ public class ResourceServiceImpl implements ResourceService {
                         rule.setGroup(ug);
                     }
                 }
+
+                if (rule.getIpRanges() != null) {
+                    rule.setIpRanges(calculateRuleUpdatedIPRanges(rule));
+                }
+
                 securityDAO.persist(rule);
             }
         } else {
             throw new NotFoundServiceEx("Resource not found " + id);
         }
+    }
+
+    private Set<IPRange> calculateRuleUpdatedIPRanges(SecurityRule rule)
+            throws InternalErrorServiceEx {
+        try {
+            validateSecurityRuleIPRanges(rule.getIpRanges());
+            return rule.getIpRanges().stream().map(this::fetchIPRange).collect(Collectors.toSet());
+        } catch (AddressStringException ex) {
+            throw new InternalErrorServiceEx(
+                    "Error parsing security rule IP ranges. " + ex.getMessage());
+        }
+    }
+
+    private void validateSecurityRuleIPRanges(Set<IPRange> ipRanges) throws AddressStringException {
+        for (IPRange ipRange : ipRanges) {
+            new IPAddressString(ipRange.getCidr()).toAddress();
+        }
+    }
+
+    private IPRange fetchIPRange(IPRange ipRange) {
+        return Optional.ofNullable(ipRangeDAO.findByCidr(ipRange.getCidr()))
+                .orElseGet(
+                        () -> {
+                            ipRangeDAO.persist(ipRange);
+                            return ipRange;
+                        });
     }
 
     @Override

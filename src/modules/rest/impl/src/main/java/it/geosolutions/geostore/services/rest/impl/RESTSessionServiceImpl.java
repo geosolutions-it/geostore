@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2017 GeoSolutions S.A.S.
+ * Copyright (C) 2017 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -31,7 +31,6 @@ import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROV
 import static it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl.DEFAULT_NAME;
 
 import it.geosolutions.geostore.core.model.User;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.dto.UserSessionImpl;
@@ -40,7 +39,13 @@ import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -240,11 +245,6 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
      */
     public void clear() {
         userSessionService.removeAllSessions();
-    }
-
-    @Override
-    protected SecurityService getSecurityService() {
-        return null;
     }
 
     public long getSessionTimeout() {

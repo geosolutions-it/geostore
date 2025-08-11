@@ -28,13 +28,18 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -191,7 +196,7 @@ public class SecurityRule implements Serializable {
         return username;
     }
 
-    /** @param username the user name to set */
+    /** @param username the username to set */
     public void setUsername(String username) {
         this.username = username;
     }
@@ -228,6 +233,27 @@ public class SecurityRule implements Serializable {
         this.canWrite = canWrite;
     }
 
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "gs_security_ip_range",
+            joinColumns = @JoinColumn(name = "security_id"),
+            inverseJoinColumns = @JoinColumn(name = "ip_range_id"),
+            indexes = {
+                @Index(name = "idx_security_ip_range_security_id", columnList = "security_id"),
+                @Index(name = "idx_security_ip_range_ip_range_id", columnList = "ip_range_id")
+            },
+            uniqueConstraints = {@UniqueConstraint(columnNames = {"security_id", "ip_range_id"})})
+    private Set<IPRange> ipRanges = new HashSet<>();
+
+    @XmlTransient
+    public Set<IPRange> getIpRanges() {
+        return ipRanges;
+    }
+
+    public void setIpRanges(Set<IPRange> ipRanges) {
+        this.ipRanges = ipRanges;
+    }
+
     /*
      * (non-Javadoc) @see java.lang.Object#toString()
      */
@@ -261,6 +287,11 @@ public class SecurityRule implements Serializable {
             builder.append("user=").append(user);
         }
 
+        if (ipRanges != null && !ipRanges.isEmpty()) {
+            builder.append(", ");
+            builder.append("ipRanges=").append(ipRanges);
+        }
+
         // if ( category != null ) {
         // builder.append(", ");
         // builder.append("category=").append(category);
@@ -286,6 +317,7 @@ public class SecurityRule implements Serializable {
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((resource == null) ? 0 : resource.hashCode());
         result = (prime * result) + ((user == null) ? 0 : user.hashCode());
+        result = (prime * result) + ((ipRanges == null) ? 0 : ipRanges.hashCode());
 
         return result;
     }
@@ -340,14 +372,15 @@ public class SecurityRule implements Serializable {
         } else if (!resource.equals(other.resource)) {
             return false;
         }
-        if (user == null) {
-            if (other.user != null) {
+        if (ipRanges == null) {
+            if (other.ipRanges != null) {
                 return false;
             }
-        } else if (!user.equals(other.user)) {
+        } else if (!ipRanges.equals(other.ipRanges)) {
             return false;
         }
-
-        return true;
+        if (user == null) {
+            return other.user == null;
+        } else return user.equals(other.user);
     }
 }

@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -35,7 +35,6 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ResourcePermissionService;
 import it.geosolutions.geostore.services.ResourceService;
-import it.geosolutions.geostore.services.SecurityService;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -102,14 +101,6 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     public void setResourcePermissionService(ResourcePermissionService resourcePermissionService) {
         this.resourcePermissionService = resourcePermissionService;
-    }
-
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.rest.impl.RESTServiceImpl#getSecurityService()
-     */
-    @Override
-    protected SecurityService getSecurityService() {
-        return resourceService;
     }
 
     /*
