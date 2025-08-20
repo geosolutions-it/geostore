@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 GeoSolutions
+ * Copyright (C) 2016-2025 GeoSolutions
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1757,6 +1757,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             adminSecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1779,6 +1780,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1793,6 +1795,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, readOnlyResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -2027,6 +2030,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -2041,6 +2045,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, readOnlyResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -2123,6 +2128,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             adminSecurityContext, groupOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
         }
@@ -2133,6 +2139,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             userSecurityContext, groupOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -2147,6 +2154,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             userSecurityContext, readOnlyGroupResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -2224,6 +2232,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
         }
 
         {
@@ -2298,6 +2307,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
         }
 
         {
@@ -2369,6 +2379,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
         }
 
         {

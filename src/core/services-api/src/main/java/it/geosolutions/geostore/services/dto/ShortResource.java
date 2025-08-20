@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2016 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -57,6 +57,8 @@ public class ShortResource implements Serializable {
     private boolean canEdit = false;
 
     private boolean canDelete = false;
+
+    private boolean canCopy = false;
 
     private String creator;
 
@@ -148,6 +150,14 @@ public class ShortResource implements Serializable {
         this.canDelete = canDelete;
     }
 
+    public boolean isCanCopy() {
+        return canCopy;
+    }
+
+    public void setCanCopy(boolean canCopy) {
+        this.canCopy = canCopy;
+    }
+
     /** @return */
     public String getCreator() {
         return creator;
@@ -199,6 +209,8 @@ public class ShortResource implements Serializable {
         if (canEdit) builder.append("canEdit=").append(true).append(", ");
 
         if (canDelete) builder.append("canDelete=").append(true).append(", ");
+
+        if (canCopy) builder.append("canCopy=").append(true).append(", ");
 
         if (creator != null) builder.append("creator=").append(creator).append(", ");
 

@@ -729,6 +729,7 @@ public class ResourceServiceImpl implements ResourceService {
         if (user != null && resourcePermissionService.canResourceBeWrittenByUser(resource, user)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);
+            shortResource.setCanCopy(true);
         }
 
         return shortResource;
