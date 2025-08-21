@@ -696,11 +696,14 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         resourceService.fetchSecurityRules(resource);
         resourceService.fetchFavoritedBy(resource);
 
-        if (!resourcePermissionService.canResourceBeReadByUser(resource, user)) {
+        ShortResource shortResource = new ShortResource(resource);
+
+        if (resourcePermissionService.canResourceBeReadByUser(resource, user)) {
+            shortResource.setCanCopy(true);
+        } else {
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
 
-        ShortResource shortResource = new ShortResource(resource);
         if (resourcePermissionService.canResourceBeWrittenByUser(resource, user)) {
             shortResource.setCanEdit(true);
             shortResource.setCanDelete(true);

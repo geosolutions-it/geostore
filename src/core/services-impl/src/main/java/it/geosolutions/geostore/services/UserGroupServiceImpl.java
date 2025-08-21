@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -306,6 +306,7 @@ public class UserGroupServiceImpl implements UserGroupService {
                 // rule updated.
                 out.setCanDelete(canWrite);
                 out.setCanEdit(canWrite);
+                out.setCanCopy(canRead);
                 updated.add(out);
             } else {
                 // Update the existing rule
@@ -320,6 +321,7 @@ public class UserGroupServiceImpl implements UserGroupService {
                 // rule updated.
                 out.setCanDelete(canWrite);
                 out.setCanEdit(canWrite);
+                out.setCanCopy(canRead);
                 updated.add(out);
             }
         }

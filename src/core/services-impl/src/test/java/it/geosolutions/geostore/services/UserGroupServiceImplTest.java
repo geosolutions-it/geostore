@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007-2012 GeoSolutions S.A.S.
+ *  Copyright (C) 2007-2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -107,13 +107,13 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         u.setName("u1");
         u.setPassword("password");
         u.setRole(Role.USER);
-        Set<UserGroup> group = new HashSet<UserGroup>();
+        Set<UserGroup> group = new HashSet<>();
         group.add(ug1);
         u.setGroups(group);
         long uid = userService.insert(u);
 
         Resource r = new Resource();
-        List<Attribute> attributeList = new ArrayList<Attribute>();
+        List<Attribute> attributeList = new ArrayList<>();
         Attribute a1 = new Attribute();
         a1.setTextValue("a1");
         a1.setType(DataType.STRING);
@@ -129,13 +129,13 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         long id = resourceService.insert(r);
         r = resourceService.get(id);
 
-        List<Long> idList = new ArrayList<Long>();
+        List<Long> idList = new ArrayList<>();
         idList.add(id);
         List<Resource> resourcelist = resourceDAO.findResources(idList);
         List<SecurityRule> listSecurity = resourcelist.get(0).getSecurity();
         assertEquals(0, listSecurity.size()); // shouldn't be any rule...
 
-        List<Long> listR = new ArrayList<Long>();
+        List<Long> listR = new ArrayList<>();
         listR.add(r.getId());
 
         List<ShortResource> listsr =
@@ -143,8 +143,9 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         assertEquals(1, listsr.size());
         assertTrue("Expected TRUE", listsr.get(0).isCanDelete());
         assertTrue("Expected TRUE", listsr.get(0).isCanEdit());
+        assertTrue("Expected TRUE", listsr.get(0).isCanCopy());
 
-        idList = new ArrayList<Long>();
+        idList = new ArrayList<>();
         idList.add(id);
         resourcelist = resourceDAO.findResources(idList);
         listSecurity = resourcelist.get(0).getSecurity();
@@ -152,8 +153,9 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
 
         listsr = userGroupService.updateSecurityRules(ug1.getId(), listR, false, false);
         assertEquals(1, listsr.size());
-        assertTrue("Expected FALSE", !listsr.get(0).isCanDelete());
-        assertTrue("Expected FALSE", !listsr.get(0).isCanEdit());
+        assertFalse("Expected FALSE", listsr.get(0).isCanDelete());
+        assertFalse("Expected FALSE", listsr.get(0).isCanEdit());
+        assertFalse("Expected FALSE", listsr.get(0).isCanCopy());
     }
 
     /**
