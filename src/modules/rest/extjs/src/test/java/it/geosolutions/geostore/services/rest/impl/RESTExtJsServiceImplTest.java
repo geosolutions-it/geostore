@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 GeoSolutions
+ * Copyright (C) 2016-2025 GeoSolutions
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1112,7 +1112,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
-        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
 
         createCategory(CAT0_NAME);
 
@@ -1167,7 +1167,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            user0SecurityContext,
+                            userSecurityContext,
                             0,
                             1000,
                             new Sort("", ""),
@@ -1213,7 +1213,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
-        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
 
         createCategory(CAT0_NAME);
 
@@ -1281,7 +1281,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtResourceList response =
                     restExtJsService.getExtResourcesList(
-                            user0SecurityContext,
+                            userSecurityContext,
                             0,
                             1000,
                             new Sort("", ""),
@@ -1530,6 +1530,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             adminSecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1552,6 +1553,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1566,6 +1568,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, readOnlyResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<ShortAttribute> attributes = response.getAttributeList().getList();
             assertEquals(1, attributes.size());
             ShortAttribute attribute = attributes.get(0);
@@ -1800,6 +1803,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, userOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -1814,6 +1818,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             user0SecurityContext, readOnlyResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -1850,7 +1855,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
-        SecurityContext user0SecurityContext = new SimpleSecurityContext(userId);
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
 
         createCategory(CAT0_NAME);
 
@@ -1896,6 +1901,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             adminSecurityContext, groupOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
         }
@@ -1903,9 +1909,10 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, groupOwnedResourceId, true, true, false);
+                            userSecurityContext, groupOwnedResourceId, true, true, false);
             assertTrue(response.isCanEdit());
             assertTrue(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -1917,9 +1924,10 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         {
             ExtShortResource response =
                     restExtJsService.getExtResource(
-                            user0SecurityContext, readOnlyGroupResourceId, true, true, false);
+                            userSecurityContext, readOnlyGroupResourceId, true, true, false);
             assertFalse(response.isCanEdit());
             assertFalse(response.isCanDelete());
+            assertTrue(response.isCanCopy());
             List<RESTSecurityRule> securityRules = response.getSecurityRuleList().getList();
             assertEquals(1, securityRules.size());
             RESTSecurityRule securityRule = securityRules.get(0);
@@ -1933,7 +1941,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     ForbiddenErrorWebEx.class,
                     () ->
                             restExtJsService.getExtResource(
-                                    user0SecurityContext,
+                                    userSecurityContext,
                                     protectedGroupResourceId,
                                     true,
                                     true,
