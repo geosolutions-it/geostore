@@ -2,9 +2,11 @@ create table gs_ip_range (
     id number(19,0) not null,
     cidr varchar2(50 char) not null,
     description varchar2(255 char),
-    constraint gs_ip_range_pkey primary key (id),
-    constraint gs_ip_range_unique_cidr unique (cidr)
+    ip_low number(39,0) not null,
+    ip_high number(39,0) not null,
+    constraint gs_ip_range_pkey primary key (id)
 );
+create index idx_ip_range_lookup on gs_ip_range(ip_low, ip_high);
 
 create table gs_security_ip_range (
     security_id number(19,0) not null,

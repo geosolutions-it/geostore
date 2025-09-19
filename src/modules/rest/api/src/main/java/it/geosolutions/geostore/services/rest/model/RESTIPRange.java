@@ -30,22 +30,34 @@ package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.IPRange;
 import java.io.Serializable;
+import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * REST representation for the {@link it.geosolutions.geostore.core.model.IPRange} model resource.
  */
+@XmlRootElement(name = "IPRange")
 public class RESTIPRange implements Serializable {
 
     private static final long serialVersionUID = 6974052046677936814L;
 
+    private Long id;
     private String cidr;
     private String description;
 
     public RESTIPRange() {}
 
     public RESTIPRange(IPRange ipRange) {
+        this.id = ipRange.getId();
         this.cidr = ipRange.getCidr();
         this.description = ipRange.getDescription();
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getCidr() {
@@ -69,6 +81,10 @@ public class RESTIPRange implements Serializable {
         StringBuilder builder = new StringBuilder();
         builder.append(getClass().getSimpleName()).append('[');
 
+        if (id != null) {
+            builder.append("id=").append(id);
+        }
+
         if (cidr != null) {
             builder.append(", ");
             builder.append("cidr=").append(cidr);
@@ -81,5 +97,13 @@ public class RESTIPRange implements Serializable {
 
         builder.append(']');
         return builder.toString();
+    }
+
+    public IPRange toIPRange() {
+        IPRange ipRange = new IPRange();
+        ipRange.setId(this.id);
+        ipRange.setCidr(this.cidr);
+        ipRange.setDescription(this.description);
+        return ipRange;
     }
 }

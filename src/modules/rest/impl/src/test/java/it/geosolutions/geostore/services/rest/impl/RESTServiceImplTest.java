@@ -19,6 +19,9 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import static org.junit.Assert.assertThrows;
+
+import inet.ipaddr.IPAddress;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -42,6 +45,7 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.exception.InternalErrorWebEx;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -194,67 +198,102 @@ public class RESTServiceImplTest extends ServiceTestBase {
                 user.getGroups().iterator().next().getGroupName());
     }
 
-    public void testExtractUserIp() {
+    public void testExtractUserIP() {
 
         String remoteIP = "4.88.132.112";
 
-        mockHttpRequestIpAddressAttribute(remoteIP, List.of(), "");
+        mockHttpRequestIPAddressAttribute(remoteIP, List.of(), "");
 
-        String ipAddress =
+        IPAddress ipAddress =
                 restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
 
-        assertEquals(remoteIP, ipAddress);
+        assertEquals(remoteIP, ipAddress.toAddressString().toString());
     }
 
-    public void testExtractUserIpWhenForwarded() {
+    public void testExtractUserIPv6() {
+
+        String remoteIP = "0:0:0:0:0:0:0:1";
+
+        mockHttpRequestIPAddressAttribute(remoteIP, List.of(), "");
+
+        IPAddress ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals(remoteIP, ipAddress.toAddressString().toString());
+    }
+
+    public void testExtractUserIPv6WithParenthesis() {
+
+        String remoteIP = "[0:0:0:0:0:0:0:1]";
+
+        mockHttpRequestIPAddressAttribute(remoteIP, List.of(), "");
+
+        IPAddress ipAddress =
+                restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
+
+        assertEquals("0:0:0:0:0:0:0:1", ipAddress.toAddressString().toString());
+    }
+
+    public void testExtractUserIPWhenForwarded() {
 
         String forwardedIP = "12.12.12.12";
 
-        mockHttpRequestIpAddressAttribute("localhost", List.of(forwardedIP), "");
+        mockHttpRequestIPAddressAttribute("localhost", List.of(forwardedIP), "");
 
-        String ipAddress =
+        IPAddress ipAddress =
                 restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
 
-        assertEquals(forwardedIP, ipAddress);
+        assertEquals(forwardedIP, ipAddress.toAddressString().toString());
     }
 
-    public void testExtractUserIpWhenForwardedMultipleTimes() {
+    public void testExtractUserIPWhenForwardedMultipleTimes() {
 
         String forwardedIPA = "152.221.232.124";
         String forwardedIPB = "54.36.51.65";
 
-        mockHttpRequestIpAddressAttribute("localhost", List.of(forwardedIPA, forwardedIPB), "");
+        mockHttpRequestIPAddressAttribute("localhost", List.of(forwardedIPA, forwardedIPB), "");
 
-        String ipAddress =
+        IPAddress ipAddress =
                 restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
 
-        assertEquals(forwardedIPA, ipAddress);
+        assertEquals(forwardedIPA, ipAddress.toAddressString().toString());
     }
 
-    public void testExtractUserIpWhenForwardedWithRealIP() {
+    public void testExtractUserIPWhenForwardedWithRealIP() {
 
         String realIP = "112.112.112.1";
 
-        mockHttpRequestIpAddressAttribute("localhost", List.of(), realIP);
+        mockHttpRequestIPAddressAttribute("localhost", List.of(), realIP);
 
-        String ipAddress =
+        IPAddress ipAddress =
                 restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
 
-        assertEquals(realIP, ipAddress);
+        assertEquals(realIP, ipAddress.toAddressString().toString());
     }
 
-    public void testExtractUserIpPrecedence() {
+    public void testExtractUserIPPrecedence() {
 
         String ipA = "76.41.15.54";
         String ipB = "12.6.0.3";
         String ipC = "1922.12.45.5";
 
-        mockHttpRequestIpAddressAttribute(ipA, List.of(ipB), ipC);
+        mockHttpRequestIPAddressAttribute(ipA, List.of(ipB), ipC);
 
-        String ipAddress =
+        IPAddress ipAddress =
                 restService.extractAuthUser(new SimpleSecurityContext(user)).getIpAddress();
 
-        assertEquals(ipB, ipAddress);
+        assertEquals(ipB, ipAddress.toAddressString().toString());
+    }
+
+    public void testErrorExtractingUserIp() {
+
+        String remoteIP = "localhost";
+
+        mockHttpRequestIPAddressAttribute(remoteIP, List.of(), "");
+
+        assertThrows(
+                InternalErrorWebEx.class,
+                () -> restService.extractAuthUser(new SimpleSecurityContext(user)));
     }
 
     private static class TestUserService implements UserService {

@@ -56,7 +56,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
-public class ServiceTestBase extends TestCase {
+public abstract class ServiceTestBase extends TestCase {
 
     protected static StoredDataService storedDataService;
 
@@ -71,6 +71,8 @@ public class ServiceTestBase extends TestCase {
     protected static TagService tagService;
 
     protected static FavoriteService favoriteService;
+
+    protected static IPRangeService ipRangeService;
 
     protected static ResourcePermissionService resourcePermissionService;
 
@@ -99,6 +101,7 @@ public class ServiceTestBase extends TestCase {
                 userGroupService = (UserGroupService) ctx.getBean("userGroupService");
                 tagService = (TagService) ctx.getBean("tagService");
                 favoriteService = (FavoriteService) ctx.getBean("favoriteService");
+                ipRangeService = (IPRangeService) ctx.getBean("ipRangeService");
                 resourcePermissionService =
                         (ResourcePermissionService) ctx.getBean("resourcePermissionService");
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
@@ -108,9 +111,6 @@ public class ServiceTestBase extends TestCase {
         }
     }
 
-    /*
-     * (non-Javadoc) @see junit.framework.TestCase#setUp()
-     */
     @Override
     protected void setUp() throws Exception {
         LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + getName());
@@ -118,7 +118,6 @@ public class ServiceTestBase extends TestCase {
         removeAll();
     }
 
-    /** */
     public void testCheckServices() {
         assertNotNull(storedDataService);
         assertNotNull(resourceService);
@@ -126,12 +125,10 @@ public class ServiceTestBase extends TestCase {
         assertNotNull(userService);
         assertNotNull(userGroupService);
         assertNotNull(tagService);
+        assertNotNull(favoriteService);
+        assertNotNull(ipRangeService);
     }
 
-    /**
-     * @throws NotFoundServiceEx
-     * @throws BadRequestServiceEx
-     */
     protected void removeAll()
             throws NotFoundServiceEx, BadRequestServiceEx, InternalErrorServiceEx {
         LOGGER.info("***** removeAll()");
@@ -141,6 +138,7 @@ public class ServiceTestBase extends TestCase {
         removeAllCategory();
         removeAllUser();
         removeAllUserGroup();
+        removeAllIPRange();
     }
 
     private void removeAllTag() throws BadRequestServiceEx {
@@ -157,61 +155,6 @@ public class ServiceTestBase extends TestCase {
                         });
     }
 
-    /**
-     * @throws BadRequestServiceEx
-     * @throws NotFoundServiceEx
-     */
-    private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
-        List<UserGroup> list = userGroupService.getAll(null, null);
-        for (UserGroup item : list) {
-            LOGGER.info("Removing User: " + item.getGroupName());
-            if (GroupReservedNames.isAllowedName(item.getGroupName())) {
-                boolean ret = userGroupService.delete(item.getId());
-                assertTrue("Group not removed", ret);
-            }
-        }
-        boolean res = userGroupService.removeSpecialUsersGroups();
-        assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
-    }
-
-    /** @throws BadRequestServiceEx */
-    private void removeAllUser() throws BadRequestServiceEx {
-        List<User> list = userService.getAll(null, null);
-        for (User item : list) {
-            LOGGER.info("Removing User: " + item.getName());
-
-            boolean ret = userService.delete(item.getId());
-            assertTrue("User not removed", ret);
-        }
-
-        assertEquals("User have not been properly deleted", 0, userService.getCount(null));
-    }
-
-    /** @throws BadRequestServiceEx */
-    private void removeAllCategory() throws BadRequestServiceEx {
-        List<Category> list = categoryService.getAll(null, null);
-        for (Category item : list) {
-            LOGGER.info("Removing " + item);
-
-            boolean ret = categoryService.delete(item.getId());
-            assertTrue("Category not removed", ret);
-        }
-
-        assertEquals("Category have not been properly deleted", 0, categoryService.getCount(null));
-    }
-
-    /** @throws NotFoundServiceEx */
-    protected void removeAllStoredData() throws NotFoundServiceEx {
-        List<StoredData> list = storedDataService.getAll();
-        for (StoredData item : list) {
-            LOGGER.info("Removing " + item);
-
-            boolean ret = storedDataService.delete(item.getId());
-            assertTrue("Data not removed", ret);
-        }
-    }
-
-    /** @throws BadRequestServiceEx */
     private void removeAllResource() throws BadRequestServiceEx, InternalErrorServiceEx {
         List<ShortResource> list =
                 resourceService.getAll(
@@ -226,23 +169,71 @@ public class ServiceTestBase extends TestCase {
         assertEquals("Resource have not been properly deleted", 0, resourceService.getCount(null));
     }
 
-    /**
-     * @param data
-     * @param resource
-     * @return long
-     * @throws Exception
-     */
+    protected void removeAllStoredData() throws NotFoundServiceEx {
+        List<StoredData> list = storedDataService.getAll();
+        for (StoredData item : list) {
+            LOGGER.info("Removing " + item);
+
+            boolean ret = storedDataService.delete(item.getId());
+            assertTrue("Data not removed", ret);
+        }
+    }
+
+    private void removeAllCategory() throws BadRequestServiceEx {
+        List<Category> list = categoryService.getAll(null, null);
+        for (Category item : list) {
+            LOGGER.info("Removing " + item);
+
+            boolean ret = categoryService.delete(item.getId());
+            assertTrue("Category not removed", ret);
+        }
+
+        assertEquals("Category have not been properly deleted", 0, categoryService.getCount(null));
+    }
+
+    private void removeAllUser() throws BadRequestServiceEx {
+        List<User> list = userService.getAll(null, null);
+        for (User item : list) {
+            LOGGER.info("Removing User: " + item.getName());
+
+            boolean ret = userService.delete(item.getId());
+            assertTrue("User not removed", ret);
+        }
+
+        assertEquals("User have not been properly deleted", 0, userService.getCount(null));
+    }
+
+    private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
+        List<UserGroup> list = userGroupService.getAll(null, null);
+        for (UserGroup item : list) {
+            LOGGER.info("Removing User: " + item.getGroupName());
+            if (GroupReservedNames.isAllowedName(item.getGroupName())) {
+                boolean ret = userGroupService.delete(item.getId());
+                assertTrue("Group not removed", ret);
+            }
+        }
+        boolean res = userGroupService.removeSpecialUsersGroups();
+        assertEquals("Group have not been properly deleted", 0, userService.getCount(null));
+    }
+
+    private void removeAllIPRange() throws BadRequestServiceEx {
+        ipRangeService
+                .getAll()
+                .forEach(
+                        item -> {
+                            LOGGER.info("Removing IP range: {}", item.getCidr());
+                            try {
+                                ipRangeService.delete(item.getId());
+                            } catch (NotFoundServiceEx e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+    }
+
     protected long createData(String data, Resource resource) throws Exception {
         return storedDataService.update(resource.getId(), data);
     }
 
-    /**
-     * @param name
-     * @param description
-     * @param catName
-     * @return long
-     * @throws Exception
-     */
     protected long createResource(String name, String description, String catName)
             throws Exception {
         Category category = new Category();
@@ -260,14 +251,6 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    /**
-     * @param name
-     * @param description
-     * @param catName
-     * @param data
-     * @return long
-     * @throws Exception
-     */
     protected long createResource(String name, String description, String catName, String data)
             throws Exception {
         Category category = new Category();
@@ -288,14 +271,6 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    /**
-     * @param name
-     * @param description
-     * @param catName
-     * @param rules
-     * @return long
-     * @throws Exception
-     */
     protected long createResource(
             String name, String description, String catName, List<SecurityRule> rules)
             throws Exception {
@@ -313,15 +288,6 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    /**
-     * @param name
-     * @param description
-     * @param catName
-     * @param advertised
-     * @param rules
-     * @return long
-     * @throws Exception
-     */
     protected long createResource(
             String name,
             String description,
@@ -346,13 +312,6 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    /**
-     * @param name
-     * @param description
-     * @param category
-     * @return
-     * @throws Exception
-     */
     protected long createResource(String name, String description, Category category)
             throws Exception {
         Resource resource = new Resource();
@@ -365,11 +324,6 @@ public class ServiceTestBase extends TestCase {
         return resourceService.insert(resource);
     }
 
-    /**
-     * @param name
-     * @return long
-     * @throws Exception
-     */
     protected long createCategory(String name) throws Exception {
         Category category = new Category();
         category.setName(name);
@@ -377,13 +331,6 @@ public class ServiceTestBase extends TestCase {
         return categoryService.insert(category);
     }
 
-    /**
-     * @param name
-     * @param role
-     * @param password
-     * @return long
-     * @throws Exception
-     */
     protected long createUser(String name, Role role, String password) throws Exception {
         User user = new User();
         user.setName(name);
@@ -430,11 +377,6 @@ public class ServiceTestBase extends TestCase {
         return id;
     }
 
-    /**
-     * @param name
-     * @return long
-     * @throws Exception
-     */
     protected long createGroup(String name) throws Exception {
         UserGroup group = new UserGroup();
         group.setGroupName(name);
@@ -449,11 +391,11 @@ public class ServiceTestBase extends TestCase {
         return user;
     }
 
-    protected void mockHttpRequestIpAddressAttribute() {
-        mockHttpRequestIpAddressAttribute("localhost", List.of(), "");
+    protected void mockHttpRequestIPAddressAttribute() {
+        mockHttpRequestIPAddressAttribute("127.0.0.1", List.of(), "");
     }
 
-    protected void mockHttpRequestIpAddressAttribute(
+    protected void mockHttpRequestIPAddressAttribute(
             String remoteAddress,
             List<String> xForwardedForHeaderAddress,
             String xRealIPHeaderAddress) {

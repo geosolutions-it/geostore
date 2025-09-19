@@ -30,8 +30,10 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
@@ -172,43 +174,57 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         searchCriteria.addFilter(securityFilter);
     }
 
-    /** Add security filtering in order to filter out resources hidden the user */
-    public void addAdvertisedSecurityConstraints(Search searchCriteria, User user) {
-        // no further constraints for admin user
+    /**
+     * Add security filtering to the {@code searchCriteria} in order to filter out resources hidden
+     * to the user.
+     */
+    public void addSecurityConstraintsToSearch(Search searchCriteria, User user) {
         if (user.getRole() == Role.ADMIN) {
             return;
         }
 
-        // User filtering based on user and groups
-        Filter userFiltering =
-                Filter.or(
-                        Filter.equal("username", user.getName()),
-                        Filter.equal("user.name", user.getName()));
+        Filter securityFilter = createOwnershipFilter(user);
 
-        // Combine owner and advertisedFilter using OR
-        /* The user is the owner of the resource or the resource is advertised. */
-        Filter advertisedFiltering =
-                Filter.or(
-                        Filter.equal("username", user.getName()),
-                        Filter.equal("user.name", user.getName()),
-                        Filter.equal("resource.advertised", true));
-
-        if (user.getGroups() != null && !user.getGroups().isEmpty()) {
-            List<Long> groupsId = new ArrayList<>();
-            for (UserGroup group : user.getGroups()) {
-                groupsId.add(group.getId());
-            }
-
-            userFiltering =
-                    Filter.and(
-                            advertisedFiltering,
-                            Filter.or(userFiltering, Filter.in("group.id", groupsId)));
+        if (user.getIpAddress() != null) {
+            securityFilter = Filter.or(securityFilter, createIPRangeFilter(user));
         }
 
-        Filter securityFilter =
-                Filter.some("security", Filter.and(Filter.equal("canRead", true), userFiltering));
+        searchCriteria.addFilter(
+                Filter.some("security", Filter.and(Filter.equal("canRead", true), securityFilter)));
+    }
 
-        searchCriteria.addFilter(securityFilter);
+    private Filter createOwnershipFilter(User user) {
+        Filter userFilter =
+                Filter.or(
+                        Filter.equal(
+                                "username",
+                                user.getName()), // is SecurityRule's username even used?
+                        Filter.equal("user.name", user.getName()));
+
+        Filter ownershipFilter = userFilter;
+
+        if (user.getGroups() != null && !user.getGroups().isEmpty()) {
+            List<Long> groupIds =
+                    user.getGroups().stream().map(UserGroup::getId).collect(Collectors.toList());
+
+            /* When the user is part of a group, he should only see the group's advertised resources */
+            ownershipFilter =
+                    Filter.or(
+                            userFilter,
+                            Filter.and(
+                                    Filter.in("group.id", groupIds),
+                                    Filter.equal("resource.advertised", true)));
+        }
+        return ownershipFilter;
+    }
+
+    private Filter createIPRangeFilter(User user) {
+        BigInteger decimalIPAddress = user.getIpAddress().getValue();
+        return Filter.some(
+                "ipRanges",
+                Filter.and(
+                        Filter.lessOrEqual("ipLow", decimalIPAddress),
+                        Filter.greaterOrEqual("ipHigh", decimalIPAddress)));
     }
 
     /**

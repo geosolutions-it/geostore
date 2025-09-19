@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ *  Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  *  http://www.geo-solutions.it
  *
  *  GPLv3 + Classpath exception
@@ -33,8 +33,8 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
     /** Add security filtering in order to filter out resources the user has not read access to */
     void addReadSecurityConstraints(Search searchCriteria, User user);
 
-    /** Add security filtering in order to filter out resources hidden the user */
-    void addAdvertisedSecurityConstraints(Search searchCriteria, User user);
+    /** Add security filtering in order to filter out resources hidden to the user */
+    void addSecurityConstraintsToSearch(Search searchCriteria, User user);
 
     /**
      * @param userName

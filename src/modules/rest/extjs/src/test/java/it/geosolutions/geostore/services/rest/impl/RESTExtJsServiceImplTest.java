@@ -85,7 +85,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void setUp() throws Exception {
         assertNotNull(restExtJsService);
         removeAll();
-        mockHttpRequestIpAddressAttribute("localhost");
+        mockHttpRequestIpAddressAttribute("127.0.0.1");
     }
 
     @After
@@ -1323,10 +1323,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testExtResourcesList_userOwnedWithIPRangeRestriction() throws Exception {
+    public void testExtResourcesList_withIPRangeRestriction() throws Exception {
         final String CAT0_NAME = "CAT000";
-        final String ACCESSIBLE_RESOURCE_NAME = "ownedResource";
-        final String INACCESSIBLE_RESOURCE_NAME = "readOnlyResource";
 
         long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
@@ -1338,152 +1336,40 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         mockHttpRequestIpAddressAttribute("127.0.0.128");
 
-        /* admin owned resource */
-        restCreateResource("adminResource", "", CAT0_NAME, adminId, false);
-
-        /* accessible resource */
-        long accessibleResourceId =
-                restCreateResource(ACCESSIBLE_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+        /* visible resource */
+        long visibleResourceId = restCreateResource("ownedResource", "", CAT0_NAME, adminId, false);
 
         SecurityRule inclusiveSecurityRule = new SecurityRule();
-        inclusiveSecurityRule.setUser(userService.get(userId));
         inclusiveSecurityRule.setCanRead(true);
         inclusiveSecurityRule.setCanWrite(true);
 
         IPRange inclusiveIPRange = new IPRange();
-        inclusiveIPRange.setCidr("127.0.0.0/0");
+        inclusiveIPRange.setCidr("127.0.0.0/24");
+        ipRangeService.insert(inclusiveIPRange);
+
         inclusiveSecurityRule.setIpRanges(Set.of(inclusiveIPRange));
 
         restResourceService.updateSecurityRules(
                 adminSecurityContext,
-                accessibleResourceId,
+                visibleResourceId,
                 new SecurityRuleList(List.of(inclusiveSecurityRule)));
 
-        /* not accessible resource */
-        long inaccessibleResourceId =
-                restCreateResource(INACCESSIBLE_RESOURCE_NAME, "", CAT0_NAME, userId, false);
+        /* not visible resource */
+        long notVisibleResourceId =
+                restCreateResource("notVisibleResource", "", CAT0_NAME, adminId, false);
 
         SecurityRule exclusiveSecurityRule = new SecurityRule();
-        exclusiveSecurityRule.setUser(userService.get(userId));
         exclusiveSecurityRule.setCanRead(true);
-        exclusiveSecurityRule.setCanWrite(true);
 
         IPRange exclusiveIPRange = new IPRange();
         exclusiveIPRange.setCidr("192.168.1.1/32");
+        ipRangeService.insert(exclusiveIPRange);
+
         exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIPRange));
 
         restResourceService.updateSecurityRules(
                 adminSecurityContext,
-                inaccessibleResourceId,
-                new SecurityRuleList(Collections.singletonList(exclusiveSecurityRule)));
-
-        {
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            adminSecurityContext,
-                            0,
-                            1000,
-                            new Sort("", ""),
-                            false,
-                            false,
-                            false,
-                            false,
-                            new AndFilter());
-            List<ExtResource> resources = response.getList();
-            assertEquals(3, resources.size());
-            assertTrue(
-                    resources.stream()
-                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
-        }
-
-        {
-            ExtResourceList response =
-                    restExtJsService.getExtResourcesList(
-                            userSecurityContext,
-                            0,
-                            1000,
-                            new Sort("", ""),
-                            false,
-                            false,
-                            false,
-                            false,
-                            new AndFilter());
-            List<ExtResource> resources = response.getList();
-            assertEquals(2, resources.size());
-
-            ExtResource accessibleResource =
-                    resources.stream()
-                            .filter(r -> r.getName().equals(ACCESSIBLE_RESOURCE_NAME))
-                            .findFirst()
-                            .orElseThrow();
-            assertTrue(accessibleResource.isCanEdit());
-            assertTrue(accessibleResource.isCanDelete());
-            assertTrue(accessibleResource.isCanCopy());
-
-            ExtResource inaccessibleResource =
-                    resources.stream()
-                            .filter(r -> r.getName().equals(INACCESSIBLE_RESOURCE_NAME))
-                            .findFirst()
-                            .orElseThrow();
-            assertFalse(inaccessibleResource.isCanEdit());
-            assertFalse(inaccessibleResource.isCanDelete());
-            assertTrue(inaccessibleResource.isCanCopy());
-        }
-    }
-
-    @Test
-    public void testExtResourcesList_groupOwnedResourceWithIPRangeRestriction() throws Exception {
-        final String CAT0_NAME = "CAT000";
-        final String GROUP_ACCESSIBLE_RESOURCE_NAME = "groupAccessibleResource";
-        final String GROUP_INACCESSIBLE_RESOURCE_NAME = "groupInaccessibleResource";
-
-        long groupId = createGroup("group");
-        UserGroup group = userGroupService.get(groupId);
-
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
-        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
-
-        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
-        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
-
-        createCategory(CAT0_NAME);
-
-        mockHttpRequestIpAddressAttribute("127.0.0.128");
-
-        /* group owned resource - accessible */
-        long accessibleResourceId =
-                restCreateResource(GROUP_ACCESSIBLE_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
-
-        SecurityRule inclusiveSecurityRule = new SecurityRule();
-        inclusiveSecurityRule.setGroup(group);
-        inclusiveSecurityRule.setCanRead(true);
-        inclusiveSecurityRule.setCanWrite(true);
-
-        IPRange inclusiveIPRange = new IPRange();
-        inclusiveIPRange.setCidr("127.0.0.0/8");
-        inclusiveSecurityRule.setIpRanges(Set.of(inclusiveIPRange));
-
-        restResourceService.updateSecurityRules(
-                adminSecurityContext,
-                accessibleResourceId,
-                new SecurityRuleList(List.of(inclusiveSecurityRule)));
-
-        /* group owned resource - inaccessible */
-        long inaccessibleResourceId =
-                restCreateResource(GROUP_INACCESSIBLE_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
-
-        SecurityRule exclusiveSecurityRule = new SecurityRule();
-        exclusiveSecurityRule.setGroup(group);
-        exclusiveSecurityRule.setCanRead(true);
-        exclusiveSecurityRule.setCanWrite(true);
-
-        IPRange exclusiveIPRange = new IPRange();
-        exclusiveIPRange.setCidr("192.168.1.1/32");
-        exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIPRange));
-
-        restResourceService.updateSecurityRules(
-                adminSecurityContext,
-                inaccessibleResourceId,
+                notVisibleResourceId,
                 new SecurityRuleList(List.of(exclusiveSecurityRule)));
 
         {
@@ -1518,25 +1404,123 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             false,
                             new AndFilter());
             List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+
+            ExtResource visibleResource = resources.get(0);
+            assertEquals(visibleResourceId, visibleResource.getId().longValue());
+            assertTrue(visibleResource.isCanEdit());
+            assertTrue(visibleResource.isCanDelete());
+            assertTrue(visibleResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_ownedResourcesWithIPRangeRestriction() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String USER_OWNED_RESOURCE_NAME = "userOwnedResource";
+        final String GROUP_OWNED_RESOURCE_NAME = "groupOwnedResource";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        mockHttpRequestIpAddressAttribute("127.0.0.128");
+
+        SecurityRule exclusiveSecurityRule = new SecurityRule();
+        exclusiveSecurityRule.setCanRead(true);
+
+        IPRange exclusiveIPRange = new IPRange();
+        exclusiveIPRange.setCidr("192.168.1.1/32");
+        ipRangeService.insert(exclusiveIPRange);
+
+        exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIPRange));
+
+        /* user owned resource */
+        long userOwnedResourceId =
+                restCreateResource(USER_OWNED_RESOURCE_NAME, "", CAT0_NAME, adminId, false);
+
+        SecurityRule userSecurityRule = new SecurityRule();
+        userSecurityRule.setUser(userService.get(userId));
+        userSecurityRule.setCanRead(true);
+        userSecurityRule.setCanWrite(true);
+
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                userOwnedResourceId,
+                new SecurityRuleList(List.of(userSecurityRule, exclusiveSecurityRule)));
+
+        /* group owned resource */
+        long groupOwnedResourceId =
+                restCreateResource(GROUP_OWNED_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+
+        SecurityRule groupSecurityRule = new SecurityRule();
+        groupSecurityRule.setGroup(group);
+        groupSecurityRule.setCanRead(true);
+        groupSecurityRule.setCanWrite(true);
+
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                groupOwnedResourceId,
+                new SecurityRuleList(List.of(groupSecurityRule, exclusiveSecurityRule)));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
             assertEquals(2, resources.size());
 
-            ExtResource groupResource =
+            ExtResource userOwnedResource =
                     resources.stream()
-                            .filter(r -> r.getName().equals(GROUP_ACCESSIBLE_RESOURCE_NAME))
+                            .filter(r -> r.getName().equals(USER_OWNED_RESOURCE_NAME))
                             .findFirst()
                             .orElseThrow();
-            assertTrue(groupResource.isCanEdit());
-            assertTrue(groupResource.isCanDelete());
-            assertTrue(groupResource.isCanCopy());
+            assertTrue(userOwnedResource.isCanEdit());
+            assertTrue(userOwnedResource.isCanDelete());
+            assertTrue(userOwnedResource.isCanCopy());
 
-            ExtResource readOnlyResource =
+            ExtResource groupOwnedResource =
                     resources.stream()
-                            .filter(r -> r.getName().equals(GROUP_INACCESSIBLE_RESOURCE_NAME))
+                            .filter(r -> r.getName().equals(GROUP_OWNED_RESOURCE_NAME))
                             .findFirst()
                             .orElseThrow();
-            assertFalse(readOnlyResource.isCanEdit());
-            assertFalse(readOnlyResource.isCanDelete());
-            assertTrue(readOnlyResource.isCanCopy());
+            assertTrue(groupOwnedResource.isCanEdit());
+            assertTrue(groupOwnedResource.isCanDelete());
+            assertTrue(groupOwnedResource.isCanCopy());
         }
     }
 
@@ -1692,6 +1676,54 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             .findFirst()
                             .orElseThrow();
             assertFalse(nonFavoriteResource.isFavorite());
+        }
+    }
+
+    @Test
+    public void testGetExtResource_withoutSecurityInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        /* resource without security rules */
+        long noRulesResource = restCreateResource("noRulesResource", "", CAT0_NAME, userId, false);
+
+        restResourceService.updateSecurityRules(
+                adminSecurityContext, noRulesResource, new SecurityRuleList(List.of()));
+
+        /* resource with an empty security rule */
+        long emptyRuleResource =
+                restCreateResource("emptyRuleResource", "", CAT0_NAME, userId, false);
+
+        SecurityRule emptyRule = new SecurityRule();
+        emptyRule.setCanRead(true);
+        emptyRule.setCanWrite(true);
+
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                emptyRuleResource,
+                new SecurityRuleList(Collections.singletonList(emptyRule)));
+
+        {
+            assertThrows(
+                    ForbiddenErrorWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    userSecurityContext, noRulesResource, true, true, false));
+        }
+
+        {
+            assertThrows(
+                    ForbiddenErrorWebEx.class,
+                    () ->
+                            restExtJsService.getExtResource(
+                                    userSecurityContext, emptyRuleResource, true, true, false));
         }
     }
 
@@ -2177,7 +2209,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testGetExtResource_userOwnedWithIPRangeRestriction() throws Exception {
+    public void testGetExtResource_withIPRangeRestriction() throws Exception {
         final String CAT0_NAME = "CAT000";
 
         long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
@@ -2191,15 +2223,15 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         mockHttpRequestIpAddressAttribute("152.124.12.10");
 
         /* accessible resource */
-        long accessibleResourceId = restCreateResource("accessible", "", CAT0_NAME, userId, false);
+        long accessibleResourceId = restCreateResource("accessible", "", CAT0_NAME, adminId, false);
 
         SecurityRule inclusiveSecurityRule = new SecurityRule();
-        inclusiveSecurityRule.setUser(userService.get(userId));
         inclusiveSecurityRule.setCanRead(true);
         inclusiveSecurityRule.setCanWrite(true);
 
         IPRange inclusiveIPRange = new IPRange();
         inclusiveIPRange.setCidr("152.124.12.0/24");
+        ipRangeService.insert(inclusiveIPRange);
         inclusiveSecurityRule.setIpRanges(Set.of(inclusiveIPRange));
 
         restResourceService.updateSecurityRules(
@@ -2212,87 +2244,10 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 restCreateResource("inaccessible", "", CAT0_NAME, userId, false);
 
         SecurityRule exclusiveSecurityRule = new SecurityRule();
-        exclusiveSecurityRule.setUser(userService.get(userId));
-        exclusiveSecurityRule.setCanRead(true);
-        exclusiveSecurityRule.setCanWrite(true);
 
         IPRange exclusiveIPRange = new IPRange();
         exclusiveIPRange.setCidr("192.168.1.1/32");
-        exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIPRange));
-
-        restResourceService.updateSecurityRules(
-                adminSecurityContext,
-                inaccessibleResourceId,
-                new SecurityRuleList(Collections.singletonList(exclusiveSecurityRule)));
-
-        {
-            ExtShortResource response =
-                    restExtJsService.getExtResource(
-                            userSecurityContext, accessibleResourceId, true, true, false);
-
-            assertTrue(response.isCanEdit());
-            assertTrue(response.isCanDelete());
-            assertTrue(response.isCanCopy());
-        }
-
-        {
-            assertThrows(
-                    ForbiddenErrorWebEx.class,
-                    () ->
-                            restExtJsService.getExtResource(
-                                    userSecurityContext,
-                                    inaccessibleResourceId,
-                                    true,
-                                    true,
-                                    false));
-        }
-    }
-
-    @Test
-    public void testGetExtResource_groupOwnedWithIPRangeRestriction() throws Exception {
-        final String CAT0_NAME = "CAT000";
-
-        long groupId = createGroup("group");
-        UserGroup group = userGroupService.get(groupId);
-
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
-        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
-
-        long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
-        SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
-
-        createCategory(CAT0_NAME);
-
-        mockHttpRequestIpAddressAttribute("22.15.18.11");
-
-        /* accessible resource */
-        long accessibleResourceId = restCreateResource("accessible", "", CAT0_NAME, userId, false);
-
-        SecurityRule inclusiveSecurityRule = new SecurityRule();
-        inclusiveSecurityRule.setGroup(group);
-        inclusiveSecurityRule.setCanRead(true);
-        inclusiveSecurityRule.setCanWrite(true);
-
-        IPRange inclusiveIPRange = new IPRange();
-        inclusiveIPRange.setCidr("22.15.18.11/32");
-        inclusiveSecurityRule.setIpRanges(Set.of(inclusiveIPRange));
-
-        restResourceService.updateSecurityRules(
-                adminSecurityContext,
-                accessibleResourceId,
-                new SecurityRuleList(List.of(inclusiveSecurityRule)));
-
-        /* not accessible resource */
-        long inaccessibleResourceId =
-                restCreateResource("inaccessible", "", CAT0_NAME, userId, false);
-
-        SecurityRule exclusiveSecurityRule = new SecurityRule();
-        exclusiveSecurityRule.setGroup(group);
-        exclusiveSecurityRule.setCanRead(true);
-        exclusiveSecurityRule.setCanWrite(true);
-
-        IPRange exclusiveIPRange = new IPRange();
-        exclusiveIPRange.setCidr("192.168.1.1/32");
+        ipRangeService.insert(exclusiveIPRange);
         exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIPRange));
 
         restResourceService.updateSecurityRules(
@@ -2341,12 +2296,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long accessibleResourceId = restCreateResource("accessible", "", CAT0_NAME, userId, false);
 
         SecurityRule inclusiveSecurityRule = new SecurityRule();
-        inclusiveSecurityRule.setUser(userService.get(userId));
         inclusiveSecurityRule.setCanRead(true);
         inclusiveSecurityRule.setCanWrite(true);
 
         IPRange inclusiveIPRange = new IPRange();
         inclusiveIPRange.setCidr("12.0.0.0/8");
+        ipRangeService.insert(inclusiveIPRange);
         inclusiveSecurityRule.setIpRanges(Set.of(inclusiveIPRange));
 
         restResourceService.updateSecurityRules(
@@ -2359,12 +2314,12 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 restCreateResource("inaccessible", "", CAT0_NAME, userId, false);
 
         SecurityRule exclusiveSecurityRule = new SecurityRule();
-        exclusiveSecurityRule.setUser(userService.get(userId));
         exclusiveSecurityRule.setCanRead(true);
         exclusiveSecurityRule.setCanWrite(true);
 
         IPRange exclusiveIPRange = new IPRange();
         exclusiveIPRange.setCidr("192.168.1.1/32");
+        ipRangeService.insert(exclusiveIPRange);
         exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIPRange));
 
         restResourceService.updateSecurityRules(
