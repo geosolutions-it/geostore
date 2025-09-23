@@ -21,7 +21,4 @@ package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.IPRange;
 
-public interface IpRangeDAO extends RestrictedGenericDAO<IPRange> {
-
-    IPRange findByCidr(String cidr);
-}
+public interface IpRangeDAO extends RestrictedGenericDAO<IPRange> {}

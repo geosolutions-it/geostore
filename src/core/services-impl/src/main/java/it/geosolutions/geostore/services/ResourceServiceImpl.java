@@ -30,8 +30,6 @@ package it.geosolutions.geostore.services;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.Sort;
-import inet.ipaddr.AddressStringException;
-import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.dao.AttributeDAO;
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
@@ -708,7 +706,7 @@ public class ResourceServiceImpl implements ResourceService {
         searchCriteria.addFetches("security", "security.ipRanges");
         searchCriteria.setDistinct(true);
 
-        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, parameters.getAuthUser());
+        securityDAO.addSecurityConstraintsToSearch(searchCriteria, parameters.getAuthUser());
         return this.search(searchCriteria);
     }
 
@@ -804,12 +802,12 @@ public class ResourceServiceImpl implements ResourceService {
             List<SecurityRule> resourceActualRules = this.securityDAO.search(searchCriteria);
 
             // remove previous rules
-            for (SecurityRule rule : resourceActualRules) {
-                securityDAO.remove(rule);
-            }
+            resourceActualRules.forEach(rule -> securityDAO.remove(rule));
+
             // insert new rules
             for (SecurityRule rule : rules) {
                 rule.setResource(resource);
+
                 if (rule.getGroup() != null) {
                     UserGroup ug = userGroupDAO.find(rule.getGroup().getId());
                     if (ug != null) {
@@ -818,7 +816,7 @@ public class ResourceServiceImpl implements ResourceService {
                 }
 
                 if (rule.getIpRanges() != null) {
-                    rule.setIpRanges(calculateRuleUpdatedIPRanges(rule));
+                    rule.setIpRanges(fetchRuleIPRanges(rule));
                 }
 
                 securityDAO.persist(rule);
@@ -828,30 +826,16 @@ public class ResourceServiceImpl implements ResourceService {
         }
     }
 
-    private Set<IPRange> calculateRuleUpdatedIPRanges(SecurityRule rule)
-            throws InternalErrorServiceEx {
-        try {
-            validateSecurityRuleIPRanges(rule.getIpRanges());
-            return rule.getIpRanges().stream().map(this::fetchIPRange).collect(Collectors.toSet());
-        } catch (AddressStringException ex) {
-            throw new InternalErrorServiceEx(
-                    "Error parsing security rule IP ranges. " + ex.getMessage());
-        }
+    private Set<IPRange> fetchRuleIPRanges(SecurityRule rule) {
+        return rule.getIpRanges().stream()
+                .map(this::fetchIPRange)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
     }
 
-    private void validateSecurityRuleIPRanges(Set<IPRange> ipRanges) throws AddressStringException {
-        for (IPRange ipRange : ipRanges) {
-            new IPAddressString(ipRange.getCidr()).toAddress();
-        }
-    }
-
-    private IPRange fetchIPRange(IPRange ipRange) {
-        return Optional.ofNullable(ipRangeDAO.findByCidr(ipRange.getCidr()))
-                .orElseGet(
-                        () -> {
-                            ipRangeDAO.persist(ipRange);
-                            return ipRange;
-                        });
+    private Optional<IPRange> fetchIPRange(IPRange ipRange) {
+        return Optional.ofNullable(ipRangeDAO.find(ipRange.getId()));
     }
 
     @Override
@@ -871,7 +855,7 @@ public class ResourceServiceImpl implements ResourceService {
             searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", user.getId()));
         }
 
-        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
+        securityDAO.addSecurityConstraintsToSearch(searchCriteria, user);
         return resourceDAO.count(searchCriteria);
     }
 
@@ -884,7 +868,7 @@ public class ResourceServiceImpl implements ResourceService {
             searchCriteria.addFilterILike("name", nameLike);
         }
 
-        securityDAO.addAdvertisedSecurityConstraints(searchCriteria, user);
+        securityDAO.addSecurityConstraintsToSearch(searchCriteria, user);
 
         return resourceDAO.count(searchCriteria);
     }

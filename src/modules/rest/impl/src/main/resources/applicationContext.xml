@@ -72,6 +72,10 @@
           class="it.geosolutions.geostore.services.rest.impl.RESTFavoriteServiceImpl">
     </bean>
 
+    <bean id="restIPRangeService"
+          class="it.geosolutions.geostore.services.rest.impl.RESTIPRangeServiceImpl">
+    </bean>
+
     <bean id="sessionServiceDelegate"
           class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
         <constructor-arg ref="restSessionService"/>
@@ -208,6 +212,25 @@
     <jaxrs:server id="geoStoreRESTUserGroup" address="/usergroups">
         <jaxrs:serviceBeans>
             <ref bean="restUserGroupService"/>
+        </jaxrs:serviceBeans>
+
+        <jaxrs:features>
+            <cxf:logging/>
+        </jaxrs:features>
+
+        <jaxrs:providers>
+            <ref bean="jaxbXmlProvider"/>
+            <ref bean="jsonProvider"/>
+            <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
+        </jaxrs:providers>
+        <jaxrs:outInterceptors>
+            <ref bean="noCacheInterceptor"/>
+        </jaxrs:outInterceptors>
+    </jaxrs:server>
+
+    <jaxrs:server id="geoStoreRESTIPRange" address="/ipranges">
+        <jaxrs:serviceBeans>
+            <ref bean="restIPRangeService"/>
         </jaxrs:serviceBeans>
 
         <jaxrs:features>

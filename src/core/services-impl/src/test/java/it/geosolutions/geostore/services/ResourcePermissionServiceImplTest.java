@@ -19,8 +19,10 @@
 package it.geosolutions.geostore.services;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -103,7 +105,7 @@ public class ResourcePermissionServiceImplTest {
         User user = new User();
         user.setId(100L);
         user.setRole(Role.USER);
-        user.setIpAddress("1.2.3.4");
+        user.setIpAddress(new IPAddressString("1.2.3.4").getAddress());
 
         // Create IP range for the security rule that contains user's IP address
         IPRange ipRange = new IPRange();
@@ -111,7 +113,6 @@ public class ResourcePermissionServiceImplTest {
 
         // Create a security rule with read and write permissions
         SecurityRule rule = new SecurityRule();
-        rule.setUser(user);
         rule.setCanRead(true);
         rule.setCanWrite(true);
         rule.setIpRanges(Set.of(ipRange));
@@ -130,8 +131,7 @@ public class ResourcePermissionServiceImplTest {
         User user = new User();
         user.setId(100L);
         user.setRole(Role.USER);
-        user.setIpAddress("127.0.0.1");
-        user.setGroups(Set.of());
+        user.setIpAddress(new IPAddressString("127.0.0.1").getAddress());
 
         // Create IP range for the security rule that does not contain user's IP address
         IPRange ipRange = new IPRange();
@@ -139,7 +139,6 @@ public class ResourcePermissionServiceImplTest {
 
         // Create a security rule with read and write permissions
         SecurityRule rule = new SecurityRule();
-        rule.setUser(user);
         rule.setCanRead(true);
         rule.setCanWrite(true);
         rule.setIpRanges(Set.of(ipRange));
@@ -153,90 +152,53 @@ public class ResourcePermissionServiceImplTest {
     }
 
     @Test
-    public void testUserInGroupCanAccessByIPAddress() {
-        // Create a group
-        UserGroup group = new UserGroup();
-        group.setId(888L);
-
-        // Create a user in the group
-        User user = new User();
-        user.setId(100L);
-        user.setRole(Role.USER);
-        user.setIpAddress("1.2.3.4");
-        user.setGroups(Set.of(group));
-
-        // Create IP range for the security rule that contains user's IP address
-        IPRange ipRange = new IPRange();
-        ipRange.setCidr("1.2.3.0/24");
-
-        // Create a group security rule with read and write permissions
-        SecurityRule rule = new SecurityRule();
-        rule.setGroup(group);
-        rule.setCanRead(true);
-        rule.setCanWrite(true);
-        rule.setIpRanges(Set.of(ipRange));
-
-        Resource resource = new Resource();
-        resource.setSecurity(Collections.singletonList(rule));
-
-        // Assert that access is allowed
-        assertTrue(service.canResourceBeReadByUser(resource, user));
-        assertTrue(service.canResourceBeWrittenByUser(resource, user));
-    }
-
-    @Test
-    public void testUserInGroupCannotAccessByIPAddress() {
-        // Create a group
-        UserGroup group = new UserGroup();
-        group.setId(888L);
-
-        // Create a user in the group
-        User user = new User();
-        user.setId(100L);
-        user.setRole(Role.USER);
-        user.setIpAddress("1.2.3.4");
-        user.setGroups(Set.of(group));
-
-        // Create IP range for the security rule that does not contain user's IP address
-        IPRange ipRange = new IPRange();
-        ipRange.setCidr("121.52.23.220/15");
-
-        // Create a group security rule with read and write permissions
-        SecurityRule rule = new SecurityRule();
-        rule.setGroup(group);
-        rule.setCanRead(true);
-        rule.setCanWrite(true);
-        rule.setIpRanges(Set.of(ipRange));
-
-        Resource resource = new Resource();
-        resource.setSecurity(Collections.singletonList(rule));
-
-        // Assert that access is not allowed
-        assertFalse(service.canResourceBeReadByUser(resource, user));
-        assertFalse(service.canResourceBeWrittenByUser(resource, user));
-    }
-
-    @Test
-    public void testUserCanAccessIfIPRangeAppliesToAnotherRule() {
+    public void testUserCannotAccessIfIPAddressIsMissing() {
         // Create a user
         User user = new User();
         user.setId(100L);
         user.setRole(Role.USER);
-        user.setIpAddress("127.0.0.1");
-        user.setGroups(Set.of());
+        user.setIpAddress(null);
 
-        // Create a group
-        UserGroup group = new UserGroup();
-        group.setId(888L);
+        // Create IP range for the security rule
+        IPRange ipRange = new IPRange();
+        ipRange.setCidr("101.102.103.104/32");
 
-        // Create IP range for the security rule that does not contain user's IP address
+        // Create a security rule with read and write permissions
+        SecurityRule rule = new SecurityRule();
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        rule.setIpRanges(Set.of(ipRange));
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(rule));
+
+        // Assert that access is not permitted
+        IllegalStateException readException =
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> service.canResourceBeReadByUser(resource, user));
+        assertTrue(readException.getMessage().contains("Missing IP address"));
+        IllegalStateException writeException =
+                assertThrows(
+                        IllegalStateException.class,
+                        () -> service.canResourceBeWrittenByUser(resource, user));
+        assertTrue(writeException.getMessage().contains("Missing IP address"));
+    }
+
+    @Test
+    public void testUserCanAccessIfIPRangeAppliesToAdditionalRule() {
+        // Create a user
+        User user = new User();
+        user.setId(100L);
+        user.setRole(Role.USER);
+        user.setIpAddress(new IPAddressString("127.0.0.1").getAddress());
+
+        // Create IP range that does not contain user's IP address
         IPRange ipRange = new IPRange();
         ipRange.setCidr("1.2.3.4/32");
 
-        // Create a security rule with an IPRange for the group
+        // Create a security rule with an IPRange
         SecurityRule ruleWithIPRange = new SecurityRule();
-        ruleWithIPRange.setGroup(group);
-        ruleWithIPRange.setCanWrite(true);
         ruleWithIPRange.setIpRanges(Set.of(ipRange));
 
         // Create a security rule for the user without an IPRange
@@ -254,17 +216,51 @@ public class ResourcePermissionServiceImplTest {
     }
 
     @Test
+    public void testUserCanAccessIfRulesHaveConflictingIPRanges() {
+        // Create a user
+        User user = new User();
+        user.setId(100L);
+        user.setRole(Role.USER);
+        user.setIpAddress(new IPAddressString("127.0.0.1").getAddress());
+
+        // Create IP range that contains user's IP address
+        IPRange inclusiveIpRange = new IPRange();
+        inclusiveIpRange.setCidr("127.0.0.0/24");
+
+        // Create IP range that does not contain user's IP address
+        IPRange exclusiveIpRange = new IPRange();
+        exclusiveIpRange.setCidr("1.2.3.4/32");
+
+        // Create security rules for the IP ranges
+        SecurityRule inclusiveSecurityRule = new SecurityRule();
+        inclusiveSecurityRule.setCanRead(true);
+        inclusiveSecurityRule.setCanWrite(true);
+        inclusiveSecurityRule.setIpRanges(Set.of(inclusiveIpRange));
+
+        SecurityRule exclusiveSecurityRule = new SecurityRule();
+        exclusiveSecurityRule.setCanRead(true);
+        exclusiveSecurityRule.setCanWrite(true);
+        exclusiveSecurityRule.setIpRanges(Set.of(exclusiveIpRange));
+
+        Resource resource = new Resource();
+        resource.setSecurity(List.of(inclusiveSecurityRule, exclusiveSecurityRule));
+
+        // Assert that access is allowed
+        assertTrue(service.canResourceBeReadByUser(resource, user));
+        assertTrue(service.canResourceBeWrittenByUser(resource, user));
+    }
+
+    @Test
     public void testPermissionsWithDefaultNetworkIPAddress() {
         User user = new User();
         user.setId(100L);
         user.setRole(Role.USER);
-        user.setIpAddress("15.222.30.111");
+        user.setIpAddress(new IPAddressString("15.222.30.111").getAddress());
 
         IPRange ipRange = new IPRange();
         ipRange.setCidr("0.0.0.0/0");
 
         SecurityRule rule = new SecurityRule();
-        rule.setUser(user);
         rule.setCanRead(true);
         rule.setCanWrite(true);
         rule.setIpRanges(Set.of(ipRange));
@@ -281,13 +277,12 @@ public class ResourcePermissionServiceImplTest {
         User user = new User();
         user.setId(100L);
         user.setRole(Role.USER);
-        user.setIpAddress("192.168.1.0");
+        user.setIpAddress(new IPAddressString("192.168.1.0").getAddress());
 
         IPRange ipRange = new IPRange();
         ipRange.setCidr("192.168.1.0/32");
 
         SecurityRule rule = new SecurityRule();
-        rule.setUser(user);
         rule.setCanRead(true);
         rule.setCanWrite(true);
         rule.setIpRanges(Set.of(ipRange));
@@ -300,11 +295,11 @@ public class ResourcePermissionServiceImplTest {
     }
 
     @Test
-    public void testPermissionsWithMultipleCidrs() {
+    public void testPermissionsWithMultipleConflictingCidrs() {
         User user = new User();
         user.setId(100L);
         user.setRole(Role.USER);
-        user.setIpAddress("122.15.55.34");
+        user.setIpAddress(new IPAddressString("122.15.55.34").getAddress());
 
         IPRange ipRangeExclusive = new IPRange();
         ipRangeExclusive.setCidr("192.168.1.0/12");
@@ -312,7 +307,6 @@ public class ResourcePermissionServiceImplTest {
         ipRangeInclusive.setCidr("122.15.0.0/16");
 
         SecurityRule rule = new SecurityRule();
-        rule.setUser(user);
         rule.setCanRead(true);
         rule.setCanWrite(true);
         rule.setIpRanges(Set.of(ipRangeExclusive, ipRangeInclusive));

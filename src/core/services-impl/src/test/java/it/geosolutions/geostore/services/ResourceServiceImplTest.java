@@ -19,8 +19,6 @@
  */
 package it.geosolutions.geostore.services;
 
-import static org.junit.Assert.assertThrows;
-
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
@@ -36,7 +34,6 @@ import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
-import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,7 +43,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import org.junit.Test;
 
 /**
  * Class ResourceServiceImplTest.
@@ -55,7 +51,6 @@ import org.junit.Test;
  */
 public class ResourceServiceImplTest extends ServiceTestBase {
 
-    @Test
     public void testInsertDeleteResource() throws Exception {
         long resourceId = createResource("name1", "description1", "MAP");
 
@@ -64,7 +59,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(0, resourceService.getCount(null));
     }
 
-    @Test
     public void testUpdateData() throws Exception {
         final String NAME1 = "name1";
         final String NAME2 = "name2";
@@ -98,7 +92,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         }
     }
 
-    @Test
     public void testGetAllData() throws Exception {
         assertEquals(
                 0,
@@ -162,7 +155,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
      *
      * @throws Exception
      */
-    @Test
     public void testSorting() throws Exception {
         assertEquals(
                 0,
@@ -272,7 +264,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         return true;
     }
 
-    @Test
     public void testCategoryFilter() throws Exception {
         assertEquals(0, categoryService.getAll(null, null).size());
 
@@ -345,7 +336,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         }
     }
 
-    @Test
     public void testGetSecurityRules() throws Exception {
         long userId = createUser("user1", Role.USER, "password");
         User user = new User();
@@ -389,7 +379,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals((Long) resourceId, groupRule.getResource().getId());
     }
 
-    @Test
     public void testUpdateSecurityRules() throws Exception {
         long resourceId = createResource("name1", "description1", "MAP");
 
@@ -450,7 +439,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(3, writtenRules.size());
     }
 
-    @Test
     public void testUpdateIpRangesInSecurityRules() throws Exception {
 
         long resourceId = createResource("name1", "description1", "MAP");
@@ -460,10 +448,12 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         IPRange ipRangeA = new IPRange();
         ipRangeA.setCidr("127.0.0.1/11");
         ipRangeA.setDescription("rangeA");
+        ipRangeService.insert(ipRangeA);
 
         IPRange ipRangeB = new IPRange();
         ipRangeB.setCidr("192.168.1.1/24");
         ipRangeB.setDescription("rangeB");
+        ipRangeService.insert(ipRangeB);
 
         /* initialize security rules for resource */
         SecurityRule ruleA = new SecurityRuleBuilder().ipRanges(Set.of(ipRangeA)).build();
@@ -518,27 +508,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
                         .contains("rangeA"));
     }
 
-    @Test
-    public void testUpdateIpRangesInSecurityRulesWithInvalidCidr() throws Exception {
-
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("555.000.xxx.1111/1a1");
-
-        SecurityRule rule = new SecurityRuleBuilder().ipRanges(Set.of(invalidIPRange)).build();
-
-        InternalErrorServiceEx internalErrorServiceEx =
-                assertThrows(
-                        InternalErrorServiceEx.class,
-                        () -> resourceService.updateSecurityRules(resourceId, List.of(rule)));
-        assertTrue(
-                internalErrorServiceEx
-                        .getMessage()
-                        .contains("Error parsing security rule IP ranges"));
-    }
-
-    @Test
     public void testInsertTooBigResource() throws Exception {
         final String ORIG_RES_NAME = "testRes";
         final String DESCRIPTION = "description";
@@ -563,7 +532,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         return sb.toString();
     }
 
-    @Test
     public void testInsertUpdateDuplicatedResource() throws Exception {
         final String ORIG_RES_NAME = "testRes";
         final String DESCRIPTION = "description";
@@ -649,7 +617,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals(0, resourceService.getCount(null));
     }
 
-    @Test
     public void testInsertUpdateCreatorAndEditor() throws Exception {
         final String ORIG_RES_NAME = "testRes";
         final String DESCRIPTION = "description";
@@ -674,7 +641,6 @@ public class ResourceServiceImplTest extends ServiceTestBase {
         assertEquals("USER1Updated", resource.getEditor());
     }
 
-    @Test
     public void testUnadvertisedResources() throws Exception {
         long groupId = createGroup("group1");
         UserGroup group = new UserGroup();

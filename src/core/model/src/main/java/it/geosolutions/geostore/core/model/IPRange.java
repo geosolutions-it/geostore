@@ -28,19 +28,18 @@
 package it.geosolutions.geostore.core.model;
 
 import java.io.Serializable;
+import java.math.BigInteger;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
 import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @Entity(name = "IPRange")
 @Table(
         name = "gs_ip_range",
-        indexes = {@Index(name = "idx_ip_range_cidr", columnList = "cidr", unique = true)})
-@XmlRootElement(name = "IPRange")
+        indexes = {@Index(name = "idx_ip_range_lookup", columnList = "ip_low, ip_high")})
 public class IPRange implements Serializable {
 
     @Id @GeneratedValue private Long id;
@@ -49,6 +48,12 @@ public class IPRange implements Serializable {
     private String cidr;
 
     @Column private String description;
+
+    @Column(name = "ip_low", precision = 39, scale = 0)
+    private BigInteger ipLow;
+
+    @Column(name = "ip_high", precision = 39, scale = 0)
+    private BigInteger ipHigh;
 
     public Long getId() {
         return id;
@@ -74,6 +79,22 @@ public class IPRange implements Serializable {
         this.description = description;
     }
 
+    public BigInteger getIpLow() {
+        return ipLow;
+    }
+
+    public void setIpLow(BigInteger ipLow) {
+        this.ipLow = ipLow;
+    }
+
+    public BigInteger getIpHigh() {
+        return ipHigh;
+    }
+
+    public void setIpHigh(BigInteger ipHigh) {
+        this.ipHigh = ipHigh;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -81,6 +102,8 @@ public class IPRange implements Serializable {
         result = (prime * result) + ((id == null) ? 0 : id.hashCode());
         result = (prime * result) + ((cidr == null) ? 0 : cidr.hashCode());
         result = (prime * result) + ((description == null) ? 0 : description.hashCode());
+        result = (prime * result) + ((ipLow == null) ? 0 : ipLow.hashCode());
+        result = (prime * result) + ((ipHigh == null) ? 0 : ipHigh.hashCode());
 
         return result;
     }
@@ -119,6 +142,20 @@ public class IPRange implements Serializable {
         } else if (!description.equals(other.description)) {
             return false;
         }
+        if (ipLow == null) {
+            if (other.ipLow != null) {
+                return false;
+            }
+        } else if (!ipLow.equals(other.ipLow)) {
+            return false;
+        }
+        if (ipHigh == null) {
+            if (other.ipHigh != null) {
+                return false;
+            }
+        } else if (!ipHigh.equals(other.ipHigh)) {
+            return false;
+        }
         return true;
     }
 
@@ -139,6 +176,16 @@ public class IPRange implements Serializable {
         if (description != null) {
             builder.append(", ");
             builder.append("description=").append(description);
+        }
+
+        if (ipLow != null && ipHigh != null) {
+            builder.append(", ");
+            builder.append("range=")
+                    .append("[")
+                    .append(ipLow)
+                    .append(":")
+                    .append(ipHigh)
+                    .append("]");
         }
 
         builder.append(']');

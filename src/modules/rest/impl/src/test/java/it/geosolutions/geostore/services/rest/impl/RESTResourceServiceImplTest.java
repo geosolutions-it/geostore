@@ -30,7 +30,6 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
-import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTAttribute;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
@@ -51,15 +50,15 @@ import org.springframework.web.context.request.RequestContextHolder;
  */
 public class RESTResourceServiceImplTest extends ServiceTestBase {
 
-    RESTResourceServiceImpl restService;
+    RESTResourceServiceImpl restResourceService;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        restService = new RESTResourceServiceImpl();
-        restService.setResourceService(resourceService);
-        restService.setResourcePermissionService(resourcePermissionService);
-        mockHttpRequestIpAddressAttribute();
+        restResourceService = new RESTResourceServiceImpl();
+        restResourceService.setResourceService(resourceService);
+        restResourceService.setResourcePermissionService(resourcePermissionService);
+        mockHttpRequestIPAddressAttribute();
     }
 
     @After
@@ -107,18 +106,18 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         restAttribute.setValue(VALUE);
 
         // attempt to update the attribute from rest service
-        restService.updateAttribute(sc, resourceId, restAttribute);
+        restResourceService.updateAttribute(sc, resourceId, restAttribute);
 
-        Resource sr = restService.get(sc, resourceId, false);
+        Resource sr = restResourceService.get(sc, resourceId, false);
 
         // verify the attribute has been changed
         Attribute attribute = sr.getAttribute().get(0);
-        assertEquals(attribute.getName(), NAME);
-        assertEquals(attribute.getValue(), VALUE);
-        assertEquals(attribute.getType(), DataType.STRING);
+        assertEquals(NAME, attribute.getName());
+        assertEquals(VALUE, attribute.getValue());
+        assertEquals(DataType.STRING, attribute.getType());
 
-        assertEquals(sr.getCreator(), "u0");
-        assertEquals(sr.getEditor(), "u0");
+        assertEquals("u0", sr.getCreator());
+        assertEquals("u0", sr.getEditor());
 
         // Update rule as "user1"
         // insert fake user for security context
@@ -137,18 +136,18 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         restAttribute.setValue(VALUE);
 
         // attempt to update the attribute from rest service
-        restService.updateAttribute(sc, resourceId, restAttribute);
+        restResourceService.updateAttribute(sc, resourceId, restAttribute);
 
-        sr = restService.get(sc, resourceId, false);
+        sr = restResourceService.get(sc, resourceId, false);
 
         // verify the attribute has been changed
         attribute = sr.getAttribute().get(0);
-        assertEquals(attribute.getName(), NAME);
-        assertEquals(attribute.getValue(), VALUE);
-        assertEquals(attribute.getType(), DataType.STRING);
+        assertEquals(NAME, attribute.getName());
+        assertEquals(VALUE, attribute.getValue());
+        assertEquals(DataType.STRING, attribute.getType());
 
-        assertEquals(sr.getCreator(), "u0");
-        assertEquals(sr.getEditor(), "u1");
+        assertEquals("u0", sr.getCreator());
+        assertEquals("u1", sr.getEditor());
     }
 
     @Test
@@ -164,12 +163,12 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         assertThrows(
                 ForbiddenErrorWebEx.class,
                 () ->
-                        restService.updateSecurityRules(
+                        restResourceService.updateSecurityRules(
                                 sc, resourceId, new SecurityRuleList(List.of(securityRule))));
     }
 
     @Test
-    public void testUpdateResource_ipRangeUpdate() throws Exception {
+    public void testUpdateResourceSecurityRules_ipRangeUpdate() throws Exception {
 
         long adminId = createUser("user", Role.ADMIN, "user");
         long resourceId = createResource("name1", "description1", "MAP");
@@ -179,12 +178,13 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         IPRange ipRange = new IPRange();
         ipRange.setCidr("192.168.1.1/24");
         ipRange.setDescription("range");
+        ipRangeService.insert(ipRange);
 
         SecurityRuleList securityRulelist =
                 new SecurityRuleList(
                         List.of(new SecurityRuleBuilder().ipRanges(Set.of(ipRange)).build()));
 
-        restService.updateSecurityRules(sc, resourceId, securityRulelist);
+        restResourceService.updateSecurityRules(sc, resourceId, securityRulelist);
 
         List<SecurityRule> securityRules = resourceService.getSecurityRules(resourceId);
 
@@ -193,165 +193,6 @@ public class RESTResourceServiceImplTest extends ServiceTestBase {
         assertEquals(1, ipRanges.size());
         IPRange savedIpRange = new ArrayList<>(ipRanges).get(0);
         assertEquals(ipRange.getCidr(), savedIpRange.getCidr());
-        assertEquals(ipRange.getDescription(), savedIpRange.getDescription());
-    }
-
-    @Test
-    public void testUpdateResource_ipRangeUpdateWithInvalidCidrFormat() throws Exception {
-
-        long adminId = createUser("user", Role.ADMIN, "user");
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        SecurityContext sc = new MockSecurityContext(userService.get(adminId));
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("1.1.1.1");
-
-        SecurityRuleList securityRulelist =
-                new SecurityRuleList(
-                        List.of(
-                                new SecurityRuleBuilder()
-                                        .ipRanges(Set.of(invalidIPRange))
-                                        .build()));
-
-        BadRequestWebEx badRequestWebEx =
-                assertThrows(
-                        BadRequestWebEx.class,
-                        () -> restService.updateSecurityRules(sc, resourceId, securityRulelist));
-        assertTrue(badRequestWebEx.getMessage().contains("Invalid CIDR format"));
-    }
-
-    @Test
-    public void testUpdateResource_ipRangeUpdateWithInvalidCidr() throws Exception {
-
-        long adminId = createUser("user", Role.ADMIN, "user");
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        SecurityContext sc = new MockSecurityContext(userService.get(adminId));
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("a.0.b.1.xx/s");
-
-        SecurityRuleList securityRulelist =
-                new SecurityRuleList(
-                        List.of(
-                                new SecurityRuleBuilder()
-                                        .ipRanges(Set.of(invalidIPRange))
-                                        .build()));
-
-        BadRequestWebEx badRequestWebEx =
-                assertThrows(
-                        BadRequestWebEx.class,
-                        () -> restService.updateSecurityRules(sc, resourceId, securityRulelist));
-        assertTrue(badRequestWebEx.getMessage().contains("Malformed IP address"));
-    }
-
-    @Test
-    public void testUpdateResource_ipRangeUpdateWithMissingPrefix() throws Exception {
-
-        long adminId = createUser("user", Role.ADMIN, "user");
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        SecurityContext sc = new MockSecurityContext(userService.get(adminId));
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("192.165.1.5/");
-
-        SecurityRuleList securityRulelist =
-                new SecurityRuleList(
-                        List.of(
-                                new SecurityRuleBuilder()
-                                        .ipRanges(Set.of(invalidIPRange))
-                                        .build()));
-
-        BadRequestWebEx badRequestWebEx =
-                assertThrows(
-                        BadRequestWebEx.class,
-                        () -> restService.updateSecurityRules(sc, resourceId, securityRulelist));
-        assertTrue(badRequestWebEx.getMessage().contains("Invalid CIDR format"));
-    }
-
-    @Test
-    public void testUpdateResource_ipRangeUpdateWithInvalidIP() throws Exception {
-
-        long adminId = createUser("user", Role.ADMIN, "user");
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        SecurityContext sc = new MockSecurityContext(userService.get(adminId));
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("666.555.444.333/222");
-
-        SecurityRuleList securityRulelist =
-                new SecurityRuleList(
-                        List.of(
-                                new SecurityRuleBuilder()
-                                        .ipRanges(Set.of(invalidIPRange))
-                                        .build()));
-
-        BadRequestWebEx badRequestWebEx =
-                assertThrows(
-                        BadRequestWebEx.class,
-                        () -> restService.updateSecurityRules(sc, resourceId, securityRulelist));
-        assertTrue(
-                badRequestWebEx
-                        .getMessage()
-                        .contains(invalidIPRange.getCidr() + " IP Address error"));
-    }
-
-    @Test
-    public void testUpdateResource_ipRangeUpdateWithInvalidCidrPrefix() throws Exception {
-
-        long adminId = createUser("user", Role.ADMIN, "user");
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        SecurityContext sc = new MockSecurityContext(userService.get(adminId));
-
-        IPRange invalidIPRange = new IPRange();
-        invalidIPRange.setCidr("1.1.1.1/555");
-
-        SecurityRuleList securityRulelist =
-                new SecurityRuleList(
-                        List.of(
-                                new SecurityRuleBuilder()
-                                        .ipRanges(Set.of(invalidIPRange))
-                                        .build()));
-
-        BadRequestWebEx badRequestWebEx =
-                assertThrows(
-                        BadRequestWebEx.class,
-                        () -> restService.updateSecurityRules(sc, resourceId, securityRulelist));
-        assertTrue(
-                badRequestWebEx
-                        .getMessage()
-                        .contains(invalidIPRange.getCidr() + " IP Address error"));
-    }
-
-    @Test
-    public void testUpdateResource_ipRangeUpdateSanitizingInput() throws Exception {
-
-        long adminId = createUser("user", Role.ADMIN, "user");
-        long resourceId = createResource("name1", "description1", "MAP");
-
-        SecurityContext sc = new MockSecurityContext(userService.get(adminId));
-
-        IPRange ipRange = new IPRange();
-        ipRange.setCidr("008.08.8.80/0");
-        ipRange.setDescription("sanitize");
-
-        SecurityRuleList securityRulelist =
-                new SecurityRuleList(
-                        List.of(new SecurityRuleBuilder().ipRanges(Set.of(ipRange)).build()));
-
-        restService.updateSecurityRules(sc, resourceId, securityRulelist);
-
-        List<SecurityRule> securityRules = resourceService.getSecurityRules(resourceId);
-
-        assertEquals(1, securityRules.size());
-        Set<IPRange> ipRanges = securityRules.get(0).getIpRanges();
-        assertEquals(1, ipRanges.size());
-        IPRange savedIpRange = new ArrayList<>(ipRanges).get(0);
-        assertEquals("8.8.8.80/0", savedIpRange.getCidr());
         assertEquals(ipRange.getDescription(), savedIpRange.getDescription());
     }
 }

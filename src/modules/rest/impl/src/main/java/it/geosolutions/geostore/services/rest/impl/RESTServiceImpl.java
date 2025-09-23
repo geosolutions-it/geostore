@@ -27,6 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import inet.ipaddr.AddressStringException;
+import inet.ipaddr.IPAddress;
+import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -109,7 +112,7 @@ public abstract class RESTServiceImpl {
 
             if (usrToken.getPrincipal() instanceof User) {
                 User user = (User) usrToken.getPrincipal();
-                user.setIpAddress(extractClientIp());
+                user.setIpAddress(extractClientIpAddress());
 
                 LOGGER.info(
                         "Accessing service with user '{}', role '{}', and IP '{}'",
@@ -124,10 +127,24 @@ public abstract class RESTServiceImpl {
         }
     }
 
-    public String extractClientIp() {
-        return extractClientIpFromRequest(
-                ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
-                        .getRequest());
+    private IPAddress extractClientIpAddress() {
+        try {
+            String ipString =
+                    extractClientIpFromRequest(
+                            ((ServletRequestAttributes)
+                                            RequestContextHolder.currentRequestAttributes())
+                                    .getRequest());
+
+            if (ipString.startsWith("[")) {
+                /* removing parenthesis in IPv6 addresses */
+                ipString = ipString.replaceAll("^\\[|]$", "");
+            }
+
+            return new IPAddressString(ipString).toAddress();
+        } catch (AddressStringException ex) {
+            LOGGER.error("Cannot identify user's IP address", ex);
+            throw new InternalErrorWebEx("Cannot identify user's IP address");
+        }
     }
 
     private String extractClientIpFromRequest(HttpServletRequest request) {
@@ -197,7 +214,7 @@ public abstract class RESTServiceImpl {
         User guest = new User();
         guest.setName("guest");
         guest.setRole(Role.GUEST);
-        HashSet<UserGroup> groups = new HashSet<UserGroup>();
+        HashSet<UserGroup> groups = new HashSet<>();
         UserGroup everyoneGroup = new UserGroup();
         everyoneGroup.setEnabled(true);
         everyoneGroup.setId(-1L);

@@ -20,9 +20,7 @@
 
 package it.geosolutions.geostore.core.dao.impl;
 
-import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
-import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
 import it.geosolutions.geostore.core.model.IPRange;
 import java.util.List;
@@ -38,7 +36,7 @@ public class IpRangeDAOImpl extends BaseDAO<IPRange, Long> implements IpRangeDAO
     @Override
     public void persist(IPRange... entities) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Inserting new entities for IPRange ... ");
+            LOGGER.info("Inserting new entities for IPRange...");
         }
 
         super.persist(entities);
@@ -73,16 +71,5 @@ public class IpRangeDAOImpl extends BaseDAO<IPRange, Long> implements IpRangeDAO
     @Override
     public int count(ISearch search) {
         return super.count(search);
-    }
-
-    @Override
-    public IPRange findByCidr(String cidr) {
-
-        Search searchCriteria = new Search(IPRange.class);
-
-        searchCriteria.addFilter(Filter.equal("cidr", cidr));
-
-        IPRange ipRange = searchUnique(searchCriteria);
-        return ipRange;
     }
 }

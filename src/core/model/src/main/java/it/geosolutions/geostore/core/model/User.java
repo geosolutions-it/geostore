@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -28,6 +28,7 @@
  */
 package it.geosolutions.geostore.core.model;
 
+import inet.ipaddr.IPAddress;
 import it.geosolutions.geostore.core.model.enums.Role;
 import java.io.Serializable;
 import java.util.List;
@@ -100,7 +101,7 @@ public class User implements Serializable {
      */
     private transient String newPassword = null;
     private transient boolean trusted = false;
-    private transient String ipAddress;
+    private transient IPAddress ipAddress;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @Fetch(FetchMode.SUBSELECT)
@@ -242,11 +243,12 @@ public class User implements Serializable {
         this.attribute = attribute;
     }
 
-    public String getIpAddress() {
+    @XmlTransient
+    public IPAddress getIpAddress() {
         return ipAddress;
     }
 
-    public void setIpAddress(String ipAddress) {
+    public void setIpAddress(IPAddress ipAddress) {
         this.ipAddress = ipAddress;
     }
 
