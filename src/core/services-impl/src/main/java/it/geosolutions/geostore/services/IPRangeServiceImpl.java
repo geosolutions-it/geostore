@@ -88,12 +88,6 @@ public class IPRangeServiceImpl implements IPRangeService {
         }
     }
 
-    private void updateIPRangeBounds(IPRange ipRange) {
-        IPAddress cidr = new IPAddressString(ipRange.getCidr()).getAddress().toPrefixBlock();
-        ipRange.setIpLow(cidr.getLower().getValue());
-        ipRange.setIpHigh(cidr.getUpper().getValue());
-    }
-
     @Override
     public List<IPRange> getAll() throws BadRequestServiceEx {
         Search searchCriteria = new Search(IPRange.class);
@@ -120,15 +114,19 @@ public class IPRangeServiceImpl implements IPRangeService {
 
         ipRange.setCidr(sanitizeCidr(ipRange.getCidr()));
 
-        if (!original.getCidr().equals(ipRange.getCidr())) {
-            updateIPRangeBounds(ipRange);
-        }
+        updateIPRangeBounds(ipRange);
 
         ipRange.setId(id);
 
         ipRangeDAO.merge(ipRange);
 
         return id;
+    }
+
+    private void updateIPRangeBounds(IPRange ipRange) {
+        IPAddress cidr = new IPAddressString(ipRange.getCidr()).getAddress().toPrefixBlock();
+        ipRange.setIpLow(cidr.getLower().getValue());
+        ipRange.setIpHigh(cidr.getUpper().getValue());
     }
 
     public void delete(long id) throws NotFoundServiceEx {

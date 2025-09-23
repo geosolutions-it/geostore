@@ -26,28 +26,49 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import org.junit.Test;
 
 public class IPRangeServiceImplTest extends ServiceTestBase {
 
     public void testInsert() throws Exception {
 
+        BigInteger expectedIPRangeAIPLow = BigInteger.valueOf(2130706432);
+        BigInteger expectedIPRangeAIPHigh = BigInteger.valueOf(2130706687);
+        BigInteger expectedIPRangeBIPLow = BigInteger.valueOf(16777216);
+        BigInteger expectedIPRangeBIPHigh = BigInteger.valueOf(33554431);
+
         IPRange ipRangeA = new IPRange();
         ipRangeA.setCidr("127.0.0.0/24");
+        ipRangeA.setDescription("ip-range-A");
 
         IPRange ipRangeB = new IPRange();
         ipRangeB.setCidr("1.0.0.1/8");
+        ipRangeB.setDescription("ip-range-B");
 
         ipRangeService.insert(ipRangeA);
         ipRangeService.insert(ipRangeB);
 
         List<IPRange> foundIPRanges = ipRangeDAO.findAll();
         assertEquals(2, foundIPRanges.size());
-        List<Long> foundIPRangesIds =
-                foundIPRanges.stream().map(IPRange::getId).collect(Collectors.toList());
-        assertTrue(foundIPRangesIds.stream().noneMatch(Objects::isNull));
+
+        IPRange insertedIPRangeA =
+                foundIPRanges.stream()
+                        .filter(f -> f.getId().equals(ipRangeA.getId()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(ipRangeA.getCidr(), insertedIPRangeA.getCidr());
+        assertEquals(ipRangeA.getDescription(), insertedIPRangeA.getDescription());
+        assertEquals(expectedIPRangeAIPLow, insertedIPRangeA.getIpLow());
+        assertEquals(expectedIPRangeAIPHigh, insertedIPRangeA.getIpHigh());
+
+        IPRange insertedIPRangeB =
+                foundIPRanges.stream()
+                        .filter(f -> f.getId().equals(ipRangeB.getId()))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(ipRangeB.getCidr(), insertedIPRangeB.getCidr());
+        assertEquals(ipRangeB.getDescription(), insertedIPRangeB.getDescription());
+        assertEquals(expectedIPRangeBIPLow, insertedIPRangeB.getIpLow());
+        assertEquals(expectedIPRangeBIPHigh, insertedIPRangeB.getIpHigh());
     }
 
     public void testInsertWithoutCidr() {
@@ -70,10 +91,9 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
 
         BadRequestServiceEx ex =
                 assertThrows(BadRequestServiceEx.class, () -> ipRangeService.insert(ipRange));
-        assertTrue(ex.getMessage().contains("Invalid"));
+        assertTrue(ex.getMessage().startsWith("Invalid"));
     }
 
-    @Test
     public void testInsertWithInvalidCidr() throws Exception {
 
         IPRange ipRange = new IPRange();
@@ -81,10 +101,9 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
 
         BadRequestServiceEx ex =
                 assertThrows(BadRequestServiceEx.class, () -> ipRangeService.insert(ipRange));
-        assertTrue(ex.getMessage().contains("Invalid"));
+        assertTrue(ex.getMessage().startsWith("Invalid"));
     }
 
-    @Test
     public void testInsertWithCidrMissingPrefix() throws Exception {
 
         IPRange ipRange = new IPRange();
@@ -92,10 +111,9 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
 
         BadRequestServiceEx ex =
                 assertThrows(BadRequestServiceEx.class, () -> ipRangeService.insert(ipRange));
-        assertTrue(ex.getMessage().contains("Invalid"));
+        assertTrue(ex.getMessage().startsWith("Invalid"));
     }
 
-    @Test
     public void testInsertWithInvalidCidrPrefix() throws Exception {
 
         IPRange ipRange = new IPRange();
@@ -103,10 +121,9 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
 
         BadRequestServiceEx ex =
                 assertThrows(BadRequestServiceEx.class, () -> ipRangeService.insert(ipRange));
-        assertTrue(ex.getMessage().contains("Invalid"));
+        assertTrue(ex.getMessage().startsWith("Invalid"));
     }
 
-    @Test
     public void testInsertSanitizingCidr() throws Exception {
 
         IPRange ipRange = new IPRange();
@@ -154,35 +171,57 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
 
     public void testUpdate() throws Exception {
 
-        IPRange expectedIPRange = new IPRange();
-        expectedIPRange.setCidr("127.1.2.3/8");
-        expectedIPRange.setDescription("onetwothree");
+        String expectedCidr = "127.1.2.3/8";
+        String expectedDescription = "onetwothree";
+        BigInteger expectedIPLow = BigInteger.valueOf(2130706432);
+        BigInteger expectedIPHigh = BigInteger.valueOf(2147483647);
 
-        IPRange ipRange = new IPRange();
-        ipRange.setCidr("5.5.5.0/32");
-        ipRange.setDescription("fivefivefive");
+        IPRange actualIPRange = new IPRange();
+        actualIPRange.setCidr("5.5.5.0/32");
+        actualIPRange.setDescription("fivefivefive");
+        actualIPRange.setIpLow(BigInteger.ZERO);
+        actualIPRange.setIpHigh(BigInteger.TEN);
 
-        ipRangeDAO.persist(ipRange);
+        ipRangeDAO.persist(actualIPRange);
 
-        ipRangeService.update(ipRange.getId(), expectedIPRange);
+        IPRange ipRangeUpdate = new IPRange();
+        ipRangeUpdate.setCidr(expectedCidr);
+        ipRangeUpdate.setDescription(expectedDescription);
 
-        IPRange updatedIPRange = ipRangeDAO.find(ipRange.getId());
-        assertEquals(expectedIPRange, updatedIPRange);
+        ipRangeService.update(actualIPRange.getId(), ipRangeUpdate);
+
+        IPRange updatedIPRange = ipRangeDAO.find(ipRangeUpdate.getId());
+        assertEquals(expectedCidr, updatedIPRange.getCidr());
+        assertEquals(expectedDescription, updatedIPRange.getDescription());
+        assertEquals(expectedIPLow, updatedIPRange.getIpLow());
+        assertEquals(expectedIPHigh, updatedIPRange.getIpHigh());
     }
 
-    public void testUpdateWithSameCidr() throws Exception {
+    public void testPartialUpdate() throws Exception {
 
-        IPRange ipRange = new IPRange();
-        ipRange.setCidr("127.0.0.0/24");
+        String expectedCidr = "127.0.0.0/24";
+        String expectedDescription = "clear";
+        BigInteger expectedIPLow = BigInteger.valueOf(2130706432);
+        BigInteger expectedIPHigh = BigInteger.valueOf(2130706687);
 
-        ipRangeDAO.persist(ipRange);
+        IPRange actualIPRange = new IPRange();
+        actualIPRange.setCidr(expectedCidr);
+        actualIPRange.setIpLow(expectedIPLow);
+        actualIPRange.setIpHigh(expectedIPHigh);
 
-        ipRange.setDescription("clear");
+        ipRangeDAO.persist(actualIPRange);
 
-        ipRangeService.update(ipRange.getId(), ipRange);
+        IPRange ipRangeUpdate = new IPRange();
+        ipRangeUpdate.setCidr(expectedCidr);
+        ipRangeUpdate.setDescription(expectedDescription);
 
-        IPRange updatedIPRange = ipRangeDAO.find(ipRange.getId());
-        assertEquals(ipRange, updatedIPRange);
+        ipRangeService.update(actualIPRange.getId(), ipRangeUpdate);
+
+        IPRange updatedIPRange = ipRangeDAO.find(actualIPRange.getId());
+        assertEquals(expectedCidr, updatedIPRange.getCidr());
+        assertEquals(expectedDescription, updatedIPRange.getDescription());
+        assertEquals(expectedIPLow, updatedIPRange.getIpLow());
+        assertEquals(expectedIPHigh, updatedIPRange.getIpHigh());
     }
 
     public void testUpdateWithMalformedCidr() throws Exception {
@@ -198,7 +237,7 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
                 assertThrows(
                         BadRequestServiceEx.class,
                         () -> ipRangeService.update(ipRange.getId(), ipRange));
-        assertTrue(ex.getMessage().contains("Invalid"));
+        assertTrue(ex.getMessage().startsWith("Invalid"));
     }
 
     public void testUpdateWithNullCidr() {
@@ -214,7 +253,7 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
                 assertThrows(
                         BadRequestServiceEx.class,
                         () -> ipRangeService.update(ipRange.getId(), ipRange));
-        assertTrue(ex.getMessage().contains("CIDR must be specified"));
+        assertEquals("CIDR must be specified", ex.getMessage());
     }
 
     public void testUpdateNotFoundIPRange() {
