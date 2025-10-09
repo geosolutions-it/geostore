@@ -37,7 +37,6 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
     private static final String USER_NOT_FOUND_MSG =
             "User not found. Please check your credentials";
 
-    private static final String USER_NOT_ENABLED = "The user present but not enabled";
     /** Message shown if the user credentials are wrong. TODO: Localize it */
     private static final String UNAUTHORIZED_MSG = "Bad credentials";
 
