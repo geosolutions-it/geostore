@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class UserLdapAuthenticationProviderTest {
     private static final String TEST_GROUP = "testgroup";
@@ -76,5 +77,16 @@ public class UserLdapAuthenticationProviderTest {
         provider.synchronizeGroups();
 
         assertNotNull(userGroupService.get(TEST_GROUP));
+    }
+
+    @Test
+    public void testIgnoreUsernameCase() throws NotFoundServiceEx {
+
+        ReflectionTestUtils.setField(provider, "ignoreUsernameCase", true);
+
+        provider.authenticate(new UsernamePasswordAuthenticationToken("user", "password"));
+
+        User user = userService.get("USER");
+        assertNotNull(user);
     }
 }

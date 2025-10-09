@@ -36,8 +36,11 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
     public static final String USER_NOT_ENABLED = "The user present but not enabled";
     private static final Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
+
     /** Message shown if the user credentials are wrong. TODO: Localize it */
     private static final String UNAUTHORIZED_MSG = "Bad credentials";
+
+    private boolean ignoreUsernameCase;
 
     @Autowired UserService userService;
     @Autowired UserGroupService userGroupService;
@@ -69,10 +72,10 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
             throw new BadCredentialsException(UNAUTHORIZED_MSG);
         }
-        LdapUserDetails ldapUser = null;
+        LdapUserDetails ldapUser;
         if (authentication.isAuthenticated()) {
 
-            Collection<? extends GrantedAuthority> authorities = null;
+            Collection<? extends GrantedAuthority> ldapAuthorities;
 
             ldapUser = (LdapUserDetails) authentication.getPrincipal();
 
@@ -83,16 +86,21 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
                 throw new DisabledException(USER_NOT_FOUND_MSG);
             }
 
-            authorities = ldapUser.getAuthorities();
+            ldapAuthorities = ldapUser.getAuthorities();
 
             String pw = (String) authentication.getCredentials();
-            String us = ldapUser.getUsername();
+            String ldapUserUsername = ldapUser.getUsername();
+
+            if (ignoreUsernameCase) {
+                ldapUserUsername = ldapUserUsername.toUpperCase();
+            }
 
             // We use the credentials for all the session in the GeoStore client
-            User user = null;
+            User user;
             try {
-                user = userService.get(us);
-                LOGGER.info("US: " + us); // + " PW: " + PwEncoder.encode(pw) + " -- " +
+                user = userService.get(ldapUserUsername);
+                LOGGER.info(
+                        "US: " + ldapUserUsername); // + " PW: " + PwEncoder.encode(pw) + " -- " +
                 // user.getPassword());
 
                 if (!user.isEnabled()) {
@@ -106,8 +114,8 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             if (user != null) {
                 // check that ROLE and GROUPS match with the LDAP ones
                 try {
-                    Set<UserGroup> groups = new HashSet<UserGroup>();
-                    Role role = extractUserRoleAndGroups(user.getRole(), authorities, groups);
+                    Set<UserGroup> groups = new HashSet<>();
+                    Role role = extractUserRoleAndGroups(user.getRole(), ldapAuthorities, groups);
                     user.setRole(role);
                     user.setGroups(GroupReservedNames.checkReservedGroups(groups));
 
@@ -115,10 +123,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
                     Authentication a = prepareAuthentication(pw, user, role);
                     return a;
-                } catch (BadRequestServiceEx e) {
-                    LOGGER.log(Level.ERROR, e.getMessage(), e);
-                    throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
-                } catch (NotFoundServiceEx e) {
+                } catch (BadRequestServiceEx | NotFoundServiceEx e) {
                     LOGGER.log(Level.ERROR, e.getMessage(), e);
                     throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
                 }
@@ -127,12 +132,12 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
                 try {
                     user = new User();
 
-                    user.setName(us);
+                    user.setName(ldapUserUsername);
                     user.setNewPassword(null);
                     user.setEnabled(true);
 
-                    Set<UserGroup> groups = new HashSet<UserGroup>();
-                    Role role = extractUserRoleAndGroups(null, authorities, groups);
+                    Set<UserGroup> groups = new HashSet<>();
+                    Role role = extractUserRoleAndGroups(null, ldapAuthorities, groups);
                     user.setRole(role);
                     user.setGroups(GroupReservedNames.checkReservedGroups(groups));
                     if (userMapper != null) {
@@ -142,10 +147,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
                     Authentication a = prepareAuthentication(pw, user, role);
                     return a;
-                } catch (BadRequestServiceEx e) {
-                    LOGGER.log(Level.ERROR, e.getMessage(), e);
-                    throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
-                } catch (NotFoundServiceEx e) {
+                } catch (BadRequestServiceEx | NotFoundServiceEx e) {
                     LOGGER.log(Level.ERROR, e.getMessage(), e);
                     throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
                 }
@@ -162,7 +164,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
      * @return
      */
     protected Authentication prepareAuthentication(String pw, User user, Role role) {
-        List<GrantedAuthority> grantedAuthorities = new ArrayList<GrantedAuthority>();
+        List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
         grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + role));
         Authentication a = new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
         // a.setAuthenticated(true);
@@ -170,7 +172,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
     }
 
     /**
-     * @param role2
+     * @param userRole
      * @param authorities
      * @param groups
      * @return
