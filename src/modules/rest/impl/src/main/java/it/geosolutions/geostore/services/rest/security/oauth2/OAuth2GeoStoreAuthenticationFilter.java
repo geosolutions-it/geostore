@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2022 GeoSolutions S.A.S.
+ * Copyright (C) 2022-2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -35,6 +35,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
@@ -43,6 +44,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.servlet.FilterChain;
@@ -89,11 +91,15 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public abstract class OAuth2GeoStoreAuthenticationFilter
         extends OAuth2ClientAuthenticationProcessingFilter {
 
+    private static final Logger LOGGER =
+            LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+
+    private static final String SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME = "sourceService";
+
     public static final String OAUTH2_AUTHENTICATION_KEY = "oauth2.authentication";
     public static final String OAUTH2_AUTHENTICATION_TYPE_KEY = "oauth2.authenticationType";
     public static final String OAUTH2_ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
-    private static final Logger LOGGER =
-            LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+
     private final AuthenticationEntryPoint authEntryPoint;
     private final TokenAuthenticationCache cache;
 
@@ -179,8 +185,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
     @Override
     public Authentication attemptAuthentication(
-            HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException, IOException, ServletException {
+            HttpServletRequest request, HttpServletResponse response) {
+
         Authentication authentication;
         String token = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
 
@@ -407,8 +413,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                         e.getCause());
             } else if (e instanceof ResourceAccessException) {
                 LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
-            } else if (e instanceof ResourceAccessException
-                    || e.getCause() instanceof OAuth2AccessDeniedException) {
+            } else if (e.getCause() instanceof OAuth2AccessDeniedException) {
                 LOGGER.warn(
                         "If you try to validate credentials against an SSH protected endpoint, you need your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM.");
                 LOGGER.info(
@@ -487,21 +492,26 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         JWTHelper jwtHelper = decodeAndValidateIdToken(idToken);
         // Remap the username if the idToken is valid and the configuration is set
         username = remapUsername(username, jwtHelper);
+
         LOGGER.info("Retrieving user with authorities for username: {}", username);
         User user = retrieveUserWithAuthorities(username, request, response);
         if (user == null) {
             LOGGER.error("User retrieval failed for username: {}", username);
             return null;
         }
+
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
+
         PreAuthenticatedAuthenticationToken authenticationToken =
                 new PreAuthenticatedAuthenticationToken(
                         user, null, Collections.singletonList(authority));
+
         if (StringUtils.isNotBlank(configuration.getGroupsClaim())
                 || StringUtils.isNotBlank(configuration.getRolesClaim())) {
             addAuthoritiesFromToken(user, idToken);
         }
+
         OAuth2AccessToken accessToken = restTemplate.getOAuth2ClientContext().getAccessToken();
         authenticationToken.setDetails(
                 new TokenDetails(accessToken, idToken, configuration.getBeanName()));
@@ -571,58 +581,40 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         LOGGER.debug(" --------- OIDC - ID_TOKEN: {}", idToken);
         JWTHelper helper = new JWTHelper(idToken);
 
-        List<String> roles = null;
-        List<String> groups = null;
+        List<String> oidcRoles = Collections.emptyList();
         if (configuration.getRolesClaim() != null) {
-            roles = helper.getClaimAsList(configuration.getRolesClaim(), String.class);
-            LOGGER.debug(" --------- OIDC - ROLES: {}", roles);
+            oidcRoles = helper.getClaimAsList(configuration.getRolesClaim(), String.class);
+            LOGGER.debug(" --------- OIDC - ROLES: {}", oidcRoles);
         }
-        if (roles == null) roles = Collections.emptyList();
-
-        if (configuration.getGroupsClaim() != null) {
-            groups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
-            LOGGER.debug(" --------- OIDC - GROUPS: {}", groups);
-        }
-        if (groups == null) groups = Collections.emptyList();
-
-        for (String r : roles) {
-            if (r.equals(Role.ADMIN.name())) user.setRole(Role.ADMIN);
+        for (String r : oidcRoles) {
+            if (r.equals(Role.ADMIN.name())) {
+                user.setRole(Role.ADMIN);
+            }
         }
         LOGGER.info("User updated with the following roles: {}", user.getRole());
 
-        Set<UserGroup> userGroups = user.getGroups();
-        for (String groupName : groups) {
-            UserGroup group = null;
-            if (userGroupService != null) {
-                if (configuration.isGroupNamesUppercase()) {
-                    group = userGroupService.get(groupName.toUpperCase());
-                }
-                if (group == null) {
-                    group = userGroupService.get(groupName);
-                }
-            }
+        List<String> oidcGroups = Collections.emptyList();
+        if (configuration.getGroupsClaim() != null) {
+            oidcGroups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+            LOGGER.debug(" --------- OIDC - GROUPS: {}", oidcGroups);
+        }
+
+        unassignRemoteUserGroupsFromUser(user);
+
+        for (String groupName : oidcGroups) {
+
+            UserGroup group = searchGroup(groupName);
+
             if (group == null) {
-                group = new UserGroup();
-                group.setGroupName(
-                        configuration.isGroupNamesUppercase()
-                                ? groupName.toUpperCase()
-                                : groupName);
-                long groupId = -1;
-                if (userGroupService != null) {
-                    try {
-                        groupId = userGroupService.insert(group);
-                        group = userGroupService.get(groupId);
-                        LOGGER.debug("inserted group id: {}", group.getGroupName());
-                    } catch (BadRequestServiceEx e) {
-                        LOGGER.error("Saving new group found in claims failed");
-                    }
-                }
+                group = createUserGroup(groupName);
+            } else {
+                updateGroupSourceServiceAttributes(group);
             }
-            if (!userGroups.contains(group)) {
+
+            if (!user.getGroups().contains(group)) {
                 try {
-                    if (userGroupService != null)
-                        userGroupService.assignUserGroup(user.getId(), group.getId());
-                    userGroups.add(group);
+                    userGroupService.assignUserGroup(user.getId(), group.getId());
+                    user.getGroups().add(group);
                 } catch (NotFoundServiceEx e) {
                     LOGGER.error(
                             "Assignment of user {} to group {} failed... skipping it!",
@@ -634,7 +626,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
         Set<UserGroup> sanitizedGroups =
                 new TreeSet<>(Comparator.comparing(UserGroup::getGroupName));
-        sanitizedGroups.addAll(userGroups);
+        sanitizedGroups.addAll(user.getGroups());
         user.setGroups(sanitizedGroups);
         try {
             if (userService != null) userService.update(user);
@@ -651,6 +643,97 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         } finally {
             LOGGER.info("User updated with the following groups: {}", sanitizedGroups);
         }
+    }
+
+    private UserGroup searchGroup(String groupName) {
+        if (userGroupService == null) {
+            return null;
+        }
+        if (configuration.isGroupNamesUppercase()) {
+            UserGroup userGroup = userGroupService.get(groupName.toUpperCase());
+            if (userGroup != null) {
+                return userGroup;
+            }
+        }
+        return userGroupService.get(groupName);
+    }
+
+    private void updateGroupSourceServiceAttributes(UserGroup group) {
+        List<UserGroupAttribute> attributes = group.getAttributes();
+
+        if (attributes == null) {
+            attributes = new ArrayList<>();
+            group.setAttributes(attributes);
+        }
+
+        Optional<UserGroupAttribute> sourceServiceAttribute =
+                attributes.stream()
+                        .filter(
+                                attribute ->
+                                        SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME.equals(
+                                                attribute.getName()))
+                        .findFirst();
+
+        if (sourceServiceAttribute.isPresent()) {
+            sourceServiceAttribute.get().setValue(configuration.getProvider());
+        } else {
+            attributes.add(createUserGroupSourceServiceAttribute(configuration.getProvider()));
+        }
+    }
+
+    private UserGroup createUserGroup(String groupName) {
+        UserGroup group = new UserGroup();
+        group.setGroupName(
+                configuration.isGroupNamesUppercase() ? groupName.toUpperCase() : groupName);
+        group.setAttributes(
+                List.of(createUserGroupSourceServiceAttribute(configuration.getProvider())));
+        if (userGroupService != null) {
+            try {
+                long groupId = userGroupService.insert(group);
+                group = userGroupService.get(groupId);
+                LOGGER.debug("inserted group id: {}", group.getGroupName());
+            } catch (BadRequestServiceEx e) {
+                LOGGER.error("Saving new group found in claims failed");
+            }
+        }
+        return group;
+    }
+
+    private void unassignRemoteUserGroupsFromUser(User user) {
+        Predicate<UserGroup> remoteUserGroupFilter =
+                userGroup ->
+                        userGroup.getAttributes().stream()
+                                .filter(
+                                        attribute ->
+                                                SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME.equals(
+                                                        attribute.getName()))
+                                .findFirst()
+                                .map(attribute -> attribute.getValue() != null)
+                                .orElse(false);
+
+        user.getGroups().stream()
+                .filter(userGroup -> userGroup.getAttributes() != null)
+                .filter(remoteUserGroupFilter)
+                .forEach(
+                        remoteUserGroup -> {
+                            try {
+                                userGroupService.deassignUserGroup(
+                                        user.getId(), remoteUserGroup.getId());
+                                LOGGER.debug(
+                                        "Removed remote group {} from user {}",
+                                        remoteUserGroup.getGroupName(),
+                                        user.getId());
+                            } catch (NotFoundServiceEx e) {
+                                throw new RuntimeException(e);
+                            }
+                        });
+    }
+
+    private UserGroupAttribute createUserGroupSourceServiceAttribute(String remoteService) {
+        UserGroupAttribute userGroupAttribute = new UserGroupAttribute();
+        userGroupAttribute.setName(SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME);
+        userGroupAttribute.setValue(remoteService);
+        return userGroupAttribute;
     }
 
     /**

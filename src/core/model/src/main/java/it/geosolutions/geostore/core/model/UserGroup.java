@@ -1,7 +1,7 @@
 /*
  * ====================================================================
  *
- * Copyright (C) 2007 - 2011 GeoSolutions S.A.S.
+ * Copyright (C) 2007 - 2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -31,6 +31,7 @@ package it.geosolutions.geostore.core.model;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -81,8 +82,9 @@ public class UserGroup implements Serializable {
     @Column(nullable = false, updatable = true)
     private boolean enabled = true;
 
-    private transient List<User> users = new ArrayList<User>();
+    private transient List<User> users = new ArrayList<>();
 
+    /* TODO: this should be a map for better handling */
     @OneToMany(mappedBy = "userGroup", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     private List<UserGroupAttribute> attributes;
 
@@ -188,7 +190,8 @@ public class UserGroup implements Serializable {
 
         if (users != null) {
             builder.append(", ");
-            builder.append("users=").append(users);
+            builder.append("users=")
+                    .append(users.stream().map(User::getId).collect(Collectors.toList()));
         }
 
         builder.append(']');
