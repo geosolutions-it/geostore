@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
@@ -59,6 +61,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
      * @param oAuth2RestTemplate the rest template to use for OAuth2 requests.
      * @param configuration the OAuth2 configuration.
      * @param tokenAuthenticationCache the cache.
+     * @param bearerTokenValidator validator for attached Bearer tokens (may be null to disable)
      */
     public OpenIdConnectFilter(
             RemoteTokenServices tokenServices,
@@ -67,12 +70,15 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             TokenAuthenticationCache tokenAuthenticationCache,
             OpenIdTokenValidator bearerTokenValidator) {
         super(tokenServices, oAuth2RestTemplate, configuration, tokenAuthenticationCache);
-        if (configuration.getDiscoveryUrl() != null && !"".equals(configuration.getDiscoveryUrl()))
+        if (configuration.getDiscoveryUrl() != null
+                && !"".equals(configuration.getDiscoveryUrl())) {
             new DiscoveryClient(configuration.getDiscoveryUrl()).autofill(configuration);
+        }
         this.bearerTokenValidator = bearerTokenValidator;
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected String getPreAuthenticatedPrincipal(
             HttpServletRequest req, HttpServletResponse resp, OAuth2AccessToken accessToken)
             throws IOException, ServletException {
@@ -80,28 +86,63 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
 
         OAuth2AuthenticationType type =
                 (OAuth2AuthenticationType) req.getAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY);
-        if ((type != null)
-                && (type.equals(OAuth2AuthenticationType.BEARER))
-                && (bearerTokenValidator != null)) {
+        if (type != null
+                && type.equals(OAuth2AuthenticationType.BEARER)
+                && bearerTokenValidator != null) {
             if (!((OpenIdConnectConfiguration) configuration).isAllowBearerTokens()) {
                 LOGGER.warn(
                         "OIDC: received an attached Bearer token, but Bearer tokens aren't allowed!");
                 throw new IOException(
                         "OIDC: received an attached Bearer token, but Bearer tokens aren't allowed!");
             }
-            // we must validate
+
+            // Resolve the token value (prefer the provided OAuth2AccessToken, then Spring
+            // attribute, then our own attribute)
             String token = null;
             if (accessToken != null
                     && !accessToken.isExpired()
                     && accessToken.getValue() != null
                     && !accessToken.getValue().isEmpty()) {
                 token = accessToken.getValue();
-            } else {
-                token = (String) req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);
             }
-            Map userinfoMap = (Map) req.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
-            Jwt decodedAccessToken = JwtHelper.decode(token);
-            Map accessTokenClaims = JSONObject.fromObject(decodedAccessToken.getClaims());
+            if (token == null) {
+                Object fromSpring =
+                        req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);
+                if (fromSpring instanceof String) {
+                    token = (String) fromSpring;
+                }
+            }
+            if (token == null) {
+                Object fromOurFlow = req.getAttribute(ACCESS_TOKEN_PARAM);
+                if (fromOurFlow instanceof String) {
+                    token = (String) fromOurFlow;
+                }
+            }
+
+            if (token == null || token.isEmpty()) {
+                LOGGER.error(
+                        "OIDC: Bearer token validation requested but no token was found in request context");
+                throw new IOException("Attached Bearer Token is missing");
+            }
+
+            // Access Token Check response (may be null depending on provider)
+            Map<String, Object> userinfoMap = null;
+            Object ext = req.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
+            if (ext instanceof Map) {
+                userinfoMap = (Map<String, Object>) ext;
+            }
+
+            // Decode token claims (no signature verification here; validator will verify)
+            Map<String, Object> accessTokenClaims;
+            try {
+                Jwt decodedAccessToken = JwtHelper.decode(token);
+                String claimsJson = decodedAccessToken.getClaims();
+                accessTokenClaims = (Map<String, Object>) JSONObject.fromObject(claimsJson);
+            } catch (Exception e) {
+                LOGGER.error("OIDC: Could not decode bearer token claims", e);
+                throw new IOException("Attached Bearer Token is invalid (decoding failed)", e);
+            }
+
             try {
                 bearerTokenValidator.verifyToken(
                         (OpenIdConnectConfiguration) configuration, accessTokenClaims, userinfoMap);
