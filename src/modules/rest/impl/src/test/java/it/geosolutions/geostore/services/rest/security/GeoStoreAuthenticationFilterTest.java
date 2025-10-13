@@ -29,7 +29,6 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.MapExpressionUserMapper;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
-import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
@@ -37,6 +36,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,6 +46,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.codec.binary.Base64; // for base64-url without padding helper
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,11 +61,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Test class for GeoStore authentication filters.
- *
- * <p>This class contains tests for the header‐based authentication filter and tests for the OAuth2
- * filter, including verifying the new configuration option to remap the username based on idToken
- * claims and the new constraint enforcing uppercase group names with users being added to groups.
+ * Enhanced tests for GeoStore authentication filters covering: - username remapping -
+ * provider-scoped reconciliation of remote groups - uppercase group handling & tagging with
+ * sourceService - role recomputation (present/empty/missing roles claims)
  */
 public class GeoStoreAuthenticationFilterTest {
 
@@ -97,11 +96,11 @@ public class GeoStoreAuthenticationFilterTest {
     @After
     public void tearDown() {
         SecurityContextHolder.getContext().setAuthentication(null);
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
     public void testAutoCreate() throws IOException, ServletException, NotFoundServiceEx {
-
         headerFilter.doFilter(
                 req,
                 resp,
@@ -120,7 +119,6 @@ public class GeoStoreAuthenticationFilterTest {
 
     @Test
     public void testAutoCreateDisabled() throws IOException, ServletException, NotFoundServiceEx {
-
         headerFilter.setEnableAutoCreatedUsers(false);
         headerFilter.doFilter(
                 req,
@@ -166,45 +164,40 @@ public class GeoStoreAuthenticationFilterTest {
         assertEquals("Attribute value should be 'value1'", "value1", attr.getValue());
     }
 
-    /**
-     * Test that verifies the new configuration option for username remapping.
-     *
-     * <p>This test creates a dummy OAuth2 filter that overrides the idToken decoding to return a
-     * dummy JWTHelper. The dummy helper returns the original username for the "principal" claim and
-     * a remapped username for the "unique" claim. The filter then should create a user with the
-     * remapped name.
-     */
+    // ---------------------------------------------------------------------
+    // OAuth2/OIDC related tests
+    // ---------------------------------------------------------------------
+
+    /** Username remapping via principal/unique claims. */
     @Test
     public void testUsernameRemapping() throws Exception {
         final String ORIGINAL_USERNAME = "myuser";
         final String REMAPPED_USERNAME = "remappedUser";
 
-        // Create a dummy OAuth2Configuration with the remapping properties.
-        OAuth2Configuration config = new OAuth2Configuration();
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
         config.setPrincipalKey("principal");
         config.setUniqueUsername("unique");
         config.setBeanName("testBean");
         config.setAutoCreateUser(true);
 
-        // Create an instance of the OAuth2 filter using an anonymous subclass.
+        // minimal restTemplate mock to avoid NPE in createPreAuthentication
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("t"));
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
+
         OAuth2GeoStoreAuthenticationFilter oauth2Filter =
                 new OAuth2GeoStoreAuthenticationFilter(
-                        /* tokenServices */ null,
-                        /* restTemplate */ null,
-                        config,
-                        /* cache */ null) {
+                        /* tokenServices */ null, /* restTemplate */ rt, config, /* cache */ null) {
 
                     @Override
                     protected JWTHelper decodeAndValidateIdToken(String idToken) {
+                        // Provide a helper that returns both claims to trigger remapping
                         return new JWTHelper(idToken) {
                             @Override
                             public <T> T getClaim(String claimName, Class<T> clazz) {
-                                if ("principal".equals(claimName)) {
-                                    return (T) ORIGINAL_USERNAME;
-                                }
-                                if ("unique".equals(claimName)) {
-                                    return (T) REMAPPED_USERNAME;
-                                }
+                                if ("principal".equals(claimName)) return (T) ORIGINAL_USERNAME;
+                                if ("unique".equals(claimName)) return (T) REMAPPED_USERNAME;
                                 return null;
                             }
                         };
@@ -226,15 +219,16 @@ public class GeoStoreAuthenticationFilterTest {
 
                     @Override
                     protected void configureRestTemplate() {
-                        // No-op for testing.
+                        /* no-op */
                     }
                 };
 
-        HttpServletRequest req2 = Mockito.mock(HttpServletRequest.class);
-        HttpServletResponse resp2 = Mockito.mock(HttpServletResponse.class);
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        MockHttpServletResponse resp = new MockHttpServletResponse();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(req));
 
         PreAuthenticatedAuthenticationToken authToken =
-                oauth2Filter.createPreAuthentication(ORIGINAL_USERNAME, req2, resp2);
+                oauth2Filter.createPreAuthentication(ORIGINAL_USERNAME, req, resp);
         assertNotNull("Authentication token should not be null", authToken);
 
         User user = (User) authToken.getPrincipal();
@@ -245,54 +239,28 @@ public class GeoStoreAuthenticationFilterTest {
                 user.getName());
     }
 
-    /**
-     * Test that verifies group names are forced to uppercase and that the user is assigned to the
-     * group.
-     *
-     * <p>This test creates a dummy OAuth2 filter that returns a dummy JWTHelper which, when asked
-     * for the groups claim, returns a list with a single group name ("groupA"). With the
-     * configuration set to force uppercase group names, the filter will use "GROUPA" for
-     * lookup/insertion. We supply a dummy UserGroupService that holds groups in memory. The test
-     * then verifies that the user gets assigned to the uppercase group.
-     */
+    /** Uppercase group handling and assignment; uses a real JWT payload for groups. */
     @Test
     public void testGroupNamesUppercaseAndUserGroupAssignment() throws Exception {
         final String GROUP_FROM_TOKEN = "groupA";
         final String EXPECTED_GROUP = "GROUPA";
 
-        // Create a dummy OAuth2Configuration with groupsClaim and groupNamesUppercase enabled.
-        OAuth2Configuration config = new OAuth2Configuration();
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
         config.setGroupsClaim("groups");
         config.setBeanName("testBean");
         config.setAutoCreateUser(true);
         config.setGroupNamesUppercase(true);
 
-        // Create a dummy UserGroupService that holds groups in memory.
         DummyUserGroupService dummyGroupService = new DummyUserGroupService();
 
-        // Create an instance of the OAuth2 filter using an anonymous subclass.
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("t"));
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
+
         OAuth2GeoStoreAuthenticationFilter oauth2Filter =
                 new OAuth2GeoStoreAuthenticationFilter(
-                        /* tokenServices */ null,
-                        /* restTemplate */ null,
-                        config,
-                        /* cache */ null) {
-
-                    @Override
-                    protected JWTHelper decodeAndValidateIdToken(String idToken) {
-                        return new JWTHelper(idToken) {
-
-                            /* TO CHECK: this won't work since addAuthoritiesFromToken uses its own JWTHelper */
-                            @Override
-                            public <T> List<T> getClaimAsList(String claimName, Class<T> clazz) {
-                                if ("groups".equals(claimName)) {
-                                    // Return a list containing the group name from the token.
-                                    return (List<T>) Collections.singletonList(GROUP_FROM_TOKEN);
-                                }
-                                return Collections.emptyList();
-                            }
-                        };
-                    }
+                        /* tokenServices */ null, /* restTemplate */ rt, config, /* cache */ null) {
 
                     @Override
                     protected User retrieveUserWithAuthorities(
@@ -300,6 +268,7 @@ public class GeoStoreAuthenticationFilterTest {
                             HttpServletRequest request,
                             HttpServletResponse response) {
                         User user = new User();
+                        user.setId(1L);
                         user.setName(username);
                         user.setRole(Role.USER);
                         user.setEnabled(true);
@@ -310,51 +279,58 @@ public class GeoStoreAuthenticationFilterTest {
 
                     @Override
                     protected void configureRestTemplate() {
-                        // No-op for testing.
+                        /* no-op */
                     }
                 };
-
-        // Inject the dummy group service.
         oauth2Filter.setUserGroupService(dummyGroupService);
 
-        // Create dummy HTTP request/response.
-        HttpServletRequest req2 = Mockito.mock(HttpServletRequest.class);
-        HttpServletResponse resp2 = Mockito.mock(HttpServletResponse.class);
+        // put an id_token with groups claim into the request context
+        String jwt = unsignedJwtJson("{\"groups\":[\"" + GROUP_FROM_TOKEN + "\"]}");
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        ServletRequestAttributes attrs = new ServletRequestAttributes(req);
+        attrs.setAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE, jwt, 0);
+        RequestContextHolder.setRequestAttributes(attrs);
 
-        // Call createPreAuthentication (which will invoke addAuthoritiesFromToken).
         PreAuthenticatedAuthenticationToken authToken =
-                oauth2Filter.createPreAuthentication("anyuser", req2, resp2);
-        assertNotNull("Authentication token should not be null", authToken);
+                oauth2Filter.createPreAuthentication("anyuser", req, new MockHttpServletResponse());
+        assertNotNull(authToken);
 
         User user = (User) authToken.getPrincipal();
-        assertNotNull("User should not be null", user);
+        assertNotNull(user);
 
-        // Verify that the user has been assigned to the group with uppercase name.
         boolean found =
-                user.getGroups().stream()
-                        .anyMatch(group -> EXPECTED_GROUP.equals(group.getGroupName()));
+                user.getGroups().stream().anyMatch(g -> EXPECTED_GROUP.equals(g.getGroupName()));
         assertTrue("User should be assigned to group " + EXPECTED_GROUP, found);
 
-        // Also verify that the dummy service holds the group under the uppercase key.
         UserGroup groupFromService = dummyGroupService.get(EXPECTED_GROUP);
         assertNotNull(
                 "Dummy group service should contain group " + EXPECTED_GROUP, groupFromService);
+        // sourceService attribute set to provider (beanName in our TestOAuth2Configuration)
+        assertEquals(
+                "testBean",
+                groupFromService.getAttributes().stream()
+                        .filter(a -> "sourceService".equals(a.getName()))
+                        .findFirst()
+                        .orElseThrow()
+                        .getValue());
     }
 
+    /**
+     * Provider-scoped remote groups reconcile: keep local & other providers, add new from token.
+     */
     @Test
-    public void testRemoteGroupsUpdate() throws Exception {
-
-        GeoStoreOAuthRestTemplate restTemplateMock = Mockito.mock(GeoStoreOAuthRestTemplate.class);
-        OAuth2ClientContext oAuth2ClientContextMock = Mockito.mock(OAuth2ClientContext.class);
-        Mockito.when(oAuth2ClientContextMock.getAccessToken())
+    public void testRemoteGroupsUpdateProviderScoped() throws Exception {
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken())
                 .thenReturn(new DefaultOAuth2AccessToken("oauth2-test-token"));
-        Mockito.when(restTemplateMock.getOAuth2ClientContext()).thenReturn(oAuth2ClientContextMock);
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
 
-        OAuth2Configuration oAuth2Configuration = new OAuth2Configuration();
-        oAuth2Configuration.setGroupsClaim("groups");
-        oAuth2Configuration.setBeanName("testBean");
-        oAuth2Configuration.setAutoCreateUser(true);
-        oAuth2Configuration.setGroupNamesUppercase(true);
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
+        config.setGroupsClaim("groups");
+        config.setBeanName("testBean"); // provider == beanName by override
+        config.setAutoCreateUser(true);
+        config.setGroupNamesUppercase(true);
 
         DummyUserGroupService userGroupService = new DummyUserGroupService();
 
@@ -364,38 +340,25 @@ public class GeoStoreAuthenticationFilterTest {
         user.setEnabled(true);
         user.setAttribute(Collections.emptyList());
 
-        UserGroup localUserGroup = new UserGroup();
-        localUserGroup.setGroupName("local");
-        localUserGroup.setUsers(new ArrayList<>(List.of(user)));
+        // local group (no sourceService)
+        UserGroup local = new UserGroup();
+        local.setGroupName("local");
+        local.setUsers(new ArrayList<>(Collections.singletonList(user)));
+        local.setAttributes(new ArrayList<>(Collections.singletonList(attr("any", "v"))));
+        userGroupService.insert(local);
 
-        UserGroupAttribute localUserGroupAttribute = new UserGroupAttribute();
-        localUserGroupAttribute.setName("test-attribute-name");
-        localUserGroupAttribute.setValue("test-attribute-value");
-        localUserGroup.setAttributes(List.of(localUserGroupAttribute));
+        // remote group from another provider -> should be KEPT
+        UserGroup otherRemote = new UserGroup();
+        otherRemote.setGroupName("remote");
+        otherRemote.setUsers(new ArrayList<>(Collections.singletonList(user)));
+        otherRemote.setAttributes(
+                new ArrayList<>(Collections.singletonList(attr("sourceService", "other"))));
+        userGroupService.insert(otherRemote);
 
-        userGroupService.insert(localUserGroup);
+        user.setGroups(new HashSet<>(Arrays.asList(local, otherRemote)));
 
-        UserGroup remoteUserGroup = new UserGroup();
-        remoteUserGroup.setGroupName("remote");
-        remoteUserGroup.setUsers(new ArrayList<>(List.of(user)));
-
-        UserGroupAttribute remoteUserGroupAttribute = new UserGroupAttribute();
-        remoteUserGroupAttribute.setName("sourceService");
-        remoteUserGroupAttribute.setValue("remote");
-        remoteUserGroup.setAttributes(List.of(remoteUserGroupAttribute));
-
-        userGroupService.insert(remoteUserGroup);
-
-        user.setGroups(new HashSet<>(Set.of(localUserGroup, remoteUserGroup)));
-
-        // Create an instance of the OAuth2 filter using an anonymous subclass.
-        OAuth2GeoStoreAuthenticationFilter oauth2Filter =
-                new OAuth2GeoStoreAuthenticationFilter(
-                        /* tokenServices */ null,
-                        /* restTemplate */ restTemplateMock,
-                        oAuth2Configuration,
-                        /* cache */ null) {
-
+        OAuth2GeoStoreAuthenticationFilter filter =
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
                     @Override
                     protected User retrieveUserWithAuthorities(
                             String username,
@@ -407,111 +370,107 @@ public class GeoStoreAuthenticationFilterTest {
 
                     @Override
                     protected void configureRestTemplate() {
-                        // No-op for testing.
+                        /* no-op */
                     }
                 };
+        filter.setUserGroupService(userGroupService);
 
-        oauth2Filter.setUserGroupService(userGroupService);
+        // token contains groups: ["admin","developer"]
+        String jwt = unsignedJwtJson("{\"groups\":[\"admin\",\"developer\"]}");
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        ServletRequestAttributes attrs = new ServletRequestAttributes(req);
+        attrs.setAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE, jwt, 0);
+        RequestContextHolder.setRequestAttributes(attrs);
 
-        HttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
-
-        ServletRequestAttributes attributes = new ServletRequestAttributes(mockHttpServletRequest);
-        /* token contains claim "groups": ["admin", "developer"] */
-        attributes.setAttribute(
-                GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE,
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cHMiOlsiYWRtaW4iLCJkZXZlbG9wZXIiXX0.T0gbdlsoZ42hlhG7glml7p5cG8IXuRTjwK9twBGETrI",
-                0);
-
-        RequestContextHolder.setRequestAttributes(attributes);
-
-        // Call createPreAuthentication (which will invoke addAuthoritiesFromToken).
         PreAuthenticatedAuthenticationToken authToken =
-                oauth2Filter.createPreAuthentication(
-                        "test-user", mockHttpServletRequest, new MockHttpServletResponse());
+                filter.createPreAuthentication("test-user", req, new MockHttpServletResponse());
         assertNotNull(authToken);
 
         User authenticatedUser = (User) authToken.getPrincipal();
         assertNotNull(authenticatedUser);
 
-        Set<UserGroup> userGroups = authenticatedUser.getGroups();
-        assertEquals(3, userGroups.size());
+        Set<UserGroup> groups = authenticatedUser.getGroups();
+        // local + otherRemote + ADMIN + DEVELOPER = 4 groups (provider-scoped behavior)
+        assertEquals(4, groups.size());
 
-        Map<String, UserGroup> authenticatedUserGroupsByName =
-                userGroups.stream()
+        Map<String, UserGroup> byName =
+                groups.stream()
                         .collect(Collectors.toMap(UserGroup::getGroupName, Function.identity()));
+        assertTrue(byName.containsKey("local"));
+        assertTrue(byName.containsKey("remote")); // kept (other provider)
+        assertTrue(byName.containsKey("ADMIN"));
+        assertTrue(byName.containsKey("DEVELOPER"));
 
-        /* local usergroup has been maintained */
-        UserGroup localGroup = authenticatedUserGroupsByName.get("local");
-        assertEquals(localUserGroup, localGroup);
-        List<UserGroupAttribute> updatedLocalGroupAttributes = localGroup.getAttributes();
-        assertEquals(1, updatedLocalGroupAttributes.size());
-
-        /* remote usergroups has been added with sourceService attribute */
-        UserGroup adminRemoteGroup = authenticatedUserGroupsByName.get("ADMIN");
-        assertNotNull(adminRemoteGroup);
-        String adminRemoteGroupSourceAttribute =
-                adminRemoteGroup.getAttributes().stream()
-                        .filter(attr -> "sourceService".equals(attr.getName()))
+        // new groups tagged with sourceService = provider ("testBean")
+        assertEquals(
+                "testBean",
+                byName.get("ADMIN").getAttributes().stream()
+                        .filter(a -> "sourceService".equals(a.getName()))
                         .findFirst()
                         .orElseThrow()
-                        .getValue();
-        assertEquals("testBean", adminRemoteGroupSourceAttribute);
-
-        UserGroup developerRemoteGroup = authenticatedUserGroupsByName.get("DEVELOPER");
-        assertNotNull(developerRemoteGroup);
-        String developerRemoteGroupSourceAttribute =
-                developerRemoteGroup.getAttributes().stream()
-                        .filter(attr -> "sourceService".equals(attr.getName()))
+                        .getValue());
+        assertEquals(
+                "testBean",
+                byName.get("DEVELOPER").getAttributes().stream()
+                        .filter(a -> "sourceService".equals(a.getName()))
                         .findFirst()
                         .orElseThrow()
-                        .getValue();
-        assertEquals("testBean", developerRemoteGroupSourceAttribute);
+                        .getValue());
     }
 
+    /**
+     * When token has empty groups [], remove provider's remote groups (but keep local/other
+     * providers).
+     */
     @Test
-    public void testRemoteGroupsUpdateWhenSameLocalGroupExists() throws Exception {
-
-        GeoStoreOAuthRestTemplate restTemplateMock = Mockito.mock(GeoStoreOAuthRestTemplate.class);
-        OAuth2ClientContext oAuth2ClientContextMock = Mockito.mock(OAuth2ClientContext.class);
-        Mockito.when(oAuth2ClientContextMock.getAccessToken())
+    public void testRemoteGroupsRemovalWhenGroupsEmpty() throws Exception {
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken())
                 .thenReturn(new DefaultOAuth2AccessToken("oauth2-test-token"));
-        Mockito.when(restTemplateMock.getOAuth2ClientContext()).thenReturn(oAuth2ClientContextMock);
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
 
-        OAuth2Configuration oAuth2Configuration = new OAuth2Configuration();
-        oAuth2Configuration.setGroupsClaim("groups");
-        oAuth2Configuration.setBeanName("testBean");
-        oAuth2Configuration.setAutoCreateUser(true);
-        oAuth2Configuration.setGroupNamesUppercase(true);
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
+        config.setGroupsClaim("groups");
+        config.setBeanName("testBean");
+        config.setAutoCreateUser(true);
+        config.setGroupNamesUppercase(true);
 
         DummyUserGroupService userGroupService = new DummyUserGroupService();
 
         User user = new User();
-        user.setId(1000L);
+        user.setId(2000L);
         user.setRole(Role.USER);
         user.setEnabled(true);
         user.setAttribute(Collections.emptyList());
 
-        UserGroup localUserGroup = new UserGroup();
-        localUserGroup.setGroupName("local");
-        localUserGroup.setUsers(new ArrayList<>(List.of(user)));
+        // provider remote group (to be removed)
+        UserGroup msAdmin = new UserGroup();
+        msAdmin.setGroupName("MS_ADMIN_GROUP");
+        msAdmin.setAttributes(
+                new ArrayList<>(Collections.singletonList(attr("sourceService", "testBean"))));
+        msAdmin.setUsers(new ArrayList<>(Collections.singletonList(user)));
+        userGroupService.insert(msAdmin);
 
-        UserGroupAttribute localUserGroupAttribute = new UserGroupAttribute();
-        localUserGroupAttribute.setName("test-attribute-name");
-        localUserGroupAttribute.setValue("test-attribute-value");
-        localUserGroup.setAttributes(new ArrayList<>(List.of(localUserGroupAttribute)));
+        // other provider remote group (kept)
+        UserGroup other = new UserGroup();
+        other.setGroupName("OTHER_GROUP");
+        other.setAttributes(
+                new ArrayList<>(Collections.singletonList(attr("sourceService", "other"))));
+        other.setUsers(new ArrayList<>(Collections.singletonList(user)));
+        userGroupService.insert(other);
 
-        userGroupService.insert(localUserGroup);
+        // local (kept)
+        UserGroup local = new UserGroup();
+        local.setGroupName("LOCAL_GROUP");
+        local.setAttributes(new ArrayList<>());
+        local.setUsers(new ArrayList<>(Collections.singletonList(user)));
+        userGroupService.insert(local);
 
-        user.setGroups(new HashSet<>(Set.of(localUserGroup)));
+        user.setGroups(new HashSet<>(Arrays.asList(msAdmin, other, local)));
 
-        // Create an instance of the OAuth2 filter using an anonymous subclass.
-        OAuth2GeoStoreAuthenticationFilter oauth2Filter =
-                new OAuth2GeoStoreAuthenticationFilter(
-                        /* tokenServices */ null,
-                        /* restTemplate */ restTemplateMock,
-                        oAuth2Configuration,
-                        /* cache */ null) {
-
+        OAuth2GeoStoreAuthenticationFilter filter =
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
                     @Override
                     protected User retrieveUserWithAuthorities(
                             String username,
@@ -523,54 +482,139 @@ public class GeoStoreAuthenticationFilterTest {
 
                     @Override
                     protected void configureRestTemplate() {
-                        // No-op for testing.
+                        /* no-op */
                     }
                 };
+        filter.setUserGroupService(userGroupService);
 
-        oauth2Filter.setUserGroupService(userGroupService);
+        // groups claim present but empty []
+        String jwt = unsignedJwtJson("{\"groups\":[]}");
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        ServletRequestAttributes attrs = new ServletRequestAttributes(req);
+        attrs.setAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE, jwt, 0);
+        RequestContextHolder.setRequestAttributes(attrs);
 
-        HttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
-
-        ServletRequestAttributes attributes = new ServletRequestAttributes(mockHttpServletRequest);
-        /* token contains claim "groups": ["admin", "developer"] */
-        attributes.setAttribute(
-                GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE,
-                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cHMiOlsibG9jYWwiXX0.nW0k3dDTGlhXytRbwz1e2nL2g2yCFgfl2uNwW5EoklM",
-                0);
-
-        RequestContextHolder.setRequestAttributes(attributes);
-
-        // Call createPreAuthentication (which will invoke addAuthoritiesFromToken).
-        PreAuthenticatedAuthenticationToken authToken =
-                oauth2Filter.createPreAuthentication(
-                        "test-user", mockHttpServletRequest, new MockHttpServletResponse());
-        assertNotNull(authToken);
-
-        User authenticatedUser = (User) authToken.getPrincipal();
-        assertNotNull(authenticatedUser);
-
-        Set<UserGroup> userGroups = authenticatedUser.getGroups();
-        assertEquals(1, userGroups.size());
-
-        UserGroup updatedLocalGroup = userGroups.iterator().next();
-        assertNotNull(updatedLocalGroup);
-
-        List<UserGroupAttribute> updatedLocalGroupAttributes = updatedLocalGroup.getAttributes();
-        assertEquals(2, updatedLocalGroupAttributes.size());
-
-        String updatedLocalGroupSourceAttribute =
-                updatedLocalGroupAttributes.stream()
-                        .filter(attr -> "sourceService".equals(attr.getName()))
-                        .findFirst()
-                        .orElseThrow()
-                        .getValue();
-        assertEquals("testBean", updatedLocalGroupSourceAttribute);
+        PreAuthenticatedAuthenticationToken token =
+                filter.createPreAuthentication("test", req, new MockHttpServletResponse());
+        assertNotNull(token);
+        User u = (User) token.getPrincipal();
+        Set<String> groups =
+                u.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        // provider remote removed, others kept
+        assertFalse(groups.contains("MS_ADMIN_GROUP"));
+        assertTrue(groups.contains("OTHER_GROUP"));
+        assertTrue(groups.contains("LOCAL_GROUP"));
     }
 
-    private void checkUser(User user) {
+    /** Roles: present claim -> recompute; empty -> demote; missing -> preserve. */
+    @Test
+    public void testRoleResolutionPresentEmptyMissing() throws Exception {
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("t"));
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
+
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
+        config.setRolesClaim("roles");
+        config.setBeanName("testBean");
+        config.setAutoCreateUser(true);
+
+        DummyUserGroupService ugs = new DummyUserGroupService();
+
+        User user = new User();
+        user.setId(3000L);
+        user.setRole(Role.USER);
+        user.setEnabled(true);
+        user.setAttribute(Collections.emptyList());
+        user.setGroups(new HashSet<>());
+
+        OAuth2GeoStoreAuthenticationFilter filter =
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
+                    @Override
+                    protected User retrieveUserWithAuthorities(
+                            String username,
+                            HttpServletRequest request,
+                            HttpServletResponse response) {
+                        user.setName(username);
+                        return user;
+                    }
+
+                    @Override
+                    protected void configureRestTemplate() {
+                        /* no-op */
+                    }
+                };
+        filter.setUserGroupService(ugs);
+
+        // 1) roles present with ADMIN -> set to ADMIN
+        setIdToken("{\"roles\":[\"ADMIN\"]}");
+        PreAuthenticatedAuthenticationToken t1 =
+                filter.createPreAuthentication(
+                        "u", new MockHttpServletRequest(), new MockHttpServletResponse());
+        assertEquals(Role.ADMIN, ((User) t1.getPrincipal()).getRole());
+
+        // 2) roles present but empty -> demote to default (USER)
+        user.setRole(Role.ADMIN);
+        setIdToken("{\"roles\":[]}");
+        PreAuthenticatedAuthenticationToken t2 =
+                filter.createPreAuthentication(
+                        "u", new MockHttpServletRequest(), new MockHttpServletResponse());
+        assertEquals(Role.USER, ((User) t2.getPrincipal()).getRole());
+
+        // 3) roles MISSING entirely -> preserve current role
+        user.setRole(Role.GUEST);
+        setIdToken("{\"some\":\"thing\"}");
+        PreAuthenticatedAuthenticationToken t3 =
+                filter.createPreAuthentication(
+                        "u", new MockHttpServletRequest(), new MockHttpServletResponse());
+        assertEquals(Role.GUEST, ((User) t3.getPrincipal()).getRole());
+    }
+
+    // ---------------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------------
+
+    private static void checkUser(User user) {
         assertNotNull("User should not be null", user);
         assertEquals("User role should be USER", Role.USER, user.getRole());
         assertTrue("User groups should be empty", user.getGroups().isEmpty());
+    }
+
+    private static UserGroupAttribute attr(String n, String v) {
+        UserGroupAttribute a = new UserGroupAttribute();
+        a.setName(n);
+        a.setValue(v);
+        return a;
+    }
+
+    /**
+     * Minimal config that treats beanName as provider (so tests don't need to call setProvider).
+     */
+    private static class TestOAuth2Configuration extends OAuth2Configuration {
+        @Override
+        public String getProvider() {
+            return getBeanName();
+        }
+    }
+
+    private static String unsignedJwtJson(String payloadJson) {
+        String header = "{\"alg\":\"none\"}";
+        String encHeader = base64Url(header);
+        String encPayload = base64Url(payloadJson);
+        return encHeader + "." + encPayload + "."; // no signature required by JWTHelper for tests
+    }
+
+    private static String base64Url(String s) {
+        byte[] enc = Base64.encodeBase64URLSafe(s.getBytes(StandardCharsets.UTF_8));
+        return new String(enc, StandardCharsets.UTF_8);
+    }
+
+    private static void setIdToken(String payloadJson) {
+        String jwt = unsignedJwtJson(payloadJson);
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        ServletRequestAttributes attrs = new ServletRequestAttributes(req);
+        attrs.setAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE, jwt, 0);
+        RequestContextHolder.setRequestAttributes(attrs);
     }
 
     /** Dummy implementation of UserGroupService for testing purposes. */
@@ -585,23 +629,32 @@ public class GeoStoreAuthenticationFilterTest {
         }
 
         @Override
-        public long getCount(String nameLike, boolean all) throws BadRequestServiceEx {
-            return 0;
+        public long getCount(String nameLike, boolean all) {
+            return groupsByName.size();
         }
 
         @Override
-        public long getCount(User authUser, String nameLike, boolean all)
-                throws BadRequestServiceEx {
-            return 0;
+        public long getCount(User authUser, String nameLike, boolean all) {
+            return groupsByName.size();
         }
 
         @Override
         public void updateAttributes(long id, List<UserGroupAttribute> attributes)
-                throws NotFoundServiceEx {}
+                throws NotFoundServiceEx {
+            UserGroup g = groupsById.get(id);
+            if (g == null) throw new NotFoundServiceEx("group not found");
+            g.setAttributes(new ArrayList<>(attributes));
+            groupsByName.put(g.getGroupName(), g);
+        }
 
         @Override
-        public long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx {
-            return 0;
+        public long update(UserGroup group) { // simple upsert
+            if (group.getId() == null) {
+                group.setId(nextId++);
+            }
+            groupsById.put(group.getId(), group);
+            groupsByName.put(group.getGroupName(), group);
+            return group.getId();
         }
 
         @Override
@@ -617,8 +670,7 @@ public class GeoStoreAuthenticationFilterTest {
 
         @Override
         public List<ShortResource> updateSecurityRules(
-                Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite)
-                throws NotFoundServiceEx, BadRequestServiceEx {
+                Long groupId, List<Long> resourcesToSet, boolean canRead, boolean canWrite) {
             return List.of();
         }
 
@@ -633,57 +685,68 @@ public class GeoStoreAuthenticationFilterTest {
         }
 
         @Override
-        public long insert(UserGroup group) throws BadRequestServiceEx {
-            group.setId(nextId);
-            groupsById.put(nextId, group);
+        public long insert(UserGroup group) {
+            if (group.getId() == null) group.setId(nextId++);
+            groupsById.put(group.getId(), group);
             groupsByName.put(group.getGroupName(), group);
-            return nextId++;
+            return group.getId();
         }
 
         @Override
-        public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
-            return false;
+        public boolean delete(long id) {
+            return groupsById.remove(id) != null;
         }
 
         @Override
         public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
-            // For testing, we assume the assignment is always successful.
+            UserGroup g = groupsById.get(groupId);
+            if (g == null) throw new NotFoundServiceEx("group not found");
+            if (g.getUsers() == null) g.setUsers(new ArrayList<>());
+            // naive lookup: ensure a user placeholder is present
+            User u =
+                    g.getUsers().stream().filter(x -> x.getId() == userId).findFirst().orElse(null);
+            if (u == null) {
+                u = new User();
+                u.setId(userId);
+                u.setGroups(new HashSet<>());
+                u.setEnabled(true);
+                u.setName("u" + userId);
+                g.getUsers().add(u);
+            }
+            u.getGroups().add(g);
         }
 
         @Override
         public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
-            UserGroup userGroup = groupsById.get(groupId);
-            User user =
-                    userGroup.getUsers().stream()
-                            .filter(u -> userId == u.getId())
-                            .findFirst()
-                            .orElseThrow();
-
-            ArrayList<User> uu = new ArrayList<>(userGroup.getUsers());
-            uu.remove(user);
-            userGroup.setUsers(uu);
-
-            HashSet<UserGroup> gg = new HashSet<>(user.getGroups());
-            gg.remove(userGroup);
-            user.setGroups(gg);
+            UserGroup g = groupsById.get(groupId);
+            if (g == null) throw new NotFoundServiceEx("group not found");
+            if (g.getUsers() != null) {
+                g.getUsers()
+                        .removeIf(
+                                u -> {
+                                    if (u.getId() == userId) {
+                                        if (u.getGroups() != null) u.getGroups().remove(g);
+                                        return true;
+                                    }
+                                    return false;
+                                });
+            }
         }
 
         @Override
         public List<UserGroup> getAllAllowed(
-                User user, Integer page, Integer entries, String nameLike, boolean all)
-                throws BadRequestServiceEx {
-            return List.of();
+                User user, Integer page, Integer entries, String nameLike, boolean all) {
+            return new ArrayList<>(groupsByName.values());
         }
 
         @Override
-        public List<UserGroup> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
-            return List.of();
+        public List<UserGroup> getAll(Integer page, Integer entries) {
+            return new ArrayList<>(groupsByName.values());
         }
 
         @Override
-        public List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all)
-                throws BadRequestServiceEx {
-            return List.of();
+        public List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all) {
+            return new ArrayList<>(groupsByName.values());
         }
     }
 }
