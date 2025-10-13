@@ -81,12 +81,10 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             throw new DisabledException(USER_NOT_FOUND_MSG);
         }
 
-        String ldapUserUsername = ldapUser.getUsername();
-        if (ldapUserUsername != null) ldapUserUsername = ldapUserUsername.trim();
-        if (ignoreUsernameCase && ldapUserUsername != null) {
-            ldapUserUsername = ldapUserUsername.toUpperCase(Locale.ROOT);
-        }
+        // Normalize username once
+        String ldapUserUsername = normalizeUsername(ldapUser.getUsername());
 
+        // Try exact (normalized) match; optionally try CI fallback
         User user = findUser(ldapUserUsername);
 
         try {
@@ -121,20 +119,75 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
                 && ldapUser.isEnabled());
     }
 
-    private User findUser(String ldapUserUsername) {
-        try {
-            User user = userService.get(ldapUserUsername);
-            LOGGER.info("US: " + ldapUserUsername); // + " PW: " + PwEncoder.encode(pw) + " -- " +
-            // user.getPassword());
+    /** Normalize incoming usernames (trim, optional UPPER with Locale.ROOT). */
+    private String normalizeUsername(String raw) {
+        if (raw == null) return null;
+        String s = raw.trim();
+        return ignoreUsernameCase ? s.toUpperCase(Locale.ROOT) : s;
+    }
 
+    /**
+     * Find user by exact normalized name; when the flag is ON and nothing found, try a
+     * case-insensitive fallback using the existing UserService#getAll(..., nameLike, ...). If a
+     * legacy record is found with different case, we return it after setting the canonical
+     * (normalized) name on the object; the actual update will occur in
+     * authenticateExistingUser(...) together with role/group sync.
+     */
+    private User findUser(String normalizedName) {
+        try {
+            User user = userService.get(normalizedName);
+            LOGGER.info("User lookup hit for '{}'", normalizedName);
             if (!user.isEnabled()) {
                 throw new DisabledException(USER_NOT_FOUND_MSG);
             }
-
             return user;
-
+        } catch (NotFoundServiceEx notFound) {
+            if (ignoreUsernameCase) {
+                User ci = findUserIgnoreCase(normalizedName);
+                if (ci != null) {
+                    // Normalize the in-memory object; it will be persisted on update.
+                    if (!normalizedName.equals(ci.getName())) {
+                        LOGGER.warn(
+                                "Found legacy user '{}' (case-variant), normalizing to '{}'",
+                                ci.getName(),
+                                normalizedName);
+                        ci.setName(normalizedName);
+                    }
+                    if (!ci.isEnabled()) {
+                        throw new DisabledException(USER_NOT_FOUND_MSG);
+                    }
+                    return ci;
+                }
+            }
+            LOGGER.info("User not found with name: {}", normalizedName);
+            return null;
         } catch (Exception e) {
-            LOGGER.info(USER_NOT_FOUND_MSG);
+            LOGGER.log(Level.ERROR, "Error while looking up user '{}'", normalizedName, e);
+            return null;
+        }
+    }
+
+    /**
+     * Case-insensitive fallback using nameLike and exact equalsIgnoreCase filtering. Returns a
+     * single deterministic user if multiple legacy variants exist (lowest id).
+     */
+    protected User findUserIgnoreCase(String normalizedUpperName) {
+        try {
+            List<User> candidates = userService.getAll(null, null, normalizedUpperName, false);
+            if (candidates == null || candidates.isEmpty()) return null;
+
+            // exact equalsIgnoreCase filter; deterministic pick if multiple
+            return candidates.stream()
+                    .filter(
+                            u ->
+                                    u.getName() != null
+                                            && u.getName()
+                                                    .trim()
+                                                    .equalsIgnoreCase(normalizedUpperName))
+                    .min(Comparator.comparing(User::getId))
+                    .orElse(null);
+        } catch (Exception e) {
+            LOGGER.log(Level.ERROR, "CI lookup failed for '{}'", normalizedUpperName, e);
             return null;
         }
     }
@@ -146,11 +199,10 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
         setUserRoleAndGroups(user, ldapAuthorities);
 
         if (userService != null) {
-            userService.update(user);
+            userService.update(user); // also persists any name normalization done above
         }
 
-        Authentication a = prepareAuthentication(pw, user);
-        return a;
+        return prepareAuthentication(pw, user);
     }
 
     private Authentication authenticateNewUser(
@@ -159,9 +211,8 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             LdapUserDetails ldapUser,
             String pw)
             throws BadRequestServiceEx, NotFoundServiceEx {
-        User user;
-        user = new User();
 
+        User user = new User();
         user.setName(ldapUserUsername);
         user.setNewPassword(null);
         user.setEnabled(true);
@@ -176,8 +227,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             userService.insert(user);
         }
 
-        Authentication a = prepareAuthentication(pw, user);
-        return a;
+        return prepareAuthentication(pw, user);
     }
 
     private void setUserRoleAndGroups(
@@ -214,9 +264,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
     protected Authentication prepareAuthentication(String pw, User user) {
         List<GrantedAuthority> grantedAuthorities = new ArrayList<>();
         grantedAuthorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
-        Authentication a = new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
-        // a.setAuthenticated(true);
-        return a;
+        return new UsernamePasswordAuthenticationToken(user, pw, grantedAuthorities);
     }
 
     public void synchronizeGroups() throws BadRequestServiceEx {
