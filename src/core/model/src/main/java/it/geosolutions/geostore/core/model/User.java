@@ -307,7 +307,7 @@ public class User implements Serializable {
 
         if (groups != null) {
             builder.append(", ");
-            builder.append("group=").append(groups.toString());
+            builder.append("group=").append(groups);
         }
 
         if (role != null) {
