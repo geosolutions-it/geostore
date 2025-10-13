@@ -82,9 +82,9 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
         }
 
         String ldapUserUsername = ldapUser.getUsername();
-
-        if (ignoreUsernameCase) {
-            ldapUserUsername = ldapUserUsername.toUpperCase();
+        if (ldapUserUsername != null) ldapUserUsername = ldapUserUsername.trim();
+        if (ignoreUsernameCase && ldapUserUsername != null) {
+            ldapUserUsername = ldapUserUsername.toUpperCase(Locale.ROOT);
         }
 
         User user = findUser(ldapUserUsername);
