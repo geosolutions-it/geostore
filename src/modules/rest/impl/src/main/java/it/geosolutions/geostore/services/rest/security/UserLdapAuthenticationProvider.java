@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -44,6 +45,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
     @Autowired UserGroupService userGroupService;
     private UserMapper userMapper;
 
+    @Value("${geostoreLdapProvider.ignoreUsernameCase:false}")
     private boolean ignoreUsernameCase;
 
     public UserLdapAuthenticationProvider(
