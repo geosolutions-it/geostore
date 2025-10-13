@@ -106,7 +106,7 @@ public class UserServiceImpl implements UserService {
         Set<UserGroup> groups = user.getGroups();
         List<String> groupNames = new ArrayList<String>();
         List<UserGroup> existingGroups = new ArrayList<UserGroup>();
-        if (groups != null && groups.size() > 0) {
+        if (groups != null && !groups.isEmpty()) {
             for (UserGroup group : groups) {
                 String groupName = group.getGroupName();
                 groupNames.add(groupName);
@@ -184,7 +184,7 @@ public class UserServiceImpl implements UserService {
         Set<UserGroup> groups = GroupReservedNames.checkReservedGroups(user.getGroups());
         List<String> groupNames = new ArrayList<String>();
         Set<UserGroup> existingGroups = new HashSet<UserGroup>();
-        if (groups != null && groups.size() > 0) {
+        if (!groups.isEmpty()) {
             for (UserGroup group : groups) {
                 String groupName = group.getGroupName();
                 groupNames.add(groupName);
@@ -201,8 +201,7 @@ public class UserServiceImpl implements UserService {
             existingGroups =
                     GroupReservedNames.checkReservedGroups(userGroupDAO.search(searchCriteria));
 
-            if (existingGroups == null
-                    || (existingGroups != null && groups.size() != existingGroups.size())) {
+            if (groups.size() != existingGroups.size()) {
                 throw new NotFoundServiceEx(
                         "At least one User group not found; review the groups associated to the user you want to insert"
                                 + user.getId());
@@ -254,7 +253,7 @@ public class UserServiceImpl implements UserService {
         }
 
         //
-        // Saving old attributes
+        // Saving new attributes
         //
         for (UserAttribute a : attributes) {
             a.setUser(user);
@@ -269,9 +268,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User get(long id) {
-        User user = userDAO.find(id);
-        // CHECKME: shouldnt we throw a NotFound when user not found?
-        return user;
+        // CHECKME: shouldn't we throw a NotFound when user not found?
+        return userDAO.find(id);
     }
 
     /*
@@ -281,6 +279,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User get(String name) throws NotFoundServiceEx {
+        // Hardening: trim input to prevent surprises
+        if (name != null) {
+            name = name.trim();
+        }
         Search searchCriteria = new Search(User.class);
         searchCriteria.addFilterEqual("name", name);
         searchCriteria.addFetch("attribute");
@@ -310,23 +312,18 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<User> getAll(Integer page, Integer entries) throws BadRequestServiceEx {
-
         if (((page != null) && (entries == null)) || ((page == null) && (entries != null))) {
             throw new BadRequestServiceEx("Page and entries params should be declared together.");
         }
 
         Search searchCriteria = new Search(User.class);
-
         if (page != null) {
             searchCriteria.setMaxResults(entries);
             searchCriteria.setPage(page);
         }
 
         searchCriteria.addSortAsc("name");
-
-        List<User> found = userDAO.search(searchCriteria);
-
-        return found;
+        return userDAO.search(searchCriteria);
     }
 
     /*
@@ -357,9 +354,7 @@ public class UserServiceImpl implements UserService {
         }
 
         List<User> found = userDAO.search(searchCriteria);
-        found = this.configUserList(found, includeAttributes);
-
-        return found;
+        return this.configUserList(found, includeAttributes);
     }
 
     /**
@@ -385,7 +380,6 @@ public class UserServiceImpl implements UserService {
 
             uList.add(u);
         }
-
         return uList;
     }
 
@@ -401,7 +395,6 @@ public class UserServiceImpl implements UserService {
         if (nameLike != null) {
             searchCriteria.addFilterILike("name", nameLike);
         }
-
         return userDAO.count(searchCriteria);
     }
 
@@ -433,7 +426,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Collection<User> getByAttribute(UserAttribute attribute) {
-
         Search searchCriteria = new Search(UserAttribute.class);
         searchCriteria.addFilterEqual("name", attribute.getName());
         searchCriteria.addFilterEqual("value", attribute.getValue());
@@ -452,7 +444,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Collection<User> getByGroup(UserGroup group) {
-
         Search searchByGroup = new Search(User.class);
         // preferred search is by group name, revert back to id based search for compatibility
         // if name is not present
@@ -469,7 +460,6 @@ public class UserServiceImpl implements UserService {
         if (user == null || user.getId() == null) {
             return;
         }
-
         user.setFavorites(new HashSet<>(resourceDAO.findUserFavorites(user.getId())));
     }
 }
