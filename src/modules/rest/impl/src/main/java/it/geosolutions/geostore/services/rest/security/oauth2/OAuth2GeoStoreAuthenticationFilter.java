@@ -1,6 +1,6 @@
 /* ====================================================================
  *
- * Copyright (C) 2022 GeoSolutions S.A.S.
+ * Copyright (C) 2022-2025 GeoSolutions S.A.S.
  * http://www.geo-solutions.it
  *
  * GPLv3 + Classpath exception
@@ -35,6 +35,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
@@ -42,7 +43,17 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.servlet.FilterChain;
@@ -89,13 +100,44 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public abstract class OAuth2GeoStoreAuthenticationFilter
         extends OAuth2ClientAuthenticationProcessingFilter {
 
+    private static final Logger LOGGER =
+            LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+
+    private static final String SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME = "sourceService";
+
     public static final String OAUTH2_AUTHENTICATION_KEY = "oauth2.authentication";
     public static final String OAUTH2_AUTHENTICATION_TYPE_KEY = "oauth2.authenticationType";
     public static final String OAUTH2_ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
-    private static final Logger LOGGER =
-            LogManager.getLogger(OAuth2GeoStoreAuthenticationFilter.class);
+
     private final AuthenticationEntryPoint authEntryPoint;
     private final TokenAuthenticationCache cache;
+
+    @Autowired protected UserService userService;
+    @Autowired protected UserGroupService userGroupService;
+    protected RemoteTokenServices tokenServices;
+    protected OAuth2Configuration configuration;
+
+    /**
+     * Constructs a new OAuth2GeoStoreAuthenticationFilter.
+     *
+     * @param tokenServices a RemoteTokenServices instance.
+     * @param oAuth2RestTemplate the REST template to use for OAuth2 requests.
+     * @param configuration the OAuth2 configuration.
+     * @param tokenAuthenticationCache the token authentication cache.
+     */
+    public OAuth2GeoStoreAuthenticationFilter(
+            RemoteTokenServices tokenServices,
+            GeoStoreOAuthRestTemplate oAuth2RestTemplate,
+            OAuth2Configuration configuration,
+            TokenAuthenticationCache tokenAuthenticationCache) {
+        super("/**");
+        super.setTokenServices(tokenServices);
+        this.tokenServices = tokenServices;
+        super.restTemplate = oAuth2RestTemplate;
+        this.configuration = configuration;
+        this.authEntryPoint = configuration.getAuthenticationEntryPoint();
+        this.cache = tokenAuthenticationCache;
+    }
 
     public UserService getUserService() {
         return userService;
@@ -129,33 +171,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         this.configuration = configuration;
     }
 
-    @Autowired protected UserService userService;
-    @Autowired protected UserGroupService userGroupService;
-    protected RemoteTokenServices tokenServices;
-    protected OAuth2Configuration configuration;
-
-    /**
-     * Constructs a new OAuth2GeoStoreAuthenticationFilter.
-     *
-     * @param tokenServices a RemoteTokenServices instance.
-     * @param oAuth2RestTemplate the REST template to use for OAuth2 requests.
-     * @param configuration the OAuth2 configuration.
-     * @param tokenAuthenticationCache the token authentication cache.
-     */
-    public OAuth2GeoStoreAuthenticationFilter(
-            RemoteTokenServices tokenServices,
-            GeoStoreOAuthRestTemplate oAuth2RestTemplate,
-            OAuth2Configuration configuration,
-            TokenAuthenticationCache tokenAuthenticationCache) {
-        super("/**");
-        super.setTokenServices(tokenServices);
-        this.tokenServices = tokenServices;
-        super.restTemplate = oAuth2RestTemplate;
-        this.configuration = configuration;
-        this.authEntryPoint = configuration.getAuthenticationEntryPoint();
-        this.cache = tokenAuthenticationCache;
-    }
-
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
@@ -179,8 +194,8 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
     @Override
     public Authentication attemptAuthentication(
-            HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException, IOException, ServletException {
+            HttpServletRequest request, HttpServletResponse response) {
+
         Authentication authentication;
         String token = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, request);
 
@@ -407,8 +422,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                         e.getCause());
             } else if (e instanceof ResourceAccessException) {
                 LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
-            } else if (e instanceof ResourceAccessException
-                    || e.getCause() instanceof OAuth2AccessDeniedException) {
+            } else if (e.getCause() instanceof OAuth2AccessDeniedException) {
                 LOGGER.warn(
                         "If you try to validate credentials against an SSH protected endpoint, you need your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM.");
                 LOGGER.info(
@@ -487,21 +501,26 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         JWTHelper jwtHelper = decodeAndValidateIdToken(idToken);
         // Remap the username if the idToken is valid and the configuration is set
         username = remapUsername(username, jwtHelper);
+
         LOGGER.info("Retrieving user with authorities for username: {}", username);
         User user = retrieveUserWithAuthorities(username, request, response);
         if (user == null) {
             LOGGER.error("User retrieval failed for username: {}", username);
             return null;
         }
+
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
+
         PreAuthenticatedAuthenticationToken authenticationToken =
                 new PreAuthenticatedAuthenticationToken(
                         user, null, Collections.singletonList(authority));
+
         if (StringUtils.isNotBlank(configuration.getGroupsClaim())
                 || StringUtils.isNotBlank(configuration.getRolesClaim())) {
             addAuthoritiesFromToken(user, idToken);
         }
+
         OAuth2AccessToken accessToken = restTemplate.getOAuth2ClientContext().getAccessToken();
         authenticationToken.setDetails(
                 new TokenDetails(accessToken, idToken, configuration.getBeanName()));
@@ -562,80 +581,50 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     /**
-     * Adds authorities to the user based on idToken claims.
-     *
-     * @param user the user instance.
-     * @param idToken the idToken containing claims.
+     * Adds authorities to the user based on idToken claims: - deterministically recomputes Role
+     * (supports demotion) if roles claim is present - otherwise keeps the current role - reconciles
+     * remote groups for THIS provider against IdP groups
      */
     protected void addAuthoritiesFromToken(User user, String idToken) {
         LOGGER.debug(" --------- OIDC - ID_TOKEN: {}", idToken);
         JWTHelper helper = new JWTHelper(idToken);
 
-        List<String> roles = null;
-        List<String> groups = null;
-        if (configuration.getRolesClaim() != null) {
-            roles = helper.getClaimAsList(configuration.getRolesClaim(), String.class);
-            LOGGER.debug(" --------- OIDC - ROLES: {}", roles);
+        // ----- Roles: update only if the claim is PRESENT; else keep current role -----
+        Role currentRole = user.getRole();
+        String rolesClaimName = configuration.getRolesClaim();
+        Object rawRoles = null;
+        if (StringUtils.isNotBlank(rolesClaimName)) {
+            // Presence detection: if claim is absent -> rawRoles == null
+            rawRoles = helper.getClaim(rolesClaimName, Object.class);
         }
-        if (roles == null) roles = Collections.emptyList();
 
+        if (rawRoles != null) {
+            List<String> oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
+            Role defaultRole =
+                    configuration.getAuthenticatedDefaultRole() != null
+                            ? configuration.getAuthenticatedDefaultRole()
+                            : Role.USER;
+            Role newRole = computeRole(oidcRoles, defaultRole); // ADMIN > GUEST > default
+            user.setRole(newRole);
+            LOGGER.info("User role set from token. {} -> {}", currentRole, newRole);
+        } else {
+            LOGGER.debug(
+                    "Roles claim '{}' missing in token -> preserving current role: {}",
+                    rolesClaimName,
+                    currentRole);
+        }
+
+        // ----- Groups: provider-scoped reconciliation with IdP set -----
+        List<String> oidcGroups = Collections.emptyList();
         if (configuration.getGroupsClaim() != null) {
-            groups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
-            LOGGER.debug(" --------- OIDC - GROUPS: {}", groups);
-        }
-        if (groups == null) groups = Collections.emptyList();
-
-        for (String r : roles) {
-            if (r.equals(Role.ADMIN.name())) user.setRole(Role.ADMIN);
-        }
-        LOGGER.info("User updated with the following roles: {}", user.getRole());
-
-        Set<UserGroup> userGroups = user.getGroups();
-        for (String groupName : groups) {
-            UserGroup group = null;
-            if (userGroupService != null) {
-                if (configuration.isGroupNamesUppercase()) {
-                    group = userGroupService.get(groupName.toUpperCase());
-                }
-                if (group == null) {
-                    group = userGroupService.get(groupName);
-                }
-            }
-            if (group == null) {
-                group = new UserGroup();
-                group.setGroupName(
-                        configuration.isGroupNamesUppercase()
-                                ? groupName.toUpperCase()
-                                : groupName);
-                long groupId = -1;
-                if (userGroupService != null) {
-                    try {
-                        groupId = userGroupService.insert(group);
-                        group = userGroupService.get(groupId);
-                        LOGGER.debug("inserted group id: {}", group.getGroupName());
-                    } catch (BadRequestServiceEx e) {
-                        LOGGER.error("Saving new group found in claims failed");
-                    }
-                }
-            }
-            if (!userGroups.contains(group)) {
-                try {
-                    if (userGroupService != null)
-                        userGroupService.assignUserGroup(user.getId(), group.getId());
-                    userGroups.add(group);
-                } catch (NotFoundServiceEx e) {
-                    LOGGER.error(
-                            "Assignment of user {} to group {} failed... skipping it!",
-                            user,
-                            group);
-                }
-            }
+            oidcGroups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+            LOGGER.debug(" --------- OIDC - GROUPS: {}", oidcGroups);
         }
 
-        Set<UserGroup> sanitizedGroups =
-                new TreeSet<>(Comparator.comparing(UserGroup::getGroupName));
-        sanitizedGroups.addAll(userGroups);
-        user.setGroups(sanitizedGroups);
+        // Old behavior removed (too broad): unassignRemoteUserGroupsFromUser(user);
+        reconcileRemoteGroups(user, new LinkedHashSet<>(oidcGroups));
+
+        // ----- Persist user after role & group sync -----
         try {
             if (userService != null) userService.update(user);
         } catch (BadRequestServiceEx | NotFoundServiceEx e) {
@@ -649,8 +638,210 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                     e.getMessage(),
                     e);
         } finally {
-            LOGGER.info("User updated with the following groups: {}", sanitizedGroups);
+            LOGGER.info("User updated with the following groups: {}", user.getGroups());
         }
+    }
+
+    // ---------------------------------------------------------------------
+    // Helpers for deterministic role and provider-scoped group reconcile
+    // ---------------------------------------------------------------------
+
+    /** Compute the user's role from token roles with deterministic precedence. */
+    private Role computeRole(List<String> rolesFromToken, Role defaultRole) {
+        if (rolesFromToken == null || rolesFromToken.isEmpty()) {
+            return (defaultRole != null) ? defaultRole : Role.USER;
+        }
+        Role resolved = (defaultRole != null) ? defaultRole : Role.USER;
+        for (String r : rolesFromToken) {
+            if (r == null) continue;
+            String rr = r.trim();
+            if (rr.equalsIgnoreCase(Role.ADMIN.name())) {
+                return Role.ADMIN; // highest precedence
+            }
+            if (rr.equalsIgnoreCase(Role.GUEST.name())) {
+                resolved = Role.GUEST; // lower than ADMIN, higher than USER
+            }
+        }
+        return resolved;
+    }
+
+    /** Normalize group name according to configuration (uppercase if enabled). */
+    private String normalizeGroupName(String name) {
+        if (name == null) return null;
+        return configuration.isGroupNamesUppercase() ? name.toUpperCase(Locale.ROOT) : name;
+    }
+
+    private boolean isRemoteGroupForProvider(UserGroup group, String provider) {
+        List<UserGroupAttribute> attrs = group.getAttributes();
+        if (attrs == null) return false;
+        for (UserGroupAttribute a : attrs) {
+            if (a != null
+                    && SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME.equals(a.getName())
+                    && provider.equals(a.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Provider-scoped reconciliation of remote groups with the new IdP set: 1) remove remote groups
+     * for THIS provider that are not in the token 2) ensure token groups exist, are marked with
+     * sourceService=provider, and are assigned
+     */
+    private void reconcileRemoteGroups(User user, Set<String> newGroupNamesRaw) {
+        final String provider = configuration.getProvider();
+        if (StringUtils.isBlank(provider)) {
+            LOGGER.warn("Provider name is empty; skipping remote group reconciliation.");
+            return;
+        }
+
+        if (user.getGroups() == null) {
+            user.setGroups(new LinkedHashSet<>());
+        }
+
+        // Normalize new group names once
+        Set<String> newGroupNames =
+                newGroupNamesRaw.stream()
+                        .filter(Objects::nonNull)
+                        .map(this::normalizeGroupName)
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        // 1) remove old remote groups for THIS provider that are not in the new set
+        Set<UserGroup> toRemove =
+                user.getGroups().stream()
+                        .filter(g -> isRemoteGroupForProvider(g, provider))
+                        .filter(g -> !newGroupNames.contains(normalizeGroupName(g.getGroupName())))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+
+        for (UserGroup g : toRemove) {
+            try {
+                userGroupService.deassignUserGroup(user.getId(), g.getId());
+                LOGGER.debug(
+                        "Removed remote group '{}' for provider '{}' from user {}",
+                        g.getGroupName(),
+                        provider,
+                        user.getId());
+            } catch (NotFoundServiceEx e) {
+                LOGGER.warn(
+                        "Deassign failed for group '{}' from user {}: {}",
+                        g.getGroupName(),
+                        user.getId(),
+                        e.getMessage());
+            }
+        }
+        user.getGroups().removeAll(toRemove);
+
+        // 2) ensure each new token group exists, is marked for this provider, and is assigned
+        for (String groupName : newGroupNames) {
+            UserGroup group = searchGroup(groupName);
+            if (group == null) {
+                group = createUserGroup(groupName); // already sets sourceService=provider
+                LOGGER.debug("Created remote group '{}' (provider={})", groupName, provider);
+            } else {
+                updateGroupSourceServiceAttributes(group); // backfill + persist attribute
+            }
+
+            UserGroup finalGroup = group;
+            boolean alreadyAssigned =
+                    user.getGroups().stream()
+                            .anyMatch(g -> Objects.equals(g.getId(), finalGroup.getId()));
+            if (!alreadyAssigned) {
+                try {
+                    userGroupService.assignUserGroup(user.getId(), group.getId());
+                    user.getGroups().add(group);
+                    LOGGER.debug("Assigned user {} to group '{}'", user.getId(), groupName);
+                } catch (NotFoundServiceEx e) {
+                    LOGGER.error(
+                            "Assignment of user {} to group '{}' failed: {}",
+                            user.getId(),
+                            groupName,
+                            e.getMessage());
+                }
+            }
+        }
+
+        // de-dup by normalized name
+        Map<String, UserGroup> byName = new LinkedHashMap<>();
+        for (UserGroup g : user.getGroups()) {
+            byName.put(normalizeGroupName(g.getGroupName()), g);
+        }
+        user.setGroups(new LinkedHashSet<>(byName.values()));
+    }
+
+    // ---------------------------------------------------------------------
+    // Existing helpers (kept) — with a tweak to persist the attribute
+    // ---------------------------------------------------------------------
+
+    private UserGroup searchGroup(String groupName) {
+        if (userGroupService == null) {
+            return null;
+        }
+        if (configuration.isGroupNamesUppercase()) {
+            UserGroup userGroup = userGroupService.get(groupName.toUpperCase());
+            if (userGroup != null) {
+                return userGroup;
+            }
+        }
+        return userGroupService.get(groupName);
+    }
+
+    private void updateGroupSourceServiceAttributes(UserGroup group) {
+        List<UserGroupAttribute> attributes = group.getAttributes();
+
+        if (attributes == null) {
+            attributes = new ArrayList<>();
+            group.setAttributes(attributes);
+        }
+
+        Optional<UserGroupAttribute> sourceServiceAttribute =
+                attributes.stream()
+                        .filter(
+                                attribute ->
+                                        SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME.equals(
+                                                attribute.getName()))
+                        .findFirst();
+
+        if (sourceServiceAttribute.isPresent()) {
+            sourceServiceAttribute.get().setValue(configuration.getProvider());
+        } else {
+            attributes.add(createUserGroupSourceServiceAttribute(configuration.getProvider()));
+        }
+
+        // Persist attributes to DB to ensure the marker is durable
+        try {
+            userGroupService.updateAttributes(group.getId(), attributes);
+        } catch (NotFoundServiceEx e) {
+            LOGGER.warn(
+                    "Could not persist sourceService attribute for group '{}': {}",
+                    group.getGroupName(),
+                    e.getMessage());
+        }
+    }
+
+    private UserGroup createUserGroup(String groupName) {
+        UserGroup group = new UserGroup();
+        group.setGroupName(
+                configuration.isGroupNamesUppercase() ? groupName.toUpperCase() : groupName);
+        group.setAttributes(
+                List.of(createUserGroupSourceServiceAttribute(configuration.getProvider())));
+        if (userGroupService != null) {
+            try {
+                long groupId = userGroupService.insert(group);
+                group = userGroupService.get(groupId);
+                LOGGER.debug("inserted group id: {}", group.getGroupName());
+            } catch (BadRequestServiceEx e) {
+                LOGGER.error("Saving new group found in claims failed");
+            }
+        }
+        return group;
+    }
+
+    private UserGroupAttribute createUserGroupSourceServiceAttribute(String remoteService) {
+        UserGroupAttribute userGroupAttribute = new UserGroupAttribute();
+        userGroupAttribute.setName(SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME);
+        userGroupAttribute.setValue(remoteService);
+        return userGroupAttribute;
     }
 
     /**
@@ -762,7 +953,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (failed instanceof AccessTokenRequiredException) {
             SecurityContextHolder.clearContext();
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Authentication request failed: {}", failed);
+                LOGGER.debug("Authentication request failed:", failed);
                 LOGGER.debug("Cleared SecurityContextHolder.");
             }
         }
