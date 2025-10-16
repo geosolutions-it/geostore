@@ -113,7 +113,7 @@ public interface UserService {
     /**
      * Persist the special Users, those that implies special behavior (Like GUEST)
      *
-     * <p>For obvious reasons this Method MUST NOT exposed through the rest interface.
+     * <p>For obvious reasons, this Method MUST NOT expose through the rest interface.
      *
      * @return true if the persist operation finish with success, false otherwise
      */

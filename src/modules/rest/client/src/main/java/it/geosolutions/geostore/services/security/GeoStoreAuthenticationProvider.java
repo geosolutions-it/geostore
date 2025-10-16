@@ -28,14 +28,14 @@ public class GeoStoreAuthenticationProvider implements AuthenticationProvider {
 
     /** Message shown if the user logged haven't got an allowed role. TODO: Localize it */
     public static final String UNAUTHORIZED_MSG =
-            "This user have not enougth permissions to access to the Admin GUI";
+            "This user have not enough permissions to access to the Admin GUI";
 
     /** Message shown if the user it's not found. TODO: Localize it */
     public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
 
     /** Message shown if GeoStore it's unavailable. TODO: Localize it */
     public static final String GEOSTORE_UNAVAILABLE =
-            "GeoStore it's not availabile. Please contact with the administrator";
+            "GeoStore it's not available. Please contact with the administrator";
 
     @Override
     public boolean supports(Class<? extends Object> authentication) {
