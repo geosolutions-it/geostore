@@ -1,28 +1,27 @@
-/* ====================================================================
+/*
+ *  Copyright (C) 2022-2025 GeoSolutions S.A.S.
+ *  http://www.geo-solutions.it
  *
- * Copyright (C) 2022-2025 GeoSolutions S.A.S.
- * http://www.geo-solutions.it
+ *  GPLv3 + Classpath exception
  *
- * GPLv3 + Classpath exception
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program.
+ *  ====================================================================
  *
- * ====================================================================
- *
- * This software consists of voluntary contributions made by developers
- * of GeoSolutions.  For more information on GeoSolutions, please see
- * <http://www.geo-solutions.it/>.
+ *  This software consists of voluntary contributions made by developers
+ *  of GeoSolutions.  For more information on GeoSolutions, please see
+ *  <http://www.geo-solutions.it/>.
  *
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
@@ -43,6 +42,7 @@ import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.google.OpenIdFilter;
@@ -54,6 +54,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -92,6 +93,7 @@ public class OpenIdIntegrationTest {
     private static final String CODE_ROLES_ADMIN = "CODE_ROLES_ADMIN";
     private static final String CODE_ROLES_EMPTY = "CODE_ROLES_EMPTY";
     private static final String CODE_GROUPS_RECON = "CODE_GROUPS_RECON";
+    private static final String CODE_ROLES_GUEST = "CODE_ROLES_GUEST";
 
     private static WireMockServer openIdService;
     private String authService;
@@ -191,6 +193,10 @@ public class OpenIdIntegrationTest {
         stubTokenForCode(
                 CODE_GROUPS_RECON,
                 jsonPayload().put("email", "recon@ex.com").put("groups", arr("A", "B")).build());
+        // demotion/promotion check for existing user override
+        stubTokenForCode(
+                CODE_ROLES_GUEST,
+                jsonPayload().put("email", "guest@ex.com").put("roles", arr("GUEST")).build());
     }
 
     @After
@@ -362,25 +368,209 @@ public class OpenIdIntegrationTest {
         }
     }
 
+    // ---------------------------------------------------------------------
+    // New tests: creation, override role, full provider-remote reset & idempotency
+    // ---------------------------------------------------------------------
+
+    @Test
+    public void testNewUserCreatedWithRoleFromOidc() throws Exception {
+        configuration.setRolesClaim("roles");
+
+        MockHttpServletRequest request = createRequest("google/login");
+        request.setParameter("authorization_code", CODE_ROLES_ADMIN);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_ROLES_ADMIN);
+
+        // No pre-existing user; filter will create it based on token.
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+
+        assertEquals("admin@ex.com", user.getName());
+        assertEquals(Role.ADMIN, user.getRole());
+
+        // Created-by-provider marker attribute
+        assertTrue(
+                user.getAttribute() != null
+                        && user.getAttribute().stream()
+                                .anyMatch(
+                                        a ->
+                                                OAuth2Configuration.CONFIGURATION_NAME.equals(
+                                                                a.getName())
+                                                        && configuration
+                                                                .getBeanName()
+                                                                .equals(a.getValue())));
+    }
+
+    @Test
+    public void testExistingUserRoleOverriddenByOidc() throws Exception {
+        configuration.setRolesClaim("roles");
+
+        // Seed an existing user with ADMIN; token will demote to GUEST
+        User existing = new User();
+        existing.setId(901L);
+        existing.setName("guest@ex.com");
+        existing.setRole(Role.ADMIN);
+        existing.setEnabled(true);
+        existing.setGroups(new HashSet<>());
+        existing.setAttribute(new ArrayList<>());
+
+        OpenIdFilter seededFilter =
+                getOpenIdFilter(existing, (DummyUserGroupService) filter.getUserGroupService());
+
+        MockHttpServletRequest request = createRequest("google/login");
+        request.setParameter("authorization_code", CODE_ROLES_GUEST);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        seededFilter
+                .restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_ROLES_GUEST);
+
+        seededFilter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+
+        assertEquals("guest@ex.com", user.getName());
+        assertEquals(Role.GUEST, user.getRole());
+    }
+
+    @Test
+    public void testProviderRemoteGroupsResetAlignedAndIdempotent() throws Exception {
+        configuration.setGroupsClaim("groups");
+
+        DummyUserGroupService svc = (DummyUserGroupService) filter.getUserGroupService();
+
+        // Seed user with: local + other provider remote + old provider remote
+        User seeded = new User();
+        seeded.setId(1001L);
+        seeded.setName("recon@ex.com");
+        seeded.setRole(Role.USER);
+        seeded.setEnabled(true);
+        seeded.setGroups(new HashSet<>());
+
+        UserGroup local = new UserGroup();
+        local.setGroupName("LOCAL_GROUP");
+        local.setAttributes(new ArrayList<>()); // no sourceService -> local
+        svc.insert(local);
+
+        UserGroup otherProv = new UserGroup();
+        otherProv.setGroupName("OTHER_GROUP");
+        otherProv.setAttributes(new ArrayList<>(List.of(attr("sourceService", "other"))));
+        svc.insert(otherProv);
+
+        UserGroup oldRemote = new UserGroup();
+        oldRemote.setGroupName("OLD_REMOTE");
+        oldRemote.setAttributes(
+                new ArrayList<>(List.of(attr("sourceService", configuration.getProvider()))));
+        svc.insert(oldRemote);
+
+        seeded.getGroups().add(local);
+        seeded.getGroups().add(otherProv);
+        seeded.getGroups().add(oldRemote);
+
+        OpenIdFilter seededFilter = getOpenIdFilter(seeded, svc);
+
+        // First pass: token groups ["A","B"]
+        MockHttpServletRequest request = createRequest("google/login");
+        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        seededFilter
+                .restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_GROUPS_RECON);
+        seededFilter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+
+        Set<String> names =
+                seeded.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(names.contains("LOCAL_GROUP"));
+        assertTrue(names.contains("OTHER_GROUP"));
+        assertFalse(names.contains("OLD_REMOTE"));
+        assertTrue(names.contains("A"));
+        assertTrue(names.contains("B"));
+
+        // Only A,B are provider-remote
+        Set<String> providerRemotes =
+                seeded.getGroups().stream()
+                        .filter(g -> g.getAttributes() != null)
+                        .filter(
+                                g ->
+                                        g.getAttributes().stream()
+                                                .anyMatch(
+                                                        a ->
+                                                                "sourceService".equals(a.getName())
+                                                                        && configuration
+                                                                                .getProvider()
+                                                                                .equals(
+                                                                                        a
+                                                                                                .getValue())))
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertEquals(Set.of("A", "B"), providerRemotes);
+
+        // Idempotency: second pass with same token makes no changes
+        int beforeCount = seeded.getGroups().size();
+        MockHttpServletRequest request2 = createRequest("google/login");
+        request2.setParameter("authorization_code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response2 = new MockHttpServletResponse();
+        seededFilter
+                .restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_GROUPS_RECON);
+        seededFilter.doFilter(request2, response2, new MockFilterChain());
+        assertEquals(200, response2.getStatus());
+        int afterCount = seeded.getGroups().size();
+        assertEquals(beforeCount, afterCount);
+
+        Set<String> providerRemotesAfter =
+                seeded.getGroups().stream()
+                        .filter(g -> g.getAttributes() != null)
+                        .filter(
+                                g ->
+                                        g.getAttributes().stream()
+                                                .anyMatch(
+                                                        a ->
+                                                                "sourceService".equals(a.getName())
+                                                                        && configuration
+                                                                                .getProvider()
+                                                                                .equals(
+                                                                                        a
+                                                                                                .getValue())))
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertEquals(Set.of("A", "B"), providerRemotesAfter);
+    }
+
     private OpenIdFilter getOpenIdFilter(User seeded, DummyUserGroupService svc) {
         OpenIdFilter seededFilter =
                 new OpenIdFilter(
-                        (GeoStoreRemoteTokenServices)
-                                ((OAuthGoogleSecurityConfiguration)
-                                                new OAuthGoogleSecurityConfiguration() {
-                                                    @Override
-                                                    protected GeoStoreOAuthRestTemplate
-                                                            restTemplate() {
-                                                        return (GeoStoreOAuthRestTemplate)
-                                                                filter.restTemplate;
-                                                    }
+                        new OAuthGoogleSecurityConfiguration() {
+                            @Override
+                            protected GeoStoreOAuthRestTemplate restTemplate() {
+                                return (GeoStoreOAuthRestTemplate) filter.restTemplate;
+                            }
 
-                                                    @Override
-                                                    public OAuth2Configuration configuration() {
-                                                        return configuration;
-                                                    }
-                                                })
-                                        .googleTokenServices(),
+                            @Override
+                            public OAuth2Configuration configuration() {
+                                return configuration;
+                            }
+                        }.googleTokenServices(),
                         (GeoStoreOAuthRestTemplate) filter.restTemplate,
                         configuration,
                         null) {
@@ -415,6 +605,7 @@ public class OpenIdIntegrationTest {
         @Override
         public long insert(UserGroup g) {
             if (g.getId() == null) g.setId(nextId++);
+            if (g.getAttributes() == null) g.setAttributes(new ArrayList<>());
             byId.put(g.getId(), g);
             byName.put(g.getGroupName(), g);
             return g.getId();
@@ -452,6 +643,7 @@ public class OpenIdIntegrationTest {
         @Override
         public long update(UserGroup group) {
             if (group.getId() == null) group.setId(nextId++);
+            if (group.getAttributes() == null) group.setAttributes(new ArrayList<>());
             byId.put(group.getId(), group);
             byName.put(group.getGroupName(), group);
             return group.getId();
@@ -475,7 +667,56 @@ public class OpenIdIntegrationTest {
         @Override
         public Collection<UserGroup> findByAttribute(
                 String name, List<String> values, boolean ignoreCase) {
-            return List.of();
+            String n = ignoreCase ? name.toLowerCase(Locale.ROOT) : name;
+            Set<String> vals = new HashSet<>();
+            for (String v : values) vals.add(ignoreCase ? v.toLowerCase(Locale.ROOT) : v);
+
+            List<UserGroup> out = new ArrayList<>();
+            for (UserGroup g : byName.values()) {
+                List<UserGroupAttribute> attrs = g.getAttributes();
+                if (attrs == null) continue;
+                for (UserGroupAttribute a : attrs) {
+                    if (a.getName() == null) continue;
+                    String an = ignoreCase ? a.getName().toLowerCase(Locale.ROOT) : a.getName();
+                    if (!an.equals(n)) continue;
+                    String av =
+                            a.getValue() == null
+                                    ? ""
+                                    : (ignoreCase
+                                            ? a.getValue().toLowerCase(Locale.ROOT)
+                                            : a.getValue());
+                    if (vals.contains(av)) {
+                        out.add(g);
+                        break;
+                    }
+                }
+            }
+            return out;
+        }
+
+        @Override
+        public UserGroup getWithAttributes(long id) throws NotFoundServiceEx, BadRequestServiceEx {
+            UserGroup g = byId.get(id);
+            if (g == null) throw new NotFoundServiceEx("UserGroup not found " + id);
+            return g;
+        }
+
+        @Override
+        public void upsertAttribute(long groupId, String name, String value)
+                throws NotFoundServiceEx, BadRequestServiceEx {
+            UserGroup g = byId.get(groupId);
+            if (g == null) throw new NotFoundServiceEx("UserGroup not found " + groupId);
+            if (g.getAttributes() == null) g.setAttributes(new ArrayList<>());
+            for (UserGroupAttribute a : g.getAttributes()) {
+                if (a.getName() != null && a.getName().equalsIgnoreCase(name)) {
+                    a.setValue(value);
+                    return;
+                }
+            }
+            UserGroupAttribute a = new UserGroupAttribute();
+            a.setName(name);
+            a.setValue(value);
+            g.getAttributes().add(a);
         }
 
         @Override
@@ -613,6 +854,7 @@ public class OpenIdIntegrationTest {
             return sb.append('}').toString();
         }
         // convenience for roles empty [] case
+
         String raw() {
             return build();
         }
