@@ -6,7 +6,7 @@
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -29,4 +29,17 @@ import it.geosolutions.geostore.core.model.UserGroup;
 public interface UserGroupDAO extends RestrictedGenericDAO<UserGroup> {
 
     UserGroup findByName(String name);
+
+    /**
+     * Returns the {@link UserGroup} with the given id with its attributes eagerly initialized (e.g.
+     * via JOIN FETCH or an equivalent mechanism).
+     *
+     * <p>This is an optional helper to avoid lazy loading issues when the caller needs to access
+     * group attributes outside an active persistence context.
+     *
+     * @param id the group id
+     * @return the group with initialized attributes, or {@code null} if not found
+     * @since 2025
+     */
+    UserGroup findWithAttributes(long id);
 }

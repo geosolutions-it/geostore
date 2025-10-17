@@ -6,7 +6,7 @@
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -141,5 +141,35 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
     @Override
     public boolean removeById(Long id) {
         return super.removeById(id);
+    }
+
+    // ---------------------------------------------------------------------
+    // Optional helper: fetch group with attributes eagerly initialized
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns the {@link UserGroup} with the given id with its attributes eagerly initialized.
+     * Implemented using a {@link Search} with {@code addFetch("attributes")} and explicit
+     * initialization to avoid lazy loading issues outside the transactional context.
+     *
+     * @param id the group id
+     * @return the group with initialized attributes, or {@code null} if not found
+     * @since 2025
+     */
+    @Override
+    public UserGroup findWithAttributes(long id) {
+        Search s = new Search(UserGroup.class);
+        s.addFilterEqual("id", id);
+        s.addFetch("attributes");
+        List<UserGroup> res = search(s);
+        if (res == null || res.isEmpty()) {
+            return null;
+        }
+        UserGroup g = res.get(0);
+        // Materialize attributes defensively
+        if (g.getAttributes() != null) {
+            Hibernate.initialize(g.getAttributes());
+        }
+        return g;
     }
 }

@@ -135,7 +135,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
             getRolesResource(keycloak).get(userGroup.getGroupName()).remove();
             return true;
         } catch (NotFoundException e) {
-            LOGGER.warn("No user found with name " + userGroup.getGroupName(), e);
+            LOGGER.warn("No user found with name {}", userGroup.getGroupName(), e);
             return false;
         } finally {
             close(keycloak);
@@ -153,7 +153,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         try {
             KeycloakQuery query = toKeycloakQuery(search);
             if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Executing the following Keycloak query " + query.toString());
+                LOGGER.debug("Executing the following Keycloak query {}", query.toString());
             RolesResource rr = getRolesResource(keycloak);
             List<RoleRepresentation> roles;
             String groupName = query.getGroupName();
@@ -209,7 +209,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
                 group.setGroupName(role.getName());
                 group.setDescription(role.getDescription());
                 group.setEnabled(true);
-                group.setId(Long.valueOf(counter));
+                group.setId((long) counter);
                 groups.add(group);
                 counter++;
             }
@@ -243,16 +243,14 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
      * Add the everyOne group to the LDAP returned list.
      *
      * @param groups
-     * @return
      */
-    private List<UserGroup> addEveryOne(List<UserGroup> groups, boolean addEveryOneGroup, int id) {
+    private void addEveryOne(List<UserGroup> groups, boolean addEveryOneGroup, int id) {
         boolean found =
                 groups.stream().anyMatch(g -> g.getGroupName().equals(EVERYONE.groupName()));
         if (!found && addEveryOneGroup && isAddEveryOneGroup()) {
             UserGroup everyoneGroup = everyoneGroup(id);
             groups.add(everyoneGroup);
         }
-        return groups;
     }
 
     private RoleRepresentation everyoneRoleRep() {
@@ -267,9 +265,18 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         searchCriteria.addFilterEqual("groupName", name);
         UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
-        if (existingGroups.size() > 0) {
+        if (!existingGroups.isEmpty()) {
             result = existingGroups.get(0);
         }
         return result;
+    }
+
+    /**
+     * @param id the group id
+     * @return
+     */
+    @Override
+    public UserGroup findWithAttributes(long id) {
+        return find(id);
     }
 }

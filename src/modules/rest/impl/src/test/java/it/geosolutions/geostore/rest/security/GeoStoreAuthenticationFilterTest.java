@@ -29,6 +29,7 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.MapExpressionUserMapper;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
@@ -46,7 +47,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.codec.binary.Base64; // for base64-url without padding helper
+import org.apache.commons.codec.binary.Base64;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,6 +65,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * Enhanced tests for GeoStore authentication filters covering: - username remapping -
  * provider-scoped reconciliation of remote groups - uppercase group handling & tagging with
  * sourceService - role recomputation (present/empty/missing roles claims)
+ *
+ * <p>Plus: tests for UserGroupService#getWithAttributes and #upsertAttribute and a guard to ensure
+ * no lazy attribute access during reconciliation.
  */
 public class GeoStoreAuthenticationFilterTest {
 
@@ -180,19 +184,16 @@ public class GeoStoreAuthenticationFilterTest {
         config.setBeanName("testBean");
         config.setAutoCreateUser(true);
 
-        // minimal restTemplate mock to avoid NPE in createPreAuthentication
         GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
         OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
         Mockito.when(ctx.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("t"));
         Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
 
         OAuth2GeoStoreAuthenticationFilter oauth2Filter =
-                new OAuth2GeoStoreAuthenticationFilter(
-                        /* tokenServices */ null, /* restTemplate */ rt, config, /* cache */ null) {
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
 
                     @Override
                     protected JWTHelper decodeAndValidateIdToken(String idToken) {
-                        // Provide a helper that returns both claims to trigger remapping
                         return new JWTHelper(idToken) {
                             @Override
                             public <T> T getClaim(String claimName, Class<T> clazz) {
@@ -259,8 +260,7 @@ public class GeoStoreAuthenticationFilterTest {
         Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
 
         OAuth2GeoStoreAuthenticationFilter oauth2Filter =
-                new OAuth2GeoStoreAuthenticationFilter(
-                        /* tokenServices */ null, /* restTemplate */ rt, config, /* cache */ null) {
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
 
                     @Override
                     protected User retrieveUserWithAuthorities(
@@ -305,10 +305,10 @@ public class GeoStoreAuthenticationFilterTest {
         UserGroup groupFromService = dummyGroupService.get(EXPECTED_GROUP);
         assertNotNull(
                 "Dummy group service should contain group " + EXPECTED_GROUP, groupFromService);
-        // sourceService attribute set to provider (beanName in our TestOAuth2Configuration)
         assertEquals(
                 "testBean",
-                groupFromService.getAttributes().stream()
+                dummyGroupService.getWithAttributes(groupFromService.getId()).getAttributes()
+                        .stream()
                         .filter(a -> "sourceService".equals(a.getName()))
                         .findFirst()
                         .orElseThrow()
@@ -344,16 +344,14 @@ public class GeoStoreAuthenticationFilterTest {
         UserGroup local = new UserGroup();
         local.setGroupName("local");
         local.setUsers(new ArrayList<>(Collections.singletonList(user)));
-        local.setAttributes(new ArrayList<>(Collections.singletonList(attr("any", "v"))));
         userGroupService.insert(local);
 
         // remote group from another provider -> should be KEPT
         UserGroup otherRemote = new UserGroup();
         otherRemote.setGroupName("remote");
         otherRemote.setUsers(new ArrayList<>(Collections.singletonList(user)));
-        otherRemote.setAttributes(
-                new ArrayList<>(Collections.singletonList(attr("sourceService", "other"))));
         userGroupService.insert(otherRemote);
+        userGroupService.upsertAttribute(otherRemote.getId(), "sourceService", "other");
 
         user.setGroups(new HashSet<>(Arrays.asList(local, otherRemote)));
 
@@ -404,26 +402,25 @@ public class GeoStoreAuthenticationFilterTest {
         // new groups tagged with sourceService = provider ("testBean")
         assertEquals(
                 "testBean",
-                byName.get("ADMIN").getAttributes().stream()
+                userGroupService.getWithAttributes(byName.get("ADMIN").getId()).getAttributes()
+                        .stream()
                         .filter(a -> "sourceService".equals(a.getName()))
                         .findFirst()
                         .orElseThrow()
                         .getValue());
         assertEquals(
                 "testBean",
-                byName.get("DEVELOPER").getAttributes().stream()
+                userGroupService.getWithAttributes(byName.get("DEVELOPER").getId()).getAttributes()
+                        .stream()
                         .filter(a -> "sourceService".equals(a.getName()))
                         .findFirst()
                         .orElseThrow()
                         .getValue());
     }
 
-    /**
-     * When token has empty groups [], remove provider's remote groups (but keep local/other
-     * providers).
-     */
+    /** When token has empty groups [], remove provider's remote groups (keep others). */
     @Test
-    public void testRemoteGroupsRemovalWhenGroupsEmpty() throws Exception {
+    public void testRemoteGroupsRemovalWhenGroupsEmpty_noLazyAccess() throws Exception {
         GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
         OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
         Mockito.when(ctx.getAccessToken())
@@ -444,26 +441,23 @@ public class GeoStoreAuthenticationFilterTest {
         user.setEnabled(true);
         user.setAttribute(Collections.emptyList());
 
-        // provider remote group (to be removed)
-        UserGroup msAdmin = new UserGroup();
+        // provider remote group (to be removed) whose getAttributes() would explode if called.
+        UserGroup msAdmin = new ThrowOnAttributesGroup();
         msAdmin.setGroupName("MS_ADMIN_GROUP");
-        msAdmin.setAttributes(
-                new ArrayList<>(Collections.singletonList(attr("sourceService", "testBean"))));
         msAdmin.setUsers(new ArrayList<>(Collections.singletonList(user)));
         userGroupService.insert(msAdmin);
+        userGroupService.upsertAttribute(msAdmin.getId(), "sourceService", "testBean");
 
         // other provider remote group (kept)
         UserGroup other = new UserGroup();
         other.setGroupName("OTHER_GROUP");
-        other.setAttributes(
-                new ArrayList<>(Collections.singletonList(attr("sourceService", "other"))));
         other.setUsers(new ArrayList<>(Collections.singletonList(user)));
         userGroupService.insert(other);
+        userGroupService.upsertAttribute(other.getId(), "sourceService", "other");
 
         // local (kept)
         UserGroup local = new UserGroup();
         local.setGroupName("LOCAL_GROUP");
-        local.setAttributes(new ArrayList<>());
         local.setUsers(new ArrayList<>(Collections.singletonList(user)));
         userGroupService.insert(local);
 
@@ -494,6 +488,7 @@ public class GeoStoreAuthenticationFilterTest {
         attrs.setAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE, jwt, 0);
         RequestContextHolder.setRequestAttributes(attrs);
 
+        // If the filter tries to touch msAdmin.getAttributes(), this will throw.
         PreAuthenticatedAuthenticationToken token =
                 filter.createPreAuthentication("test", req, new MockHttpServletResponse());
         assertNotNull(token);
@@ -571,6 +566,65 @@ public class GeoStoreAuthenticationFilterTest {
     }
 
     // ---------------------------------------------------------------------
+    // NEW TESTS for getWithAttributes / upsertAttribute
+    // ---------------------------------------------------------------------
+
+    @Test
+    public void testGetWithAttributes_returnsEagerCopy_noMutationLeak()
+            throws BadRequestServiceEx, NotFoundServiceEx {
+        DummyUserGroupService svc = new DummyUserGroupService();
+
+        UserGroup g = new UserGroup();
+        g.setGroupName("TEAM");
+        List<UserGroupAttribute> attrs = new ArrayList<>();
+        attrs.add(attr("k1", "v1"));
+        attrs.add(attr("k2", "v2"));
+        g.setAttributes(attrs);
+
+        long id = svc.insert(g);
+
+        // Plain get should not expose attributes (simulates non-eager load)
+        assertTrue(
+                "Plain get should not expose attributes (simulates non-eager load)",
+                svc.get(id).getAttributes() == null || svc.get(id).getAttributes().isEmpty());
+
+        // getWithAttributes must return a copy with attributes populated
+        UserGroup loaded = svc.getWithAttributes(id);
+        assertNotNull(loaded);
+        assertEquals(2, loaded.getAttributes().size());
+
+        // Mutate returned list - should NOT affect service store (deep-copy behavior)
+        loaded.getAttributes().clear();
+        assertEquals(
+                "Clearing returned attributes must not affect stored attributes",
+                2,
+                svc.getWithAttributes(id).getAttributes().size());
+    }
+
+    @Test
+    public void testUpsertAttribute_insertThenUpdate_caseInsensitive()
+            throws BadRequestServiceEx, NotFoundServiceEx {
+        DummyUserGroupService svc = new DummyUserGroupService();
+
+        UserGroup g = new UserGroup();
+        g.setGroupName("ORG");
+        long id = svc.insert(g);
+
+        // insert
+        svc.upsertAttribute(id, "SourceService", "A");
+        UserGroup with1 = svc.getWithAttributes(id);
+        assertEquals(1, with1.getAttributes().size());
+        assertEquals("A", with1.getAttributes().get(0).getValue());
+
+        // update (case-insensitive name match)
+        svc.upsertAttribute(id, "sourceservice", "B");
+        UserGroup with2 = svc.getWithAttributes(id);
+        assertEquals(1, with2.getAttributes().size());
+        assertEquals("B", with2.getAttributes().get(0).getValue());
+        assertEquals("sourceservice", with2.getAttributes().get(0).getName());
+    }
+
+    // ---------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------
 
@@ -601,7 +655,7 @@ public class GeoStoreAuthenticationFilterTest {
         String header = "{\"alg\":\"none\"}";
         String encHeader = base64Url(header);
         String encPayload = base64Url(payloadJson);
-        return encHeader + "." + encPayload + "."; // no signature required by JWTHelper for tests
+        return encHeader + "." + encPayload + ".";
     }
 
     private static String base64Url(String s) {
@@ -617,10 +671,23 @@ public class GeoStoreAuthenticationFilterTest {
         RequestContextHolder.setRequestAttributes(attrs);
     }
 
-    /** Dummy implementation of UserGroupService for testing purposes. */
+    /** A group whose getAttributes() throws, to detect accidental lazy access. */
+    private static class ThrowOnAttributesGroup extends UserGroup {
+        @Override
+        public List<UserGroupAttribute> getAttributes() {
+            throw new AssertionError("Unexpected lazy attribute access");
+        }
+    }
+
+    /**
+     * Dummy implementation of UserGroupService for testing purposes. Stores attributes in a
+     * separate index so we can simulate "plain get() returns no attributes" while getWithAttributes
+     * returns an eager copy.
+     */
     private static class DummyUserGroupService implements UserGroupService {
         private final Map<String, UserGroup> groupsByName = new HashMap<>();
         private final Map<Long, UserGroup> groupsById = new HashMap<>();
+        private final Map<Long, List<UserGroupAttribute>> attrsByGroupId = new HashMap<>();
         private long nextId = 1;
 
         @Override
@@ -643,14 +710,19 @@ public class GeoStoreAuthenticationFilterTest {
                 throws NotFoundServiceEx {
             UserGroup g = groupsById.get(id);
             if (g == null) throw new NotFoundServiceEx("group not found");
-            g.setAttributes(new ArrayList<>(attributes));
+            attrsByGroupId.put(id, deepCopy(attributes));
             groupsByName.put(g.getGroupName(), g);
         }
 
         @Override
-        public long update(UserGroup group) { // simple upsert
+        public long update(UserGroup group) {
             if (group.getId() == null) {
                 group.setId(nextId++);
+            }
+            // if attributes present, index them and clear on the stored entity to simulate "lazy"
+            if (group.getAttributes() != null) {
+                attrsByGroupId.put(group.getId(), deepCopy(group.getAttributes()));
+                group.setAttributes(null);
             }
             groupsById.put(group.getId(), group);
             groupsByName.put(group.getGroupName(), group);
@@ -660,12 +732,92 @@ public class GeoStoreAuthenticationFilterTest {
         @Override
         public Collection<UserGroup> findByAttribute(
                 String name, List<String> values, boolean ignoreCase) {
-            return List.of();
+            List<UserGroup> out = new ArrayList<>();
+            for (Map.Entry<Long, List<UserGroupAttribute>> e : attrsByGroupId.entrySet()) {
+                Long gid = e.getKey();
+                List<UserGroupAttribute> list = e.getValue();
+                if (list == null) continue;
+                for (UserGroupAttribute a : list) {
+                    boolean nameMatch =
+                            ignoreCase
+                                    ? a.getName() != null && a.getName().equalsIgnoreCase(name)
+                                    : Objects.equals(a.getName(), name);
+                    if (!nameMatch) continue;
+
+                    boolean valMatch =
+                            values == null
+                                    || values.isEmpty()
+                                    || values.stream()
+                                            .anyMatch(
+                                                    v ->
+                                                            ignoreCase
+                                                                    ? a.getValue() != null
+                                                                            && a.getValue()
+                                                                                    .equalsIgnoreCase(
+                                                                                            v)
+                                                                    : Objects.equals(
+                                                                            a.getValue(), v));
+                    if (valMatch) {
+                        out.add(groupsById.get(gid));
+                        break;
+                    }
+                }
+            }
+            return out;
+        }
+
+        @Override
+        public UserGroup getWithAttributes(long id) throws NotFoundServiceEx, BadRequestServiceEx {
+            UserGroup g = groupsById.get(id);
+            if (g == null) throw new NotFoundServiceEx("UserGroup not found " + id);
+            UserGroup copy = new UserGroup();
+            copy.setId(g.getId());
+            copy.setGroupName(g.getGroupName());
+            copy.setDescription(g.getDescription());
+            copy.setEnabled(g.isEnabled());
+            copy.setUsers(g.getUsers()); // not used in these tests
+            List<UserGroupAttribute> attrs = attrsByGroupId.get(id);
+            copy.setAttributes(deepCopy(attrs));
+            return copy;
+        }
+
+        @Override
+        public void upsertAttribute(long groupId, String name, String value)
+                throws NotFoundServiceEx, BadRequestServiceEx {
+            UserGroup g = groupsById.get(groupId);
+            if (g == null) throw new NotFoundServiceEx("UserGroup not found " + groupId);
+            List<UserGroupAttribute> list =
+                    attrsByGroupId.computeIfAbsent(groupId, k -> new ArrayList<>());
+            // case-insensitive match (typical DB behavior with ILIKE)
+            UserGroupAttribute existing =
+                    list.stream()
+                            .filter(a -> a.getName() != null && a.getName().equalsIgnoreCase(name))
+                            .findFirst()
+                            .orElse(null);
+            if (existing != null) {
+                existing.setName(
+                        name); // match implementation in prod that might persist last-cased name
+                existing.setValue(value);
+            } else {
+                UserGroupAttribute a = new UserGroupAttribute();
+                a.setName(name);
+                a.setValue(value);
+                list.add(a);
+            }
         }
 
         @Override
         public UserGroup get(long id) {
-            return groupsById.get(id);
+            // Simulate "plain get" that doesn't initialize attributes
+            UserGroup g = groupsById.get(id);
+            if (g == null) return null;
+            UserGroup copy = new UserGroup();
+            copy.setId(g.getId());
+            copy.setGroupName(g.getGroupName());
+            copy.setDescription(g.getDescription());
+            copy.setEnabled(g.isEnabled());
+            // do NOT set attributes -> simulates lazy/non-fetched
+            return copy;
         }
 
         @Override
@@ -687,6 +839,11 @@ public class GeoStoreAuthenticationFilterTest {
         @Override
         public long insert(UserGroup group) {
             if (group.getId() == null) group.setId(nextId++);
+            // index attributes separately and clear from entity (simulate lazy)
+            if (group.getAttributes() != null) {
+                attrsByGroupId.put(group.getId(), deepCopy(group.getAttributes()));
+                group.setAttributes(null);
+            }
             groupsById.put(group.getId(), group);
             groupsByName.put(group.getGroupName(), group);
             return group.getId();
@@ -694,7 +851,10 @@ public class GeoStoreAuthenticationFilterTest {
 
         @Override
         public boolean delete(long id) {
-            return groupsById.remove(id) != null;
+            attrsByGroupId.remove(id);
+            UserGroup g = groupsById.remove(id);
+            if (g != null) groupsByName.remove(g.getGroupName());
+            return g != null;
         }
 
         @Override
@@ -702,7 +862,6 @@ public class GeoStoreAuthenticationFilterTest {
             UserGroup g = groupsById.get(groupId);
             if (g == null) throw new NotFoundServiceEx("group not found");
             if (g.getUsers() == null) g.setUsers(new ArrayList<>());
-            // naive lookup: ensure a user placeholder is present
             User u =
                     g.getUsers().stream().filter(x -> x.getId() == userId).findFirst().orElse(null);
             if (u == null) {
@@ -713,6 +872,7 @@ public class GeoStoreAuthenticationFilterTest {
                 u.setName("u" + userId);
                 g.getUsers().add(u);
             }
+            if (u.getGroups() == null) u.setGroups(new HashSet<>());
             u.getGroups().add(g);
         }
 
@@ -747,6 +907,18 @@ public class GeoStoreAuthenticationFilterTest {
         @Override
         public List<UserGroup> getAll(Integer page, Integer entries, String nameLike, boolean all) {
             return new ArrayList<>(groupsByName.values());
+        }
+
+        private static List<UserGroupAttribute> deepCopy(List<UserGroupAttribute> src) {
+            if (src == null) return null;
+            List<UserGroupAttribute> out = new ArrayList<>(src.size());
+            for (UserGroupAttribute a : src) {
+                UserGroupAttribute c = new UserGroupAttribute();
+                c.setName(a.getName());
+                c.setValue(a.getValue());
+                out.add(c);
+            }
+            return out;
         }
     }
 }

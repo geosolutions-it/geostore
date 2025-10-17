@@ -6,7 +6,7 @@
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -40,6 +40,9 @@ import org.springframework.ldap.core.support.AbstractContextMapper;
 /**
  * Class UserGroupDAOImpl. LDAP (read-only) implementation of UserGroupDAO. Allows fetching
  * UserGroup from an LDAP repository.
+ *
+ * <p><b>Note:</b> Attributes are not persisted in this LDAP DAO; methods that would normally fetch
+ * or mutate attributes in a DB-backed DAO are no-ops or unsupported here.
  *
  * @author Mauro Bartolomeoli (mauro.bartolomeoli at geo-solutions.it)
  */
@@ -136,7 +139,6 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
      *
      * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
      */
-    @SuppressWarnings("unchecked")
     @Override
     public List<UserGroup> search(ISearch search) {
         String filter;
@@ -286,5 +288,22 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
             if (clazz != null && UserDAO.class.isAssignableFrom(clazz)) return false;
         }
         return true;
+    }
+
+    // ---------------------------------------------------------------------
+    // Optional helper required by the DAO interface (read-only in LDAP)
+    // ---------------------------------------------------------------------
+
+    /**
+     * LDAP implementation does not persist attributes; this method simply delegates to {@link
+     * #find(Long)} which is currently unsupported and returns {@code null}.
+     *
+     * @param id the group id
+     * @return {@code null} (IDs are not supported in this LDAP DAO)
+     * @since 2025
+     */
+    @Override
+    public UserGroup findWithAttributes(long id) {
+        return find(id);
     }
 }

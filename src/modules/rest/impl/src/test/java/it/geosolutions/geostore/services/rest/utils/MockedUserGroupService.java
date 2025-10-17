@@ -46,7 +46,7 @@ public class MockedUserGroupService implements UserGroupService {
 
     @Override
     public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
-        return GROUPS.containsKey(Long.valueOf(id)) && GROUPS.remove(Long.valueOf(id)) != null;
+        return GROUPS.containsKey(id) && GROUPS.remove(id) != null;
     }
 
     @Override
@@ -74,7 +74,7 @@ public class MockedUserGroupService implements UserGroupService {
 
     @Override
     public UserGroup get(long id) throws BadRequestServiceEx {
-        return GROUPS.get(Long.valueOf(id));
+        return GROUPS.get(id);
     }
 
     @Override
@@ -141,4 +141,26 @@ public class MockedUserGroupService implements UserGroupService {
             String name, List<String> values, boolean ignoreCase) {
         return null;
     }
+
+    /**
+     * @param id the group id
+     * @return
+     * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx
+     */
+    @Override
+    public UserGroup getWithAttributes(long id) throws NotFoundServiceEx, BadRequestServiceEx {
+        return null;
+    }
+
+    /**
+     * @param groupId the group id
+     * @param name attribute name (case-insensitive match recommended by implementations)
+     * @param value attribute value (may be {@code null} depending on implementation policy)
+     * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx
+     */
+    @Override
+    public void upsertAttribute(long groupId, String name, String value)
+            throws NotFoundServiceEx, BadRequestServiceEx {}
 }
