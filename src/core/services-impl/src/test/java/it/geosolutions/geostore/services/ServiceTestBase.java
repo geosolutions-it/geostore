@@ -113,7 +113,7 @@ public abstract class ServiceTestBase extends TestCase {
 
     @Override
     protected void setUp() throws Exception {
-        LOGGER.info("################ Running " + getClass().getSimpleName() + "::" + getName());
+        LOGGER.info("################ Running {}::{}", getClass().getSimpleName(), getName());
         super.setUp();
         removeAll();
     }

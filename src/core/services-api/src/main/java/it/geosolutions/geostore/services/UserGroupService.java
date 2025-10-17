@@ -6,7 +6,7 @@
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
+ *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
@@ -178,4 +178,36 @@ public interface UserGroupService {
     long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx;
 
     Collection<UserGroup> findByAttribute(String name, List<String> values, boolean ignoreCase);
+
+    // ---------------------------------------------------------------------
+    // Optional helpers to avoid LazyInitialization in security filters
+    // and to safely update a single attribute without replacing others.
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns the {@link UserGroup} with the given id with its attributes fully initialized (e.g.
+     * via JOIN FETCH). This is useful when a caller needs to read group attributes outside of a web
+     * request transaction boundary without triggering lazy-loading issues.
+     *
+     * @param id the group id
+     * @return the group with initialized attributes
+     * @throws NotFoundServiceEx if the group does not exist
+     * @throws BadRequestServiceEx if the request cannot be fulfilled
+     * @since 2025
+     */
+    UserGroup getWithAttributes(long id) throws NotFoundServiceEx, BadRequestServiceEx;
+
+    /**
+     * Upserts a single attribute on the given group, creating it if missing or updating its value
+     * if already present. This method does not replace unrelated attributes.
+     *
+     * @param groupId the group id
+     * @param name attribute name (case-insensitive match recommended by implementations)
+     * @param value attribute value (may be {@code null} depending on implementation policy)
+     * @throws NotFoundServiceEx if the group does not exist
+     * @throws BadRequestServiceEx if the update cannot be performed
+     * @since 2025
+     */
+    void upsertAttribute(long groupId, String name, String value)
+            throws NotFoundServiceEx, BadRequestServiceEx;
 }
