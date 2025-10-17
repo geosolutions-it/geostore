@@ -48,7 +48,7 @@ class MockUserGroupService implements UserGroupService {
 
     @Override
     public long insert(UserGroup userGroup) throws BadRequestServiceEx {
-        Long id = atomicLong.incrementAndGet();
+        long id = atomicLong.incrementAndGet();
         userGroup.setId(id);
         groups.put(userGroup.getGroupName(), userGroup);
         return id;
@@ -135,4 +135,26 @@ class MockUserGroupService implements UserGroupService {
             String name, List<String> values, boolean ignoreCase) {
         return null;
     }
+
+    /**
+     * @param id the group id
+     * @return
+     * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx
+     */
+    @Override
+    public UserGroup getWithAttributes(long id) throws NotFoundServiceEx, BadRequestServiceEx {
+        return null;
+    }
+
+    /**
+     * @param groupId the group id
+     * @param name attribute name (case-insensitive match recommended by implementations)
+     * @param value attribute value (may be {@code null} depending on implementation policy)
+     * @throws NotFoundServiceEx
+     * @throws BadRequestServiceEx
+     */
+    @Override
+    public void upsertAttribute(long groupId, String name, String value)
+            throws NotFoundServiceEx, BadRequestServiceEx {}
 }

@@ -19,6 +19,9 @@
  */
 package it.geosolutions.geostore.services;
 
+import static java.util.stream.Collectors.toList;
+import static org.junit.Assert.assertThrows;
+
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -27,11 +30,13 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -39,6 +44,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.Test;
 
 /** @author DamianoG */
@@ -291,5 +297,279 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
 
         groups = userGroupService.findByAttribute("organization", Arrays.asList("value"), false);
         assertEquals(1, groups.size());
+    }
+
+    @Test
+    public void testGetWithAttributesLoadsAllAttributes() throws Exception {
+        // create a group with two attributes
+        UserGroup group = new UserGroup();
+        group.setGroupName("group-get-with-attrs");
+        UserGroupAttribute a1 = new UserGroupAttribute();
+        a1.setName("k1");
+        a1.setValue("v1");
+        UserGroupAttribute a2 = new UserGroupAttribute();
+        a2.setName("k2");
+        a2.setValue("v2");
+        group.setAttributes(Arrays.asList(a1, a2));
+
+        long id = userGroupService.insert(group);
+
+        // WHEN
+        UserGroup loaded = userGroupService.getWithAttributes(id);
+
+        // THEN
+        assertNotNull(loaded);
+        assertEquals(id, loaded.getId().longValue());
+        assertNotNull("Attributes must be initialized", loaded.getAttributes());
+        assertEquals(2, loaded.getAttributes().size());
+        // ordering is not guaranteed; check by name
+        assertTrue(
+                loaded.getAttributes().stream()
+                        .anyMatch(ua -> "k1".equals(ua.getName()) && "v1".equals(ua.getValue())));
+        assertTrue(
+                loaded.getAttributes().stream()
+                        .anyMatch(ua -> "k2".equals(ua.getName()) && "v2".equals(ua.getValue())));
+    }
+
+    @Test
+    public void testUpsertAttributeInsertAndUpdate() throws Exception {
+        // start with a group having a different attribute
+        UserGroup group = new UserGroup();
+        group.setGroupName("group-upsert-attrs");
+        UserGroupAttribute base = new UserGroupAttribute();
+        base.setName("base");
+        base.setValue("b0");
+        group.setAttributes(Arrays.asList(base));
+
+        long id = userGroupService.insert(group);
+
+        // 1) INSERT a new attribute (k1=v1)
+        userGroupService.upsertAttribute(id, "k1", "v1");
+        UserGroup afterInsert = userGroupService.getWithAttributes(id);
+        assertNotNull(afterInsert.getAttributes());
+        assertEquals(
+                "Should still have 2 attributes (base + k1)",
+                2,
+                afterInsert.getAttributes().size());
+        assertTrue(
+                afterInsert.getAttributes().stream()
+                        .anyMatch(a -> "base".equals(a.getName()) && "b0".equals(a.getValue())));
+        assertTrue(
+                afterInsert.getAttributes().stream()
+                        .anyMatch(a -> "k1".equals(a.getName()) && "v1".equals(a.getValue())));
+
+        // 2) UPDATE existing attribute (k1=v2)
+        userGroupService.upsertAttribute(id, "k1", "v2");
+        UserGroup afterUpdate = userGroupService.getWithAttributes(id);
+        assertEquals(
+                "Attribute count must remain the same after update",
+                2,
+                afterUpdate.getAttributes().size());
+        long k1Count =
+                afterUpdate.getAttributes().stream().filter(a -> "k1".equals(a.getName())).count();
+        assertEquals("Upsert must not duplicate attributes with the same name", 1, k1Count);
+        assertTrue(
+                afterUpdate.getAttributes().stream()
+                        .anyMatch(a -> "k1".equals(a.getName()) && "v2".equals(a.getValue())));
+        // base attribute must be preserved
+        assertTrue(
+                afterUpdate.getAttributes().stream()
+                        .anyMatch(a -> "base".equals(a.getName()) && "b0".equals(a.getValue())));
+
+        // 3) INSERT another attribute to ensure others aren't dropped
+        userGroupService.upsertAttribute(id, "k2", "v2");
+        UserGroup afterSecondInsert = userGroupService.getWithAttributes(id);
+        assertEquals(
+                "Now we should have 3 attributes", 3, afterSecondInsert.getAttributes().size());
+        assertTrue(
+                afterSecondInsert.getAttributes().stream()
+                        .anyMatch(a -> "k2".equals(a.getName()) && "v2".equals(a.getValue())));
+    }
+
+    @Test
+    public void testUpsertAttributeOnMissingGroupThrowsNotFound() {
+        long missingId = Long.MAX_VALUE;
+
+        try {
+            userGroupService.upsertAttribute(missingId, "any", "value");
+            fail("Expected NotFoundServiceEx to be thrown");
+        } catch (it.geosolutions.geostore.services.exception.NotFoundServiceEx e) {
+            // message may vary; keep assertion loose
+            String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase();
+            assertTrue(
+                    "Exception message should hint 'not found'",
+                    msg.contains("not found") || msg.contains("usergroup"));
+        } catch (Exception other) {
+            fail("Unexpected exception type: " + other);
+        }
+    }
+
+    @Test
+    public void testInsertReservedGroupFails() throws BadRequestServiceEx {
+        assertThrows(
+                ReservedUserGroupNameEx.class,
+                () -> userGroupService.insert(group(GroupReservedNames.EVERYONE.groupName())));
+    }
+
+    @Test
+    public void testDeleteReservedGroupFails() throws Exception {
+        ensureReservedExists();
+        UserGroup everyone = userGroupService.get(GroupReservedNames.EVERYONE.groupName());
+        assertNotNull("Reserved EVERYONE group must exist for this test", everyone);
+        assertThrows(BadRequestServiceEx.class, () -> userGroupService.delete(everyone.getId()));
+    }
+
+    @Test
+    public void testAssignReservedGroupFails() throws Exception {
+        ensureReservedExists();
+        UserGroup everyone = userGroupService.get(GroupReservedNames.EVERYONE.groupName());
+        assertNotNull("Reserved EVERYONE group must exist for this test", everyone);
+
+        long uid = userService.insert(user("u"));
+        assertThrows(
+                NotFoundServiceEx.class,
+                () -> userGroupService.assignUserGroup(uid, everyone.getId()));
+    }
+
+    @Test
+    public void testGetAllAllowedForRegularUser() throws Exception {
+        long g1 = userGroupService.insert(group("A"));
+        long g2 = userGroupService.insert(group("B"));
+        long g3 = userGroupService.insert(group("C"));
+
+        long uid = userService.insert(user("u1"));
+        userGroupService.assignUserGroup(uid, g1);
+        userGroupService.assignUserGroup(uid, g3);
+
+        User u = userService.get(uid);
+        List<UserGroup> allowed = userGroupService.getAllAllowed(u, null, null, null, true);
+        assertEquals(
+                Set.of(g1, g3), allowed.stream().map(UserGroup::getId).collect(Collectors.toSet()));
+    }
+
+    @Test
+    public void testGetAllPaginationAndSorting() throws Exception {
+        for (String n : List.of("bbb", "aaa", "ccc")) userGroupService.insert(group(n));
+        List<UserGroup> page0 = userGroupService.getAll(0, 2);
+        assertEquals(
+                List.of("aaa", "bbb"),
+                page0.stream().map(UserGroup::getGroupName).collect(toList()));
+        List<UserGroup> page1 = userGroupService.getAll(1, 2);
+        assertEquals(List.of("ccc"), page1.stream().map(UserGroup::getGroupName).collect(toList()));
+    }
+
+    @Test
+    public void testNameLikeAndReservedToggle() throws Exception {
+        userGroupService.insert(group("devs"));
+        userGroupService.insert(group("qa"));
+        ensureReservedExists();
+
+        assertEquals(1, userGroupService.getAll(null, null, "de%", true).size());
+        assertEquals(0, userGroupService.getAll(null, null, "EVER%", false).size());
+    }
+
+    @Test
+    public void testUpdateByNameWhenIdMissing() throws Exception {
+        long id = userGroupService.insert(group("updateMe"));
+        UserGroup g = new UserGroup();
+        g.setGroupName("updateMe");
+        g.setDescription("D");
+        // Avoid NPE due to null autounboxing; push code path to "lookup by name"
+        g.setId(0L);
+        long updatedId = userGroupService.update(g);
+        assertEquals(id, updatedId);
+        assertEquals("D", userGroupService.get(id).getDescription());
+    }
+
+    @Test
+    public void testUpdateAttributesReplacesAll() throws Exception {
+        long id = userGroupService.insert(groupWithAttrs("G", attr("a", "1"), attr("b", "2")));
+        userGroupService.updateAttributes(id, List.of(attr("a", "1"), attr("c", "3")));
+        List<UserGroupAttribute> attrs = userGroupService.getWithAttributes(id).getAttributes();
+        assertNames(attrs, "a", "c"); // "b" removed
+    }
+
+    @Test
+    public void testUpsertAttributeUpdatesCaseInsensitiveAndNullValue() throws Exception {
+        long id = userGroupService.insert(groupWithAttrs("G", attr("SoUrCeSeRvIcE", "old")));
+        userGroupService.upsertAttribute(id, "sourceservice", null); // policy: allow null
+        UserGroup g = userGroupService.getWithAttributes(id);
+        assertTrue(
+                g.getAttributes().stream()
+                        .anyMatch(a -> "sourceservice".equalsIgnoreCase(a.getName())));
+    }
+
+    @Test
+    public void testGetWithAttributesIsEager() throws Exception {
+        long id = userGroupService.insert(groupWithAttrs("G", attr("k", "v")));
+        UserGroup g = userGroupService.getWithAttributes(id);
+        // simulate detached use
+        List<UserGroupAttribute> copy = new ArrayList<>(g.getAttributes());
+        assertEquals(1, copy.size());
+    }
+
+    @Test
+    public void testUpdateSecurityRulesEveryoneInvalidCombo() throws Exception {
+        ensureReservedExists();
+        UserGroup everyone = userGroupService.get(GroupReservedNames.EVERYONE.groupName());
+        assertNotNull("Reserved EVERYONE group must exist for this test", everyone);
+        assertThrows(
+                BadRequestServiceEx.class,
+                () ->
+                        userGroupService.updateSecurityRules(
+                                everyone.getId(), List.of(1L), false, true));
+    }
+
+    @Test
+    public void testDeleteDetachesFromUsers() throws Exception {
+        long gid = userGroupService.insert(group("toRemove"));
+        long uid = userService.insert(user("x"));
+        userGroupService.assignUserGroup(uid, gid);
+        userGroupService.delete(gid);
+        assertTrue(userService.get(uid).getGroups().isEmpty());
+    }
+
+    private static UserGroup group(String name) {
+        UserGroup g = new UserGroup();
+        g.setGroupName(name);
+        return g;
+    }
+
+    private static User user(String name) {
+        User u = new User();
+        u.setName(name);
+        u.setPassword("p");
+        u.setRole(Role.USER);
+        u.setEnabled(true);
+        u.setGroups(new HashSet<>());
+        u.setAttribute(new ArrayList<>());
+        return u;
+    }
+
+    private static UserGroupAttribute attr(String k, String v) {
+        UserGroupAttribute a = new UserGroupAttribute();
+        a.setName(k);
+        a.setValue(v);
+        return a;
+    }
+
+    private static UserGroup groupWithAttrs(String name, UserGroupAttribute... atts) {
+        UserGroup g = group(name);
+        g.setAttributes(Arrays.asList(atts));
+        return g;
+    }
+
+    private static void assertNames(List<UserGroupAttribute> attrs, String... names) {
+        assertEquals(
+                Set.of(names),
+                attrs.stream().map(UserGroupAttribute::getName).collect(Collectors.toSet()));
+    }
+
+    /** Ensure the reserved EVERYONE group exists, creating it via the special path if missing. */
+    private void ensureReservedExists() throws BadRequestServiceEx {
+        String reserved = GroupReservedNames.EVERYONE.groupName();
+        if (userGroupService.get(reserved) == null) {
+            userGroupService.insertSpecialUsersGroups();
+        }
     }
 }

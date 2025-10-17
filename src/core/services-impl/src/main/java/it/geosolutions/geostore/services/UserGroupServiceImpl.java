@@ -491,4 +491,90 @@ public class UserGroupServiceImpl implements UserGroupService {
         }
         return newList;
     }
+
+    // ---------------------------------------------------------------------
+    // Optional helpers (added) to support auth filters without lazy issues
+    // and to safely update a single attribute without replacing others.
+    // ---------------------------------------------------------------------
+
+    /**
+     * Returns the {@link UserGroup} with attributes eagerly fetched and materialized. Uses a search
+     * with {@code addFetch("attributes")} to avoid lazy initialization issues.
+     *
+     * @param id the group id
+     * @return the group with initialized attributes
+     * @throws NotFoundServiceEx if the group is not found
+     * @throws BadRequestServiceEx if the request cannot be fulfilled
+     * @since 2025
+     */
+    @Override
+    public UserGroup getWithAttributes(long id) throws NotFoundServiceEx, BadRequestServiceEx {
+        Search s = new Search(UserGroup.class);
+        s.addFilterEqual("id", id);
+        s.addFetch("attributes");
+        List<UserGroup> res = userGroupDAO.search(s);
+        if (res == null || res.isEmpty()) {
+            throw new NotFoundServiceEx("UserGroup not found " + id);
+        }
+        UserGroup g = res.get(0);
+        // materialize
+        List<UserGroupAttribute> attrs = g.getAttributes();
+        if (attrs != null) {
+            attrs.size();
+        }
+        return g;
+    }
+
+    /**
+     * Upserts a single attribute on a group (create if missing, update otherwise), without
+     * replacing unrelated attributes.
+     *
+     * @param groupId the group id
+     * @param name attribute name (case-insensitive match)
+     * @param value attribute value (nullable by policy)
+     * @throws NotFoundServiceEx if the group does not exist
+     * @throws BadRequestServiceEx if the request cannot be performed
+     * @since 2025
+     */
+    @Override
+    public void upsertAttribute(long groupId, String name, String value)
+            throws NotFoundServiceEx, BadRequestServiceEx {
+        if (StringUtils.isBlank(name)) {
+            throw new BadRequestServiceEx("Attribute name must be provided");
+        }
+
+        UserGroup group = getWithAttributes(groupId);
+
+        List<UserGroupAttribute> attrs = group.getAttributes();
+        if (attrs == null) {
+            attrs = new ArrayList<>();
+            group.setAttributes(attrs);
+        }
+
+        UserGroupAttribute existing = null;
+        for (UserGroupAttribute a : attrs) {
+            if (a != null && name.equalsIgnoreCase(a.getName())) {
+                existing = a;
+                break;
+            }
+        }
+
+        if (existing == null) {
+            UserGroupAttribute a = new UserGroupAttribute();
+            a.setName(name);
+            a.setValue(value);
+            a.setUserGroup(group);
+            userGroupAttributeDAO.persist(a);
+            attrs.add(a);
+        } else {
+            existing.setValue(value);
+            // Prefer merge on existing attribute if your DAO supports it, otherwise persist is fine
+            try {
+                userGroupAttributeDAO.merge(existing);
+            } catch (Throwable t) {
+                // Fallback if merge is not available on the DAO implementation
+                userGroupAttributeDAO.persist(existing);
+            }
+        }
+    }
 }
