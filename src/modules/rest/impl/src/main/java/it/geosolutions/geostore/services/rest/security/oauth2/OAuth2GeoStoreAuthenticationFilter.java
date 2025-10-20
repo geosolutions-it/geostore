@@ -179,7 +179,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // Do we need to authenticate?
         if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null) {
             super.doFilter(req, res, chain);
-            return; // avoid double invocation of the chain
         } else if (req instanceof HttpServletRequest) {
             // No need to authenticate, but if the security context holds a Token authentication,
             // set the access token as a request attribute.
