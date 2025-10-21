@@ -43,7 +43,6 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,7 +52,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -808,29 +806,14 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
      */
     private void updateGroupSourceServiceAttributes(UserGroup group) {
         if (group == null || group.getId() == null) return;
-
-        List<UserGroupAttribute> attributes = group.getAttributes();
-        if (attributes == null) attributes = new ArrayList<>();
-
-        Optional<UserGroupAttribute> sourceServiceAttribute =
-                attributes.stream()
-                        .filter(
-                                attribute ->
-                                        SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME.equals(
-                                                attribute.getName()))
-                        .findFirst();
-
-        if (sourceServiceAttribute.isPresent()) {
-            sourceServiceAttribute.get().setValue(configuration.getProvider());
-        } else {
-            attributes.add(createUserGroupSourceServiceAttribute(configuration.getProvider()));
-        }
-
         try {
-            userGroupService.updateAttributes(group.getId(), attributes);
-        } catch (NotFoundServiceEx e) {
+            userGroupService.upsertAttribute(
+                    group.getId(),
+                    SOURCE_SERVICE_USER_GROUP_ATTRIBUTE_NAME,
+                    configuration.getProvider());
+        } catch (NotFoundServiceEx | BadRequestServiceEx e) {
             LOGGER.warn(
-                    "Could not persist sourceService attribute for group '{}': {}",
+                    "Could not upsert sourceService for group '{}': {}",
                     group.getGroupName(),
                     e.getMessage());
         }

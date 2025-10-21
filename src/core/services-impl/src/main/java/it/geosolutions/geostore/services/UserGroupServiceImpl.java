@@ -428,27 +428,31 @@ public class UserGroupServiceImpl implements UserGroupService {
             throws NotFoundServiceEx {
         UserGroup group = userGroupDAO.find(id);
         if (group == null) {
-            throw new NotFoundServiceEx("User not found " + id);
+            throw new NotFoundServiceEx("UserGroup not found " + id);
         }
 
-        //
-        // Removing old attributes
-        //
+        // 1) Remove existing rows
         List<UserGroupAttribute> oldList = group.getAttributes();
-        // Iterator<UserAttribute> iterator;
-
         if (oldList != null) {
             for (UserGroupAttribute a : oldList) {
-                userGroupAttributeDAO.removeById(a.getId());
+                if (a.getId() != null) {
+                    userGroupAttributeDAO.removeById(a.getId());
+                }
             }
         }
-        //
-        // Saving old attributes
-        //
-        for (UserGroupAttribute a : attributes) {
-            a.setUserGroup(group);
-            userGroupAttributeDAO.persist(a);
+
+        // 2) Persist the provided ones as NEW rows
+        if (attributes != null) {
+            for (UserGroupAttribute a : attributes) {
+                // important: ensure they're transient and correctly linked
+                a.setId(null);
+                a.setUserGroup(group);
+                userGroupAttributeDAO.persist(a);
+            }
         }
+
+        // (optional) keep the in-memory association coherent
+        group.setAttributes(attributes != null ? new ArrayList<>(attributes) : new ArrayList<>());
     }
 
     @Override
@@ -539,42 +543,43 @@ public class UserGroupServiceImpl implements UserGroupService {
     @Override
     public void upsertAttribute(long groupId, String name, String value)
             throws NotFoundServiceEx, BadRequestServiceEx {
-        if (StringUtils.isBlank(name)) {
-            throw new BadRequestServiceEx("Attribute name must be provided");
+        if (name == null) throw new BadRequestServiceEx("Attribute name must not be null");
+
+        UserGroup group = userGroupDAO.find(groupId);
+        if (group == null) {
+            throw new NotFoundServiceEx("UserGroup not found " + groupId);
         }
 
-        UserGroup group = getWithAttributes(groupId);
-
-        List<UserGroupAttribute> attrs = group.getAttributes();
-        if (attrs == null) {
-            attrs = new ArrayList<>();
-            group.setAttributes(attrs);
-        }
-
+        // look for the attribute (case-insensitive)
         UserGroupAttribute existing = null;
-        for (UserGroupAttribute a : attrs) {
-            if (a != null && name.equalsIgnoreCase(a.getName())) {
-                existing = a;
-                break;
+        List<UserGroupAttribute> current = group.getAttributes();
+        if (current != null) {
+            for (UserGroupAttribute a : current) {
+                if (a.getName() != null && a.getName().equalsIgnoreCase(name)) {
+                    existing = a;
+                    break;
+                }
             }
         }
 
-        if (existing == null) {
+        if (existing != null) {
+            // update existing row (MERGE is safe for managed/detached)
+            existing.setValue(value);
+            userGroupAttributeDAO.merge(existing);
+        } else {
+            // insert new row
             UserGroupAttribute a = new UserGroupAttribute();
+            a.setUserGroup(group);
             a.setName(name);
             a.setValue(value);
-            a.setUserGroup(group);
             userGroupAttributeDAO.persist(a);
-            attrs.add(a);
-        } else {
-            existing.setValue(value);
-            // Prefer merge on existing attribute if your DAO supports it, otherwise persist is fine
-            try {
-                userGroupAttributeDAO.merge(existing);
-            } catch (Throwable t) {
-                // Fallback if merge is not available on the DAO implementation
-                userGroupAttributeDAO.persist(existing);
+
+            // keep in-memory model consistent
+            if (current == null) {
+                current = new ArrayList<>();
+                group.setAttributes(current);
             }
+            current.add(a);
         }
     }
 }

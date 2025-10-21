@@ -37,13 +37,7 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.junit.Test;
 
@@ -527,6 +521,87 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         userGroupService.assignUserGroup(uid, gid);
         userGroupService.delete(gid);
         assertTrue(userService.get(uid).getGroups().isEmpty());
+    }
+
+    @Test
+    public void testUpdateAttributesWithDetachedInstancesDoesNotThrow() throws Exception {
+        // 1) Create a group with one attribute
+        UserGroup group = new UserGroup();
+        group.setGroupName("group-detached-updates");
+        UserGroupAttribute base = new UserGroupAttribute();
+        base.setName("base");
+        base.setValue("b0");
+        group.setAttributes(List.of(base));
+        long id = userGroupService.insert(group);
+
+        // 2) Load with attributes to obtain *detached* instances outside the original persist
+        // context
+        UserGroup loaded = userGroupService.getWithAttributes(id);
+        assertNotNull(loaded);
+        assertNotNull("Attributes must be initialized", loaded.getAttributes());
+        assertEquals(1, loaded.getAttributes().size());
+
+        // This is the detached instance we will re-use (carrying an id)
+        UserGroupAttribute detached = loaded.getAttributes().get(0);
+        // Change its value to verify the replacement logic actually persists our change
+        detached.setValue("b1");
+
+        // Add a brand-new attribute alongside the detached one
+        UserGroupAttribute extra = new UserGroupAttribute();
+        extra.setName("k1");
+        extra.setValue("v1");
+
+        // 3) BEFORE the fix this call would throw PersistentObjectException due to detached attr
+        userGroupService.updateAttributes(id, Arrays.asList(detached, extra));
+
+        // 4) Verify the attributes got replaced properly and no duplicates exist
+        UserGroup after = userGroupService.getWithAttributes(id);
+        assertNotNull(after);
+        assertNotNull(after.getAttributes());
+        assertEquals("Should now have 2 attributes", 2, after.getAttributes().size());
+
+        // Verify updated 'base' is present with the NEW value
+        assertTrue(
+                "Updated base attribute (b1) must be present",
+                after.getAttributes().stream()
+                        .anyMatch(a -> "base".equals(a.getName()) && "b1".equals(a.getValue())));
+
+        // Verify the new attribute is there too
+        assertTrue(
+                "New attribute k1=v1 must be present",
+                after.getAttributes().stream()
+                        .anyMatch(a -> "k1".equals(a.getName()) && "v1".equals(a.getValue())));
+
+        // Optional: ensure every attribute is bound to the correct owning group
+        assertTrue(
+                "All attributes must reference the owning group",
+                after.getAttributes().stream()
+                        .allMatch(a -> a.getUserGroup() != null && id == a.getUserGroup().getId()));
+    }
+
+    @Test
+    public void testUpdateAttributesIgnoresIncomingIdsOnNewAttributes() throws Exception {
+        long id = userGroupService.insert(groupWithAttrs("ignore-ids", attr("a", "1")));
+
+        // Create a "new" attribute but poison it with a random id to mimic stale/detached usage
+        UserGroupAttribute poisoned = new UserGroupAttribute();
+        poisoned.setId(999999L); // should be ignored/nullified by the service before persist
+        poisoned.setName("b");
+        poisoned.setValue("2");
+
+        userGroupService.updateAttributes(id, Arrays.asList(attr("a", "1"), poisoned));
+
+        UserGroup reloaded = userGroupService.getWithAttributes(id);
+        assertNotNull(reloaded);
+        assertEquals(2, reloaded.getAttributes().size());
+        // Must contain both 'a' and 'b' exactly once
+        Map<String, Long> byName =
+                reloaded.getAttributes().stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        UserGroupAttribute::getName, Collectors.counting()));
+        assertEquals(Long.valueOf(1L), byName.get("a"));
+        assertEquals(Long.valueOf(1L), byName.get("b"));
     }
 
     private static UserGroup group(String name) {
