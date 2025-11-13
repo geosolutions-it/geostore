@@ -124,7 +124,7 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
 
     protected void verifyTokenResponse(String accessToken, Map<String, Object> checkTokenResponse) {
         if (checkTokenResponse.containsKey("error")) {
-            logger.debug("check_token returned error: " + checkTokenResponse.get("error"));
+            LOGGER.info("check_token returned error: {}", checkTokenResponse.get("error"));
             throw new InvalidTokenException(accessToken);
         }
     }
@@ -161,10 +161,8 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         }
         ParameterizedTypeReference<Map<String, Object>> map =
                 new ParameterizedTypeReference<Map<String, Object>>() {};
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Executing request " + path + " form data are " + formData);
-            LOGGER.debug("Headers are " + headers);
-        }
+        LOGGER.info("Executing request {} form data are {}", path, formData);
+        LOGGER.info("Headers are {}", headers);
         return restTemplate
                 .exchange(path, method, new HttpEntity<>(formData, headers), map)
                 .getBody();

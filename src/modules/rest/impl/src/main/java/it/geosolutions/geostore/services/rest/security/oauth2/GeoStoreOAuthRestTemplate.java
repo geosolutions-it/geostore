@@ -87,29 +87,29 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
                 AccessTokenRequest accessTokenRequest = oauth2Context.getAccessTokenRequest();
                 if ((accessTokenRequest.getAuthorizationCode() != null)
                         && (!accessTokenRequest.getAuthorizationCode().isEmpty())) {
-                    LOGGER.debug(
+                    LOGGER.info(
                             "OIDC: received a CODE from Identity Provider - handing it in for ID/Access Token");
-                    LOGGER.debug("OIDC: CODE={}", accessTokenRequest.getAuthorizationCode());
+                    LOGGER.info("OIDC: CODE={}", accessTokenRequest.getAuthorizationCode());
                     if (result != null) {
-                        LOGGER.debug(
+                        LOGGER.info(
                                 "OIDC: Identity Provider returned Token, type={}",
                                 result.getTokenType());
-                        LOGGER.debug("OIDC: SCOPES={}", String.join(" ", result.getScope()));
+                        LOGGER.info("OIDC: SCOPES={}", String.join(" ", result.getScope()));
                         final String accessToken = result.getValue();
-                        LOGGER.debug("OIDC: ACCESS TOKEN:{}", saferJWT(accessToken));
+                        LOGGER.info("OIDC: ACCESS TOKEN:{}", saferJWT(accessToken));
                         Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                                 .setAttribute(ACCESS_TOKEN_PARAM, accessToken, 0);
                         if (result.getAdditionalInformation().containsKey("refresh_token")) {
                             final String refreshToken =
                                     (String) result.getAdditionalInformation().get("refresh_token");
-                            LOGGER.debug("OIDC: REFRESH TOKEN:{}", saferJWT(refreshToken));
+                            LOGGER.info("OIDC: REFRESH TOKEN:{}", saferJWT(refreshToken));
                             RequestContextHolder.getRequestAttributes()
                                     .setAttribute(REFRESH_TOKEN_PARAM, accessToken, 0);
                         }
                         if (result.getAdditionalInformation().containsKey("id_token")) {
                             final String idToken =
                                     (String) result.getAdditionalInformation().get("id_token");
-                            LOGGER.debug("OIDC: ID TOKEN:{}", saferJWT(idToken));
+                            LOGGER.info("OIDC: ID TOKEN:{}", saferJWT(idToken));
                             RequestContextHolder.getRequestAttributes()
                                     .setAttribute(ID_TOKEN_PARAM, accessToken, 0);
                         }

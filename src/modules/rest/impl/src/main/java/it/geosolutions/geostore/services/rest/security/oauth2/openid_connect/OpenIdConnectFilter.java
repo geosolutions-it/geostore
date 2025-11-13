@@ -125,7 +125,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
                 throw new IOException("Attached Bearer Token is missing");
             }
 
-            // Access Token Check response (may be null depending on provider)
+            // Access Token Check response (maybe null depending on provider)
             Map<String, Object> userinfoMap = null;
             Object ext = req.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
             if (ext instanceof Map) {

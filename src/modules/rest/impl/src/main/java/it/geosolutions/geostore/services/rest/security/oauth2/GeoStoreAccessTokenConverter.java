@@ -74,10 +74,11 @@ public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
 
     @Override
     public OAuth2Authentication extractAuthentication(Map<String, ?> map) {
+        LOGGER.info("OAuth2Authentication extractAuthentication from {}", map);
         Map<String, String> parameters = new HashMap<>();
         Set<String> scope = parseScopes(map);
         Authentication user = userTokenConverter.extractAuthentication(map);
-        LOGGER.debug("User: " + user);
+        LOGGER.info("User: {}", user);
         String clientId = (String) map.get(CLIENT_ID);
         parameters.put(CLIENT_ID, clientId);
 
@@ -86,11 +87,11 @@ public class GeoStoreAccessTokenConverter extends DefaultAccessTokenConverter {
             extensionParameters.put(ACCESS_TOKEN_CHECK_KEY, (Serializable) map);
         } catch (Exception e) {
             //
-            LOGGER.debug("Exception while trying to record the access token check info", e);
+            LOGGER.info("Exception while trying to record the access token check info", e);
         }
 
         Set<String> resourceIds = new LinkedHashSet<>(getAud(map));
-        LOGGER.debug("ResourceIds: " + resourceIds);
+        LOGGER.info("ResourceIds: {}", resourceIds);
         OAuth2Request request =
                 new OAuth2Request(
                         parameters,

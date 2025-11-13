@@ -51,9 +51,9 @@ public abstract class Oauth2LoginService implements IdPLoginService {
         Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
         LOGGER.info("Callback Provider: {}", provider);
-        LOGGER.debug("Token: {}", token);
-        LOGGER.debug("Redirect uri: {}", configuration.getRedirectUri());
-        LOGGER.debug("Internal redirect uri: {}", configuration.getInternalRedirectUri());
+        LOGGER.info("Token: {}", token);
+        LOGGER.info("Redirect uri: {}", configuration.getRedirectUri());
+        LOGGER.info("Internal redirect uri: {}", configuration.getInternalRedirectUri());
         if (token != null) {
             LOGGER.info("AccessToken found");
             SessionToken sessionToken = new SessionToken();
@@ -61,10 +61,10 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 result =
                         result.status(302)
                                 .location(new URI(configuration.getInternalRedirectUri()));
-                LOGGER.debug("AccessToken: {}", token);
+                LOGGER.info("AccessToken: {}", token);
                 sessionToken.setAccessToken(token);
                 if (refreshToken != null) {
-                    LOGGER.debug("RefreshToken: {}", refreshToken);
+                    LOGGER.info("RefreshToken: {}", refreshToken);
                     sessionToken.setRefreshToken(refreshToken);
                 }
                 sessionToken.setTokenType(BEARER_TYPE);
