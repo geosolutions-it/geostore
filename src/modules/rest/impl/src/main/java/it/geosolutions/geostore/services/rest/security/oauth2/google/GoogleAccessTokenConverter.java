@@ -50,7 +50,7 @@ public class GoogleAccessTokenConverter extends GeoStoreAccessTokenConverter {
         Object aud = map.get(AUD);
         Set<String> resourceIds = new LinkedHashSet<>();
         if (aud instanceof Collection) {
-            ((Collection<Object>) aud).stream().forEach(a -> resourceIds.add(a.toString()));
+            ((Collection<Object>) aud).forEach(a -> resourceIds.add(a.toString()));
         } else if (aud instanceof String) {
             resourceIds.add(aud.toString());
         }
@@ -62,7 +62,7 @@ public class GoogleAccessTokenConverter extends GeoStoreAccessTokenConverter {
 
     private Set<String> parseScopes(Map<String, ?> map) {
         // Parsing of scopes coming back from Google are slightly different from
-        // the default implementation. Instead of it being a collection it is a
+        // the default implementation. Instead of it being a collection, it is a
         // String where multiple scopes are separated by a space.
         Object scopeAsObject = map.containsKey(SCOPE) ? map.get(SCOPE) : "";
         Set<String> scope = new LinkedHashSet<>();

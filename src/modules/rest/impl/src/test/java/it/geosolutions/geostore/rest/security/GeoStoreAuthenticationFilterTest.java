@@ -17,7 +17,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package it.geosolutions.geostore.services.rest.security;
+package it.geosolutions.geostore.rest.security;
 
 import static org.junit.Assert.*;
 
@@ -31,6 +31,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.security.GeoStoreRequestHeadersAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
@@ -192,7 +193,6 @@ public class GeoStoreAuthenticationFilterTest {
         OAuth2GeoStoreAuthenticationFilter oauth2Filter =
                 new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
 
-                    @Override
                     protected JWTHelper decodeAndValidateIdToken(String idToken) {
                         return new JWTHelper(idToken) {
                             @Override

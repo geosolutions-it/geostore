@@ -55,10 +55,10 @@ public class GoogleTokenServices extends GeoStoreRemoteTokenServices {
 
     @Override
     protected void transformNonStandardValuesToStandardValues(Map<String, Object> map) {
-        LOGGER.debug("Original map = " + map);
+        LOGGER.info("Original map = {}", map);
         map.put("client_id", map.get("issued_to")); // Google sends 'client_id' as 'issued_to'
         map.put("user_name", map.get("user_id")); // Google sends 'user_name' as 'user_id'
-        LOGGER.debug("Transformed = " + map);
+        LOGGER.info("Transformed = {}", map);
     }
 
     @Override

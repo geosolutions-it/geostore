@@ -35,7 +35,6 @@ import static org.mockito.Mockito.*;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
-import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleOAuth2Configuration;

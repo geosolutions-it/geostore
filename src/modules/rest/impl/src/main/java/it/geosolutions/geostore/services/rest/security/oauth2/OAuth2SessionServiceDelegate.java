@@ -411,8 +411,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (authentication == null)
             authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (LOGGER.isDebugEnabled())
-            LOGGER.info("Updating the cache and the SecurityContext with new Auth details");
+        LOGGER.info("Updating the cache and the SecurityContext with new Auth details");
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken)) {
             TokenDetails details = getTokenDetails(authentication);
             String idToken = details.getIdToken();
@@ -426,9 +425,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (refreshToken != null) {
                 accessToken.setRefreshToken(refreshToken);
             }
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug(
-                        "Creating new details. AccessToken: {} IdToken: {}", accessToken, idToken);
+            LOGGER.info("Creating new details. AccessToken: {} IdToken: {}", accessToken, idToken);
             updated.setDetails(new TokenDetails(accessToken, idToken, conf.getBeanName()));
             cache().putCacheEntry(newToken.getValue(), updated);
             SecurityContextHolder.getContext().setAuthentication(updated);
