@@ -48,9 +48,14 @@ jobs:
           distribution: 'adopt'
           server-id: geosolutions
           server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
       - name: Publish package
-        run: mvn clean install deploy -Ppostgres # published version includes only the postgres drivers. Auditing module is not added to the published version.
+        run: |
+          # Setup SSH keys for SFTP
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GS_SFTP_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # add geo-solutions.it to known hosts to avoid prompts
+          ssh-keyscan -H maven.geo-solutions.it >> ~/.ssh/known_hosts
+          mvn clean install deploy -Ppostgres # published version includes only the postgres drivers. Auditing module is not added to the published version.
         env:
           MAVEN_USERNAME: ${{ secrets.GS_MAVEN_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.GS_MAVEN_PASSWORD }}
