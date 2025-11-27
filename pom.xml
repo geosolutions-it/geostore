@@ -179,7 +179,7 @@
         <dependency-check-maven.version>9.0.9</dependency-check-maven.version>
         <fmt-maven-plugin.version>2.9.1</fmt-maven-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-        <wagon-ftp.version>2.10</wagon-ftp.version>
+        <wagon-ssh.version>3.5.3</wagon-ssh.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <coveralls-maven-plugin.version>4.1.0</coveralls-maven-plugin.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
@@ -201,18 +201,14 @@
         <repository>
             <uniqueVersion>false</uniqueVersion>
             <id>geosolutions</id>
-            <url>ftp://maven.geo-solutions.it/</url>
+            <url>sftp://maven.geo-solutions.it/</url>
         </repository>
         <!-- use the following if you ARE using a snapshot version. -->
         <snapshotRepository>
             <uniqueVersion>false</uniqueVersion>
             <id>geosolutions</id>
-            <url>ftp://maven.geo-solutions.it/</url>
+            <url>sftp://maven.geo-solutions.it/</url>
         </snapshotRepository>
-        <site>
-            <id>demo.geosolutions</id>
-            <url>scp://demo.geo-solutions.it/var/www/share/javadoc/geostore/${project.version}</url>
-        </site>
     </distributionManagement>
 
     <build>
@@ -390,8 +386,8 @@
         <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ftp</artifactId>
-                <version>${wagon-ftp.version}</version>
+                <artifactId>wagon-ssh</artifactId>
+                <version>${wagon-ssh.version}</version>
             </extension>
         </extensions>
 

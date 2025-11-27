@@ -43,13 +43,13 @@
         <repository>
             <uniqueVersion>false</uniqueVersion>
             <id>geosolutions</id>
-            <url>ftp://maven.geo-solutions.it/</url>
+            <url>sftp://maven.geo-solutions.it/</url>
         </repository>
         <!-- use the following if you ARE using a snapshot version. -->
         <snapshotRepository>
             <uniqueVersion>false</uniqueVersion>
             <id>geosolutions</id>
-            <url>ftp://maven.geo-solutions.it/</url>
+            <url>sftp://maven.geo-solutions.it/</url>
         </snapshotRepository>
     </distributionManagement>
 
