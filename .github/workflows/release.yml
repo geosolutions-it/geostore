@@ -65,7 +65,12 @@ jobs:
         server-password: MAVEN_PASSWORD
 
     - name: Publish package
-      run: mvn clean install deploy -Ppostgres # deploy version includes only the postgres drivers. Auditing module is not added to the published webapp.
+      run: |
+        # Setup SSH keys for SFTP
+        mkdir -p ~/.ssh
+        # add geo-solutions.it to known hosts to avoid prompts
+        ssh-keyscan -H maven.geo-solutions.it >> ~/.ssh/known_hosts
+        mvn clean install deploy -Ppostgres # deploy version includes only the postgres drivers. Auditing module is not added to the published webapp.
       env:
         MAVEN_USERNAME: ${{ secrets.GS_MAVEN_USERNAME }}
         MAVEN_PASSWORD: ${{ secrets.GS_MAVEN_PASSWORD }}
