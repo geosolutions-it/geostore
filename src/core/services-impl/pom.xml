@@ -25,7 +25,7 @@
     <parent>
         <groupId>it.geosolutions.geostore</groupId>
         <artifactId>geostore-core</artifactId>
-        <version>2.4-SNAPSHOT</version>
+        <version>2.4.0</version>
     </parent>
 
     <artifactId>geostore-services-impl</artifactId>
