@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.User;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,6 +30,6 @@ import java.util.List;
  */
 public interface UserDAO extends RestrictedGenericDAO<User> {
     default List<User> findFavoritedBy(Long resourceId) {
-        return null;
+        return Collections.emptyList();
     }
 }
