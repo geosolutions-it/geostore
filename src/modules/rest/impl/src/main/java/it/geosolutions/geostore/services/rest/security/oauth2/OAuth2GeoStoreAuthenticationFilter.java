@@ -679,6 +679,22 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LOGGER.info("Groups from token: {}", oidcGroups);
         }
 
+        Map<String, String> groupMappings = configuration.getGroupMappings();
+        boolean dropUnmapped = configuration.isDropUnmapped();
+        if (groupMappings != null && !oidcGroups.isEmpty()) {
+            List<String> mapped = new java.util.ArrayList<>();
+            for (String g : oidcGroups) {
+                if (g == null) continue;
+                String m = groupMappings.get(g.toUpperCase(Locale.ROOT));
+                if (m != null) {
+                    mapped.add(m);
+                } else if (!dropUnmapped) {
+                    mapped.add(g);
+                }
+            }
+            oidcGroups = mapped;
+        }
+
         reconcileRemoteGroups(user, new LinkedHashSet<>(oidcGroups));
 
         // ----- Persist user after role & group sync -----
@@ -707,10 +723,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (rolesFromToken == null || rolesFromToken.isEmpty()) {
             return (defaultRole != null) ? defaultRole : Role.USER;
         }
+        Map<String, String> roleMappings = configuration.getRoleMappings();
+        boolean dropUnmapped = configuration.isDropUnmapped();
         Role resolved = (defaultRole != null) ? defaultRole : Role.USER;
         for (String r : rolesFromToken) {
             if (r == null) continue;
             String rr = r.trim();
+            if (roleMappings != null) {
+                String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
+                if (mapped != null) {
+                    rr = mapped;
+                } else if (dropUnmapped) {
+                    continue;
+                }
+            }
             if (rr.equalsIgnoreCase(Role.ADMIN.name())) return Role.ADMIN;
             if (rr.equalsIgnoreCase(Role.GUEST.name())) resolved = Role.GUEST;
         }
@@ -808,22 +834,29 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             boolean alreadyAssigned =
                     user.getGroups().stream()
                             .anyMatch(
-                                    g ->
-                                            g != null
-                                                    && Objects.equals(
-                                                            g.getId(), finalGroup.getId()));
+                                    g -> {
+                                        if (g == null) return false;
+                                        if (finalGroup.getId() != null && g.getId() != null) {
+                                            return Objects.equals(g.getId(), finalGroup.getId());
+                                        }
+                                        return Objects.equals(
+                                                normalizeGroupName(g.getGroupName()),
+                                                normalizeGroupName(finalGroup.getGroupName()));
+                                    });
             if (!alreadyAssigned) {
-                try {
-                    userGroupService.assignUserGroup(user.getId(), group.getId());
-                    user.getGroups().add(group);
-                    LOGGER.info("Assigned user {} to group '{}'", user.getId(), groupName);
-                } catch (NotFoundServiceEx e) {
-                    LOGGER.error(
-                            "Assignment of user {} to group '{}' failed: {}",
-                            user.getId(),
-                            groupName,
-                            e.getMessage());
+                if (userGroupService != null && user.getId() != null && group.getId() != null) {
+                    try {
+                        userGroupService.assignUserGroup(user.getId(), group.getId());
+                        LOGGER.info("Assigned user {} to group '{}'", user.getId(), groupName);
+                    } catch (NotFoundServiceEx e) {
+                        LOGGER.error(
+                                "Assignment of user {} to group '{}' failed: {}",
+                                user.getId(),
+                                groupName,
+                                e.getMessage());
+                    }
                 }
+                user.getGroups().add(group);
             }
         }
 

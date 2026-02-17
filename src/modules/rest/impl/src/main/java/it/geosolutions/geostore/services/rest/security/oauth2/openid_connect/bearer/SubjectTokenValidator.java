@@ -21,6 +21,12 @@ public class SubjectTokenValidator implements OpenIdTokenValidator {
     @Override
     public void verifyToken(OpenIdConnectConfiguration config, Map claims, Map userInfoClaims)
             throws Exception {
+        // If no userinfo is available (e.g. direct bearer token validation without
+        // introspection), skip the subject comparison — there is nothing to compare against.
+        if (userInfoClaims == null || userInfoClaims.isEmpty()) {
+            return;
+        }
+
         // normal case - subjects are the same
         if ((claims.get(SUBJECT_CLAIM_NAME) != null)
                 && (userInfoClaims.get(SUBJECT_CLAIM_NAME) != null)) {

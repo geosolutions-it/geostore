@@ -34,6 +34,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestT
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreSecurityConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.OpenIdTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
@@ -142,7 +143,24 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
                 oauth2RestTemplate(),
                 configuration(),
                 oAuth2Cache(),
-                openIdConnectBearerTokenValidator());
+                openIdConnectBearerTokenValidator(),
+                jwksRsaKeyProvider());
+    }
+
+    @Bean
+    public JwksRsaKeyProvider jwksRsaKeyProvider() {
+        OpenIdConnectConfiguration config = (OpenIdConnectConfiguration) configuration();
+        // Prefer idTokenUri (auto-discovered from jwks_uri), fallback to explicit jwkURI
+        String jwksUri = config.getIdTokenUri();
+        if (jwksUri == null || jwksUri.isEmpty()) {
+            jwksUri = config.getJwkURI();
+        }
+        if (jwksUri != null && !jwksUri.isEmpty()) {
+            return new JwksRsaKeyProvider(jwksUri);
+        }
+        LOGGER.warn(
+                "No JWKS URI configured — bearer token signature verification will be disabled");
+        return null;
     }
 
     @Bean
@@ -158,6 +176,8 @@ public class OpenIdConnectSecurityConfiguration extends OAuth2GeoStoreSecurityCo
 
     @Bean
     public TokenAuthenticationCache oAuth2Cache() {
-        return new TokenAuthenticationCache();
+        OAuth2Configuration config = configuration();
+        return new TokenAuthenticationCache(
+                config.getCacheSize(), config.getCacheExpirationMinutes());
     }
 }

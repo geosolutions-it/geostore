@@ -29,20 +29,34 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Collections;
+import javax.servlet.http.HttpSession;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 
 public class OpenIdConnectConfiguration extends OAuth2Configuration {
+
+    private static final Logger LOGGER = LogManager.getLogger(OpenIdConnectConfiguration.class);
+
+    public static final String PKCE_CODE_VERIFIER_SESSION_ATTR = "oidc.pkce.code_verifier";
+
     String jwkURI;
     String postLogoutRedirectUri;
     boolean sendClientSecret = false;
     boolean allowBearerTokens = true;
     boolean usePKCE = false;
+    int maxTokenAgeSecs = 0;
 
     public String getJwkURI() {
         return jwkURI;
@@ -97,6 +111,50 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setUsePKCE(boolean usePKCE) {
         this.usePKCE = usePKCE;
+    }
+
+    public int getMaxTokenAgeSecs() {
+        return maxTokenAgeSecs;
+    }
+
+    public void setMaxTokenAgeSecs(int maxTokenAgeSecs) {
+        this.maxTokenAgeSecs = maxTokenAgeSecs;
+    }
+
+    @Override
+    public AuthenticationEntryPoint getAuthenticationEntryPoint() {
+        if (!usePKCE) {
+            return super.getAuthenticationEntryPoint();
+        }
+        return (request, response, authException) -> {
+            try {
+                // Generate code_verifier: 32 random bytes, base64url-encoded
+                byte[] randomBytes = new byte[32];
+                new SecureRandom().nextBytes(randomBytes);
+                String codeVerifier =
+                        Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+
+                // Compute code_challenge = BASE64URL(SHA-256(code_verifier))
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                byte[] hash = digest.digest(codeVerifier.getBytes(StandardCharsets.US_ASCII));
+                String codeChallenge = Base64.getUrlEncoder().withoutPadding().encodeToString(hash);
+
+                // Store verifier in HTTP session
+                HttpSession session = request.getSession(true);
+                session.setAttribute(PKCE_CODE_VERIFIER_SESSION_ATTR, codeVerifier);
+
+                // Build login URI with code_challenge parameters
+                String loginUri =
+                        buildLoginUri()
+                                + "&code_challenge="
+                                + codeChallenge
+                                + "&code_challenge_method=S256";
+                response.sendRedirect(loginUri);
+            } catch (Exception e) {
+                LOGGER.error("Failed to generate PKCE parameters", e);
+                response.sendRedirect(buildLoginUri());
+            }
+        };
     }
 
     /**
