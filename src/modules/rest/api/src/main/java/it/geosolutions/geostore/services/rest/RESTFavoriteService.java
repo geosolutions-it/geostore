@@ -38,35 +38,27 @@ import org.springframework.security.access.annotation.Secured;
 
 /**
  * REST service mapped under the <code>/users</code> path. For example, to assign a favorite to the
- * user, use the endpoint: <code>POST /rest/users/user/{userId}/favorite/{resourceId}</code>.
+ * current logged user, use the endpoint: <code>POST /rest/users/user/favorite/{resourceId}</code>.
  */
 public interface RESTFavoriteService {
 
     /**
-     * @param id user identifier
      * @param resourceId resource identifier
      * @throws NotFoundWebEx
      */
     @POST
-    @Path("user/{id}/favorite/{resourceId}")
+    @Path("user/favorite/{resourceId}")
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
-    void addFavorite(
-            @Context SecurityContext sc,
-            @PathParam("id") long id,
-            @PathParam("resourceId") long resourceId)
+    void addFavorite(@Context SecurityContext sc, @PathParam("resourceId") long resourceId)
             throws NotFoundWebEx;
 
     /**
-     * @param id user identifier
      * @param resourceId resource identifier
      * @throws NotFoundWebEx
      */
     @DELETE
-    @Path("user/{id}/favorite/{resourceId}")
+    @Path("user/favorite/{resourceId}")
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
-    void removeFavorite(
-            @Context SecurityContext sc,
-            @PathParam("id") long id,
-            @PathParam("resourceId") long resourceId)
+    void removeFavorite(@Context SecurityContext sc, @PathParam("resourceId") long resourceId)
             throws NotFoundWebEx;
 }

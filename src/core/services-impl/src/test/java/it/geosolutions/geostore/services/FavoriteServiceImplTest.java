@@ -22,68 +22,183 @@ package it.geosolutions.geostore.services;
 import static org.junit.Assert.assertThrows;
 
 import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserFavorite;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.exception.DuplicatedFavoriteServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
+import javax.ws.rs.ForbiddenException;
 
 public class FavoriteServiceImplTest extends ServiceTestBase {
 
-    public FavoriteServiceImplTest() {}
-
-    public void testAddFavorite() throws Exception {
+    public void testAddFavoriteByUserId() throws Exception {
 
         long resourceId = createResource("resource", "description", "category");
         long userId = createUser("user", Role.USER, "password");
 
-        favoriteService.addFavorite(userId, resourceId);
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(userService.get(userId));
+        rule.setCanRead(true);
+        resourceService.updateSecurityRules(resourceId, List.of(rule));
+
+        favoriteService.addFavoriteByUserId(userId, resourceId);
 
         User user = userService.get(userId);
         userService.fetchFavorites(user);
 
-        Set<Resource> resourceFavorites = user.getFavorites();
-        assertEquals(1, resourceFavorites.size());
-        Resource resourceFavorite = resourceFavorites.stream().findFirst().orElseThrow();
-        assertEquals(resourceId, resourceFavorite.getId().longValue());
+        Set<UserFavorite> userFavorites = user.getFavorites();
+        assertEquals(1, userFavorites.size());
+        UserFavorite resourceFavorite = userFavorites.stream().findFirst().orElseThrow();
+        assertEquals(resourceId, resourceFavorite.getResource().getId().longValue());
     }
 
-    public void testAddFavoriteNotFoundUser() throws Exception {
+    public void testAddFavoriteByUserIdNotFoundUser() throws Exception {
         long resourceId = createResource("resource", "description", "category");
-        assertThrows(NotFoundServiceEx.class, () -> favoriteService.addFavorite(0L, resourceId));
+        assertThrows(
+                NotFoundServiceEx.class, () -> favoriteService.addFavoriteByUserId(0L, resourceId));
     }
 
-    public void testAddFavoriteNotFoundResource() throws Exception {
+    public void testAddFavoriteByUserIdWhenNotPermitted() throws Exception {
+
+        long resourceId = createResource("resource", "description", "category");
         long userId = createUser("user", Role.USER, "password");
-        assertThrows(NotFoundServiceEx.class, () -> favoriteService.addFavorite(userId, 0L));
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(null);
+        rule.setUsername("alice");
+        rule.setCanRead(true);
+
+        resourceService.updateSecurityRules(resourceId, List.of(rule));
+
+        assertThrows(
+                ForbiddenException.class,
+                () -> favoriteService.addFavoriteByUserId(userId, resourceId));
     }
 
-    public void testRemoveFavorite() throws Exception {
+    public void testAddFavoriteByUserIdWhenDuplicateExists() throws Exception {
+
+        long resourceId = createResource("resource", "description", "category");
+        long userId = createUser("user", Role.USER, "password");
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(userService.get(userId));
+        rule.setCanRead(true);
+        resourceService.updateSecurityRules(resourceId, List.of(rule));
+
+        favoriteService.addFavoriteByUserId(userId, resourceId);
+
+        assertThrows(
+                DuplicatedFavoriteServiceException.class,
+                () -> favoriteService.addFavoriteByUserId(userId, resourceId));
+    }
+
+    public void testAddFavoriteByUserIdNotFoundResource() throws Exception {
+        long userId = createUser("user", Role.USER, "password");
+        assertThrows(
+                NotFoundServiceEx.class, () -> favoriteService.addFavoriteByUserId(userId, 0L));
+    }
+
+    public void testAddFavoriteByUsername() throws Exception {
+
+        final String username = "user";
+        long resourceId = createResource("resource", "description", "category");
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUsername(username);
+        rule.setCanRead(true);
+        resourceService.updateSecurityRules(resourceId, List.of(rule));
+
+        favoriteService.addFavoriteByUsername(username, resourceId);
+
+        Resource resource = resourceService.get(resourceId);
+        resourceService.fetchFavorites(resource);
+
+        Set<UserFavorite> favorites = resource.getFavorites();
+        assertEquals(1, favorites.size());
+        UserFavorite resourceFavorite = favorites.stream().findFirst().orElseThrow();
+        assertEquals(resourceId, resourceFavorite.getResource().getId().longValue());
+    }
+
+    public void testAddFavoriteByUsernameNotFoundResource() {
+        assertThrows(
+                NotFoundServiceEx.class, () -> favoriteService.addFavoriteByUsername("user", 0L));
+    }
+
+    public void testAddFavoriteByUsernameWhenDuplicateExists() throws Exception {
+
+        final String username = "username";
+        long resourceId = createResource("resource", "description", "category");
+
+        SecurityRule rule = new SecurityRule();
+        rule.setUsername(username);
+        rule.setCanRead(true);
+        resourceService.updateSecurityRules(resourceId, List.of(rule));
+
+        favoriteService.addFavoriteByUsername(username, resourceId);
+
+        assertThrows(
+                DuplicatedFavoriteServiceException.class,
+                () -> favoriteService.addFavoriteByUsername(username, resourceId));
+    }
+
+    public void testRemoveFavoriteByUserId() throws Exception {
 
         long resourceId = createResource("resource", "description", "category");
         long userId = createUser("user", Role.USER, "password");
 
         User user = userService.get(userId);
         Resource resource = resourceService.get(resourceId);
-        user.setFavorites(Collections.singleton(resource));
+
+        UserFavorite favorite = UserFavorite.withUser(user, resource);
+
+        user.setFavorites(Collections.singleton(favorite));
         userService.update(user);
 
         userService.fetchFavorites(user);
         assertFalse(user.getFavorites().isEmpty());
 
-        favoriteService.removeFavorite(userId, resourceId);
+        favoriteService.removeFavoriteByUserId(userId, resourceId);
         userService.fetchFavorites(user);
 
         assertTrue(user.getFavorites().isEmpty());
     }
 
-    public void testRemoveFromResourceNotFoundUser() throws Exception {
+    public void testRemoveFavoriteByUserIdWhenNotFound() throws Exception {
         long resourceId = createResource("resource", "description", "category");
-        assertThrows(NotFoundServiceEx.class, () -> favoriteService.removeFavorite(0L, resourceId));
+        assertThrows(
+                NotFoundServiceEx.class,
+                () -> favoriteService.removeFavoriteByUserId(0L, resourceId));
     }
 
-    public void testRemoveFromResourceNotFoundResource() throws Exception {
-        long userId = createUser("user", Role.USER, "password");
-        assertThrows(NotFoundServiceEx.class, () -> favoriteService.removeFavorite(userId, 0L));
+    public void testRemoveFavoriteByUsername() throws Exception {
+
+        final String username = "user";
+        long resourceId = createResource("resource", "description", "category");
+
+        Resource resource = resourceService.get(resourceId);
+
+        UserFavorite favorite = UserFavorite.withUsername(username, resource);
+
+        resource.setFavorites(Collections.singleton(favorite));
+        resourceService.update(resource);
+
+        resourceService.fetchFavorites(resource);
+        assertFalse(resource.getFavorites().isEmpty());
+
+        favoriteService.removeFavoriteByUsername(username, resourceId);
+        resourceService.fetchFavorites(resource);
+
+        assertTrue(resource.getFavorites().isEmpty());
+    }
+
+    public void testRemoveFavoriteByUsernameWhenNotFound() throws Exception {
+        long resourceId = createResource("resource", "description", "category");
+        assertThrows(
+                NotFoundServiceEx.class,
+                () -> favoriteService.removeFavoriteByUsername("notfounduser", resourceId));
     }
 }

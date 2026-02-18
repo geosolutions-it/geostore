@@ -259,17 +259,12 @@ public interface ResourceService extends SecurityService {
      *
      * @param resource
      */
-    default void fetchSecurityRules(Resource resource) {
-        /* no-op */
-    }
+    void fetchSecurityRules(Resource resource);
 
     /**
-     * Update the resource entity by fetching from the database the users who marked it as a
-     * favorite.
+     * Update the resource entity by fetching from the database the favorites.
      *
      * @param resource
      */
-    default void fetchFavoritedBy(Resource resource) {
-        /* no-op */
-    }
+    void fetchFavorites(Resource resource);
 }

@@ -20,10 +20,11 @@
 package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.User;
+import it.geosolutions.geostore.core.model.UserFavorite;
+import java.util.List;
 
-/**
- * Interface UserDAO.
- *
- * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
- */
-public interface UserDAO extends RestrictedGenericDAO<User> {}
+public interface UserFavoriteDAO extends RestrictedGenericDAO<UserFavorite> {
+    List<UserFavorite> findByResourceId(Long resourceId);
+
+    List<UserFavorite> findByUser(User user);
+}
