@@ -45,6 +45,10 @@ public class UserFavorite implements Serializable {
         this.username = username;
     }
 
+    public Long getId() {
+        return id;
+    }
+
     public User getUser() {
         return user;
     }
