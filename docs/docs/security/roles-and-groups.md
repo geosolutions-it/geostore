@@ -27,9 +27,9 @@ oidcOAuth2Config.authenticatedDefaultRole=USER
 
 When `rolesClaim` or `groupsClaim` is configured, GeoStore resolves the claim value using a multi-level fallback chain:
 
-1. **JWT (ID token)** -- the ID token returned during the authorization code flow is decoded and the claim is looked up. Supports dot-notation for nested claims (e.g. `realm_access.roles`).
-2. **JWT (access token)** -- if the ID token does not contain the claim, the access token JWT is tried next. Also supports dot-notation.
-3. **Userinfo response** -- if neither JWT contains the claim, the response from the OIDC userinfo endpoint (`checkTokenEndpointUrl`) is checked as a final fallback. Also supports dot-notation, with case-insensitive key matching at each level.
+1. **JWT (ID token)** -- the ID token returned during the authorization code flow is decoded and the claim is looked up. Supports dot-notation and full [JsonPath](https://github.com/json-path/JsonPath) expressions for nested claims (e.g. `realm_access.roles`, `$.resource_access.*.roles`).
+2. **JWT (access token)** -- if the ID token does not contain the claim, the access token JWT is tried next. Also supports dot-notation and JsonPath.
+3. **Userinfo response** -- if neither JWT contains the claim, the response from the OIDC userinfo endpoint (`checkTokenEndpointUrl`) is checked as a final fallback. Also supports dot-notation and JsonPath, with case-insensitive key matching at each level.
 
 This fallback chain ensures that roles and groups are resolved even when:
 
@@ -61,15 +61,21 @@ When `rolesClaim` is configured, roles are extracted from the JWT token (or user
 !!! note "ADMIN takes highest priority"
     The ADMIN role short-circuits evaluation. If **any** role value maps to `ADMIN`, the user receives the ADMIN role regardless of other values in the list.
 
-### Nested Claim Paths
+### Nested Claim Paths and JsonPath
 
-Both `rolesClaim` and `groupsClaim` support **dot-notation** for nested claims across all resolution sources (JWT and userinfo). This is essential for providers like Keycloak that nest roles inside structured objects.
+Both `rolesClaim` and `groupsClaim` support **dot-notation** and full **[JsonPath](https://github.com/json-path/JsonPath)** expressions across all resolution sources (JWT and userinfo). This is essential for providers like Keycloak that nest roles inside structured objects.
 
-| Claim Path | Token Structure |
-|------------|-----------------|
-| `roles` | Top-level `roles` claim |
-| `realm_access.roles` | Nested inside `realm_access` object (Keycloak realm roles) |
-| `resource_access.my-client.roles` | Deeply nested (Keycloak client roles) |
+| Claim Path | Syntax | Token Structure |
+|------------|--------|-----------------|
+| `roles` | dot-notation | Top-level `roles` claim |
+| `realm_access.roles` | dot-notation | Nested inside `realm_access` object (Keycloak realm roles) |
+| `resource_access.my-client.roles` | dot-notation | Deeply nested (Keycloak client roles) |
+| `$.realm_access.roles` | JsonPath | Same as `realm_access.roles` (explicit JsonPath) |
+| `$.resource_access.*.roles` | JsonPath | Wildcard — collects roles from **all** entries under `resource_access` |
+| `$.roles[0]` | JsonPath | Array index — extracts only the first role |
+| `$.realm_access.roles[?(@=='ADMIN')]` | JsonPath | Filter — extracts only the `ADMIN` role |
+
+Legacy dot-notation paths are automatically converted to JsonPath by prepending `$.`. Paths starting with `$` are used as-is.
 
 For example, a Keycloak ID token typically contains:
 
@@ -85,6 +91,12 @@ To extract roles from this structure, set:
 
 ```properties
 oidcOAuth2Config.rolesClaim=realm_access.roles
+```
+
+Or equivalently, using explicit JsonPath:
+
+```properties
+oidcOAuth2Config.rolesClaim=$.realm_access.roles
 ```
 
 ---
@@ -129,8 +141,8 @@ On each login, the following reconciliation occurs:
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `rolesClaim` | String | -- | JWT claim path for roles (supports dot-notation) |
-| `groupsClaim` | String | -- | JWT claim path for groups (supports dot-notation) |
+| `rolesClaim` | String | -- | JWT claim path for roles (supports dot-notation and [JsonPath](https://github.com/json-path/JsonPath)) |
+| `groupsClaim` | String | -- | JWT claim path for groups (supports dot-notation and [JsonPath](https://github.com/json-path/JsonPath)) |
 | `roleMappings` | String | -- | Comma-separated `idpValue:geoStoreValue` pairs |
 | `groupMappings` | String | -- | Comma-separated `idpValue:geoStoreValue` pairs |
 | `dropUnmapped` | boolean | `false` | Drop roles/groups with no mapping entry |

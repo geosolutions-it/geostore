@@ -131,6 +131,11 @@
             <artifactId>java-jwt</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+        </dependency>
+
         <!-- ================================================================-->
         <!--  Misc support libs -->
         <!-- ================================================================-->

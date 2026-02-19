@@ -900,6 +900,125 @@ public class OpenIdConnectIntegrationTest {
         assertTrue(groupNames.contains("editors"), "Should have 'editors' from nested path");
     }
 
+    @Test
+    public void testJsonPathRoles() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        // Explicit JsonPath expression for roles
+        configuration.setRolesClaim("$.realm_access.roles");
+
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-jsonpath")
+                        .withClaim("email", "jsonpath@example.com")
+                        .withClaim(
+                                "realm_access",
+                                java.util.Collections.singletonMap(
+                                        "roles", java.util.Arrays.asList("ADMIN", "user")))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "JsonPath roles expression should resolve");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("jsonpath@example.com", user.getName());
+        assertEquals(
+                Role.ADMIN,
+                user.getRole(),
+                "$.realm_access.roles containing ADMIN should resolve to ADMIN role");
+    }
+
+    @Test
+    public void testJsonPathGroupsWithWildcard() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        // Wildcard JsonPath for groups across all resource_access entries
+        configuration.setGroupsClaim("$.resource_access.*.groups");
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> resourceAccess = new java.util.LinkedHashMap<>();
+        resourceAccess.put(
+                "app1",
+                java.util.Collections.singletonMap("groups", java.util.Arrays.asList("analysts")));
+        resourceAccess.put(
+                "app2",
+                java.util.Collections.singletonMap("groups", java.util.Arrays.asList("editors")));
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-wildcard")
+                        .withClaim("email", "wildcard@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Wildcard JsonPath should resolve groups");
+        User user = (User) authentication.getPrincipal();
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("analysts"), "Should have 'analysts' from wildcard path");
+        assertTrue(groupNames.contains("editors"), "Should have 'editors' from wildcard path");
+    }
+
+    @Test
+    public void testJsonPathArrayIndex() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        // Array index JsonPath to get the first role
+        configuration.setRolesClaim("$.roles[0]");
+
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-index")
+                        .withClaim("email", "index@example.com")
+                        .withArrayClaim("roles", new String[] {"ADMIN", "USER"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Array index JsonPath should resolve");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("index@example.com", user.getName());
+        assertEquals(
+                Role.ADMIN, user.getRole(), "$.roles[0] should extract ADMIN as first element");
+    }
+
     /** Creates a properly RSA-signed JWT with email, sub, and aud claims. */
     private String createSignedJwt(String email, String sub, String aud) {
         long now = System.currentTimeMillis() / 1000;

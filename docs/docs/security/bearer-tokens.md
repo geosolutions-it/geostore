@@ -152,6 +152,9 @@ After successful validation, the user principal (username) is extracted from the
 
 All claim lookups are **case-insensitive**. If the resolved claim value is an array or collection, the **first element** is used.
 
+!!! tip "JsonPath Support"
+    The `rolesClaim` and `groupsClaim` properties support full [JsonPath](https://github.com/json-path/JsonPath) expressions in addition to simple dot-notation. For example, `$.resource_access.*.roles` extracts roles from all entries under `resource_access` using a wildcard. Paths starting with `$` are treated as JsonPath; legacy dot-notation paths (e.g. `realm_access.roles`) are automatically converted.
+
 ---
 
 ## Examples

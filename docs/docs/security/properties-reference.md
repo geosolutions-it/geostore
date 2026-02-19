@@ -72,8 +72,8 @@ These are normally auto-filled by discovery. Set them explicitly only when overr
 | `authenticatedDefaultRole` | String | `USER` | No | Default role for authenticated users: `ADMIN`, `USER`, or `GUEST` |
 | `principalKey` | String | `email` | No | JWT claim used to resolve the username |
 | `uniqueUsername` | String | -- | No | Alternative claim for username resolution (checked before `principalKey`) |
-| `rolesClaim` | String | -- | No | Claim path for roles — supports dot-notation for nested claims (e.g. `roles`, `realm_access.roles`). Resolved from both JWT and userinfo. |
-| `groupsClaim` | String | -- | No | Claim path for groups — supports dot-notation for nested claims (e.g. `groups`, `isMemberOf`). Resolved from both JWT and userinfo. |
+| `rolesClaim` | String | -- | No | Claim path for roles — supports dot-notation (e.g. `realm_access.roles`) and full [JsonPath](https://github.com/json-path/JsonPath) expressions (e.g. `$.resource_access.*.roles`). Resolved from both JWT and userinfo. |
+| `groupsClaim` | String | -- | No | Claim path for groups — supports dot-notation (e.g. `groups`, `isMemberOf`) and full [JsonPath](https://github.com/json-path/JsonPath) expressions (e.g. `$.resource_access.*.groups`). Resolved from both JWT and userinfo. |
 | `roleMappings` | String | -- | No | IdP-to-GeoStore role mappings (format: `idp_role:GEOSTORE_ROLE,idp_role2:GEOSTORE_ROLE2`) |
 | `groupMappings` | String | -- | No | IdP-to-GeoStore group mappings (same format as `roleMappings`) |
 | `dropUnmapped` | boolean | `false` | No | Drop roles/groups that have no mapping entry |

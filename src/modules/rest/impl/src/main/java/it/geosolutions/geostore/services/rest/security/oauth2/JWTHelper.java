@@ -31,7 +31,10 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.impl.NullClaim;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -39,17 +42,20 @@ import java.util.Map;
 /** A class holding utilities method for handling JWT tokens. */
 public class JWTHelper {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private final DecodedJWT decodedJWT;
+    private volatile Map<String, Object> payloadMap;
 
     public JWTHelper(String jwtToken) {
         this.decodedJWT = JWT.decode(jwtToken);
     }
 
     /**
-     * Get a claim by name from the idToken. Supports dot-notation for nested claims (e.g.
-     * "realm_access.roles" will traverse into the "realm_access" object and return "roles").
+     * Get a claim by name from the idToken. Supports dot-notation and full JsonPath expressions for
+     * nested claims (e.g. "realm_access.roles", "$.resource_access.*.roles").
      *
-     * @param claimName the name of the claim to retrieve, may use dot-notation for nested objects.
+     * @param claimName the name of the claim to retrieve, may use dot-notation or JsonPath.
      * @param binding the Class to which convert the claim value.
      * @param <T> the type of the claim value.
      * @return the claim value.
@@ -58,13 +64,12 @@ public class JWTHelper {
     public <T> T getClaim(String claimName, Class<T> binding) {
         if (decodedJWT == null || claimName == null) return null;
 
-        // If the claim name contains dots, traverse nested objects
-        if (claimName.contains(".")) {
-            Object nested = resolveNestedClaim(claimName);
-            if (nested == null) return null;
-            if (binding.isInstance(nested)) return (T) nested;
-            // For String binding, toString the value
-            if (binding == String.class) return (T) String.valueOf(nested);
+        // For path expressions (dot-notation or JsonPath), use ClaimPathResolver
+        if (claimName.contains(".") || claimName.startsWith("$")) {
+            Object resolved = ClaimPathResolver.resolve(getPayloadAsMap(), claimName);
+            if (resolved == null) return null;
+            if (binding.isInstance(resolved)) return (T) resolved;
+            if (binding == String.class) return (T) String.valueOf(resolved);
             return null;
         }
 
@@ -74,10 +79,10 @@ public class JWTHelper {
     }
 
     /**
-     * Get a claim values as List by its name. Supports dot-notation for nested claims (e.g.
-     * "realm_access.roles" will traverse into the "realm_access" object and return "roles").
+     * Get a claim values as List by its name. Supports dot-notation and full JsonPath expressions
+     * for nested claims (e.g. "realm_access.roles", "$.resource_access.*.roles").
      *
-     * @param claimName the name of the claim to retrieve, may use dot-notation for nested objects.
+     * @param claimName the name of the claim to retrieve, may use dot-notation or JsonPath.
      * @param binding the Class to which convert the claim value.
      * @param <T> the type of the claim value.
      * @return the claim value.
@@ -86,10 +91,12 @@ public class JWTHelper {
     public <T> List<T> getClaimAsList(String claimName, Class<T> binding) {
         if (decodedJWT == null || claimName == null) return null;
 
-        // If the claim name contains dots, traverse nested objects
-        if (claimName.contains(".")) {
-            Object nested = resolveNestedClaim(claimName);
-            return extractListFromValue(nested, binding);
+        // For path expressions (dot-notation or JsonPath), use ClaimPathResolver
+        if (claimName.contains(".") || claimName.startsWith("$")) {
+            List<String> resolved = ClaimPathResolver.resolveAsList(getPayloadAsMap(), claimName);
+            if (resolved == null) return null;
+            if (binding == String.class) return (List<T>) resolved;
+            return extractListFromValue(resolved, binding);
         }
 
         Claim claim = decodedJWT.getClaim(claimName);
@@ -106,31 +113,27 @@ public class JWTHelper {
     }
 
     /**
-     * Resolves a dot-notation claim path (e.g. "realm_access.roles") by traversing nested objects.
+     * Lazily decodes the JWT payload into a Map. The payload is Base64URL-decoded and parsed via
+     * Jackson.
      */
     @SuppressWarnings("unchecked")
-    private Object resolveNestedClaim(String path) {
-        String[] parts = path.split("\\.");
-        if (parts.length < 2) return null;
-
-        // Get the top-level claim as a Map
-        Claim topClaim = decodedJWT.getClaim(parts[0]);
-        if (!nonNullClaim(topClaim)) return null;
-
-        Object current;
-        try {
-            current = topClaim.as(Map.class);
-        } catch (Exception e) {
-            return null;
+    Map<String, Object> getPayloadAsMap() {
+        if (payloadMap == null) {
+            synchronized (this) {
+                if (payloadMap == null) {
+                    try {
+                        String payload = decodedJWT.getPayload();
+                        byte[] decoded = Base64.getUrlDecoder().decode(payload);
+                        payloadMap =
+                                OBJECT_MAPPER.readValue(
+                                        decoded, new TypeReference<Map<String, Object>>() {});
+                    } catch (Exception e) {
+                        payloadMap = java.util.Collections.emptyMap();
+                    }
+                }
+            }
         }
-
-        // Traverse the remaining path segments
-        for (int i = 1; i < parts.length; i++) {
-            if (!(current instanceof Map)) return null;
-            current = ((Map<String, Object>) current).get(parts[i]);
-            if (current == null) return null;
-        }
-        return current;
+        return payloadMap;
     }
 
     /** Extracts a List from a value that may be a List, a Collection, or a single value. */

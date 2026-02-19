@@ -674,7 +674,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 rawRoles = helper.getClaim(rolesClaimName, Object.class);
             }
             if (rawRoles == null && userinfoMap != null) {
-                rawRoles = resolveClaimFromMap(userinfoMap, rolesClaimName);
+                rawRoles = ClaimPathResolver.resolveIgnoreCase(userinfoMap, rolesClaimName);
             }
         }
 
@@ -683,7 +683,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             if (helper != null && helper.getClaim(rolesClaimName, Object.class) != null) {
                 oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
             } else {
-                oidcRoles = claimValueToStringList(rawRoles);
+                oidcRoles = ClaimPathResolver.toStringList(rawRoles);
             }
             if (oidcRoles == null) oidcRoles = Collections.emptyList();
             Role defaultRole =
@@ -710,10 +710,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             if (fromJwt != null && !fromJwt.isEmpty()) {
                 oidcGroups = fromJwt;
             } else if (userinfoMap != null) {
-                Object raw = resolveClaimFromMap(userinfoMap, configuration.getGroupsClaim());
-                if (raw != null) {
-                    oidcGroups = claimValueToStringList(raw);
-                    if (oidcGroups == null) oidcGroups = Collections.emptyList();
+                List<String> fromUserinfo =
+                        ClaimPathResolver.resolveAsListIgnoreCase(
+                                userinfoMap, configuration.getGroupsClaim());
+                if (fromUserinfo != null) {
+                    oidcGroups = fromUserinfo;
                 }
             }
             LOGGER.info("Groups from token/userinfo: {}", oidcGroups);
@@ -753,65 +754,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         } finally {
             LOGGER.info("User updated with the following groups: {}", user.getGroups());
         }
-    }
-
-    /**
-     * Case-insensitive claim lookup supporting dot-notation for nested maps. Mirrors the nested
-     * claim resolution behavior of {@link JWTHelper#getClaim}.
-     */
-    @SuppressWarnings("unchecked")
-    private Object resolveClaimFromMap(Map<String, Object> map, String claimName) {
-        if (map == null || StringUtils.isBlank(claimName)) return null;
-
-        if (claimName.contains(".")) {
-            String[] parts = claimName.split("\\.");
-            Map<String, Object> current = map;
-            for (int i = 0; i < parts.length - 1; i++) {
-                Object next = getIgnoreCase(current, parts[i]);
-                if (next instanceof Map) {
-                    current = (Map<String, Object>) next;
-                } else {
-                    return null;
-                }
-            }
-            return getIgnoreCase(current, parts[parts.length - 1]);
-        }
-
-        return getIgnoreCase(map, claimName);
-    }
-
-    private Object getIgnoreCase(Map<String, Object> map, String key) {
-        if (map == null || key == null) return null;
-        Object direct = map.get(key);
-        if (direct != null) return direct;
-        for (Map.Entry<String, Object> e : map.entrySet()) {
-            if (key.equalsIgnoreCase(e.getKey())) return e.getValue();
-        }
-        return null;
-    }
-
-    /**
-     * Converts a claim value (String, Collection, or other) to a List of Strings. Mirrors the
-     * behavior of {@link JWTHelper#getClaimAsList}.
-     */
-    @SuppressWarnings("unchecked")
-    private List<String> claimValueToStringList(Object value) {
-        if (value == null) return null;
-        if (value instanceof List) {
-            List<String> result = new java.util.ArrayList<>();
-            for (Object item : (List<?>) value) {
-                if (item != null) result.add(String.valueOf(item));
-            }
-            return result;
-        }
-        if (value instanceof Collection) {
-            List<String> result = new java.util.ArrayList<>();
-            for (Object item : (Collection<?>) value) {
-                if (item != null) result.add(String.valueOf(item));
-            }
-            return result;
-        }
-        return Collections.singletonList(String.valueOf(value));
     }
 
     // ---------------------------------------------------------------------
