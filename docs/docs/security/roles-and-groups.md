@@ -27,9 +27,9 @@ oidcOAuth2Config.authenticatedDefaultRole=USER
 
 When `rolesClaim` or `groupsClaim` is configured, GeoStore resolves the claim value using a multi-level fallback chain:
 
-1. **JWT (ID token)** -- the ID token returned during the authorization code flow is decoded and the claim is looked up (supports dot-notation for nested claims).
-2. **JWT (access token)** -- if the ID token does not contain the claim, the access token JWT is tried next.
-3. **Userinfo response** -- if neither JWT contains the claim, the response from the OIDC userinfo endpoint (`checkTokenEndpointUrl`) is checked as a final fallback.
+1. **JWT (ID token)** -- the ID token returned during the authorization code flow is decoded and the claim is looked up. Supports dot-notation for nested claims (e.g. `realm_access.roles`).
+2. **JWT (access token)** -- if the ID token does not contain the claim, the access token JWT is tried next. Also supports dot-notation.
+3. **Userinfo response** -- if neither JWT contains the claim, the response from the OIDC userinfo endpoint (`checkTokenEndpointUrl`) is checked as a final fallback. Also supports dot-notation, with case-insensitive key matching at each level.
 
 This fallback chain ensures that roles and groups are resolved even when:
 
@@ -63,7 +63,7 @@ When `rolesClaim` is configured, roles are extracted from the JWT token (or user
 
 ### Nested Claim Paths
 
-The `rolesClaim` property supports **dot-notation** for nested claims. This is essential for providers like Keycloak that nest roles inside structured objects.
+Both `rolesClaim` and `groupsClaim` support **dot-notation** for nested claims across all resolution sources (JWT and userinfo). This is essential for providers like Keycloak that nest roles inside structured objects.
 
 | Claim Path | Token Structure |
 |------------|-----------------|
