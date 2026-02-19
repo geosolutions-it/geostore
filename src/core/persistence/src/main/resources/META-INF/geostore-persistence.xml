@@ -34,6 +34,7 @@
     <class>it.geosolutions.geostore.core.model.User</class>
     <class>it.geosolutions.geostore.core.model.UserGroup</class>
     <class>it.geosolutions.geostore.core.model.UserGroupAttribute</class>
+    <class>it.geosolutions.geostore.core.model.UserFavorite</class>
     <class>it.geosolutions.geostore.core.model.Tag</class>
     <class>it.geosolutions.geostore.core.model.IPRange</class>
   </persistence-unit>
