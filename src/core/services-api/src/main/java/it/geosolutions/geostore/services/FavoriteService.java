@@ -28,11 +28,18 @@
  */
 package it.geosolutions.geostore.services;
 
+import it.geosolutions.geostore.services.exception.DuplicatedFavoriteServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 public interface FavoriteService {
 
-    void addFavorite(long userId, long resourceId) throws NotFoundServiceEx;
+    void addFavoriteByUserId(long userId, long resourceId)
+            throws NotFoundServiceEx, DuplicatedFavoriteServiceException;
 
-    void removeFavorite(long userId, long resourceId) throws NotFoundServiceEx;
+    void removeFavoriteByUserId(long userId, long resourceId) throws NotFoundServiceEx;
+
+    void addFavoriteByUsername(String username, long resourceId)
+            throws NotFoundServiceEx, DuplicatedFavoriteServiceException;
+
+    void removeFavoriteByUsername(String username, long resourceId) throws NotFoundServiceEx;
 }
