@@ -7,8 +7,7 @@ GeoStore provides a layered security model built on Spring Security. It supports
 | Method | Description | Configuration |
 |--------|-------------|---------------|
 | **Local Users** | Database-backed username/password with HTTP Basic | Default, always available |
-| **OIDC / OAuth2** | External identity providers (Keycloak, Azure AD, Google, Okta, etc.) | [OIDC Configuration](oidc.md) |
-| **Google OAuth2** | Google-specific OAuth2 integration | [Google Setup](../guides/google-setup.md) |
+| **OIDC / OAuth2** | External identity providers (Keycloak, Azure AD, Google, Okta, etc.) | [OIDC Configuration](oidc.md), [Google Setup](../guides/google-setup.md) |
 | **LDAP** | Directory-based authentication | [LDAP Configuration](ldap.md) |
 | **Header-based SSO** | Trusted proxy authentication via HTTP headers | Spring XML config |
 
@@ -30,9 +29,8 @@ GeoStore registers multiple Spring Security filters in a specific order:
 
 1. **UserAttributeTokenAuthenticationFilter** — Token-based authentication via request attributes
 2. **SessionTokenAuthenticationFilter** — Session token validation
-3. **Google OpenID Filter** — Google OAuth2 login flow
-4. **OIDC OpenID Filter** — Generic OIDC/OAuth2 login and bearer token validation
-5. **HTTP Basic** — Standard username/password authentication
+3. **OIDC OpenID Filter** — OIDC/OAuth2 login and bearer token validation (supports Google, Keycloak, Azure AD, etc.)
+4. **HTTP Basic** — Standard username/password authentication
 
 The first filter that successfully authenticates a request wins. Subsequent filters are skipped for that request.
 

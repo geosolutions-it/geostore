@@ -94,7 +94,11 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
                         LOGGER.info(
                                 "OIDC: Identity Provider returned Token, type={}",
                                 result.getTokenType());
-                        LOGGER.info("OIDC: SCOPES={}", String.join(" ", result.getScope()));
+                        LOGGER.info(
+                                "OIDC: SCOPES={}",
+                                result.getScope() != null
+                                        ? String.join(" ", result.getScope())
+                                        : "(none)");
                         final String accessToken = result.getValue();
                         LOGGER.info("OIDC: ACCESS TOKEN:{}", saferJWT(accessToken));
                         Objects.requireNonNull(RequestContextHolder.getRequestAttributes())

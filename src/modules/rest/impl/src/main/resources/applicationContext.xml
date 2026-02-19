@@ -81,12 +81,6 @@
         <constructor-arg ref="restSessionService"/>
     </bean>
 
-<bean id="googleSessionServiceDelegate"
-          class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate">
-        <constructor-arg ref="restSessionService"/>
-        <constructor-arg ref="userService"/>
-    </bean>
-
     <bean id="oidcSessionServiceDelegate"
           class="it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSessionServiceDelegate">
         <constructor-arg ref="restSessionService"/>
@@ -99,11 +93,6 @@
 
     <bean id="tokenStorage"
           class="it.geosolutions.geostore.services.rest.security.oauth2.InMemoryTokenStorage">
-    </bean>
-
-<bean id="googleLoginService"
-          class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleLoginService">
-        <constructor-arg ref="idpLoginRest"/>
     </bean>
 
     <bean id="oidcLoginService"

@@ -25,12 +25,6 @@ Two authentication flows are supported:
 
 See [OIDC / OAuth2 Configuration](oidc.md) for full details.
 
-## Google OAuth2
-
-A dedicated Google OAuth2 integration is provided for environments that only need Google authentication. It uses Google's OAuth2 endpoints with `offline` access type for refresh token support.
-
-See [Google OAuth2 Setup](../guides/google-setup.md) for configuration.
-
 ## LDAP
 
 GeoStore can authenticate users against an LDAP directory, with support for:

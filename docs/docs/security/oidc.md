@@ -152,6 +152,7 @@ GeoStore supports Authorization Code Flow with PKCE, as defined in [RFC 7636](ht
 |---|---|---|---|
 | `sendClientSecret` | boolean | `false` | Send `client_secret` to the token endpoint (for confidential clients) |
 | `usePKCE` | boolean | `false` | Enable PKCE for the authorization code flow |
+| `accessType` | String | -- | Access type for the authorization request (set to `offline` for refresh token support, e.g. Google) |
 
 When `usePKCE=true`:
 

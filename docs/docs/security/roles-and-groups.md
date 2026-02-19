@@ -123,10 +123,7 @@ On each login, the following reconciliation occurs:
 | `groupNamesUppercase` | boolean | `false` | Convert all group names to uppercase |
 | `authenticatedDefaultRole` | String | `USER` | Default role when no role resolved from claims |
 
-All properties use the provider prefix. For example:
-
-- `oidcOAuth2Config.rolesClaim` for the generic OIDC provider
-- `googleOAuth2Config.rolesClaim` for the Google provider
+All properties use the `oidcOAuth2Config.` prefix. For example: `oidcOAuth2Config.rolesClaim`.
 
 ### Mapping Format
 

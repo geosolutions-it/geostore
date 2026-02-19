@@ -28,10 +28,10 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -44,8 +44,10 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import it.geosolutions.geostore.services.rest.security.oauth2.google.OAuthGoogleSecurityConfiguration;
-import it.geosolutions.geostore.services.rest.security.oauth2.google.OpenIdFilter;
+import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectFilter;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSecurityConfiguration;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -60,10 +62,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.ServletException;
 import org.apache.commons.codec.binary.Base64;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -97,11 +99,11 @@ public class OpenIdIntegrationTest {
 
     private static WireMockServer openIdService;
     private String authService;
-    private OpenIdFilter filter;
+    private OpenIdConnectFilter filter;
     private TestOAuth2Configuration configuration;
 
-    @BeforeClass
-    public static void beforeClass() {
+    @BeforeAll
+    static void beforeClass() {
         openIdService =
                 new WireMockServer(
                         wireMockConfig()
@@ -130,8 +132,8 @@ public class OpenIdIntegrationTest {
                                         .withBody("{}")));
     }
 
-    @Before
-    public void before() {
+    @BeforeEach
+    void before() {
         // base URL
         authService = "http://localhost:" + openIdService.port();
 
@@ -145,13 +147,13 @@ public class OpenIdIntegrationTest {
         configuration.setEnabled(true);
         configuration.setAutoCreateUser(true);
         configuration.setIdTokenUri(authService + "/certs");
-        configuration.setBeanName("googleOAuth2Config"); // provider will mirror this via override
+        configuration.setBeanName("oidcOAuth2Config"); // provider will mirror this via override
         configuration.setEnableRedirectEntryPoint(true);
         configuration.setRedirectUri("../../../geostore/rest/users/user/details");
         configuration.setScopes("openId,email");
 
-        OAuthGoogleSecurityConfiguration securityConfiguration =
-                new OAuthGoogleSecurityConfiguration() {
+        OpenIdConnectSecurityConfiguration securityConfiguration =
+                new OpenIdConnectSecurityConfiguration() {
                     @Override
                     protected GeoStoreOAuthRestTemplate restTemplate() {
                         return new GeoStoreOAuthRestTemplate(
@@ -166,12 +168,16 @@ public class OpenIdIntegrationTest {
                     }
                 };
         GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
+        // Disable JWKS verification — test uses unsigned JWTs (alg: none)
+        restTemplate.setTokenStore(null);
         filter =
-                new OpenIdFilter(
-                        securityConfiguration.googleTokenServices(),
+                new OpenIdConnectFilter(
+                        securityConfiguration.oidcTokenServices(),
                         restTemplate,
                         configuration,
-                        securityConfiguration.oAuth2Cache());
+                        securityConfiguration.oAuth2Cache(),
+                        null,
+                        null);
 
         // attach a simple in-memory UserGroupService so group reconciliation works
         filter.setUserGroupService(new DummyUserGroupService());
@@ -185,29 +191,32 @@ public class OpenIdIntegrationTest {
                 jsonPayload().put("email", "u@ex.com").put("hd", "geosolutionsgroup.com").build());
         stubTokenForCode(
                 CODE_ROLES_ADMIN,
-                jsonPayload().put("email", "admin@ex.com").put("roles", arr("ADMIN")).build());
+                jsonPayload().put("email", "admin@ex.com").putArray("roles", arr("ADMIN")).build());
         stubTokenForCode(
                 CODE_ROLES_EMPTY,
-                jsonPayload().put("email", "demote@ex.com").put("roles", "[]").raw());
+                jsonPayload().put("email", "demote@ex.com").putArray("roles", "[]").build());
         // reconcile: provide groups ["A","B"]
         stubTokenForCode(
                 CODE_GROUPS_RECON,
-                jsonPayload().put("email", "recon@ex.com").put("groups", arr("A", "B")).build());
+                jsonPayload()
+                        .put("email", "recon@ex.com")
+                        .putArray("groups", arr("A", "B"))
+                        .build());
         // demotion/promotion check for existing user override
         stubTokenForCode(
                 CODE_ROLES_GUEST,
-                jsonPayload().put("email", "guest@ex.com").put("roles", arr("GUEST")).build());
+                jsonPayload().put("email", "guest@ex.com").putArray("roles", arr("GUEST")).build());
     }
 
-    @After
-    public void afterTest() {
+    @AfterEach
+    void afterTest() {
         SecurityContextHolder.clearContext();
         RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
     public void testRedirect() throws IOException, ServletException {
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
         filter.doFilter(request, response, chain);
@@ -217,7 +226,7 @@ public class OpenIdIntegrationTest {
 
     @Test
     public void testAuthentication_basic() throws IOException, ServletException {
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -228,6 +237,7 @@ public class OpenIdIntegrationTest {
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "authentication should not be null");
         User user = (User) authentication.getPrincipal();
         assertEquals("ritter@erdukunde.de", user.getName());
         // roles claim missing -> preserve default USER
@@ -237,7 +247,7 @@ public class OpenIdIntegrationTest {
     @Test
     public void testGroupsFromToken_hdDomain() throws Exception {
         configuration.setGroupsClaim("hd"); // Google hosted domain string claim
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_GROUPS_HD);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -256,7 +266,7 @@ public class OpenIdIntegrationTest {
     @Test
     public void testRoleFromToken_adminPromotion() throws Exception {
         configuration.setRolesClaim("roles");
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_ROLES_ADMIN);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -274,7 +284,7 @@ public class OpenIdIntegrationTest {
     @Test
     public void testRoleFromToken_emptyListDemotesToDefault() throws Exception {
         configuration.setRolesClaim("roles");
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_ROLES_EMPTY);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -327,9 +337,9 @@ public class OpenIdIntegrationTest {
         seeded.getGroups().add(oldRemote);
 
         // Wrap the filter with a retrieveUser override that returns our seeded user
-        OpenIdFilter seededFilter = getOpenIdFilter(seeded, svc);
+        OpenIdConnectFilter seededFilter = getOpenIdFilter(seeded, svc);
 
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -376,7 +386,7 @@ public class OpenIdIntegrationTest {
     public void testNewUserCreatedWithRoleFromOidc() throws Exception {
         configuration.setRolesClaim("roles");
 
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_ROLES_ADMIN);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -422,10 +432,10 @@ public class OpenIdIntegrationTest {
         existing.setGroups(new HashSet<>());
         existing.setAttribute(new ArrayList<>());
 
-        OpenIdFilter seededFilter =
+        OpenIdConnectFilter seededFilter =
                 getOpenIdFilter(existing, (DummyUserGroupService) filter.getUserGroupService());
 
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_ROLES_GUEST);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -479,10 +489,10 @@ public class OpenIdIntegrationTest {
         seeded.getGroups().add(otherProv);
         seeded.getGroups().add(oldRemote);
 
-        OpenIdFilter seededFilter = getOpenIdFilter(seeded, svc);
+        OpenIdConnectFilter seededFilter = getOpenIdFilter(seeded, svc);
 
         // First pass: token groups ["A","B"]
-        MockHttpServletRequest request = createRequest("google/login");
+        MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("authorization_code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
@@ -525,7 +535,7 @@ public class OpenIdIntegrationTest {
 
         // Idempotency: second pass with same token makes no changes
         int beforeCount = seeded.getGroups().size();
-        MockHttpServletRequest request2 = createRequest("google/login");
+        MockHttpServletRequest request2 = createRequest("oidc/login");
         request2.setParameter("authorization_code", CODE_GROUPS_RECON);
         MockHttpServletResponse response2 = new MockHttpServletResponse();
         seededFilter
@@ -557,10 +567,10 @@ public class OpenIdIntegrationTest {
         assertEquals(Set.of("A", "B"), providerRemotesAfter);
     }
 
-    private OpenIdFilter getOpenIdFilter(User seeded, DummyUserGroupService svc) {
-        OpenIdFilter seededFilter =
-                new OpenIdFilter(
-                        new OAuthGoogleSecurityConfiguration() {
+    private OpenIdConnectFilter getOpenIdFilter(User seeded, DummyUserGroupService svc) {
+        OpenIdConnectFilter seededFilter =
+                new OpenIdConnectFilter(
+                        new OpenIdConnectSecurityConfiguration() {
                             @Override
                             protected GeoStoreOAuthRestTemplate restTemplate() {
                                 return (GeoStoreOAuthRestTemplate) filter.restTemplate;
@@ -570,9 +580,11 @@ public class OpenIdIntegrationTest {
                             public OAuth2Configuration configuration() {
                                 return configuration;
                             }
-                        }.googleTokenServices(),
+                        }.oidcTokenServices(),
                         (GeoStoreOAuthRestTemplate) filter.restTemplate,
                         configuration,
+                        new TokenAuthenticationCache(),
+                        null,
                         null) {
                     @Override
                     protected User retrieveUserWithAuthorities(
@@ -590,11 +602,10 @@ public class OpenIdIntegrationTest {
     // Helpers & test support
     // ---------------------------------------------------------------------
 
-    private static class TestOAuth2Configuration extends OAuth2Configuration {
-        @Override
-        public String getProvider() {
-            return getBeanName();
-        }
+    private static class TestOAuth2Configuration extends OpenIdConnectConfiguration {
+        // Uses default getProvider() from OAuth2Configuration which strips
+        // CONFIG_NAME_SUFFIX ("OAuth2Config") from beanName, e.g.
+        // "oidcOAuth2Config" -> "oidc"
     }
 
     private static class DummyUserGroupService implements UserGroupService {
@@ -785,6 +796,7 @@ public class OpenIdIntegrationTest {
                         + code
                         + "\","
                         + "\"token_type\":\"Bearer\","
+                        + "\"scope\":\"openid email\","
                         + "\"expires_in\":3600,"
                         + "\"id_token\":\""
                         + idToken

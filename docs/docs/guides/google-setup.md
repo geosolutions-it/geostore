@@ -2,12 +2,10 @@
 
 ## Overview
 
-GeoStore provides a **dedicated Google OAuth2 integration** that is separate from the generic OIDC provider. The dedicated provider uses Google's OAuth2 endpoints with `offline` access type, which ensures a refresh token is returned during the authorization code flow. Configuration uses the `googleOAuth2Config.` property prefix in `geostore-ovr.properties`.
+GeoStore integrates with Google as an OpenID Connect (OIDC) provider through the generic OIDC integration. Configuration uses the `oidcOAuth2Config.` property prefix in `geostore-ovr.properties`. This gives you access to all OIDC features including bearer token validation, PKCE support, and JWKS signature verification.
 
-Alternatively, you can use the **generic OIDC provider** (`oidcOAuth2Config.` prefix) with Google's standard OpenID Connect discovery URL. This approach gives you access to additional features such as bearer token validation and PKCE support.
-
-!!! note
-    Both providers can coexist in the same GeoStore deployment. Each maintains its own token cache and authentication filter chain.
+!!! tip
+    To request a refresh token from Google, set `oidcOAuth2Config.accessType=offline`. This appends `access_type=offline` to the authorization URL, which tells Google to return a refresh token during the authorization code flow.
 
 ## Prerequisites
 
@@ -58,111 +56,50 @@ Before configuring Google OAuth2 with GeoStore, ensure you have the following:
 
 ## GeoStore Configuration
 
-GeoStore provides two ways to integrate with Google. Choose the one that fits your requirements.
+Add the following properties to `geostore-ovr.properties`:
 
-=== "Dedicated Google Provider"
+```properties
+# -----------------------------------------------
+# Google via OIDC Provider
+# -----------------------------------------------
 
-    Uses the `googleOAuth2Config.` prefix with Google-specific defaults. The dedicated provider automatically sets the access type to `offline`, ensuring a refresh token is returned.
+# Enable OIDC authentication
+oidcOAuth2Config.enabled=true
 
-    ```properties
-    # -----------------------------------------------
-    # Google OAuth2 — Dedicated Provider
-    # -----------------------------------------------
+# Google OAuth2 client credentials (from Cloud Console)
+oidcOAuth2Config.clientId=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+oidcOAuth2Config.clientSecret=YOUR_CLIENT_SECRET
 
-    # Enable Google OAuth2 authentication
-    googleOAuth2Config.enabled=true
+# Discovery URL — auto-fills all Google endpoints
+oidcOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
 
-    # Google OAuth2 client credentials (from Cloud Console)
-    googleOAuth2Config.clientId=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
-    googleOAuth2Config.clientSecret=YOUR_CLIENT_SECRET
+# OAuth2 redirect URI — must match the one registered in Cloud Console
+oidcOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
 
-    # Discovery URL — auto-fills all Google endpoints
-    googleOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
+# After successful login, redirect the browser here
+oidcOAuth2Config.internalRedirectUri=../../mapstore/
 
-    # OAuth2 redirect URI — must match the one registered in Cloud Console
-    googleOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+# Auto-create users in GeoStore DB on first login
+oidcOAuth2Config.autoCreateUser=true
 
-    # After successful login, redirect the browser here
-    googleOAuth2Config.internalRedirectUri=../../mapstore/
+# Default role for authenticated users
+oidcOAuth2Config.authenticatedDefaultRole=USER
 
-    # Auto-create users in GeoStore DB on first Google login
-    googleOAuth2Config.autoCreateUser=true
+# Use the email claim as the GeoStore username
+oidcOAuth2Config.principalKey=email
 
-    # Default role for authenticated Google users
-    googleOAuth2Config.authenticatedDefaultRole=USER
+# Scopes to request
+oidcOAuth2Config.scopes=openid,email,profile
 
-    # Use the email claim as the GeoStore username
-    googleOAuth2Config.principalKey=email
+# Send client secret in the token request body
+oidcOAuth2Config.sendClientSecret=true
 
-    # Scopes to request from Google
-    googleOAuth2Config.scopes=openid,email,profile
-    ```
+# Request offline access for refresh token support
+oidcOAuth2Config.accessType=offline
 
-=== "Generic OIDC Provider"
-
-    Uses the `oidcOAuth2Config.` prefix. This approach is useful when you need OIDC features such as bearer token validation, PKCE, or introspection.
-
-    ```properties
-    # -----------------------------------------------
-    # Google via Generic OIDC Provider
-    # -----------------------------------------------
-
-    # Enable OIDC authentication
-    oidcOAuth2Config.enabled=true
-
-    # Google OAuth2 client credentials (from Cloud Console)
-    oidcOAuth2Config.clientId=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
-    oidcOAuth2Config.clientSecret=YOUR_CLIENT_SECRET
-
-    # Discovery URL — auto-fills all Google endpoints
-    oidcOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
-
-    # OAuth2 redirect URI — must match the one registered in Cloud Console
-    oidcOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
-
-    # After successful login, redirect the browser here
-    oidcOAuth2Config.internalRedirectUri=../../mapstore/
-
-    # Auto-create users in GeoStore DB on first login
-    oidcOAuth2Config.autoCreateUser=true
-
-    # Default role for authenticated users
-    oidcOAuth2Config.authenticatedDefaultRole=USER
-
-    # Use the email claim as the GeoStore username
-    oidcOAuth2Config.principalKey=email
-
-    # Scopes to request
-    oidcOAuth2Config.scopes=openid,email,profile
-
-    # Send client secret in the token request body
-    oidcOAuth2Config.sendClientSecret=true
-
-    # Enable JWT-based bearer token validation for API clients
-    oidcOAuth2Config.bearerTokenStrategy=jwt
-    ```
-
-## Google-Specific Properties
-
-The following table lists all properties available under the `googleOAuth2Config.` prefix.
-
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `googleOAuth2Config.enabled` | boolean | `false` | Enable Google OAuth2 authentication |
-| `googleOAuth2Config.clientId` | String | -- | Google OAuth2 client ID (from Cloud Console) |
-| `googleOAuth2Config.clientSecret` | String | -- | Google OAuth2 client secret |
-| `googleOAuth2Config.discoveryUrl` | String | -- | Set to `https://accounts.google.com/.well-known/openid-configuration` |
-| `googleOAuth2Config.redirectUri` | String | -- | Authorized redirect URI (must match Cloud Console) |
-| `googleOAuth2Config.internalRedirectUri` | String | -- | Internal redirect after successful callback |
-| `googleOAuth2Config.autoCreateUser` | boolean | `false` | Auto-create users in GeoStore DB on first login |
-| `googleOAuth2Config.authenticatedDefaultRole` | String | `USER` | Default role for authenticated users (`ADMIN`, `USER`, or `GUEST`) |
-| `googleOAuth2Config.principalKey` | String | `email` | JWT claim used to resolve the username |
-| `googleOAuth2Config.scopes` | String | (from discovery) | Comma-separated scopes to request |
-| `googleOAuth2Config.rolesClaim` | String | -- | JWT claim path for roles |
-| `googleOAuth2Config.groupsClaim` | String | -- | JWT claim path for groups |
-
-!!! tip
-    When using `discoveryUrl`, endpoint properties (`authorizationUri`, `accessTokenUri`, etc.) are auto-filled from Google's discovery document. You do not need to set them manually. See the [OIDC / OAuth2 Configuration](../security/oidc.md#discovery) page for details on the discovery auto-fill behavior.
+# Enable JWT-based bearer token validation for API clients
+oidcOAuth2Config.bearerTokenStrategy=jwt
+```
 
 ## Google OAuth2 Scopes and Claims
 
@@ -177,47 +114,32 @@ Google supports the standard OpenID Connect scopes. The following table shows wh
 !!! note
     Google's standard OAuth2 does not provide roles or groups claims. If you need role or group mapping from Google, you must manage role assignments in GeoStore directly, or use the [Google Workspace Admin SDK](https://developers.google.com/admin-sdk) to derive group memberships through a custom integration.
 
-## Differences: Dedicated vs Generic Provider
-
-The following table summarizes the key differences between the two integration approaches.
-
-| Feature | Dedicated (`googleOAuth2Config`) | Generic (`oidcOAuth2Config`) |
-|---|---|---|
-| Access type | `offline` (automatic -- refresh token returned) | Not set (no refresh token by default) |
-| Bearer token validation | Not supported | Full support (`jwt`, `introspection`, `auto`) |
-| PKCE | Not supported | Supported (`usePKCE=true`) |
-| Token cache | Separate cache instance | Separate cache instance |
-| Can coexist with other providers | Yes | Yes |
-| Configuration prefix | `googleOAuth2Config.` | `oidcOAuth2Config.` |
-
-!!! tip
-    If you only need browser-based login with Google, the dedicated provider is simpler to configure and automatically handles refresh tokens. If you also need bearer token support for API clients (e.g. machine-to-machine authentication), use the generic OIDC provider.
-
 ## Testing the Configuration
 
 After configuring Google OAuth2, you can verify the setup by navigating to the login endpoint in your browser:
 
-=== "Dedicated Google Provider"
-
-    ```
-    https://your-geostore-host/geostore/rest/users/user/details?provider=google
-    ```
-
-=== "Generic OIDC Provider"
-
-    ```
-    https://your-geostore-host/geostore/rest/users/user/details?provider=oidc
-    ```
+```
+https://your-geostore-host/geostore/rest/users/user/details?provider=oidc
+```
 
 If the configuration is correct, you will be redirected to Google's login page. After authenticating, Google will redirect back to GeoStore and complete the login flow.
+
+## Migration from Dedicated Google Provider
+
+If you were previously using the dedicated Google provider (`googleOAuth2Config.` prefix), update your properties as follows:
+
+1. Replace the `googleOAuth2Config.` prefix with `oidcOAuth2Config.` for all properties.
+2. Add `oidcOAuth2Config.accessType=offline` to preserve refresh token behavior.
+3. Add `oidcOAuth2Config.sendClientSecret=true` (the dedicated provider sent the client secret by default).
+4. Update the login URL from `?provider=google` to `?provider=oidc`.
 
 ## Troubleshooting
 
 | Problem | Solution |
 |---|---|
 | `redirect_uri_mismatch` error | Ensure the `redirectUri` property value **exactly** matches the Authorized redirect URI in Google Cloud Console (including trailing slashes and protocol). |
-| No email in token | Add the `email` scope to the `scopes` property: `googleOAuth2Config.scopes=openid,email,profile`. |
-| Refresh token not returned | The dedicated Google provider uses `offline` access by default. For the generic OIDC provider, the `offline` access type is not set automatically -- Google will not return a refresh token. |
+| No email in token | Add the `email` scope to the `scopes` property: `oidcOAuth2Config.scopes=openid,email,profile`. |
+| Refresh token not returned | Set `oidcOAuth2Config.accessType=offline` to request a refresh token from Google. |
 | "Access blocked: app has not completed verification" | Either complete the OAuth consent screen verification process in Google Cloud Console, or add your test users under **OAuth consent screen** > **Test users**. |
 | `invalid_client` error | Double-check that the `clientId` and `clientSecret` match the credentials from Google Cloud Console. Ensure no extra whitespace. |
 | User created but no roles | Google does not provide role claims. Set `authenticatedDefaultRole` to assign a default role, or manage roles directly in GeoStore after user creation. |

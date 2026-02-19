@@ -25,13 +25,6 @@ GeoStore caches OAuth2 `Authentication` objects keyed by access token value usin
 | `oidcOAuth2Config.cacheSize` | int | 1000 | Maximum number of cached authentication entries |
 | `oidcOAuth2Config.cacheExpirationMinutes` | int | 480 | Cache entry TTL in minutes (8 hours default) |
 
-The same properties are available for the Google provider using the `googleOAuth2Config` prefix:
-
-```properties
-googleOAuth2Config.cacheSize=1000
-googleOAuth2Config.cacheExpirationMinutes=480
-```
-
 ### Cache Behavior
 
 - **Keyed by access token value** -- each unique access token maps to one `Authentication` object.
@@ -118,7 +111,7 @@ geostoreInitializer.allowPasswordRecoding=true
 
 ## Configuration Summary
 
-The table below lists all session and token management properties in one place. The `*` prefix stands for the provider bean name (e.g., `oidcOAuth2Config`, `googleOAuth2Config`).
+The table below lists all session and token management properties in one place. The `*` prefix stands for the provider bean name (e.g., `oidcOAuth2Config`).
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|

@@ -58,6 +58,7 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     boolean usePKCE = false;
     int maxTokenAgeSecs = 0;
     String bearerTokenStrategy = "jwt";
+    String accessType;
 
     public String getJwkURI() {
         return jwkURI;
@@ -133,6 +134,28 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setBearerTokenStrategy(String bearerTokenStrategy) {
         this.bearerTokenStrategy = bearerTokenStrategy;
+    }
+
+    /**
+     * Access type for the authorization request. Set to "offline" to request a refresh token (e.g.
+     * for Google). When null, no access_type parameter is appended.
+     */
+    public String getAccessType() {
+        return accessType;
+    }
+
+    public void setAccessType(String accessType) {
+        this.accessType = accessType;
+    }
+
+    @Override
+    public String buildLoginUri() {
+        return super.buildLoginUri(accessType);
+    }
+
+    @Override
+    public String buildRefreshTokenURI() {
+        return super.buildRefreshTokenURI(accessType);
     }
 
     @Override

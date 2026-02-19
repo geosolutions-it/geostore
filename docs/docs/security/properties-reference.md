@@ -78,6 +78,7 @@ These are normally auto-filled by discovery. Set them explicitly only when overr
 | `postLogoutRedirectUri` | String | -- | No | Where to redirect the browser after OIDC logout |
 | `sendClientSecret` | boolean | `false` | No | Send `client_secret` as a form parameter to the token endpoint (for confidential clients) |
 | `usePKCE` | boolean | `false` | No | Enable PKCE (Proof Key for Code Exchange) for the authorization code flow |
+| `accessType` | String | -- | No | Access type for the authorization request (set to `offline` for refresh token support, e.g. Google) |
 
 ### Bearer Token Settings
 
@@ -104,50 +105,6 @@ These are normally auto-filled by discovery. Set them explicitly only when overr
 | `maxRetries` | int | `3` | No | Maximum number of retries for token refresh operations |
 | `initialBackoffDelay` | long | `1000` | No | Initial backoff delay for retry in milliseconds |
 | `backoffMultiplier` | double | `2.0` | No | Exponential backoff multiplier for successive retries |
-
----
-
-## Google OAuth2 Properties
-
-**Prefix:** `googleOAuth2Config.`
-
-These properties configure the dedicated Google OAuth2 integration. Google OAuth2 uses `offline` access type by default for refresh token support.
-
-### Core Settings
-
-| Property | Type | Default | Required | Description |
-|----------|------|---------|----------|-------------|
-| `enabled` | boolean | `false` | Yes | Enable Google OAuth2 authentication |
-| `clientId` | String | -- | Yes | Google OAuth2 client ID |
-| `clientSecret` | String | -- | Yes | Google OAuth2 client secret |
-| `discoveryUrl` | String | -- | No | Google discovery URL (`https://accounts.google.com/.well-known/openid-configuration`) |
-| `redirectUri` | String | -- | Yes | OAuth2 callback URL registered in Google Cloud Console |
-| `internalRedirectUri` | String | -- | No | Internal redirect after callback |
-| `scopes` | String | (auto) | No | Comma-separated OAuth2 scopes |
-
-### User & Role Settings
-
-| Property | Type | Default | Required | Description |
-|----------|------|---------|----------|-------------|
-| `autoCreateUser` | boolean | `false` | No | Auto-create users in GeoStore DB on first login |
-| `authenticatedDefaultRole` | String | `USER` | No | Default role for authenticated users: `ADMIN`, `USER`, or `GUEST` |
-| `principalKey` | String | `email` | No | Claim used to resolve the username |
-| `rolesClaim` | String | -- | No | JWT claim path for roles |
-| `groupsClaim` | String | -- | No | JWT claim path for groups |
-| `roleMappings` | String | -- | No | Role mappings (format: `idp_role:GEOSTORE_ROLE`) |
-| `groupMappings` | String | -- | No | Group mappings (same format as `roleMappings`) |
-| `dropUnmapped` | boolean | `false` | No | Drop roles/groups that have no mapping entry |
-| `groupNamesUppercase` | boolean | `false` | No | Convert group names to uppercase |
-
-### Cache Settings
-
-| Property | Type | Default | Required | Description |
-|----------|------|---------|----------|-------------|
-| `cacheSize` | int | `1000` | No | Token authentication cache maximum entries |
-| `cacheExpirationMinutes` | int | `480` | No | Token authentication cache TTL in minutes |
-
-!!! note
-    The same retry/backoff properties (`maxRetries`, `initialBackoffDelay`, `backoffMultiplier`) apply to Google OAuth2 as well, using the `googleOAuth2Config.` prefix.
 
 ---
 
