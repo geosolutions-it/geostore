@@ -81,6 +81,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     private static final long CLOCK_SKEW_ALLOWANCE_MILLIS = 5 * 60 * 1000; // 5 minutes
 
     protected UserService userService;
+    protected final String delegateName;
 
     /**
      * @param restSessionService the session service to which register this delegate?
@@ -89,11 +90,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     public OAuth2SessionServiceDelegate(
             RESTSessionService restSessionService, String delegateName, UserService userService) {
         restSessionService.registerDelegate(delegateName, this);
+        this.delegateName = delegateName;
         this.userService = userService;
     }
 
     public OAuth2SessionServiceDelegate(
-            RestTemplate restTemplate, OAuth2Configuration configuration) {}
+            RestTemplate restTemplate, OAuth2Configuration configuration) {
+        this.delegateName = null;
+    }
 
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
@@ -668,11 +672,23 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     /**
-     * Get the OAuth2Configuration.
+     * Get the OAuth2Configuration. Prefers the provider-specific bean ({delegateName}OAuth2Config)
+     * and falls back to iterating all enabled configurations.
      *
      * @return the OAuth2Configuration.
      */
     protected OAuth2Configuration configuration() {
+        // Try provider-specific bean first
+        if (delegateName != null) {
+            OAuth2Configuration specific =
+                    GeoStoreContext.bean(
+                            delegateName + OAuth2Configuration.CONFIG_NAME_SUFFIX,
+                            OAuth2Configuration.class);
+            if (specific != null && specific.isEnabled()) {
+                return specific;
+            }
+        }
+        // Fallback: iterate all configurations
         Map<String, OAuth2Configuration> configurations =
                 GeoStoreContext.beans(OAuth2Configuration.class);
         if (configurations != null) {

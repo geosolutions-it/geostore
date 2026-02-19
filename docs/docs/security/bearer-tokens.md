@@ -94,7 +94,7 @@ Verifies that the token subject matches the userInfo subject (when userInfo clai
 
 ## Configuration
 
-All bearer-related properties are set on the OIDC configuration bean (bean name `oidcOAuth2Config`). They can be configured via Spring XML, Java config, or property overrides.
+All bearer-related properties are set on the OIDC configuration bean (default bean name `oidcOAuth2Config`). When using [multiple providers](oidc.md#multiple-oidc-providers), each provider has its own bearer token configuration via `{provider}OAuth2Config.`. Properties can be configured via Spring XML, Java config, or property overrides.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -230,6 +230,22 @@ All claim lookups are **case-insensitive**. If the resolved claim value is an ar
         <!-- ... other properties ... -->
     </bean>
     ```
+
+---
+
+## Multiple Providers
+
+When multiple OIDC providers are configured (see [Multiple OIDC Providers](oidc.md#multiple-oidc-providers)), the `CompositeOpenIdConnectFilter` handles bearer token routing:
+
+1. Each provider has its own JWKS key provider, token validator, and audience check.
+2. When a bearer token arrives, the composite filter tries each enabled provider in order.
+3. The first provider that successfully validates the token (correct signature, matching audience) authenticates the request.
+4. If a provider rejects the token (wrong key, wrong audience, expired), the composite filter moves to the next provider.
+5. If no provider accepts the token, the request continues unauthenticated.
+
+This provides **cross-provider isolation** -- a token issued for one provider's `clientId` cannot be used to authenticate against another provider.
+
+Each provider can independently configure its own `bearerTokenStrategy`, `maxTokenAgeSecs`, and `allowBearerTokens` settings.
 
 ---
 

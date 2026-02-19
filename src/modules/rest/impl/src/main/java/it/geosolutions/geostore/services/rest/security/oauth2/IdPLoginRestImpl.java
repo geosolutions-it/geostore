@@ -32,7 +32,10 @@ import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,6 +65,23 @@ public class IdPLoginRestImpl implements IdPLoginRest {
     public SessionToken getTokensByTokenIdentifier(String provider, String tokenIdentifier)
             throws NotFoundWebEx {
         return services.get(provider).getTokenByIdentifier(provider, tokenIdentifier);
+    }
+
+    @Override
+    public Response listProviders() {
+        Map<String, OAuth2Configuration> configs = GeoStoreContext.beans(OAuth2Configuration.class);
+        List<Map<String, String>> providers = new ArrayList<>();
+        if (configs != null) {
+            for (OAuth2Configuration config : configs.values()) {
+                if (config.isEnabled()) {
+                    Map<String, String> entry = new HashMap<>();
+                    entry.put("name", config.getProvider());
+                    entry.put("loginUrl", config.getProvider() + "/login");
+                    providers.add(entry);
+                }
+            }
+        }
+        return Response.ok(providers).build();
     }
 
     @Override

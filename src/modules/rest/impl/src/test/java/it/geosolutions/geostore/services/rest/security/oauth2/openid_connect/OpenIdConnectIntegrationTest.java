@@ -41,8 +41,10 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
-import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -63,7 +65,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -184,31 +185,26 @@ public class OpenIdConnectIntegrationTest {
         configuration.setScopes("openId,email");
         configuration.setSendClientSecret(true);
         this.configuration = configuration;
-        OpenIdConnectSecurityConfiguration securityConfiguration =
-                new OpenIdConnectSecurityConfiguration() {
-
-                    @Override
-                    protected GeoStoreOAuthRestTemplate restTemplate() {
-                        return new GeoStoreOAuthRestTemplate(
-                                resourceDetails(),
-                                new DefaultOAuth2ClientContext(new DefaultAccessTokenRequest()),
-                                configuration());
-                    }
-
-                    @Override
-                    public OAuth2Configuration configuration() {
-                        return configuration;
-                    }
-                };
-        GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
+        GeoStoreOAuthRestTemplate restTemplate =
+                OpenIdConnectRestTemplateFactory.create(
+                        configuration, new DefaultAccessTokenRequest());
         JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
+        OpenIdConnectTokenServices tokenServices =
+                new OpenIdConnectTokenServices(configuration.getPrincipalKey());
+        TokenAuthenticationCache cache =
+                new TokenAuthenticationCache(
+                        configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
+        MultiTokenValidator validator =
+                new MultiTokenValidator(
+                        java.util.Arrays.asList(
+                                new AudienceAccessTokenValidator(), new SubjectTokenValidator()));
         this.filter =
                 new OpenIdConnectFilter(
-                        securityConfiguration.oidcTokenServices(),
+                        tokenServices,
                         restTemplate,
                         configuration,
-                        securityConfiguration.oAuth2Cache(),
-                        securityConfiguration.openIdConnectBearerTokenValidator(),
+                        cache,
+                        validator,
                         jwksKeyProvider);
     }
 

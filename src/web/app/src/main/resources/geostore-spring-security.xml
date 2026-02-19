@@ -25,7 +25,7 @@
 		<security:csrf disabled="true"/>
 		<security:custom-filter ref="authenticationTokenProcessingFilter" before="FORM_LOGIN_FILTER"/>
 		<security:custom-filter ref="sessionTokenProcessingFilter" after="FORM_LOGIN_FILTER"/>
-		<security:custom-filter ref="oidcOpenIdFilter" before="OPENID_FILTER"/>
+		<security:custom-filter ref="compositeOpenIdFilter" before="OPENID_FILTER"/>
 		<security:anonymous />
 	</security:http>
 
@@ -44,6 +44,10 @@
 	<context:annotation-config/>
 
 	<bean id="oidcSecurityConfiguration" class="it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSecurityConfiguration"/>
+
+	<bean id="oidcProviderRegistrar" class="it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectProviderRegistrar"/>
+
+	<bean id="compositeOpenIdFilter" class="it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.CompositeOpenIdConnectFilter"/>
 
 	<!-- END OAuth2 beans-->
 

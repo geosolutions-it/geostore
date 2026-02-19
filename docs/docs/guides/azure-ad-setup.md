@@ -325,6 +325,54 @@ The following table summarizes where Azure AD behavior deviates from standard OI
 
 ---
 
+## Multi-Provider Setup
+
+When running Azure AD alongside other identity providers (e.g. Keycloak, Google), declare Azure AD as one of the providers in `oidc.providers` and use a distinct prefix for its properties.
+
+```properties
+# Declare Keycloak + Azure AD
+oidc.providers=oidc,azure
+
+# --- Keycloak (default "oidc" provider) ---
+oidcOAuth2Config.enabled=true
+oidcOAuth2Config.clientId=geostore
+oidcOAuth2Config.clientSecret=KEYCLOAK_SECRET
+oidcOAuth2Config.discoveryUrl=https://keycloak.example.com/realms/your-realm/.well-known/openid-configuration
+oidcOAuth2Config.scopes=openid,email,profile
+oidcOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+oidcOAuth2Config.autoCreateUser=true
+oidcOAuth2Config.principalKey=preferred_username
+oidcOAuth2Config.rolesClaim=realm_access.roles
+oidcOAuth2Config.roleMappings=admin:ADMIN,user:USER
+
+# --- Azure AD (additional provider) ---
+azureOAuth2Config.enabled=true
+azureOAuth2Config.clientId=YOUR_APPLICATION_CLIENT_ID
+azureOAuth2Config.clientSecret=YOUR_CLIENT_SECRET
+azureOAuth2Config.discoveryUrl=https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration
+azureOAuth2Config.scopes=openid,email,profile
+azureOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+azureOAuth2Config.internalRedirectUri=../../mapstore/
+azureOAuth2Config.autoCreateUser=true
+azureOAuth2Config.principalKey=preferred_username
+azureOAuth2Config.sendClientSecret=true
+azureOAuth2Config.rolesClaim=roles
+azureOAuth2Config.roleMappings=Admin:ADMIN,User:USER
+```
+
+With this configuration:
+
+- Keycloak login: `https://your-geostore-host/geostore/rest/users/user/details?provider=oidc`
+- Azure AD login: `https://your-geostore-host/geostore/rest/users/user/details?provider=azure`
+- Bearer tokens are automatically routed to the correct provider based on audience/signature
+
+!!! tip
+    When registering Azure AD as a multi-provider, make sure the **redirect URI** in the Azure portal includes a wildcard or matches the GeoStore callback URL pattern. Each provider's callback flows through `/openid/{provider}/callback`.
+
+See [Multiple OIDC Providers](../security/oidc.md#multiple-oidc-providers) for the full multi-provider architecture overview.
+
+---
+
 ## Complete Example
 
 Below is a complete `geostore-ovr.properties` configuration for Azure AD with App Roles, bearer token support, and logout enabled.

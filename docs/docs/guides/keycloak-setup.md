@@ -381,6 +381,56 @@ This ensures the `aud` claim in the access token contains your client ID, which 
 
 ---
 
+## Multi-Provider Setup
+
+When running Keycloak alongside other identity providers (e.g. Google, Azure AD), declare Keycloak as one of the providers in `oidc.providers`. The default `oidc` provider name works well for Keycloak as the primary provider.
+
+```properties
+# Declare Keycloak + Google
+oidc.providers=oidc,google
+
+# --- Keycloak (default "oidc" provider) ---
+oidcOAuth2Config.enabled=true
+oidcOAuth2Config.clientId=geostore
+oidcOAuth2Config.clientSecret=YOUR_CLIENT_SECRET
+oidcOAuth2Config.discoveryUrl=https://keycloak.example.com/realms/your-realm/.well-known/openid-configuration
+oidcOAuth2Config.scopes=openid,email,profile
+oidcOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+oidcOAuth2Config.internalRedirectUri=../../mapstore/
+oidcOAuth2Config.autoCreateUser=true
+oidcOAuth2Config.principalKey=preferred_username
+oidcOAuth2Config.rolesClaim=realm_access.roles
+oidcOAuth2Config.roleMappings=admin:ADMIN,user:USER
+oidcOAuth2Config.groupsClaim=groups
+
+# --- Google (additional provider) ---
+googleOAuth2Config.enabled=true
+googleOAuth2Config.clientId=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+googleOAuth2Config.clientSecret=YOUR_GOOGLE_SECRET
+googleOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
+googleOAuth2Config.scopes=openid,email,profile
+googleOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+googleOAuth2Config.autoCreateUser=true
+googleOAuth2Config.principalKey=email
+googleOAuth2Config.sendClientSecret=true
+googleOAuth2Config.accessType=offline
+```
+
+With this configuration:
+
+- Keycloak login: `https://your-geostore-host/geostore/rest/users/user/details?provider=oidc`
+- Google login: `https://your-geostore-host/geostore/rest/users/user/details?provider=google`
+- Bearer tokens issued by Keycloak (audience `geostore`) are validated against Keycloak's JWKS endpoint
+- Bearer tokens issued by Google are validated against Google's JWKS endpoint
+- The provider list endpoint (`GET /openid/providers`) returns both enabled providers
+
+!!! note
+    When using the default `oidc` name for Keycloak, all existing `oidcOAuth2Config.*` properties continue to work unchanged. No migration is needed.
+
+See [Multiple OIDC Providers](../security/oidc.md#multiple-oidc-providers) for the full multi-provider architecture overview.
+
+---
+
 ## Further Reading
 
 - [OIDC / OAuth2 Configuration](../security/oidc.md) -- full reference for all OIDC configuration properties

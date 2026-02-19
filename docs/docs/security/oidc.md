@@ -5,7 +5,7 @@ GeoStore provides a generic OpenID Connect (OIDC) integration that works with an
 - **Authorization Code Flow** for interactive browser-based login (with optional PKCE)
 - **Bearer Token** for direct API authentication using a pre-obtained access token
 
-All configuration is done through property overrides in `geostore-ovr.properties` using the bean name prefix `oidcOAuth2Config.`.
+All configuration is done through property overrides in `geostore-ovr.properties` using the bean name prefix `{provider}OAuth2Config.` (default: `oidcOAuth2Config.`). GeoStore supports [multiple simultaneous providers](#multiple-oidc-providers).
 
 ## How It Works
 
@@ -67,7 +67,7 @@ At each level, the following claim keys are checked in order:
 
 ## Configuration Properties
 
-All properties use the prefix `oidcOAuth2Config.` in `geostore-ovr.properties`.
+All properties use the prefix `{provider}OAuth2Config.` in `geostore-ovr.properties` (default: `oidcOAuth2Config.`). When using [multiple providers](#multiple-oidc-providers), replace `oidc` with the provider name.
 
 ### Core Settings
 
@@ -207,6 +207,142 @@ The discovery document is fetched once at filter initialization. The auto-fill l
 
 !!! note
     Discovery requires network access from GeoStore to the IdP at startup. If your deployment restricts outbound connections, set each endpoint property manually instead.
+
+## Multiple OIDC Providers
+
+GeoStore supports running multiple OIDC providers simultaneously (e.g. Keycloak + Google + Azure AD). Each provider gets its own configuration bean, filter, token cache, and JWKS key provider.
+
+### How It Works
+
+A `CompositeOpenIdConnectFilter` discovers all registered `OpenIdConnectConfiguration` beans at startup and creates per-provider filter instances. Request routing works as follows:
+
+- **Login/callback URLs** use the pattern `/openid/{provider}/login` and `/openid/{provider}/callback`, routing to the matching provider automatically.
+- **Bearer tokens** are tried against each enabled provider in order. The first provider that successfully validates the token wins.
+- **Already authenticated** requests pass through without re-authentication.
+
+### Configuration
+
+Set the `oidc.providers` property to a comma-separated list of provider names. For each provider, use the prefix `{provider}OAuth2Config.` in `geostore-ovr.properties`.
+
+```properties
+# Declare providers (defaults to "oidc" if not set)
+oidc.providers=oidc,google
+
+# --- Provider 1: Keycloak (default "oidc" provider) ---
+oidcOAuth2Config.enabled=true
+oidcOAuth2Config.clientId=geostore-keycloak
+oidcOAuth2Config.clientSecret=keycloak-secret
+oidcOAuth2Config.discoveryUrl=https://keycloak.example.com/realms/master/.well-known/openid-configuration
+oidcOAuth2Config.scopes=openid,email,profile
+oidcOAuth2Config.redirectUri=https://geostore.example.com/geostore/rest/users/user/details
+oidcOAuth2Config.autoCreateUser=true
+oidcOAuth2Config.principalKey=email
+
+# --- Provider 2: Google ---
+googleOAuth2Config.enabled=true
+googleOAuth2Config.clientId=123456789.apps.googleusercontent.com
+googleOAuth2Config.clientSecret=google-secret
+googleOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
+googleOAuth2Config.scopes=openid,email,profile
+googleOAuth2Config.redirectUri=https://geostore.example.com/geostore/rest/users/user/details
+googleOAuth2Config.autoCreateUser=true
+googleOAuth2Config.principalKey=email
+googleOAuth2Config.usePKCE=true
+googleOAuth2Config.accessType=offline
+```
+
+!!! note "Backward compatibility"
+    If `oidc.providers` is not set, GeoStore defaults to a single `oidc` provider, preserving the existing behavior. All existing `oidcOAuth2Config.*` properties continue to work unchanged.
+
+### Provider List Endpoint
+
+The REST API exposes a `GET /openid/providers` endpoint that returns all enabled providers as a JSON array:
+
+```json
+[
+  {"name": "oidc", "loginUrl": "oidc/login"},
+  {"name": "google", "loginUrl": "google/login"}
+]
+```
+
+This is useful for building dynamic login UIs that present multiple identity provider options.
+
+### Bearer Token Routing
+
+When a bearer token arrives, the composite filter tries each enabled provider in order. Each provider validates the token against its own JWKS endpoint and audience (`clientId`). The first provider that accepts the token authenticates the request. If no provider accepts it, the request continues unauthenticated.
+
+This provides **cross-provider isolation**: a token issued by Keycloak with audience `geostore-keycloak` will be rejected by the Google provider (which expects audience `123456789.apps.googleusercontent.com`), and vice versa.
+
+### Complete Multi-Provider Example (Keycloak + Google + Azure AD)
+
+Below is a full example configuring three providers simultaneously. See the individual [Keycloak](../guides/keycloak-setup.md), [Google](../guides/google-setup.md), and [Azure AD](../guides/azure-ad-setup.md) guides for detailed IdP setup steps.
+
+```properties
+# -----------------------------------------------
+# Multi-Provider OIDC Configuration
+# -----------------------------------------------
+
+# Declare all providers
+oidc.providers=oidc,google,azure
+
+# -----------------------------------------------
+# Provider 1: Keycloak (using default "oidc" name)
+# -----------------------------------------------
+oidcOAuth2Config.enabled=true
+oidcOAuth2Config.clientId=geostore-keycloak
+oidcOAuth2Config.clientSecret=keycloak-secret
+oidcOAuth2Config.discoveryUrl=https://keycloak.example.com/realms/master/.well-known/openid-configuration
+oidcOAuth2Config.scopes=openid,email,profile
+oidcOAuth2Config.redirectUri=https://geostore.example.com/geostore/rest/users/user/details
+oidcOAuth2Config.internalRedirectUri=../../mapstore/
+oidcOAuth2Config.autoCreateUser=true
+oidcOAuth2Config.principalKey=preferred_username
+oidcOAuth2Config.rolesClaim=realm_access.roles
+oidcOAuth2Config.roleMappings=admin:ADMIN,user:USER
+oidcOAuth2Config.groupsClaim=groups
+
+# -----------------------------------------------
+# Provider 2: Google
+# -----------------------------------------------
+googleOAuth2Config.enabled=true
+googleOAuth2Config.clientId=123456789.apps.googleusercontent.com
+googleOAuth2Config.clientSecret=google-secret
+googleOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
+googleOAuth2Config.scopes=openid,email,profile
+googleOAuth2Config.redirectUri=https://geostore.example.com/geostore/rest/users/user/details
+googleOAuth2Config.internalRedirectUri=../../mapstore/
+googleOAuth2Config.autoCreateUser=true
+googleOAuth2Config.principalKey=email
+googleOAuth2Config.sendClientSecret=true
+googleOAuth2Config.accessType=offline
+googleOAuth2Config.usePKCE=true
+
+# -----------------------------------------------
+# Provider 3: Azure AD / Entra ID
+# -----------------------------------------------
+azureOAuth2Config.enabled=true
+azureOAuth2Config.clientId=12345678-abcd-efgh-ijkl-1234567890ab
+azureOAuth2Config.clientSecret=azure-secret
+azureOAuth2Config.discoveryUrl=https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0/.well-known/openid-configuration
+azureOAuth2Config.scopes=openid,email,profile
+azureOAuth2Config.redirectUri=https://geostore.example.com/geostore/rest/users/user/details
+azureOAuth2Config.internalRedirectUri=../../mapstore/
+azureOAuth2Config.autoCreateUser=true
+azureOAuth2Config.principalKey=preferred_username
+azureOAuth2Config.sendClientSecret=true
+azureOAuth2Config.rolesClaim=roles
+azureOAuth2Config.roleMappings=Admin:ADMIN,User:USER
+```
+
+With this configuration, users can log in via any of three identity providers:
+
+| Provider | Login URL | Bearer token audience |
+|----------|-----------|----------------------|
+| Keycloak | `/openid/oidc/login` | `geostore-keycloak` |
+| Google | `/openid/google/login` | `123456789.apps.googleusercontent.com` |
+| Azure AD | `/openid/azure/login` | `12345678-abcd-efgh-ijkl-1234567890ab` |
+
+Each provider has its own configuration, token cache, and JWKS keys. Users authenticated by different providers are fully isolated from each other.
 
 ## Minimal Working Example
 

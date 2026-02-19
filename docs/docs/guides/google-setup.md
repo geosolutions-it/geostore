@@ -2,7 +2,7 @@
 
 ## Overview
 
-GeoStore integrates with Google as an OpenID Connect (OIDC) provider through the generic OIDC integration. Configuration uses the `oidcOAuth2Config.` property prefix in `geostore-ovr.properties`. This gives you access to all OIDC features including bearer token validation, PKCE support, and JWKS signature verification.
+GeoStore integrates with Google as an OpenID Connect (OIDC) provider through the generic OIDC integration. When used as the only provider, configuration uses the `oidcOAuth2Config.` property prefix in `geostore-ovr.properties`. When used alongside other providers, you can use any provider name (e.g. `googleOAuth2Config.`). This gives you access to all OIDC features including bearer token validation, PKCE support, and JWKS signature verification.
 
 !!! tip
     To request a refresh token from Google, set `oidcOAuth2Config.accessType=offline`. This appends `access_type=offline` to the authorization URL, which tells Google to return a refresh token during the authorization code flow.
@@ -124,22 +124,82 @@ https://your-geostore-host/geostore/rest/users/user/details?provider=oidc
 
 If the configuration is correct, you will be redirected to Google's login page. After authenticating, Google will redirect back to GeoStore and complete the login flow.
 
+## Multi-Provider Setup
+
+Google can be used alongside other identity providers (e.g. Keycloak, Azure AD) by declaring multiple providers in the `oidc.providers` property. See [Multiple OIDC Providers](../security/oidc.md#multiple-oidc-providers) for the full explanation.
+
+### Example: Google + Keycloak
+
+```properties
+# Declare two providers
+oidc.providers=keycloak,google
+
+# -----------------------------------------------
+# Provider 1: Keycloak (corporate identity)
+# -----------------------------------------------
+keycloakOAuth2Config.enabled=true
+keycloakOAuth2Config.clientId=geostore-app
+keycloakOAuth2Config.clientSecret=KEYCLOAK_CLIENT_SECRET
+keycloakOAuth2Config.discoveryUrl=https://keycloak.example.com/realms/master/.well-known/openid-configuration
+keycloakOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+keycloakOAuth2Config.internalRedirectUri=../../mapstore/
+keycloakOAuth2Config.autoCreateUser=true
+keycloakOAuth2Config.principalKey=email
+keycloakOAuth2Config.scopes=openid,email,profile
+keycloakOAuth2Config.rolesClaim=realm_access.roles
+keycloakOAuth2Config.roleMappings=realm_admin:ADMIN,realm_user:USER
+
+# -----------------------------------------------
+# Provider 2: Google (external users)
+# -----------------------------------------------
+googleOAuth2Config.enabled=true
+googleOAuth2Config.clientId=YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com
+googleOAuth2Config.clientSecret=YOUR_GOOGLE_CLIENT_SECRET
+googleOAuth2Config.discoveryUrl=https://accounts.google.com/.well-known/openid-configuration
+googleOAuth2Config.redirectUri=https://your-geostore-host/geostore/rest/users/user/details
+googleOAuth2Config.internalRedirectUri=../../mapstore/
+googleOAuth2Config.autoCreateUser=true
+googleOAuth2Config.principalKey=email
+googleOAuth2Config.scopes=openid,email,profile
+googleOAuth2Config.sendClientSecret=true
+googleOAuth2Config.accessType=offline
+googleOAuth2Config.authenticatedDefaultRole=USER
+```
+
+With this configuration:
+
+| Provider | Login URL | Bearer audience (`clientId`) |
+|----------|-----------|------------------------------|
+| Keycloak | `?provider=keycloak` | `geostore-app` |
+| Google | `?provider=google` | `YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com` |
+
+Bearer tokens are routed automatically -- a JWT issued by Google (with Google's `clientId` in the `aud` claim) is validated against the Google provider's JWKS keys, while a Keycloak-issued token is validated against Keycloak's keys. See [Bearer Token Multiple Providers](../security/bearer-tokens.md#multiple-providers) for details.
+
 ## Migration from Dedicated Google Provider
 
-If you were previously using the dedicated Google provider (`googleOAuth2Config.` prefix), update your properties as follows:
+If you were previously using the dedicated Google provider (`googleOAuth2Config.` prefix) with a single-provider setup, you have two options:
+
+**Option A: Single provider (simplest)**
 
 1. Replace the `googleOAuth2Config.` prefix with `oidcOAuth2Config.` for all properties.
 2. Add `oidcOAuth2Config.accessType=offline` to preserve refresh token behavior.
 3. Add `oidcOAuth2Config.sendClientSecret=true` (the dedicated provider sent the client secret by default).
 4. Update the login URL from `?provider=google` to `?provider=oidc`.
 
+**Option B: Multi-provider (recommended if adding other IdPs)**
+
+1. Declare Google as a named provider: `oidc.providers=google` (or `oidc.providers=google,keycloak` etc.).
+2. Keep the `googleOAuth2Config.` prefix -- it is now a valid provider-specific prefix.
+3. Add `googleOAuth2Config.accessType=offline` and `googleOAuth2Config.sendClientSecret=true`.
+4. The login URL `?provider=google` continues to work as before.
+
 ## Troubleshooting
 
 | Problem | Solution |
 |---|---|
 | `redirect_uri_mismatch` error | Ensure the `redirectUri` property value **exactly** matches the Authorized redirect URI in Google Cloud Console (including trailing slashes and protocol). |
-| No email in token | Add the `email` scope to the `scopes` property: `oidcOAuth2Config.scopes=openid,email,profile`. |
-| Refresh token not returned | Set `oidcOAuth2Config.accessType=offline` to request a refresh token from Google. |
+| No email in token | Add the `email` scope to the `scopes` property: `{provider}OAuth2Config.scopes=openid,email,profile`. |
+| Refresh token not returned | Set `{provider}OAuth2Config.accessType=offline` to request a refresh token from Google. |
 | "Access blocked: app has not completed verification" | Either complete the OAuth consent screen verification process in Google Cloud Console, or add your test users under **OAuth consent screen** > **Test users**. |
 | `invalid_client` error | Double-check that the `clientId` and `clientSecret` match the credentials from Google Cloud Console. Ensure no extra whitespace. |
 | User created but no roles | Google does not provide role claims. Set `authenticatedDefaultRole` to assign a default role, or manage roles directly in GeoStore after user creation. |

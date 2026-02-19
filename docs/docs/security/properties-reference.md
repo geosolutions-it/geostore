@@ -18,9 +18,22 @@ This page provides a comprehensive reference for every security-related property
 
 ## OIDC / OpenID Connect Properties
 
-**Prefix:** `oidcOAuth2Config.`
+**Prefix:** `{provider}OAuth2Config.` (default: `oidcOAuth2Config.`)
 
 These properties configure the generic OpenID Connect integration that works with any OIDC-compliant identity provider (Keycloak, Azure AD / Entra ID, Google, Okta, Auth0, etc.). See [OIDC / OAuth2 Configuration](oidc.md) for a full conceptual overview.
+
+### Multi-Provider Property
+
+| Property | Type | Default | Required | Description |
+|----------|------|---------|----------|-------------|
+| `oidc.providers` | String | `oidc` | No | Comma-separated list of provider names. Each name defines a configuration bean `{name}OAuth2Config`. |
+
+When multiple providers are declared, each provider's properties use the prefix `{provider}OAuth2Config.`. For example, with `oidc.providers=oidc,google`:
+
+- `oidcOAuth2Config.clientId=...` configures the `oidc` provider
+- `googleOAuth2Config.clientId=...` configures the `google` provider
+
+If `oidc.providers` is not set, GeoStore defaults to a single `oidc` provider for backward compatibility.
 
 ### Core Settings
 

@@ -47,7 +47,8 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectFilter;
-import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSecurityConfiguration;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectRestTemplateFactory;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectTokenServices;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -72,7 +73,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -154,32 +154,19 @@ public class OpenIdIntegrationTest {
         configuration.setRedirectUri("../../../geostore/rest/users/user/details");
         configuration.setScopes("openId,email");
 
-        OpenIdConnectSecurityConfiguration securityConfiguration =
-                new OpenIdConnectSecurityConfiguration() {
-                    @Override
-                    protected GeoStoreOAuthRestTemplate restTemplate() {
-                        return new GeoStoreOAuthRestTemplate(
-                                resourceDetails(),
-                                new DefaultOAuth2ClientContext(new DefaultAccessTokenRequest()),
-                                configuration());
-                    }
-
-                    @Override
-                    public OAuth2Configuration configuration() {
-                        return configuration;
-                    }
-                };
-        GeoStoreOAuthRestTemplate restTemplate = securityConfiguration.oauth2RestTemplate();
+        GeoStoreOAuthRestTemplate restTemplate =
+                OpenIdConnectRestTemplateFactory.create(
+                        configuration, new DefaultAccessTokenRequest());
         // Disable JWKS verification — test uses unsigned JWTs (alg: none)
         restTemplate.setTokenStore(null);
+        OpenIdConnectTokenServices tokenServices =
+                new OpenIdConnectTokenServices(configuration.getPrincipalKey());
+        TokenAuthenticationCache cache =
+                new TokenAuthenticationCache(
+                        configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
         filter =
                 new OpenIdConnectFilter(
-                        securityConfiguration.oidcTokenServices(),
-                        restTemplate,
-                        configuration,
-                        securityConfiguration.oAuth2Cache(),
-                        null,
-                        null);
+                        tokenServices, restTemplate, configuration, cache, null, null);
 
         // attach a simple in-memory UserGroupService so group reconciliation works
         filter.setUserGroupService(new DummyUserGroupService());
@@ -652,17 +639,7 @@ public class OpenIdIntegrationTest {
     private OpenIdConnectFilter getOpenIdFilter(User seeded, DummyUserGroupService svc) {
         OpenIdConnectFilter seededFilter =
                 new OpenIdConnectFilter(
-                        new OpenIdConnectSecurityConfiguration() {
-                            @Override
-                            protected GeoStoreOAuthRestTemplate restTemplate() {
-                                return (GeoStoreOAuthRestTemplate) filter.restTemplate;
-                            }
-
-                            @Override
-                            public OAuth2Configuration configuration() {
-                                return configuration;
-                            }
-                        }.oidcTokenServices(),
+                        new OpenIdConnectTokenServices(configuration.getPrincipalKey()),
                         (GeoStoreOAuthRestTemplate) filter.restTemplate,
                         configuration,
                         new TokenAuthenticationCache(),
