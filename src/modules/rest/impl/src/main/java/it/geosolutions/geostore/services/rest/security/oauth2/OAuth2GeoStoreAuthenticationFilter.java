@@ -64,8 +64,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -109,8 +111,12 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     public static final String OAUTH2_AUTHENTICATION_TYPE_KEY = "oauth2.authenticationType";
     public static final String OAUTH2_ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
 
+    private static final String SECURITY_LOGGER_NAME =
+            "it.geosolutions.geostore.services.rest.security";
+
     private final AuthenticationEntryPoint authEntryPoint;
     private final TokenAuthenticationCache cache;
+    private volatile boolean sensitiveLoggingConfigured = false;
 
     @Autowired protected UserService userService;
     @Autowired protected UserGroupService userGroupService;
@@ -166,6 +172,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
+        configureSensitiveLogging();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null) {
             super.doFilter(req, res, chain);
@@ -563,6 +570,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                         ? ""
                         : Stream.of(configuration.getScopes()).collect(Collectors.joining(","));
         details.setScope(parseScopes(scopesJoined));
+    }
+
+    private void configureSensitiveLogging() {
+        if (!sensitiveLoggingConfigured && configuration.isLogSensitiveInfo()) {
+            sensitiveLoggingConfigured = true;
+            Configurator.setLevel(SECURITY_LOGGER_NAME, Level.DEBUG);
+            LOGGER.warn(
+                    "logSensitiveInfo is ENABLED for provider '{}'. "
+                            + "Security logger '{}' set to DEBUG. "
+                            + "Token contents and credentials may appear in logs. "
+                            + "Do NOT use in production.",
+                    configuration.getProvider(),
+                    SECURITY_LOGGER_NAME);
+        }
     }
 
     protected List<String> parseScopes(String commaSeparatedScopes) {

@@ -86,6 +86,9 @@ public class OAuth2Configuration extends IdPConfiguration {
     private Map<String, String> groupMappings;
     private boolean dropUnmapped = false;
 
+    // Sensitive information logging
+    private boolean logSensitiveInfo = false;
+
     // Cache configuration
     private int cacheSize = 1000;
     private int cacheExpirationMinutes = 480;
@@ -647,6 +650,14 @@ public class OAuth2Configuration extends IdPConfiguration {
 
     public void setCacheExpirationMinutes(int cacheExpirationMinutes) {
         this.cacheExpirationMinutes = cacheExpirationMinutes;
+    }
+
+    public boolean isLogSensitiveInfo() {
+        return logSensitiveInfo;
+    }
+
+    public void setLogSensitiveInfo(boolean logSensitiveInfo) {
+        this.logSensitiveInfo = logSensitiveInfo;
     }
 
     static Map<String, String> parseMappings(String mappings) {

@@ -117,6 +117,15 @@ These are normally auto-filled by discovery. Set them explicitly only when overr
 !!! tip "Choosing a bearer token strategy"
     Use **jwt** (default) for best performance -- tokens are validated locally using the JWKS endpoint. Use **introspection** if your IdP issues opaque (non-JWT) tokens. Use **auto** to try JWT first and fall back to introspection on failure.
 
+### Diagnostics / Debug Settings
+
+| Property | Type | Default | Required | Description |
+|----------|------|---------|----------|-------------|
+| `logSensitiveInfo` | boolean | `false` | No | Set all security loggers to DEBUG level at startup, logging full token contents, credentials, and claim details |
+
+!!! warning "Do NOT enable in production"
+    When `logSensitiveInfo=true`, access tokens, ID tokens, client secrets, and full claim payloads will appear in the application logs. This is intended **only** for development and debugging. A warning is logged when this flag is active.
+
 ### Microsoft Graph Settings
 
 | Property | Type | Default | Required | Description |

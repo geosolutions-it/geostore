@@ -1,6 +1,6 @@
 # GeoStore vs GeoServer OIDC — Feature Gap Analysis
 
-**Date:** 2026-02-19
+**Date:** 2026-02-20
 **GeoServer reference:** [OIDC docs (2.28.0)](https://docs.geoserver.org/main/en/user/community/oidc/index.html), [security community module](https://github.com/geoserver/geoserver/tree/main/src/community/security)
 
 ---
@@ -32,6 +32,7 @@
 | Multiple simultaneous providers | Yes (Google, GitHub, Azure, Keycloak, generic) | Yes (`oidc.providers`, `CompositeOpenIdConnectFilter`) |
 | JWE (encrypted tokens) | Yes | Yes (`JweTokenDecryptor`, RSA-OAEP / ECDH-ES, opt-in via `jweKeyStoreFile`) |
 | Microsoft Graph group/role resolution | Yes | Yes (`msGraphEnabled`, overage detection + `/me/memberOf` + `/me/appRoleAssignments`) |
+| Log sensitive info toggle | Yes | Yes (`logSensitiveInfo` property) |
 
 ---
 
@@ -67,14 +68,10 @@
 
 ---
 
-### Gap 3: Dedicated "log sensitive information" toggle
+### ~~Gap 3: Dedicated "log sensitive information" toggle~~ **RESOLVED**
 
-**Priority:** Low
-**GeoServer:** Single checkbox flag to dump full token contents (access token, ID token, userinfo response) to logs for debugging.
-
-**GeoStore current state:** Dynamic log level control via the diagnostics endpoint (`PUT /diagnostics/logging/{logger}/DEBUG`). More flexible but requires knowing which loggers to enable. Token values are logged at DEBUG level in `GeoStoreOAuthRestTemplate`.
-
-**What's needed:** Optionally, a single `logSensitiveInfo=true` property that sets all security loggers to DEBUG. Low priority since the diagnostics endpoint already provides this capability.
+**Status:** Implemented
+**GeoStore:** `logSensitiveInfo=true` sets all security loggers (`it.geosolutions.geostore.services.rest.security`) to DEBUG on first filter invocation. A prominent WARNING is logged when active. Token contents, credentials, and claim details appear in logs. Completely opt-in (default `false`), zero behavioral changes when disabled. The diagnostics endpoint (`/rest/diagnostics/`) also remains available for more fine-grained runtime control.
 
 ---
 
@@ -84,15 +81,17 @@
 |---|---|---|
 | Opaque token introspection (was Gap 1) | Fully implemented: `bearerTokenStrategy` supports jwt, introspection, and auto. RFC 7662 introspection via `introspectToken()`, auto strategy with JWT-first fallback. | `bearer_token_improvements` |
 | Multiple simultaneous OIDC providers (was Gap 2) | Fully implemented: `oidc.providers` property, `CompositeOpenIdConnectFilter` with per-provider routing for login/callback URLs and bearer tokens. Cross-provider isolation via separate JWKS/audience. | `bearer_token_improvements` |
+| Microsoft Graph role/group source (was Gap 2) | Fully implemented: `msGraphEnabled=true` activates Azure AD groups overage detection and resolution via `/me/memberOf` + `/me/appRoleAssignments`. Opt-in, graceful degradation on failures. | `bearer_token_improvements` |
 | Full JSON Path (was Gap 4) | Fully implemented: `rolesClaim`/`groupsClaim` support full JsonPath expressions (e.g. `$.resource_access.*.roles`) via Jayway JsonPath, plus legacy dot-notation auto-conversion. | `bearer_token_improvements` |
 | JWE encrypted token support (was Gap 6) | Fully implemented: `JweTokenDecryptor` detects 5-part JWE tokens and decrypts via Nimbus JOSE+JWT using the relying party's private key from a configurable Java keystore. Supports RSA-OAEP and ECDH-ES. Opt-in via `jweKeyStoreFile`. | `bearer_token_improvements` |
+| Log sensitive info toggle (was Gap 3) | Fully implemented: `logSensitiveInfo=true` sets security loggers to DEBUG on first filter invocation. Opt-in, WARNING logged when active. | `bearer_token_improvements` |
 
 ---
 
 ## Summary
 
-| Gap | Priority | Effort | Impact |
-|---|---|---|---|
-| GitHub OAuth2 | Low | High | Single non-OIDC provider |
-| Microsoft Graph role source | Low | Medium | Niche Azure AD use case |
-| Log sensitive info toggle | Low | Small | Convenience only |
+| Gap | Status | Priority | Effort | Impact |
+|---|---|---|---|---|
+| GitHub OAuth2 | Open | Low | High | Single non-OIDC provider |
+| ~~Microsoft Graph role/group source~~ | **Resolved** | -- | -- | -- |
+| ~~Log sensitive info toggle~~ | **Resolved** | -- | -- | -- |

@@ -1530,6 +1530,43 @@ public class OpenIdConnectIntegrationTest {
         }
     }
 
+    @Test
+    public void testLogSensitiveInfoEnablesDebugLogging() throws IOException, ServletException {
+        configuration.setLogSensitiveInfo(true);
+        configuration.setAllowBearerTokens(true);
+        recreateFilter();
+
+        String jwt = createSignedJwt("sensitive-test@example.com", "sub-sensitive", CLIENT_ID);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        // Verify authentication succeeded
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "User should authenticate with logSensitiveInfo enabled");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("sensitive-test@example.com", user.getName());
+
+        // Verify the security logger is now at DEBUG level
+        org.apache.logging.log4j.Logger securityLogger =
+                org.apache.logging.log4j.LogManager.getLogger(
+                        "it.geosolutions.geostore.services.rest.security");
+        assertTrue(
+                securityLogger.isDebugEnabled(),
+                "Security logger should be at DEBUG when logSensitiveInfo=true");
+    }
+
+    @Test
+    public void testLogSensitiveInfoDisabledByDefault() throws IOException, ServletException {
+        // logSensitiveInfo defaults to false
+        assertFalse(configuration.isLogSensitiveInfo());
+    }
+
     /**
      * Creates a PKCS12 keystore file containing the test RSA key pair for JWE decryption testing.
      */
