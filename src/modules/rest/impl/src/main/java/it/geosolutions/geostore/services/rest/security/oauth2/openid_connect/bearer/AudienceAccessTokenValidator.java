@@ -4,6 +4,8 @@ import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.Ope
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This checks that the token is connected to this application. This will prevent a token for
@@ -18,6 +20,8 @@ import java.util.Map;
  * "live-key",
  */
 public class AudienceAccessTokenValidator implements OpenIdTokenValidator {
+
+    private static final Logger LOGGER = LogManager.getLogger(AudienceAccessTokenValidator.class);
 
     private final String AUDIENCE_CLAIM_NAME = "aud";
     private final String APPID_CLAIM_NAME = "appid";
@@ -69,6 +73,15 @@ public class AudienceAccessTokenValidator implements OpenIdTokenValidator {
                 }
             }
         }
-        throw new Exception("JWT Bearer token - probably not meant for this application");
+        LOGGER.warn(
+                "Bearer token audience validation failed: aud={}, appid={}, azp={}, expected clientId={}",
+                claimsJWT.get(AUDIENCE_CLAIM_NAME),
+                claimsJWT.get(APPID_CLAIM_NAME),
+                claimsJWT.get(AZP_CLAIM_NAME),
+                clientId);
+        throw new Exception(
+                "JWT Bearer token audience mismatch — not meant for this application (clientId="
+                        + clientId
+                        + ")");
     }
 }

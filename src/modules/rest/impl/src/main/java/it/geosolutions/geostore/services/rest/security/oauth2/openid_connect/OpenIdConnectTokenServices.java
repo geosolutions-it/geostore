@@ -48,10 +48,10 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
     @Override
     protected Map<String, Object> checkToken(String accessToken) {
         if (checkTokenEndpointUrl == null || checkTokenEndpointUrl.trim().isEmpty()) {
-            LOGGER.info("No userinfo endpoint configured; skipping userinfo call.");
+            LOGGER.debug("No userinfo endpoint configured; skipping userinfo call.");
             return Collections.emptyMap();
         }
-        LOGGER.info("Checking token via userinfo endpoint");
+        LOGGER.debug("Checking token via userinfo endpoint");
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -61,7 +61,7 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
                         new LinkedMultiValueMap<>(),
                         headers,
                         HttpMethod.GET);
-        LOGGER.info("Got userinfo results: {}", results);
+        LOGGER.debug("Got userinfo results: {}", results);
         return results;
     }
 }

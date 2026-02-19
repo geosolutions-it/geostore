@@ -542,8 +542,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     doLogoutInternal(token, configuration, accessToken);
                 if (configuration.getRevokeEndpoint() != null) clearSession(restTemplate, request);
             } else {
-                if (LOGGER.isDebugEnabled())
-                    LOGGER.info("Unable to retrieve access token. Remote logout was not executed.");
+                LOGGER.debug("Unable to retrieve access token. Remote logout was not executed.");
             }
             if (response != null) clearCookies(request, response);
         }
@@ -592,12 +591,12 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
         // Revoke the token if a revocation endpoint is available
         if (configuration.getRevokeEndpoint() != null) {
-            if (LOGGER.isDebugEnabled()) LOGGER.info("Revoking token at revocation endpoint");
+            LOGGER.debug("Revoking token at revocation endpoint");
             callRevokeEndpoint(tokenValue, accessToken);
         }
 
         // Call the remote logout endpoint (end_session_endpoint) independently
-        if (LOGGER.isDebugEnabled()) LOGGER.info("Performing remote logout");
+        LOGGER.debug("Performing remote logout");
         callRemoteLogout(tokenValue, accessToken);
     }
 

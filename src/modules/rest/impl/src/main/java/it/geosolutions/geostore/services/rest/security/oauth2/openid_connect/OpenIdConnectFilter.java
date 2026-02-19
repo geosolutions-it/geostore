@@ -320,7 +320,8 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             bearerTokenValidator.verifyToken(
                     (OpenIdConnectConfiguration) configuration, accessTokenClaims, null);
         } catch (Exception e) {
-            throw new IOException("Attached Bearer Token is invalid", e);
+            LOGGER.warn("OIDC: Bearer token validator rejected the token: {}", e.getMessage());
+            throw new IOException("Attached Bearer Token is invalid: " + e.getMessage(), e);
         }
 
         return accessTokenClaims;

@@ -41,6 +41,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import java.io.IOException;
 import java.util.Collection;
@@ -502,24 +503,27 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (e instanceof UserRedirectRequiredException
                 && configuration.isEnableRedirectEntryPoint()) {
             handleUserRedirection(req, resp);
-        } else if (e instanceof BadCredentialsException || e instanceof ResourceAccessException) {
-            if (e.getCause() instanceof OAuth2AccessDeniedException) {
-                LOGGER.warn(
-                        "Error while trying to authenticate to OAuth2 Provider. Cause: ",
-                        e.getCause());
-            } else if (e instanceof ResourceAccessException) {
-                LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
-            } else if (e.getCause() instanceof OAuth2AccessDeniedException) {
-                LOGGER.warn(
-                        "If you try to validate credentials against an SSH protected endpoint, you need your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM.");
-                LOGGER.info(
-                        "Refer to the GeoServer OAuth2 Plugin Documentation for steps to import SSH certificates.");
-            } else {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
-                }
-            }
+            return;
         }
+
+        String errorDetail;
+        if (e instanceof BadCredentialsException) {
+            if (e.getCause() instanceof OAuth2AccessDeniedException) {
+                errorDetail = "OAuth2 access denied: " + e.getCause().getMessage();
+                LOGGER.warn("OAuth2 access denied by provider: {}", e.getCause().getMessage());
+            } else {
+                errorDetail = "Bad credentials: " + e.getMessage();
+                LOGGER.warn("OAuth2 bad credentials: {}", e.getMessage());
+            }
+        } else if (e instanceof ResourceAccessException) {
+            errorDetail = "OAuth2 provider unreachable: " + e.getMessage();
+            LOGGER.error("Could not reach OAuth2 provider: {}", e.getMessage(), e);
+        } else {
+            errorDetail = "Authentication error: " + e.getMessage();
+            LOGGER.warn("OAuth2 authentication error: {}", e.getMessage(), e);
+        }
+
+        req.setAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY, errorDetail);
     }
 
     private void handleUserRedirection(HttpServletRequest req, HttpServletResponse resp)

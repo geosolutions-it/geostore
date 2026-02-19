@@ -28,6 +28,8 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import java.util.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -35,6 +37,7 @@ import org.springframework.web.client.RestTemplate;
  * instance.
  */
 public class DiscoveryClient {
+    private static final Logger LOGGER = LogManager.getLogger(DiscoveryClient.class);
     private static final String PROVIDER_END_PATH = "/.well-known/openid-configuration";
     private static final String AUTHORIZATION_ENDPOINT_ATTR_NAME = "authorization_endpoint";
     private static final String TOKEN_ENDPOINT_ATTR_NAME = "token_endpoint";
@@ -88,9 +91,16 @@ public class DiscoveryClient {
      * @param conf the OAuth2Configuration.
      */
     public void autofill(OAuth2Configuration conf) {
-        if (location != null) {
+        if (location == null) return;
+        try {
+            LOGGER.debug("Fetching OIDC discovery document from {}", location);
             Map response = restTemplate.getForObject(this.location, Map.class);
-            assert response != null;
+            if (response == null) {
+                LOGGER.error(
+                        "OIDC discovery returned null from {}. Endpoints will not be auto-configured.",
+                        location);
+                return;
+            }
             Optional.ofNullable(response.get(getAuthorizationEndpointAttrName()))
                     .ifPresent(uri -> conf.setAuthorizationUri((String) uri));
             Optional.ofNullable(response.get(getTokenEndpointAttrName()))
@@ -114,6 +124,13 @@ public class DiscoveryClient {
                                     conf.setScopes(collectScopes(scopes));
                                 });
             }
+            LOGGER.info("OIDC discovery successful from {}", location);
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Failed to fetch OIDC discovery document from {}: {}",
+                    location,
+                    e.getMessage(),
+                    e);
         }
     }
 

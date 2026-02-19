@@ -2,6 +2,8 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.be
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This verifies that the token is about our user (i.e. the access token and userinfo endpoint agree
@@ -14,6 +16,8 @@ import java.util.Map;
  * <p>The spec suggests verifying the user vs token subjects match, so this does that check.
  */
 public class SubjectTokenValidator implements OpenIdTokenValidator {
+
+    private static final Logger LOGGER = LogManager.getLogger(SubjectTokenValidator.class);
 
     private final String SUBJECT_CLAIM_NAME = "sub";
     private final String AZURE_SUBJECT_CONTAINER_NAME = "xms_st";
@@ -43,6 +47,10 @@ public class SubjectTokenValidator implements OpenIdTokenValidator {
                     return;
             }
         }
-        throw new Exception("JWT Bearer token VS UserInfo - subjects dont match");
+        LOGGER.warn(
+                "Bearer token subject mismatch: JWT sub={}, userinfo sub={}",
+                claims.get(SUBJECT_CLAIM_NAME),
+                userInfoClaims != null ? userInfoClaims.get(SUBJECT_CLAIM_NAME) : "null");
+        throw new Exception("JWT Bearer token subject does not match userinfo subject");
     }
 }
