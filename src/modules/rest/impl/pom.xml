@@ -136,6 +136,11 @@
             <artifactId>json-path</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+
         <!-- ================================================================-->
         <!--  Misc support libs -->
         <!-- ================================================================-->

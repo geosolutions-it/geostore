@@ -34,11 +34,15 @@ import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JweTokenDecryptor;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.OpenIdTokenValidator;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Collection;
@@ -69,6 +73,8 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
 
     private final OpenIdTokenValidator bearerTokenValidator;
     private final JwksRsaKeyProvider jwksKeyProvider;
+    private volatile JweTokenDecryptor jweDecryptor;
+    private volatile boolean jweDecryptorInitialized = false;
 
     /**
      * @param tokenServices a RemoteTokenServices instance.
@@ -245,6 +251,13 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> validateBearerJwt(String token) throws IOException {
+        // Decrypt JWE tokens if a decryptor is configured
+        JweTokenDecryptor decryptor = getJweDecryptor();
+        if (decryptor != null && JweTokenDecryptor.isJweToken(token)) {
+            LOGGER.debug("Detected JWE token (5 parts), attempting decryption");
+            token = decryptor.decrypt(token);
+        }
+
         Map<String, Object> accessTokenClaims;
         try {
             Jwt decodedAccessToken;
@@ -407,6 +420,78 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
         } catch (Exception e) {
             LOGGER.debug("Could not extract kid from JWT header", e);
             return "";
+        }
+    }
+
+    /**
+     * Lazily initializes the JWE token decryptor from the keystore configuration. Returns null if
+     * JWE is not configured (no jweKeyStoreFile set).
+     */
+    private JweTokenDecryptor getJweDecryptor() {
+        if (jweDecryptorInitialized) {
+            return jweDecryptor;
+        }
+        synchronized (this) {
+            if (jweDecryptorInitialized) {
+                return jweDecryptor;
+            }
+            try {
+                OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+                String keystoreFile = oidcConfig.getJweKeyStoreFile();
+                if (keystoreFile == null || keystoreFile.isEmpty()) {
+                    LOGGER.debug("JWE not configured (no jweKeyStoreFile)");
+                    jweDecryptor = null;
+                    jweDecryptorInitialized = true;
+                    return null;
+                }
+
+                String keystorePassword =
+                        oidcConfig.getJweKeyStorePassword() != null
+                                ? oidcConfig.getJweKeyStorePassword()
+                                : "";
+                String keystoreType =
+                        oidcConfig.getJweKeyStoreType() != null
+                                ? oidcConfig.getJweKeyStoreType()
+                                : "PKCS12";
+                String keyAlias = oidcConfig.getJweKeyAlias();
+                String keyPassword =
+                        oidcConfig.getJweKeyPassword() != null
+                                ? oidcConfig.getJweKeyPassword()
+                                : keystorePassword;
+
+                KeyStore keyStore = KeyStore.getInstance(keystoreType);
+                try (FileInputStream fis = new FileInputStream(keystoreFile)) {
+                    keyStore.load(fis, keystorePassword.toCharArray());
+                }
+
+                if (keyAlias == null || keyAlias.isEmpty()) {
+                    // Use the first alias in the keystore
+                    keyAlias = keyStore.aliases().nextElement();
+                }
+
+                PrivateKey privateKey =
+                        (PrivateKey) keyStore.getKey(keyAlias, keyPassword.toCharArray());
+                if (privateKey == null) {
+                    LOGGER.error(
+                            "JWE keystore '{}' does not contain a private key with alias '{}'",
+                            keystoreFile,
+                            keyAlias);
+                    jweDecryptor = null;
+                    jweDecryptorInitialized = true;
+                    return null;
+                }
+
+                jweDecryptor = new JweTokenDecryptor(privateKey);
+                LOGGER.info(
+                        "JWE token decryptor initialized with key alias '{}' from '{}'",
+                        keyAlias,
+                        keystoreFile);
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize JWE token decryptor: {}", e.getMessage(), e);
+                jweDecryptor = null;
+            }
+            jweDecryptorInitialized = true;
+            return jweDecryptor;
         }
     }
 

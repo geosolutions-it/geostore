@@ -82,6 +82,19 @@ These are normally auto-filled by discovery. Set them explicitly only when overr
 !!! note "Mapping format"
     Role and group mappings use the format `IdPValue:GeoStoreValue`, comma-separated. IdP keys are matched case-insensitively (uppercased internally). For example, `realm_admin:ADMIN,viewer:USER` maps the IdP role `realm_admin` to GeoStore's `ADMIN` role.
 
+### JWE (Encrypted Token) Settings
+
+| Property | Type | Default | Required | Description |
+|----------|------|---------|----------|-------------|
+| `jweKeyStoreFile` | String | -- | No | Path to the Java keystore (JKS/PKCS12) containing the private key for JWE decryption. When set, enables JWE support. |
+| `jweKeyStorePassword` | String | -- | No | Keystore password |
+| `jweKeyStoreType` | String | `PKCS12` | No | Keystore type (`PKCS12` or `JKS`) |
+| `jweKeyAlias` | String | *(first alias)* | No | Alias of the private key within the keystore |
+| `jweKeyPassword` | String | *(keystore password)* | No | Password for the specific key entry (defaults to keystore password if not set) |
+
+!!! note "JWE is opt-in"
+    JWE decryption is only activated when `jweKeyStoreFile` is configured. Plain JWS tokens are always accepted regardless of this setting. See [Bearer Tokens - JWE](bearer-tokens.md#jwe-encrypted-tokens) for full details on setup and supported algorithms.
+
 ### Authentication Flow Settings
 
 | Property | Type | Default | Required | Description |

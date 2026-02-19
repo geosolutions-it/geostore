@@ -60,6 +60,13 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     String bearerTokenStrategy = "jwt";
     String accessType;
 
+    // JWE (encrypted token) support
+    String jweKeyStoreFile;
+    String jweKeyStorePassword;
+    String jweKeyStoreType = "PKCS12";
+    String jweKeyAlias;
+    String jweKeyPassword;
+
     public String getJwkURI() {
         return jwkURI;
     }
@@ -146,6 +153,46 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setAccessType(String accessType) {
         this.accessType = accessType;
+    }
+
+    public String getJweKeyStoreFile() {
+        return jweKeyStoreFile;
+    }
+
+    public void setJweKeyStoreFile(String jweKeyStoreFile) {
+        this.jweKeyStoreFile = jweKeyStoreFile;
+    }
+
+    public String getJweKeyStorePassword() {
+        return jweKeyStorePassword;
+    }
+
+    public void setJweKeyStorePassword(String jweKeyStorePassword) {
+        this.jweKeyStorePassword = jweKeyStorePassword;
+    }
+
+    public String getJweKeyStoreType() {
+        return jweKeyStoreType;
+    }
+
+    public void setJweKeyStoreType(String jweKeyStoreType) {
+        this.jweKeyStoreType = jweKeyStoreType;
+    }
+
+    public String getJweKeyAlias() {
+        return jweKeyAlias;
+    }
+
+    public void setJweKeyAlias(String jweKeyAlias) {
+        this.jweKeyAlias = jweKeyAlias;
+    }
+
+    public String getJweKeyPassword() {
+        return jweKeyPassword;
+    }
+
+    public void setJweKeyPassword(String jweKeyPassword) {
+        this.jweKeyPassword = jweKeyPassword;
     }
 
     @Override

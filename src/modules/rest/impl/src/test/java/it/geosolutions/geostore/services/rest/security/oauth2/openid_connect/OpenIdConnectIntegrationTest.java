@@ -36,6 +36,12 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.RSAEncrypter;
+import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jwt.EncryptedJWT;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
@@ -45,9 +51,13 @@ import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bea
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
@@ -1017,6 +1027,423 @@ public class OpenIdConnectIntegrationTest {
         assertEquals("index@example.com", user.getName());
         assertEquals(
                 Role.ADMIN, user.getRole(), "$.roles[0] should extract ADMIN as first element");
+    }
+
+    @Test
+    public void testBearerTokenJweRsaOaep() throws Exception {
+        configuration.setAllowBearerTokens(true);
+
+        // Create a PKCS12 keystore with the RSA key pair for JWE decryption
+        File keystoreFile = createTestKeystore();
+        try {
+            configuration.setJweKeyStoreFile(keystoreFile.getAbsolutePath());
+            configuration.setJweKeyStorePassword("changeit");
+            configuration.setJweKeyStoreType("PKCS12");
+            configuration.setJweKeyAlias("jwekey");
+            configuration.setJweKeyPassword("changeit");
+
+            // Recreate filter so it picks up the JWE config
+            recreateFilter();
+
+            // Create a signed JWT, then encrypt it inside a JWE
+            String jweToken =
+                    createSignedJweToken("jwe-user@example.com", "test-sub-jwe", CLIENT_ID);
+
+            MockHttpServletRequest request = createRequest("rest/resources");
+            request.addHeader("Authorization", "Bearer " + jweToken);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            MockFilterChain chain = new MockFilterChain();
+
+            filter.doFilter(request, response, chain);
+
+            assertEquals(200, response.getStatus());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            assertNotNull(authentication, "JWE bearer token should authenticate successfully");
+            User user = (User) authentication.getPrincipal();
+            assertEquals("jwe-user@example.com", user.getName());
+        } finally {
+            keystoreFile.delete();
+        }
+    }
+
+    @Test
+    public void testBearerTokenJweWithRolesAndGroups() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        configuration.setGroupsClaim("groups");
+
+        File keystoreFile = createTestKeystore();
+        try {
+            configuration.setJweKeyStoreFile(keystoreFile.getAbsolutePath());
+            configuration.setJweKeyStorePassword("changeit");
+            configuration.setJweKeyStoreType("PKCS12");
+            configuration.setJweKeyAlias("jwekey");
+            configuration.setJweKeyPassword("changeit");
+
+            recreateFilter();
+
+            // Create JWE with roles and groups in the inner JWT
+            long now = System.currentTimeMillis() / 1000;
+            JWTClaimsSet innerClaims =
+                    new JWTClaimsSet.Builder()
+                            .subject("test-sub-jwe-roles")
+                            .issuer("https://test.issuer/")
+                            .audience(CLIENT_ID)
+                            .claim("email", "jwe-admin@example.com")
+                            .claim("roles", java.util.Arrays.asList("ADMIN"))
+                            .claim("groups", java.util.Arrays.asList("analysts", "editors"))
+                            .issueTime(new Date(now * 1000))
+                            .expirationTime(new Date((now + 3600) * 1000))
+                            .build();
+
+            SignedJWT signedJWT =
+                    new SignedJWT(
+                            new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(TEST_KID).build(),
+                            innerClaims);
+            signedJWT.sign(new RSASSASigner(rsaPrivateKey));
+
+            JWEHeader jweHeader =
+                    new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
+                            .contentType("JWT")
+                            .build();
+            JWEObject jweObject = new JWEObject(jweHeader, new Payload(signedJWT));
+            jweObject.encrypt(new RSAEncrypter(rsaPublicKey));
+            String jweToken = jweObject.serialize();
+
+            MockHttpServletRequest request = createRequest("rest/resources");
+            request.addHeader("Authorization", "Bearer " + jweToken);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            MockFilterChain chain = new MockFilterChain();
+
+            filter.doFilter(request, response, chain);
+
+            assertEquals(200, response.getStatus());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            assertNotNull(authentication, "JWE token with roles/groups should authenticate");
+            User user = (User) authentication.getPrincipal();
+            assertEquals("jwe-admin@example.com", user.getName());
+            assertEquals(Role.ADMIN, user.getRole());
+
+            Set<String> groupNames =
+                    user.getGroups().stream()
+                            .map(UserGroup::getGroupName)
+                            .collect(Collectors.toSet());
+            assertTrue(groupNames.contains("analysts"), "Should have 'analysts' group from JWE");
+            assertTrue(groupNames.contains("editors"), "Should have 'editors' group from JWE");
+        } finally {
+            keystoreFile.delete();
+        }
+    }
+
+    @Test
+    public void testBearerTokenJweFallsBackToJws() throws Exception {
+        configuration.setAllowBearerTokens(true);
+
+        // Configure JWE keystore — but send a plain JWS token
+        File keystoreFile = createTestKeystore();
+        try {
+            configuration.setJweKeyStoreFile(keystoreFile.getAbsolutePath());
+            configuration.setJweKeyStorePassword("changeit");
+            configuration.setJweKeyStoreType("PKCS12");
+            configuration.setJweKeyAlias("jwekey");
+            configuration.setJweKeyPassword("changeit");
+
+            recreateFilter();
+
+            // Send a plain JWS token (3 parts) — should bypass JWE decryption and work normally
+            String jwt = createSignedJwt("jws-fallback@example.com", "test-sub-jws", CLIENT_ID);
+
+            MockHttpServletRequest request = createRequest("rest/resources");
+            request.addHeader("Authorization", "Bearer " + jwt);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            MockFilterChain chain = new MockFilterChain();
+
+            filter.doFilter(request, response, chain);
+
+            assertEquals(200, response.getStatus());
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            assertNotNull(
+                    authentication, "Plain JWS token should still work when JWE is configured");
+            User user = (User) authentication.getPrincipal();
+            assertEquals("jws-fallback@example.com", user.getName());
+        } finally {
+            keystoreFile.delete();
+        }
+    }
+
+    @Test
+    public void testBearerTokenJweNotConfigured() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        // No JWE keystore configured — JWE tokens should fail validation
+        // (they look like malformed JWTs to the JWS pipeline)
+
+        // Create a JWE token
+        long now = System.currentTimeMillis() / 1000;
+        JWTClaimsSet claims =
+                new JWTClaimsSet.Builder()
+                        .subject("test-sub-jwe-noconfig")
+                        .issuer("https://test.issuer/")
+                        .audience(CLIENT_ID)
+                        .claim("email", "jwe-noconfig@example.com")
+                        .issueTime(new Date(now * 1000))
+                        .expirationTime(new Date((now + 3600) * 1000))
+                        .build();
+
+        JWEHeader header =
+                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM).build();
+        EncryptedJWT encryptedJWT = new EncryptedJWT(header, claims);
+        encryptedJWT.encrypt(new RSAEncrypter(rsaPublicKey));
+        String jweToken = encryptedJWT.serialize();
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jweToken);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNull(
+                authentication,
+                "JWE token should not authenticate when no JWE keystore is configured");
+    }
+
+    /**
+     * Creates a PKCS12 keystore file containing the test RSA key pair for JWE decryption testing.
+     */
+    private File createTestKeystore() throws Exception {
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(null, "changeit".toCharArray());
+
+        // Create a self-signed certificate for the key pair
+        X509Certificate cert = generateSelfSignedCert(rsaPublicKey, rsaPrivateKey);
+        keyStore.setKeyEntry(
+                "jwekey",
+                rsaPrivateKey,
+                "changeit".toCharArray(),
+                new java.security.cert.Certificate[] {cert});
+
+        File tempFile = File.createTempFile("geostore-test-jwe-", ".p12");
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+            keyStore.store(fos, "changeit".toCharArray());
+        }
+        return tempFile;
+    }
+
+    /**
+     * Generates a minimal self-signed X.509 certificate for test purposes using DER encoding
+     * directly (no sun.security.x509 dependency).
+     */
+    private static X509Certificate generateSelfSignedCert(
+            RSAPublicKey pubKey, RSAPrivateKey privKey) throws Exception {
+        // Build a self-signed cert by constructing the DER TBSCertificate manually,
+        // signing it, and parsing it back via CertificateFactory.
+        byte[] subjectBytes =
+                derSequence(
+                        derSet(
+                                derSequence(
+                                        derOid(new int[] {2, 5, 4, 3}), // OID for CN
+                                        derUtf8String("GeoStore Test JWE"))));
+
+        long now = System.currentTimeMillis();
+        byte[] notBefore = derUtcTime(new Date(now));
+        byte[] notAfter = derUtcTime(new Date(now + 365L * 24 * 60 * 60 * 1000));
+        byte[] validity = derSequence(notBefore, notAfter);
+
+        // SHA256withRSA OID: 1.2.840.113549.1.1.11
+        byte[] sha256WithRsa =
+                derSequence(derOid(new int[] {1, 2, 840, 113549, 1, 1, 11}), derNull());
+
+        byte[] serialNumber =
+                derInteger(new java.math.BigInteger(64, new java.security.SecureRandom()));
+        byte[] version = derExplicit(0, derInteger(java.math.BigInteger.valueOf(2))); // v3
+
+        byte[] subjectPublicKeyInfo = pubKey.getEncoded();
+
+        byte[] tbsCertificate =
+                derSequence(
+                        version,
+                        serialNumber,
+                        sha256WithRsa,
+                        subjectBytes,
+                        validity,
+                        subjectBytes,
+                        subjectPublicKeyInfo);
+
+        java.security.Signature sig = java.security.Signature.getInstance("SHA256withRSA");
+        sig.initSign(privKey);
+        sig.update(tbsCertificate);
+        byte[] signature = sig.sign();
+
+        byte[] signatureBits = derBitString(signature);
+        byte[] certificate = derSequence(tbsCertificate, sha256WithRsa, signatureBits);
+
+        java.security.cert.CertificateFactory cf =
+                java.security.cert.CertificateFactory.getInstance("X.509");
+        return (X509Certificate)
+                cf.generateCertificate(new java.io.ByteArrayInputStream(certificate));
+    }
+
+    // --- Minimal DER encoding helpers for self-signed cert generation ---
+
+    private static byte[] derSequence(byte[]... items) {
+        return derTagged(0x30, concat(items));
+    }
+
+    private static byte[] derSet(byte[]... items) {
+        return derTagged(0x31, concat(items));
+    }
+
+    private static byte[] derOid(int[] components) {
+        java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+        buf.write(40 * components[0] + components[1]);
+        for (int i = 2; i < components.length; i++) {
+            encodeOidComponent(buf, components[i]);
+        }
+        byte[] content = buf.toByteArray();
+        return derTagged(0x06, content);
+    }
+
+    private static void encodeOidComponent(java.io.ByteArrayOutputStream buf, int value) {
+        if (value < 128) {
+            buf.write(value);
+        } else {
+            // Multi-byte encoding
+            byte[] bytes = new byte[5];
+            int pos = 4;
+            bytes[pos] = (byte) (value & 0x7F);
+            value >>= 7;
+            while (value > 0) {
+                pos--;
+                bytes[pos] = (byte) ((value & 0x7F) | 0x80);
+                value >>= 7;
+            }
+            buf.write(bytes, pos, 5 - pos);
+        }
+    }
+
+    private static byte[] derUtf8String(String s) {
+        return derTagged(0x0C, s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
+    private static byte[] derNull() {
+        return new byte[] {0x05, 0x00};
+    }
+
+    private static byte[] derInteger(java.math.BigInteger value) {
+        byte[] content = value.toByteArray();
+        return derTagged(0x02, content);
+    }
+
+    private static byte[] derBitString(byte[] data) {
+        byte[] content = new byte[data.length + 1];
+        content[0] = 0; // no unused bits
+        System.arraycopy(data, 0, content, 1, data.length);
+        return derTagged(0x03, content);
+    }
+
+    private static byte[] derUtcTime(Date date) {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyMMddHHmmss'Z'");
+        sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        byte[] content = sdf.format(date).getBytes(java.nio.charset.StandardCharsets.US_ASCII);
+        return derTagged(0x17, content);
+    }
+
+    private static byte[] derExplicit(int tag, byte[] content) {
+        return derTagged(0xA0 | tag, content);
+    }
+
+    private static byte[] derTagged(int tag, byte[] content) {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        out.write(tag);
+        writeLength(out, content.length);
+        out.write(content, 0, content.length);
+        return out.toByteArray();
+    }
+
+    private static void writeLength(java.io.ByteArrayOutputStream out, int length) {
+        if (length < 128) {
+            out.write(length);
+        } else if (length < 256) {
+            out.write(0x81);
+            out.write(length);
+        } else {
+            out.write(0x82);
+            out.write(length >> 8);
+            out.write(length & 0xFF);
+        }
+    }
+
+    private static byte[] concat(byte[][]... arrays) {
+        int total = 0;
+        for (byte[][] arr : arrays) {
+            for (byte[] b : arr) {
+                total += b.length;
+            }
+        }
+        byte[] result = new byte[total];
+        int pos = 0;
+        for (byte[][] arr : arrays) {
+            for (byte[] b : arr) {
+                System.arraycopy(b, 0, result, pos, b.length);
+                pos += b.length;
+            }
+        }
+        return result;
+    }
+
+    /** Creates a JWE token wrapping a signed JWT (nested JWS in JWE). */
+    private String createSignedJweToken(String email, String sub, String aud) throws Exception {
+        long now = System.currentTimeMillis() / 1000;
+
+        JWTClaimsSet innerClaims =
+                new JWTClaimsSet.Builder()
+                        .subject(sub)
+                        .issuer("https://test.issuer/")
+                        .audience(aud)
+                        .claim("email", email)
+                        .issueTime(new Date(now * 1000))
+                        .expirationTime(new Date((now + 3600) * 1000))
+                        .build();
+
+        SignedJWT signedJWT =
+                new SignedJWT(
+                        new JWSHeader.Builder(JWSAlgorithm.RS256).keyID(TEST_KID).build(),
+                        innerClaims);
+        signedJWT.sign(new RSASSASigner(rsaPrivateKey));
+
+        JWEHeader jweHeader =
+                new JWEHeader.Builder(JWEAlgorithm.RSA_OAEP_256, EncryptionMethod.A256GCM)
+                        .contentType("JWT")
+                        .build();
+        JWEObject jweObject = new JWEObject(jweHeader, new Payload(signedJWT));
+        jweObject.encrypt(new RSAEncrypter(rsaPublicKey));
+        return jweObject.serialize();
+    }
+
+    /** Recreates the filter with current configuration (picks up JWE config changes). */
+    private void recreateFilter() {
+        GeoStoreOAuthRestTemplate restTemplate =
+                OpenIdConnectRestTemplateFactory.create(
+                        configuration, new DefaultAccessTokenRequest());
+        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
+        OpenIdConnectTokenServices tokenServices =
+                new OpenIdConnectTokenServices(configuration.getPrincipalKey());
+        TokenAuthenticationCache cache =
+                new TokenAuthenticationCache(
+                        configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
+        MultiTokenValidator validator =
+                new MultiTokenValidator(
+                        java.util.Arrays.asList(
+                                new AudienceAccessTokenValidator(), new SubjectTokenValidator()));
+        this.filter =
+                new OpenIdConnectFilter(
+                        tokenServices,
+                        restTemplate,
+                        configuration,
+                        cache,
+                        validator,
+                        jwksKeyProvider);
     }
 
     /** Creates a properly RSA-signed JWT with email, sub, and aud claims. */

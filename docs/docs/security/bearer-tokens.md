@@ -252,6 +252,96 @@ Each provider can independently configure its own `bearerTokenStrategy`, `maxTok
 
 ---
 
+## JWE (Encrypted Tokens)
+
+Some OIDC providers (Azure AD, ADFS, Keycloak when configured) can issue tokens in JWE (JSON Web Encryption) format instead of plain JWS. JWE tokens encrypt the payload for confidentiality — the claims are unreadable without the recipient's private key.
+
+GeoStore supports JWE tokens transparently: when a JWE token is detected (5 dot-separated parts instead of the usual 3), GeoStore decrypts it using the configured private key before passing the inner content to the standard JWS validation pipeline. Plain JWS tokens bypass the decryptor entirely.
+
+### How It Works
+
+1. GeoStore detects JWE format by counting dot-separated segments (JWE has 5: `header.encryptedKey.iv.ciphertext.tag`).
+2. The token is decrypted using the relying party's private key from the configured Java keystore.
+3. The decrypted payload — either a nested JWS token or plain claims JSON — is passed to the existing JWT validation pipeline.
+4. Signature verification, expiry checks, and audience validation proceed as normal.
+
+!!! note "Key asymmetry"
+    JWE decryption uses *GeoStore's own private key*, not the IdP's JWKS public key. The IdP encrypts with GeoStore's public key; GeoStore decrypts with its private key. This is the inverse of JWS signature verification.
+
+### Configuration
+
+JWE support is opt-in. It is only activated when `jweKeyStoreFile` is configured on the OIDC configuration bean.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `jweKeyStoreFile` | `String` | -- | Path to the Java keystore (JKS/PKCS12) containing the private key for JWE decryption |
+| `jweKeyStorePassword` | `String` | -- | Password for the keystore |
+| `jweKeyStoreType` | `String` | `PKCS12` | Keystore type (`PKCS12` or `JKS`) |
+| `jweKeyAlias` | `String` | *(first alias)* | Alias of the private key within the keystore |
+| `jweKeyPassword` | `String` | *(keystore password)* | Password for the specific key entry (defaults to the keystore password) |
+
+### Supported Algorithms
+
+The JWE decryptor supports the following key management algorithms:
+
+- **RSA-OAEP**, **RSA-OAEP-256** (RSA keys)
+- **ECDH-ES**, **ECDH-ES+A128KW**, **ECDH-ES+A256KW** (EC keys)
+
+Content encryption methods: **A128GCM**, **A256GCM**, **A128CBC-HS256**, **A256CBC-HS512**.
+
+### Example
+
+```xml
+<bean id="oidcOAuth2Config"
+      class="...openid_connect.OpenIdConnectConfiguration">
+    <property name="clientId" value="my-client-id" />
+    <property name="clientSecret" value="my-client-secret" />
+    <property name="discoveryUrl"
+              value="https://idp.example.com/.well-known/openid-configuration" />
+    <!-- JWE decryption -->
+    <property name="jweKeyStoreFile" value="/etc/geostore/jwe-keystore.p12" />
+    <property name="jweKeyStorePassword" value="changeit" />
+    <property name="jweKeyStoreType" value="PKCS12" />
+    <property name="jweKeyAlias" value="geostore-jwe" />
+</bean>
+```
+
+Or in `geostore-ovr.properties`:
+
+```properties
+oidcOAuth2Config.jweKeyStoreFile=/etc/geostore/jwe-keystore.p12
+oidcOAuth2Config.jweKeyStorePassword=changeit
+oidcOAuth2Config.jweKeyStoreType=PKCS12
+oidcOAuth2Config.jweKeyAlias=geostore-jwe
+```
+
+### Creating a JWE Keystore
+
+Generate an RSA key pair and PKCS12 keystore using `keytool`:
+
+```bash
+keytool -genkeypair -alias geostore-jwe \
+  -keyalg RSA -keysize 2048 \
+  -storetype PKCS12 \
+  -keystore /etc/geostore/jwe-keystore.p12 \
+  -storepass changeit \
+  -dname "CN=GeoStore JWE"
+```
+
+Export the public key (to provide to the IdP for encryption):
+
+```bash
+keytool -exportcert -alias geostore-jwe \
+  -keystore /etc/geostore/jwe-keystore.p12 \
+  -storepass changeit \
+  -rfc -file geostore-jwe-public.pem
+```
+
+!!! warning "Backward Compatibility"
+    When `jweKeyStoreFile` is not configured, JWE support is completely disabled. Plain JWS tokens work exactly as before — no configuration changes are required for existing deployments.
+
+---
+
 ## Troubleshooting
 
 | Error message | Cause | Resolution |
@@ -264,3 +354,5 @@ Each provider can independently configure its own `bearerTokenStrategy`, `maxTok
 | *"Token introspection returned active=false"* | The token has been revoked or has expired at the provider | Request a new token. If using refresh tokens, ensure the refresh flow is working |
 | *"Bearer token introspection requested but no introspection endpoint is configured"* | Strategy is `introspection` or `auto` (fallback) but no endpoint is set | Configure `introspectionEndpoint` explicitly or set a `discoveryUrl` for auto-discovery |
 | *"Attached Bearer Token is invalid (decoding failed)"* | The token is not a valid JWT (malformed, wrong encoding) | Verify the token format. If the provider issues opaque tokens, switch to the `introspection` or `auto` strategy |
+| *"JWE token decryption failed"* | The JWE token could not be decrypted (wrong key, unsupported algorithm, corrupted token) | Verify the keystore contains the correct private key. Check that the IdP is encrypting with GeoStore's public key and using a supported algorithm (RSA-OAEP-256 + A256GCM recommended) |
+| *"JWE keystore does not contain a private key"* | The configured keystore file exists but the specified alias does not contain a private key | Verify `jweKeyAlias` matches an alias with a private key entry in the keystore. Use `keytool -list -keystore ...` to inspect aliases |

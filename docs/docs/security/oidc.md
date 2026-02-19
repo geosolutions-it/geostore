@@ -133,6 +133,19 @@ These are normally auto-filled by discovery. Set them explicitly only if you nee
 
     Tries JWT validation first. If decoding or signature verification fails, falls back to introspection.
 
+### JWE (Encrypted Token) Settings
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `jweKeyStoreFile` | String | -- | Path to the Java keystore (JKS/PKCS12) containing the private key for JWE decryption |
+| `jweKeyStorePassword` | String | -- | Keystore password |
+| `jweKeyStoreType` | String | `PKCS12` | Keystore type (`PKCS12` or `JKS`) |
+| `jweKeyAlias` | String | *(first alias)* | Alias of the private key in the keystore |
+| `jweKeyPassword` | String | *(keystore password)* | Password for the specific key entry |
+
+!!! note "JWE is opt-in"
+    JWE decryption is only activated when `jweKeyStoreFile` is set. Plain JWS tokens are always accepted regardless of this setting. See [Bearer Tokens - JWE](bearer-tokens.md#jwe-encrypted-tokens) for details.
+
 ### Authentication Flow Settings
 
 | Property | Type | Default | Description |
