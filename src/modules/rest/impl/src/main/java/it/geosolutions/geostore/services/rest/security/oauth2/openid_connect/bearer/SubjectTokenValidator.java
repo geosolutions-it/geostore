@@ -7,8 +7,8 @@ import java.util.Map;
  * This verifies that the token is about our user (i.e. the access token and userinfo endpoint agree
  * on who).
  *
- * <p>for keycloak, the "sub" of the JWT and userInfo are the same. for Azure AD, the "sub" of the
- * userInfo is in the JWT "xms_st" claim. "xms_st": { "sub":
+ * <p>For most OIDC providers, the "sub" of the JWT and userInfo are the same. For Azure AD, the
+ * "sub" of the userInfo is in the JWT "xms_st" claim. "xms_st": { "sub":
  * "982kuI1hxIANLB__lrKejDgDnyjPnhbKLdPUF0JmOD1" },
  *
  * <p>The spec suggests verifying the user vs token subjects match, so this does that check.

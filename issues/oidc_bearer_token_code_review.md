@@ -263,10 +263,13 @@ Configuration format: `"idp_role:ADMIN,idp_viewer:GUEST"` (comma-separated key:v
 - `PKCERequestEnhancer.enhance()` retrieves the `code_verifier` from the session if not
   already present in the `AccessTokenRequest`.
 
-### 6.4 Keycloak Filter
+### 6.4 Keycloak Filter (REMOVED)
 
-`KeyCloakFilter.java` uses Keycloak's own adapter library (`RequestAuthenticator`) for bearer
-token validation. It is NOT affected by the introspection bug and was not modified.
+The Keycloak adapter (`KeyCloakFilter.java` and all associated classes) has been removed from
+the codebase. The generic OIDC path now covers all features previously provided by the Keycloak
+adapter, including role/group mappings, PKCE, JWKS-based JWT verification, and bearer token
+validation. OIDC is the single authentication path for all OpenID Connect providers (including
+Keycloak).
 
 ---
 

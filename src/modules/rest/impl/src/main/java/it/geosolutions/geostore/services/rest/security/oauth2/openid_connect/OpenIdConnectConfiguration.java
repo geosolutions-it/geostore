@@ -57,6 +57,7 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     boolean allowBearerTokens = true;
     boolean usePKCE = false;
     int maxTokenAgeSecs = 0;
+    String bearerTokenStrategy = "jwt";
 
     public String getJwkURI() {
         return jwkURI;
@@ -121,6 +122,19 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
         this.maxTokenAgeSecs = maxTokenAgeSecs;
     }
 
+    /**
+     * Strategy for validating bearer tokens: "jwt" (default, decode and verify JWT),
+     * "introspection" (call the token introspection endpoint), or "auto" (try JWT first, fallback
+     * to introspection).
+     */
+    public String getBearerTokenStrategy() {
+        return bearerTokenStrategy;
+    }
+
+    public void setBearerTokenStrategy(String bearerTokenStrategy) {
+        this.bearerTokenStrategy = bearerTokenStrategy;
+    }
+
     @Override
     public AuthenticationEntryPoint getAuthenticationEntryPoint() {
         if (!usePKCE) {
@@ -158,36 +172,43 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     }
 
     /**
-     * Build the logout endpoint.
+     * Build the OIDC RP-Initiated Logout endpoint. Uses standard parameters: id_token_hint,
+     * post_logout_redirect_uri, and client_id.
      *
-     * @param token the current access_token.
-     * @return the logout endpoint.
+     * @param token the refresh token (unused for OIDC logout, kept for API compat).
+     * @param accessToken the access token (fallback if no ID token is available).
+     * @param configuration the OAuth2Configuration.
+     * @return the logout endpoint, or null if no logoutUri is configured.
      */
     @Override
     public Endpoint buildLogoutEndpoint(
             String token, String accessToken, OAuth2Configuration configuration) {
-        Endpoint result = null;
         String uri = getLogoutUri();
-        String idToken = OAuth2Utils.getIdToken() != null ? OAuth2Utils.getIdToken() : accessToken;
-        if (uri != null) {
-            HttpHeaders headers = new HttpHeaders();
+        if (uri == null) return null;
 
-            MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-            if (idToken != null) {
-                params.put("token_type_hint", Collections.singletonList("id_token"));
-                headers.set("Authorization", "Bearer " + idToken);
-            }
-            if (StringUtils.hasText(getPostLogoutRedirectUri()))
-                params.put(
-                        "post_logout_redirect_uri",
-                        Collections.singletonList(getPostLogoutRedirectUri()));
-            getLogoutRequestParams(token, getClientId(), params);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
-            HttpEntity<MultiValueMap<String, String>> requestEntity =
-                    new HttpEntity<>(null, headers);
-
-            result = new Endpoint(HttpMethod.GET, appendParameters(params, uri), requestEntity);
+        // id_token_hint: the ID token JWT string (required by most OIDC providers)
+        String idToken = OAuth2Utils.getIdToken();
+        if (idToken == null) idToken = accessToken;
+        if (idToken != null) {
+            params.put("id_token_hint", Collections.singletonList(idToken));
         }
-        return result;
+
+        // client_id: some providers require it alongside id_token_hint
+        if (StringUtils.hasText(getClientId())) {
+            params.put("client_id", Collections.singletonList(getClientId()));
+        }
+
+        // post_logout_redirect_uri: where to redirect after logout
+        if (StringUtils.hasText(getPostLogoutRedirectUri())) {
+            params.put(
+                    "post_logout_redirect_uri",
+                    Collections.singletonList(getPostLogoutRedirectUri()));
+        }
+
+        HttpEntity<MultiValueMap<String, String>> requestEntity =
+                new HttpEntity<>(null, new HttpHeaders());
+        return new Endpoint(HttpMethod.GET, appendParameters(params, uri), requestEntity);
     }
 }

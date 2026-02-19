@@ -588,11 +588,17 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         } else if (token instanceof String) {
             tokenValue = (String) token;
         }
-        if (configuration.getRevokeEndpoint() != null && tokenValue != null) {
-            if (LOGGER.isDebugEnabled()) LOGGER.info("Performing remote logout");
+        if (tokenValue == null) return;
+
+        // Revoke the token if a revocation endpoint is available
+        if (configuration.getRevokeEndpoint() != null) {
+            if (LOGGER.isDebugEnabled()) LOGGER.info("Revoking token at revocation endpoint");
             callRevokeEndpoint(tokenValue, accessToken);
-            callRemoteLogout(tokenValue, accessToken);
         }
+
+        // Call the remote logout endpoint (end_session_endpoint) independently
+        if (LOGGER.isDebugEnabled()) LOGGER.info("Performing remote logout");
+        callRemoteLogout(tokenValue, accessToken);
     }
 
     protected void callRevokeEndpoint(String token, String accessToken) {

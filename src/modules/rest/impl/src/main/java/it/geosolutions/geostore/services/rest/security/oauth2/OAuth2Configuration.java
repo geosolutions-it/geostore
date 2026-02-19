@@ -69,6 +69,7 @@ public class OAuth2Configuration extends IdPConfiguration {
     private String checkTokenEndpointUrl;
     private String logoutUri;
     private String revokeEndpoint;
+    private String introspectionEndpoint;
 
     // Additional settings
     private boolean globalLogoutEnabled = false;
@@ -407,6 +408,20 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public void setRevokeEndpoint(String revokeEndpoint) {
         this.revokeEndpoint = revokeEndpoint;
+    }
+
+    /** @return the token introspection endpoint (RFC 7662). */
+    public String getIntrospectionEndpoint() {
+        return introspectionEndpoint;
+    }
+
+    /**
+     * Set the token introspection endpoint.
+     *
+     * @param introspectionEndpoint the introspection endpoint URL.
+     */
+    public void setIntrospectionEndpoint(String introspectionEndpoint) {
+        this.introspectionEndpoint = introspectionEndpoint;
     }
 
     /**

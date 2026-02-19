@@ -81,13 +81,7 @@
         <constructor-arg ref="restSessionService"/>
     </bean>
 
-    <bean id="keycloakServiceDelegate"
-          class="it.geosolutions.geostore.services.rest.security.keycloak.KeycloakSessionServiceDelegate">
-        <constructor-arg ref="restSessionService"/>
-        <constructor-arg ref="userService"/>
-    </bean>
-
-    <bean id="googleSessionServiceDelegate"
+<bean id="googleSessionServiceDelegate"
           class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleSessionServiceDelegate">
         <constructor-arg ref="restSessionService"/>
         <constructor-arg ref="userService"/>
@@ -107,12 +101,7 @@
           class="it.geosolutions.geostore.services.rest.security.oauth2.InMemoryTokenStorage">
     </bean>
 
-    <bean id="keycloakLoginService"
-          class="it.geosolutions.geostore.services.rest.security.keycloak.KeyCloakLoginService">
-        <constructor-arg ref="idpLoginRest"/>
-    </bean>
-
-    <bean id="googleLoginService"
+<bean id="googleLoginService"
           class="it.geosolutions.geostore.services.rest.security.oauth2.google.GoogleLoginService">
         <constructor-arg ref="idpLoginRest"/>
     </bean>

@@ -43,6 +43,7 @@ public class DiscoveryClient {
     private static final String JWK_SET_URI_ATTR_NAME = "jwks_uri";
     private static final String SCOPES_SUPPORTED = "scopes_supported";
     private static final String REVOCATION_ENDPOINT = "revocation_endpoint";
+    private static final String INTROSPECTION_ENDPOINT = "introspection_endpoint";
 
     private final RestTemplate restTemplate;
     private String location;
@@ -102,6 +103,8 @@ public class DiscoveryClient {
                     .ifPresent(uri -> conf.setLogoutUri((String) uri));
             Optional.ofNullable(response.get(getRevocationEndpoint()))
                     .ifPresent(s -> conf.setRevokeEndpoint((String) s));
+            Optional.ofNullable(response.get(getIntrospectionEndpoint()))
+                    .ifPresent(s -> conf.setIntrospectionEndpoint((String) s));
             if (conf.getScopes() == null || conf.getScopes().isEmpty()) {
                 Optional.ofNullable(response.get(getScopesSupported()))
                         .ifPresent(
@@ -148,5 +151,9 @@ public class DiscoveryClient {
 
     protected String getRevocationEndpoint() {
         return REVOCATION_ENDPOINT;
+    }
+
+    protected String getIntrospectionEndpoint() {
+        return INTROSPECTION_ENDPOINT;
     }
 }

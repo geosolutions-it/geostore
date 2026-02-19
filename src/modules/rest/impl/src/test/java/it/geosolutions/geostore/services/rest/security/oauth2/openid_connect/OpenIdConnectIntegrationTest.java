@@ -699,6 +699,211 @@ public class OpenIdConnectIntegrationTest {
         assertNotNull(defaultCache);
     }
 
+    @Test
+    public void testBearerTokenIntrospection() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setBearerTokenStrategy("introspection");
+        configuration.setIntrospectionEndpoint(authService + "/introspect");
+
+        // Stub the introspection endpoint to return active=true with claims
+        openIdConnectService.stubFor(
+                WireMock.post(urlPathEqualTo("/introspect"))
+                        .withRequestBody(containing("token=opaque-test-token-12345"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"active\":true,\"sub\":\"test-sub-opaque\","
+                                                        + "\"email\":\"opaque@example.com\","
+                                                        + "\"preferred_username\":\"opaque_user\"}")));
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer opaque-test-token-12345");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Opaque bearer token should authenticate via introspection");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("opaque@example.com", user.getName());
+    }
+
+    @Test
+    public void testBearerTokenIntrospectionInactive() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setBearerTokenStrategy("introspection");
+        configuration.setIntrospectionEndpoint(authService + "/introspect");
+
+        // Stub the introspection endpoint to return active=false
+        openIdConnectService.stubFor(
+                WireMock.post(urlPathEqualTo("/introspect"))
+                        .withRequestBody(containing("token=revoked-token-99999"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody("{\"active\":false}")));
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer revoked-token-99999");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNull(authentication, "Inactive token should not authenticate via introspection");
+    }
+
+    @Test
+    public void testBearerTokenAutoStrategyJwtSuccess() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setBearerTokenStrategy("auto");
+        configuration.setIntrospectionEndpoint(authService + "/introspect");
+
+        // Build a valid signed JWT — auto strategy should succeed with JWT, no introspection needed
+        String jwt = createSignedJwt("auto-jwt@example.com", "test-sub-auto", CLIENT_ID);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Auto strategy should authenticate valid JWT");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("auto-jwt@example.com", user.getName());
+    }
+
+    @Test
+    public void testBearerTokenAutoStrategyFallbackToIntrospection()
+            throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setBearerTokenStrategy("auto");
+        configuration.setIntrospectionEndpoint(authService + "/introspect");
+
+        // Stub the introspection endpoint for the opaque token fallback
+        openIdConnectService.stubFor(
+                WireMock.post(urlPathEqualTo("/introspect"))
+                        .withRequestBody(containing("token=not-a-jwt-opaque-token"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"active\":true,\"sub\":\"test-sub-fallback\","
+                                                        + "\"email\":\"fallback@example.com\"}")));
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer not-a-jwt-opaque-token");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(
+                authentication,
+                "Auto strategy should fall back to introspection for non-JWT tokens");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("fallback@example.com", user.getName());
+    }
+
+    @Test
+    public void testNestedClaimRoles() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        // Keycloak-style nested claim path
+        configuration.setRolesClaim("realm_access.roles");
+
+        long now = System.currentTimeMillis() / 1000;
+        // Build JWT with nested realm_access.roles claim (Keycloak format)
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-nested")
+                        .withClaim("email", "nested@example.com")
+                        .withClaim(
+                                "realm_access",
+                                java.util.Collections.singletonMap(
+                                        "roles", java.util.Arrays.asList("ADMIN", "user")))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Nested claim path should resolve roles");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("nested@example.com", user.getName());
+        assertEquals(
+                Role.ADMIN,
+                user.getRole(),
+                "realm_access.roles containing ADMIN should resolve to ADMIN role");
+    }
+
+    @Test
+    public void testNestedClaimGroups() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("resource_access.geostore.groups");
+
+        long now = System.currentTimeMillis() / 1000;
+        // Build JWT with deeply nested groups claim
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-nested-groups")
+                        .withClaim("email", "nested-groups@example.com")
+                        .withClaim(
+                                "resource_access",
+                                java.util.Collections.singletonMap(
+                                        "geostore",
+                                        java.util.Collections.singletonMap(
+                                                "groups",
+                                                java.util.Arrays.asList("analysts", "editors"))))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Nested claim path should resolve groups");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("nested-groups@example.com", user.getName());
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("analysts"), "Should have 'analysts' from nested path");
+        assertTrue(groupNames.contains("editors"), "Should have 'editors' from nested path");
+    }
+
     /** Creates a properly RSA-signed JWT with email, sub, and aud claims. */
     private String createSignedJwt(String email, String sub, String aud) {
         long now = System.currentTimeMillis() / 1000;
