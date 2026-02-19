@@ -39,8 +39,31 @@ import org.springframework.security.access.annotation.Secured;
 /**
  * REST service mapped under the <code>/users</code> path. For example, to assign a favorite to the
  * current logged user, use the endpoint: <code>POST /rest/users/user/favorite/{resourceId}</code>.
+ *
+ * <p><b>For compatibility reasons, the now deprecated endpoint to add favorites has been kept</b>:
+ * <br>
+ * <i>To assign a favorite to the user, use the endpoint: <code>
+ * POST /rest/users/user/{userId}/favorite/{resourceId}</code></i>.
  */
 public interface RESTFavoriteService {
+
+    /**
+     * @param id user identifier
+     * @param resourceId resource identifier
+     * @throws NotFoundWebEx
+     * @deprecated use {@link #addFavorite(SecurityContext, long)} instead
+     */
+    @POST
+    @Path("user/{id}/favorite/{resourceId}")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    @Deprecated(forRemoval = true)
+    default void addFavorite(
+            @Context SecurityContext sc,
+            @PathParam("id") long id,
+            @PathParam("resourceId") long resourceId)
+            throws NotFoundWebEx {
+        addFavorite(sc, resourceId);
+    }
 
     /**
      * @param resourceId resource identifier
@@ -51,6 +74,24 @@ public interface RESTFavoriteService {
     @Secured({"ROLE_ADMIN", "ROLE_USER"})
     void addFavorite(@Context SecurityContext sc, @PathParam("resourceId") long resourceId)
             throws NotFoundWebEx;
+
+    /**
+     * @param id user identifier
+     * @param resourceId resource identifier
+     * @throws NotFoundWebEx
+     * @deprecated use {@link #removeFavorite(SecurityContext, long)} instead
+     */
+    @DELETE
+    @Path("user/{id}/favorite/{resourceId}")
+    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    @Deprecated(forRemoval = true)
+    default void removeFavorite(
+            @Context SecurityContext sc,
+            @PathParam("id") long id,
+            @PathParam("resourceId") long resourceId)
+            throws NotFoundWebEx {
+        removeFavorite(sc, resourceId);
+    }
 
     /**
      * @param resourceId resource identifier
