@@ -65,6 +65,7 @@ nav:
       - Roles & Groups: security/roles-and-groups.md
       - LDAP: security/ldap.md
       - Session Management: security/session-management.md
+      - Monitoring & Auditing: security/monitoring-and-auditing.md
       - Property Reference: security/properties-reference.md
   - Guides:
       - Keycloak Setup: guides/keycloak-setup.md

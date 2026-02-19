@@ -100,6 +100,10 @@
         <constructor-arg ref="idpLoginRest"/>
     </bean>
 
+    <bean id="restDiagnosticsService"
+          class="it.geosolutions.geostore.services.rest.impl.RESTDiagnosticsServiceImpl">
+    </bean>
+
     <!-- ==================================================================== -->
     <!-- === REST Services ================================================== -->
     <!-- ==================================================================== -->
@@ -281,6 +285,21 @@
                 <property name="dropRootElement" value="true"/>
           </bean-->
             <ref bean="jaxbContextResolver"/>
+            <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
+        </jaxrs:providers>
+        <jaxrs:outInterceptors>
+            <ref bean="noCacheInterceptor"/>
+        </jaxrs:outInterceptors>
+    </jaxrs:server>
+
+    <jaxrs:server id="geoStoreRESTDiagnostics" address="/diagnostics">
+        <jaxrs:serviceBeans>
+            <ref bean="restDiagnosticsService"/>
+        </jaxrs:serviceBeans>
+        <jaxrs:features>
+            <cxf:logging/>
+        </jaxrs:features>
+        <jaxrs:providers>
             <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
         </jaxrs:providers>
         <jaxrs:outInterceptors>

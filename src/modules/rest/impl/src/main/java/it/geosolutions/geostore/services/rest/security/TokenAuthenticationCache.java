@@ -163,6 +163,10 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
         this.cache.invalidate(accessToken);
     }
 
+    public Cache<String, Authentication> getCache() {
+        return cache;
+    }
+
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
         this.context = applicationContext;
