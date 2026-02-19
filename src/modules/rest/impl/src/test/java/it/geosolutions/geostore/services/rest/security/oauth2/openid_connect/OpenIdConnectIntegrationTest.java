@@ -173,6 +173,54 @@ public class OpenIdConnectIntegrationTest {
                                                 "Content-Type", MediaType.APPLICATION_JSON_VALUE)
                                         .withBodyFile(
                                                 "userinfo.json"))); // disallow query parameters
+
+        // Microsoft Graph API stubs
+        openIdConnectService.stubFor(
+                WireMock.get(urlPathEqualTo("/graph/me/memberOf"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"value\":["
+                                                        + "{\"@odata.type\":\"#microsoft.graph.group\","
+                                                        + "\"displayName\":\"GIS Analysts\",\"id\":\"g1\"},"
+                                                        + "{\"@odata.type\":\"#microsoft.graph.group\","
+                                                        + "\"displayName\":\"Map Editors\",\"id\":\"g2\"},"
+                                                        + "{\"@odata.type\":\"#microsoft.graph.servicePrincipal\","
+                                                        + "\"displayName\":\"Some SP\",\"id\":\"sp1\"}"
+                                                        + "]}")));
+        openIdConnectService.stubFor(
+                WireMock.get(urlPathEqualTo("/graph/me/appRoleAssignments"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"value\":["
+                                                        + "{\"appRoleId\":\"role-guid-001\","
+                                                        + "\"resourceId\":\"sp-guid-001\"},"
+                                                        + "{\"appRoleId\":\"role-guid-002\","
+                                                        + "\"resourceId\":\"sp-guid-001\"}"
+                                                        + "]}")));
+        openIdConnectService.stubFor(
+                WireMock.get(urlPathEqualTo("/graph/servicePrincipals/sp-guid-001/appRoles"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"value\":["
+                                                        + "{\"id\":\"role-guid-001\","
+                                                        + "\"value\":\"Admin\","
+                                                        + "\"displayName\":\"Administrator\"},"
+                                                        + "{\"id\":\"role-guid-002\","
+                                                        + "\"value\":\"Viewer\","
+                                                        + "\"displayName\":\"Viewer\"}"
+                                                        + "]}")));
     }
 
     @BeforeEach
@@ -1206,6 +1254,280 @@ public class OpenIdConnectIntegrationTest {
         assertNull(
                 authentication,
                 "JWE token should not authenticate when no JWE keystore is configured");
+    }
+
+    @Test
+    public void testBearerTokenGroupsOverageResolvesViaGraph()
+            throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("groups");
+        configuration.setMsGraphEnabled(true);
+        configuration.setMsGraphEndpoint(authService + "/graph");
+        recreateFilter();
+
+        // Build JWT with groups overage indicator (_claim_names containing "groups")
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-overage")
+                        .withClaim("email", "overage@example.com")
+                        .withClaim(
+                                "_claim_names",
+                                java.util.Collections.singletonMap("groups", "src1"))
+                        .withClaim(
+                                "_claim_sources",
+                                java.util.Collections.singletonMap(
+                                        "src1",
+                                        java.util.Collections.singletonMap(
+                                                "endpoint",
+                                                "https://graph.microsoft.com/v1.0/me/memberOf")))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token with overage should authenticate");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("overage@example.com", user.getName());
+
+        // Verify groups were resolved from Graph
+        assertNotNull(user.getGroups(), "Groups should be populated from Graph");
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("GIS Analysts"), "Should have 'GIS Analysts' from Graph");
+        assertTrue(groupNames.contains("Map Editors"), "Should have 'Map Editors' from Graph");
+    }
+
+    @Test
+    public void testBearerTokenGroupsOverageWithMappings() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("groups");
+        configuration.setGroupMappings("GIS ANALYSTS:analysts_mapped,MAP EDITORS:editors_mapped");
+        configuration.setMsGraphEnabled(true);
+        configuration.setMsGraphEndpoint(authService + "/graph");
+        recreateFilter();
+
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-overage-map")
+                        .withClaim("email", "overage-map@example.com")
+                        .withClaim(
+                                "_claim_names",
+                                java.util.Collections.singletonMap("groups", "src1"))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token with overage + mappings should authenticate");
+        User user = (User) authentication.getPrincipal();
+
+        // Verify groups were resolved from Graph AND then mapped
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("analysts_mapped"),
+                "Graph group 'GIS Analysts' should map to 'analysts_mapped'");
+        assertTrue(
+                groupNames.contains("editors_mapped"),
+                "Graph group 'Map Editors' should map to 'editors_mapped'");
+    }
+
+    @Test
+    public void testBearerTokenGroupsOverageGraphUnavailable()
+            throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("groups");
+        configuration.setMsGraphEnabled(true);
+        // Use a non-existent graph endpoint path to simulate Graph unavailability
+        configuration.setMsGraphEndpoint(authService + "/graph-unavailable");
+        recreateFilter();
+
+        // Stub a 503 for the unavailable endpoint
+        openIdConnectService.stubFor(
+                WireMock.get(urlPathEqualTo("/graph-unavailable/me/memberOf"))
+                        .willReturn(aResponse().withStatus(503).withBody("Service Unavailable")));
+
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-overage-503")
+                        .withClaim("email", "overage-503@example.com")
+                        .withClaim(
+                                "_claim_names",
+                                java.util.Collections.singletonMap("groups", "src1"))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "User should still authenticate when Graph is unavailable");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("overage-503@example.com", user.getName());
+        // Groups may be empty since Graph failed, but user should still authenticate
+    }
+
+    @Test
+    public void testBearerTokenGroupsNoOverageSkipsGraph() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("groups");
+        configuration.setMsGraphEnabled(true);
+        configuration.setMsGraphEndpoint(authService + "/graph");
+        recreateFilter();
+
+        // JWT with inline groups (no overage) — Graph should NOT be called
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-no-overage")
+                        .withClaim("email", "no-overage@example.com")
+                        .withArrayClaim("groups", new String[] {"inline-group-A", "inline-group-B"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token with inline groups should authenticate");
+        User user = (User) authentication.getPrincipal();
+
+        // Verify inline groups were used (not Graph groups)
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("inline-group-A"), "Should have inline group A");
+        assertTrue(groupNames.contains("inline-group-B"), "Should have inline group B");
+        assertFalse(
+                groupNames.contains("GIS Analysts"), "Should NOT have Graph group when no overage");
+    }
+
+    @Test
+    public void testBearerTokenMsGraphRoles() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        configuration.setMsGraphEnabled(true);
+        configuration.setMsGraphRolesEnabled(true);
+        configuration.setMsGraphEndpoint(authService + "/graph");
+        recreateFilter();
+
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-graph-roles")
+                        .withClaim("email", "graph-roles@example.com")
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token with Graph roles should authenticate");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("graph-roles@example.com", user.getName());
+        // The Graph stubs return "Admin" and "Viewer" roles
+        assertEquals(Role.ADMIN, user.getRole(), "Graph app role 'Admin' should resolve to ADMIN");
+    }
+
+    @Test
+    public void testBearerTokenMsGraphDisabledIgnoresOverage()
+            throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("groups");
+        configuration.setMsGraphEnabled(false);
+        recreateFilter();
+
+        // JWT with overage but MS Graph disabled — groups overage should be ignored
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-disabled")
+                        .withClaim("email", "disabled@example.com")
+                        .withClaim(
+                                "_claim_names",
+                                java.util.Collections.singletonMap("groups", "src1"))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(
+                authentication, "User should authenticate even with overage when Graph disabled");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("disabled@example.com", user.getName());
+        // No Graph groups should be present since MS Graph is disabled
+        if (user.getGroups() != null) {
+            Set<String> groupNames =
+                    user.getGroups().stream()
+                            .map(UserGroup::getGroupName)
+                            .collect(Collectors.toSet());
+            assertFalse(
+                    groupNames.contains("GIS Analysts"),
+                    "Should NOT have Graph groups when msGraphEnabled=false");
+        }
     }
 
     /**

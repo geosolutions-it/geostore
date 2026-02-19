@@ -117,6 +117,19 @@ These are normally auto-filled by discovery. Set them explicitly only when overr
 !!! tip "Choosing a bearer token strategy"
     Use **jwt** (default) for best performance -- tokens are validated locally using the JWKS endpoint. Use **introspection** if your IdP issues opaque (non-JWT) tokens. Use **auto** to try JWT first and fall back to introspection on failure.
 
+### Microsoft Graph Settings
+
+| Property | Type | Default | Required | Description |
+|----------|------|---------|----------|-------------|
+| `msGraphEnabled` | boolean | `false` | No | Enable Microsoft Graph API integration for Azure AD groups overage resolution |
+| `msGraphEndpoint` | String | `https://graph.microsoft.com/v1.0` | No | Microsoft Graph API base URL |
+| `msGraphGroupsEnabled` | boolean | `true` | No | When MS Graph is enabled, resolve groups via `/me/memberOf` on overage detection |
+| `msGraphRolesEnabled` | boolean | `false` | No | When MS Graph is enabled, resolve app roles via `/me/appRoleAssignments` |
+| `msGraphAppId` | String | -- | No | Application ID for app role filtering (optional) |
+
+!!! note "MS Graph is opt-in"
+    MS Graph integration is only activated when `msGraphEnabled=true`. When enabled, GeoStore automatically detects Azure AD groups overage (>200 groups) and resolves group memberships via the Graph API. If no overage is detected, Graph is not called. See [Azure AD Setup Guide - Microsoft Graph Group Resolution](../guides/azure-ad-setup.md#microsoft-graph-group-resolution) for full details.
+
 ### Cache Settings
 
 | Property | Type | Default | Required | Description |

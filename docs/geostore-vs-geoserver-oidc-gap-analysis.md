@@ -24,11 +24,14 @@
 | Token expiry checking | Yes (`exp` claim) | Yes (`exp` + optional `iat` via `maxTokenAgeSecs`) |
 | Logout / post-logout redirect | Yes | Yes (`postLogoutRedirectUri`) |
 | Configurable scopes | Yes (space-separated) | Yes (comma-separated) |
-| Nested claim paths | JSON Path notation | Dot notation (JWT + userinfo) |
+| Nested claim paths | JSON Path notation | JsonPath + dot notation (JWT + userinfo) |
 | Auto-create users | N/A (different user model) | Yes (`autoCreateUser`) |
 | Configurable principal key | Yes | Yes (`principalKey`, `uniqueUsername`) |
 | `sendClientSecret` toggle | Yes | Yes |
 | Opaque token introspection | Yes (RFC 7662) | Yes (`bearerTokenStrategy`: jwt / introspection / auto) |
+| Multiple simultaneous providers | Yes (Google, GitHub, Azure, Keycloak, generic) | Yes (`oidc.providers`, `CompositeOpenIdConnectFilter`) |
+| JWE (encrypted tokens) | Yes | Yes (`JweTokenDecryptor`, RSA-OAEP / ECDH-ES, opt-in via `jweKeyStoreFile`) |
+| Microsoft Graph group/role resolution | Yes | Yes (`msGraphEnabled`, overage detection + `/me/memberOf` + `/me/appRoleAssignments`) |
 
 ---
 
@@ -46,18 +49,7 @@
 
 ## GeoStore gaps (features GeoServer has that GeoStore lacks)
 
-### Gap 1 (was Gap 2): Multiple simultaneous OIDC providers
-
-**Priority:** High
-**GeoServer:** Supports separate configurations for Google, GitHub, Azure, Keycloak, and generic OIDC — users can run multiple providers simultaneously (e.g., Google + Keycloak). Each gets its own filter chain entry, callback URL, and login button.
-
-**GeoStore current state:** A single `oidcOAuth2Config` bean. Multiple `OAuth2Configuration` beans are technically possible (Spring will wire them), but there's no documented pattern, no separate callback routes per provider, and no tested multi-provider flow.
-
-**What's needed:** Document and test the multi-provider pattern. Likely needs per-provider callback endpoints (`/openid/{provider}/callback`), and the login service needs to present multiple provider options.
-
----
-
-### Gap 2 (was Gap 3): GitHub OAuth2 (non-OIDC provider)
+### Gap 1: GitHub OAuth2 (non-OIDC provider)
 
 **Priority:** Low
 **GeoServer:** Dedicated GitHub provider that works with plain OAuth2 (no ID token, opaque access tokens). Uses GitHub's `/user` API endpoint for user info.
@@ -68,40 +60,14 @@
 
 ---
 
-### Gap 3 (was Gap 4): Microsoft Graph role source
+### ~~Gap 2: Microsoft Graph role/group source~~ **RESOLVED**
 
-**Priority:** Low
-**GeoServer:** Dedicated Azure Graph API integration to fetch `appRoleAssignments` from the Microsoft Graph endpoint. This is useful when Azure AD app roles are complex or exceed the token size limit.
-
-**GeoStore current state:** Relies on token claims only. Azure AD users must ensure roles appear in the `roles` claim via manifest configuration (`groupMembershipClaims`).
-
-**What's needed:** A pluggable role source mechanism that can call external APIs (like Graph) after initial authentication. Low priority because the token claim approach works for most Azure AD setups.
+**Status:** Implemented
+**GeoStore:** `msGraphEnabled=true` activates automatic Azure AD groups overage detection and resolution via Microsoft Graph API (`/me/memberOf` for groups, `/me/appRoleAssignments` + `/servicePrincipals/{id}/appRoles` for roles). Overage is detected by checking for `_claim_names` or `hasgroups=true` in the JWT. Completely opt-in, zero changes to existing behavior when disabled. Graph results flow through the standard role/group mapping pipeline. Graceful degradation on Graph API failures.
 
 ---
 
-### Gap 4 (was Gap 5): Full JSON Path for role/group extraction
-
-**Priority:** Low
-**GeoServer:** Uses JSON Path expressions for navigating token structures (e.g., `resource_access.geostore-client.roles` with potential for wildcards and array indexing).
-
-**GeoStore current state:** Simple dot notation (e.g., `realm_access.roles`). Supports multi-level nesting but no wildcards, array indexing, or filters.
-
-**What's needed:** Replace or extend the dot-notation resolver with a JSON Path library (e.g., Jayway JsonPath). Low priority because dot notation covers the vast majority of real-world claim structures.
-
----
-
-### Gap 5 (was Gap 6): JWE (encrypted token) support
-
-**Priority:** Low
-**GeoServer:** Can handle encrypted opaque tokens in JWE format.
-
-**GeoStore current state:** No JWE support. Tokens must be plain JWTs (JWS) or opaque tokens validated via introspection.
-
-**What's needed:** JWE decryption before JWT validation. Very niche — most OIDC providers use JWS, not JWE.
-
----
-
-### Gap 6 (was Gap 7): Dedicated "log sensitive information" toggle
+### Gap 3: Dedicated "log sensitive information" toggle
 
 **Priority:** Low
 **GeoServer:** Single checkbox flag to dump full token contents (access token, ID token, userinfo response) to logs for debugging.
@@ -117,6 +83,9 @@
 | Former gap | Resolution | Branch |
 |---|---|---|
 | Opaque token introspection (was Gap 1) | Fully implemented: `bearerTokenStrategy` supports jwt, introspection, and auto. RFC 7662 introspection via `introspectToken()`, auto strategy with JWT-first fallback. | `bearer_token_improvements` |
+| Multiple simultaneous OIDC providers (was Gap 2) | Fully implemented: `oidc.providers` property, `CompositeOpenIdConnectFilter` with per-provider routing for login/callback URLs and bearer tokens. Cross-provider isolation via separate JWKS/audience. | `bearer_token_improvements` |
+| Full JSON Path (was Gap 4) | Fully implemented: `rolesClaim`/`groupsClaim` support full JsonPath expressions (e.g. `$.resource_access.*.roles`) via Jayway JsonPath, plus legacy dot-notation auto-conversion. | `bearer_token_improvements` |
+| JWE encrypted token support (was Gap 6) | Fully implemented: `JweTokenDecryptor` detects 5-part JWE tokens and decrypts via Nimbus JOSE+JWT using the relying party's private key from a configurable Java keystore. Supports RSA-OAEP and ECDH-ES. Opt-in via `jweKeyStoreFile`. | `bearer_token_improvements` |
 
 ---
 
@@ -124,9 +93,6 @@
 
 | Gap | Priority | Effort | Impact |
 |---|---|---|---|
-| Multiple simultaneous providers | High | High | Enables organizations with multiple IdPs |
 | GitHub OAuth2 | Low | High | Single non-OIDC provider |
 | Microsoft Graph role source | Low | Medium | Niche Azure AD use case |
-| Full JSON Path | Low | Small | Covers edge cases only |
-| JWE support | Low | Medium | Very niche |
 | Log sensitive info toggle | Low | Small | Convenience only |

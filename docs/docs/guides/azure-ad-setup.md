@@ -282,8 +282,56 @@ oidcOAuth2Config.roleMappings=Admin:ADMIN,User:USER
 
 In the Azure portal, under **Token configuration** -> **Groups claim**, some configurations allow emitting group display names. However, this is limited and not available for all group types.
 
-!!! warning
-    Azure AD limits the `groups` claim to **200 groups** per token. If a user belongs to more than 200 groups, Azure AD returns a `_claim_sources` link (a URL to fetch the full group list) instead of the groups array. GeoStore does not currently resolve this overage link. For users with large group memberships, use **App Roles** instead.
+!!! note "Groups Overage (>200 groups)"
+    Azure AD limits the `groups` claim to **200 groups** per token. If a user belongs to more than 200 groups, Azure AD replaces the `groups` array with `_claim_names`/`_claim_sources` metadata pointing to the Microsoft Graph API. GeoStore can automatically detect this overage condition and resolve group memberships via the Graph API. See [Microsoft Graph Group Resolution](#microsoft-graph-group-resolution) below.
+
+### Microsoft Graph Group Resolution
+
+When a user belongs to more than 200 groups, Azure AD replaces the `groups` claim in the JWT with `_claim_names` and `_claim_sources` metadata (a "groups overage" condition). GeoStore can automatically detect this and resolve group memberships by calling the Microsoft Graph API.
+
+**Enable Microsoft Graph integration:**
+
+```properties
+# Enable MS Graph group resolution for overage scenarios
+oidcOAuth2Config.msGraphEnabled=true
+
+# Graph API endpoint (default: https://graph.microsoft.com/v1.0)
+# oidcOAuth2Config.msGraphEndpoint=https://graph.microsoft.com/v1.0
+
+# Enable group resolution via /me/memberOf (default: true)
+oidcOAuth2Config.msGraphGroupsEnabled=true
+
+# Optionally enable app role resolution via /me/appRoleAssignments (default: false)
+# oidcOAuth2Config.msGraphRolesEnabled=false
+
+# Application ID for app role filtering (optional)
+# oidcOAuth2Config.msGraphAppId=YOUR_APPLICATION_CLIENT_ID
+```
+
+**How it works:**
+
+1. GeoStore decodes the JWT and checks for overage indicators (`_claim_names` containing the groups key, or `hasgroups=true`).
+2. If overage is detected, GeoStore calls Microsoft Graph `GET /me/memberOf` to resolve group display names.
+3. The resolved groups are injected into the claim pipeline under the configured `groupsClaim` key.
+4. The existing role/group mapping pipeline processes the Graph-resolved groups normally.
+5. If MS Graph is unreachable, the user still authenticates but without Graph-sourced groups (graceful degradation).
+
+When no overage is detected (the JWT contains inline groups), MS Graph is not called even when enabled.
+
+**Required Azure AD permissions:**
+
+The bearer token (or the application's access token) must have the following Microsoft Graph API permissions:
+
+| Permission | Type | Required for |
+|------------|------|--------------|
+| `GroupMember.Read.All` | Delegated or Application | Group resolution via `/me/memberOf` |
+| `AppRoleAssignment.ReadWrite.All` | Delegated or Application | App role resolution (only if `msGraphRolesEnabled=true`) |
+
+Grant these permissions in your Azure AD app registration under **API permissions**, and click **Grant admin consent**.
+
+**App Role Resolution (optional):**
+
+If `msGraphRolesEnabled=true`, GeoStore also resolves app role assignments via the Graph API by calling `/me/appRoleAssignments` and `/servicePrincipals/{id}/appRoles`. This maps app role GUIDs to human-readable role values. The resolved roles are placed under the configured `rolesClaim` key.
 
 ---
 

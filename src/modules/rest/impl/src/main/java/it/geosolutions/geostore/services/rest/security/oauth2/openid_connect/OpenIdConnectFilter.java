@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
@@ -36,6 +37,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JweTokenDecryptor;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MicrosoftGraphClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.OpenIdTokenValidator;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -46,6 +48,8 @@ import java.security.PrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -75,6 +79,8 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
     private final JwksRsaKeyProvider jwksKeyProvider;
     private volatile JweTokenDecryptor jweDecryptor;
     private volatile boolean jweDecryptorInitialized = false;
+    private volatile MicrosoftGraphClient graphClient;
+    private volatile boolean graphClientInitialized = false;
 
     /**
      * @param tokenServices a RemoteTokenServices instance.
@@ -492,6 +498,135 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             }
             jweDecryptorInitialized = true;
             return jweDecryptor;
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void addAuthoritiesFromToken(
+            User user, String tokenString, Map<String, Object> userinfoMap) {
+        OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+        if (oidcConfig.isMsGraphEnabled()) {
+            MicrosoftGraphClient client = getGraphClient();
+            String accessToken = resolveAccessTokenForGraph();
+            if (client != null && accessToken != null) {
+                Map<String, Object> enriched =
+                        (userinfoMap != null) ? new HashMap<>(userinfoMap) : new HashMap<>();
+
+                // Groups overage resolution
+                if (oidcConfig.isMsGraphGroupsEnabled()
+                        && configuration.getGroupsClaim() != null
+                        && isGroupsOverage(tokenString, configuration.getGroupsClaim())) {
+                    List<String> graphGroups = client.fetchMemberOfGroups(accessToken);
+                    if (!graphGroups.isEmpty()) {
+                        enriched.put(configuration.getGroupsClaim(), graphGroups);
+                    }
+                }
+
+                // App roles resolution
+                if (oidcConfig.isMsGraphRolesEnabled() && configuration.getRolesClaim() != null) {
+                    List<MicrosoftGraphClient.AppRoleAssignment> assignments =
+                            client.fetchAppRoleAssignments(accessToken);
+                    if (!assignments.isEmpty()) {
+                        List<String> roleNames =
+                                client.resolveAppRoleNames(accessToken, assignments);
+                        if (!roleNames.isEmpty()) {
+                            enriched.put(configuration.getRolesClaim(), roleNames);
+                        }
+                    }
+                }
+
+                userinfoMap = enriched;
+            }
+        }
+        super.addAuthoritiesFromToken(user, tokenString, userinfoMap);
+    }
+
+    /**
+     * Checks whether the JWT payload indicates a groups overage condition. Azure AD replaces the
+     * groups claim with {@code _claim_names} containing a key for the groups claim (or {@code
+     * hasgroups=true}) when the user belongs to more than 200 groups.
+     */
+    boolean isGroupsOverage(String tokenString, String groupsClaim) {
+        if (tokenString == null || tokenString.isEmpty()) return false;
+        try {
+            // Decode the JWT payload (second segment)
+            String[] parts = tokenString.split("\\.");
+            if (parts.length < 2) return false;
+            String payloadJson =
+                    new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            JSONObject payload = JSONObject.fromObject(payloadJson);
+
+            // Check hasgroups=true
+            Object hasgroups = payload.get("hasgroups");
+            if (Boolean.TRUE.equals(hasgroups)
+                    || "true".equalsIgnoreCase(String.valueOf(hasgroups))) {
+                LOGGER.info("MS Graph: groups overage detected (hasgroups=true)");
+                return true;
+            }
+
+            // Check _claim_names containing the groups claim key
+            Object claimNames = payload.get("_claim_names");
+            if (claimNames instanceof Map) {
+                Map<String, Object> names = (Map<String, Object>) claimNames;
+                if (names.containsKey(groupsClaim)) {
+                    LOGGER.info(
+                            "MS Graph: groups overage detected (_claim_names contains '{}')",
+                            groupsClaim);
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            LOGGER.debug("Could not check for groups overage in JWT", e);
+            return false;
+        }
+    }
+
+    /**
+     * Resolves the access token for Microsoft Graph API calls from the OAuth2 client context.
+     *
+     * @return the access token value, or null if unavailable.
+     */
+    private String resolveAccessTokenForGraph() {
+        try {
+            OAuth2AccessToken token = restTemplate.getOAuth2ClientContext().getAccessToken();
+            return token != null ? token.getValue() : null;
+        } catch (Exception e) {
+            LOGGER.debug("Could not resolve access token for MS Graph", e);
+            return null;
+        }
+    }
+
+    /** Lazily initializes the Microsoft Graph client. Returns null if MS Graph is not enabled. */
+    private MicrosoftGraphClient getGraphClient() {
+        if (graphClientInitialized) {
+            return graphClient;
+        }
+        synchronized (this) {
+            if (graphClientInitialized) {
+                return graphClient;
+            }
+            try {
+                OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+                if (!oidcConfig.isMsGraphEnabled()) {
+                    LOGGER.debug("MS Graph not enabled");
+                    graphClient = null;
+                    graphClientInitialized = true;
+                    return null;
+                }
+
+                graphClient = new MicrosoftGraphClient(oidcConfig.getMsGraphEndpoint());
+                LOGGER.info(
+                        "MS Graph client initialized with endpoint '{}'",
+                        oidcConfig.getMsGraphEndpoint());
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize MS Graph client: {}", e.getMessage(), e);
+                graphClient = null;
+            }
+            graphClientInitialized = true;
+            return graphClient;
         }
     }
 

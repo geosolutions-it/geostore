@@ -137,6 +137,39 @@ On each login, the following reconciliation occurs:
 
 ---
 
+## Azure AD Groups Overage and Microsoft Graph Resolution
+
+Azure AD limits the `groups` claim to **200 groups** per token. When a user belongs to more than 200 groups, Azure AD replaces the `groups` array with metadata (`_claim_names` and `_claim_sources`) pointing to the Microsoft Graph API. This is known as the "groups overage" condition.
+
+GeoStore detects this condition automatically by checking the JWT payload for:
+
+- `_claim_names` containing the configured `groupsClaim` key (e.g., `"groups"`)
+- `hasgroups=true`
+
+When overage is detected and `msGraphEnabled=true`, GeoStore calls Microsoft Graph `GET /me/memberOf` to resolve group display names, then injects them into the claim pipeline. The resolved groups flow through the standard mapping and reconciliation process.
+
+```
+1. Decode JWT payload
+2. Check for overage indicators (_claim_names or hasgroups)
+3. If overage detected AND msGraphEnabled:
+   a. Call GET /me/memberOf → extract group displayName values
+   b. Inject resolved groups into userinfoMap under groupsClaim key
+4. If msGraphRolesEnabled:
+   a. Call GET /me/appRoleAssignments → extract role GUIDs
+   b. Call GET /servicePrincipals/{id}/appRoles → map GUIDs to role values
+   c. Inject resolved roles into userinfoMap under rolesClaim key
+5. Proceed with normal role/group resolution pipeline (mappings, reconciliation)
+```
+
+If MS Graph is unreachable or returns an error, the user still authenticates but without Graph-sourced groups or roles (graceful degradation).
+
+!!! tip "When to enable MS Graph"
+    Enable MS Graph group resolution (`msGraphEnabled=true`) if your Azure AD users may belong to more than 200 groups. For smaller deployments, inline JWT groups work fine without Graph.
+
+See the [Azure AD Setup Guide](../guides/azure-ad-setup.md#microsoft-graph-group-resolution) for configuration details and required Azure AD permissions.
+
+---
+
 ## Configuration Properties
 
 | Property | Type | Default | Description |

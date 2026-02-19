@@ -67,6 +67,13 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     String jweKeyAlias;
     String jweKeyPassword;
 
+    // Microsoft Graph API integration
+    boolean msGraphEnabled = false;
+    String msGraphEndpoint = "https://graph.microsoft.com/v1.0";
+    boolean msGraphGroupsEnabled = true;
+    boolean msGraphRolesEnabled = false;
+    String msGraphAppId;
+
     public String getJwkURI() {
         return jwkURI;
     }
@@ -193,6 +200,46 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setJweKeyPassword(String jweKeyPassword) {
         this.jweKeyPassword = jweKeyPassword;
+    }
+
+    public boolean isMsGraphEnabled() {
+        return msGraphEnabled;
+    }
+
+    public void setMsGraphEnabled(boolean msGraphEnabled) {
+        this.msGraphEnabled = msGraphEnabled;
+    }
+
+    public String getMsGraphEndpoint() {
+        return msGraphEndpoint;
+    }
+
+    public void setMsGraphEndpoint(String msGraphEndpoint) {
+        this.msGraphEndpoint = msGraphEndpoint;
+    }
+
+    public boolean isMsGraphGroupsEnabled() {
+        return msGraphGroupsEnabled;
+    }
+
+    public void setMsGraphGroupsEnabled(boolean msGraphGroupsEnabled) {
+        this.msGraphGroupsEnabled = msGraphGroupsEnabled;
+    }
+
+    public boolean isMsGraphRolesEnabled() {
+        return msGraphRolesEnabled;
+    }
+
+    public void setMsGraphRolesEnabled(boolean msGraphRolesEnabled) {
+        this.msGraphRolesEnabled = msGraphRolesEnabled;
+    }
+
+    public String getMsGraphAppId() {
+        return msGraphAppId;
+    }
+
+    public void setMsGraphAppId(String msGraphAppId) {
+        this.msGraphAppId = msGraphAppId;
     }
 
     @Override
