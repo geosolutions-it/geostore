@@ -23,9 +23,23 @@ oidcOAuth2Config.authenticatedDefaultRole=USER
 
 ---
 
+## Claim Resolution Order
+
+When `rolesClaim` or `groupsClaim` is configured, GeoStore resolves the claim value using a multi-level fallback chain:
+
+1. **JWT (ID token)** -- the ID token returned during the authorization code flow is decoded and the claim is looked up (supports dot-notation for nested claims).
+2. **JWT (access token)** -- if the ID token does not contain the claim, the access token JWT is tried next.
+3. **Userinfo response** -- if neither JWT contains the claim, the response from the OIDC userinfo endpoint (`checkTokenEndpointUrl`) is checked as a final fallback.
+
+This fallback chain ensures that roles and groups are resolved even when:
+
+- The token is opaque (non-JWT) and claims are only available via the userinfo endpoint.
+- The provider (e.g., Google, Azure AD) places certain claims in the userinfo response rather than in the JWT.
+- The access token is a minimal JWT that delegates claim details to the userinfo endpoint.
+
 ## Role Resolution from Token Claims
 
-When `rolesClaim` is configured, roles are extracted from the JWT token. GeoStore prefers the **ID token** for claim extraction; if the ID token is not available, it falls back to the **access token**.
+When `rolesClaim` is configured, roles are extracted from the JWT token (or userinfo response, per the fallback chain above). GeoStore prefers the **ID token** for claim extraction; if the ID token is not available, it falls back to the **access token**, and finally to the **userinfo response**.
 
 ### Resolution Algorithm
 

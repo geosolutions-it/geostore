@@ -96,6 +96,8 @@ public class OpenIdIntegrationTest {
     private static final String CODE_ROLES_EMPTY = "CODE_ROLES_EMPTY";
     private static final String CODE_GROUPS_RECON = "CODE_GROUPS_RECON";
     private static final String CODE_ROLES_GUEST = "CODE_ROLES_GUEST";
+    private static final String CODE_USERINFO_ROLES = "CODE_USERINFO_ROLES";
+    private static final String CODE_USERINFO_GROUPS = "CODE_USERINFO_GROUPS";
 
     private static WireMockServer openIdService;
     private String authService;
@@ -206,6 +208,35 @@ public class OpenIdIntegrationTest {
         stubTokenForCode(
                 CODE_ROLES_GUEST,
                 jsonPayload().put("email", "guest@ex.com").putArray("roles", arr("GUEST")).build());
+
+        // Stubs for userinfo fallback tests: JWT has NO roles/groups claim
+        stubTokenForCode(CODE_USERINFO_ROLES, jsonPayload().put("email", "uiroles@ex.com").build());
+        stubTokenForCode(
+                CODE_USERINFO_GROUPS, jsonPayload().put("email", "uigroups@ex.com").build());
+
+        // Userinfo stubs returning roles/groups for specific access tokens
+        openIdService.stubFor(
+                WireMock.get(urlPathEqualTo("/userinfo"))
+                        .withHeader("Authorization", equalTo("Bearer at-" + CODE_USERINFO_ROLES))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"email\":\"uiroles@ex.com\","
+                                                        + "\"roles\":[\"ADMIN\"]}")));
+        openIdService.stubFor(
+                WireMock.get(urlPathEqualTo("/userinfo"))
+                        .withHeader("Authorization", equalTo("Bearer at-" + CODE_USERINFO_GROUPS))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"email\":\"uigroups@ex.com\","
+                                                        + "\"groups\":[\"TEAM_X\",\"TEAM_Y\"]}")));
     }
 
     @AfterEach
@@ -565,6 +596,57 @@ public class OpenIdIntegrationTest {
                         .map(UserGroup::getGroupName)
                         .collect(Collectors.toSet());
         assertEquals(Set.of("A", "B"), providerRemotesAfter);
+    }
+
+    @Test
+    public void testAuthentication_rolesFromUserinfo() throws Exception {
+        // rolesClaim is configured, but the JWT does NOT contain the claim.
+        // The userinfo endpoint response (WireMock stub) returns roles=[ADMIN].
+        configuration.setRolesClaim("roles");
+
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE_USERINFO_ROLES);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_USERINFO_ROLES);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "authentication should not be null");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("uiroles@ex.com", user.getName());
+        // Role should come from userinfo fallback
+        assertEquals(Role.ADMIN, user.getRole());
+    }
+
+    @Test
+    public void testAuthentication_groupsFromUserinfo() throws Exception {
+        // groupsClaim is configured, but the JWT does NOT contain the claim.
+        // The userinfo endpoint response (WireMock stub) returns groups=[TEAM_X, TEAM_Y].
+        configuration.setGroupsClaim("groups");
+
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE_USERINFO_GROUPS);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_USERINFO_GROUPS);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "authentication should not be null");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("uigroups@ex.com", user.getName());
+        // Groups should come from userinfo fallback
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("TEAM_X"), "Should contain TEAM_X from userinfo");
+        assertTrue(groupNames.contains("TEAM_Y"), "Should contain TEAM_Y from userinfo");
     }
 
     private OpenIdConnectFilter getOpenIdFilter(User seeded, DummyUserGroupService svc) {

@@ -36,6 +36,18 @@ The standard redirect-based login flow works as follows:
 3. GeoStore exchanges the code for an access token, ID token, and (optionally) a refresh token.
 4. The user's principal (username) is resolved from the token claims.
 
+### Userinfo Endpoint
+
+After obtaining an access token, GeoStore calls the OIDC userinfo endpoint (`checkTokenEndpointUrl`) per [OIDC Core Section 5.3.1](https://openid.net/specs/openid-connect-core-1_0.html#UserInfo). The request is a simple GET with a Bearer Authorization header:
+
+```
+GET /userinfo HTTP/1.1
+Authorization: Bearer <access_token>
+Accept: application/json
+```
+
+The userinfo response is used for principal resolution (see below) and as a fallback source for role and group claims. If `rolesClaim` or `groupsClaim` is configured but not found in the JWT, GeoStore checks the userinfo response before giving up. See [Roles & Groups - Claim Resolution Order](roles-and-groups.md#claim-resolution-order) for details.
+
 ### Principal Resolution
 
 GeoStore uses a 3-level fallback strategy to resolve the authenticated username:

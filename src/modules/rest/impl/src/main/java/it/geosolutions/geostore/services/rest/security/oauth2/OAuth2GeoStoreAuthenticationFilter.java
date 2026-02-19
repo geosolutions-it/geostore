@@ -607,7 +607,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (StringUtils.isNotBlank(tokenForClaims)
                 && (StringUtils.isNotBlank(configuration.getGroupsClaim())
                         || StringUtils.isNotBlank(configuration.getRolesClaim()))) {
-            addAuthoritiesFromToken(user, tokenForClaims);
+            // Read userinfo/introspection response stored by getPreAuthenticatedPrincipal()
+            @SuppressWarnings("unchecked")
+            Map<String, Object> userinfoMap =
+                    (Map<String, Object>) request.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
+            addAuthoritiesFromToken(user, tokenForClaims, userinfoMap);
         }
 
         authenticationToken.setDetails(
@@ -634,18 +638,27 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
     /**
      * Add authorities from token claims: - recompute Role if roles claim is present (supports
-     * demotion), - reconcile remote groups for THIS provider against IdP groups.
+     * demotion), - reconcile remote groups for THIS provider against IdP groups. Delegates to the
+     * overloaded version with a null userinfo map.
      */
     protected void addAuthoritiesFromToken(User user, String tokenString) {
+        addAuthoritiesFromToken(user, tokenString, null);
+    }
+
+    /**
+     * Add authorities from token claims with optional userinfo/introspection fallback. Tries JWT
+     * extraction first; if the claim is not found in the JWT, falls back to the userinfo map.
+     */
+    @SuppressWarnings("unchecked")
+    protected void addAuthoritiesFromToken(
+            User user, String tokenString, Map<String, Object> userinfoMap) {
         LOGGER.info("Syncing authorities from token claims.");
 
-        JWTHelper helper;
+        JWTHelper helper = null;
         try {
             helper = new JWTHelper(tokenString);
         } catch (Exception e) {
-            // Fail soft if token is opaque or not a valid JWT
-            LOGGER.warn("Token is not a valid JWT; skipping authorities sync from claims.", e);
-            return;
+            LOGGER.warn("Token is not a valid JWT; will try userinfo map for claims.", e);
         }
 
         // ----- Roles -----
@@ -653,11 +666,22 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         String rolesClaimName = configuration.getRolesClaim();
         Object rawRoles = null;
         if (StringUtils.isNotBlank(rolesClaimName)) {
-            rawRoles = helper.getClaim(rolesClaimName, Object.class);
+            if (helper != null) {
+                rawRoles = helper.getClaim(rolesClaimName, Object.class);
+            }
+            if (rawRoles == null && userinfoMap != null) {
+                rawRoles = resolveClaimFromMap(userinfoMap, rolesClaimName);
+            }
         }
 
         if (rawRoles != null) {
-            List<String> oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
+            List<String> oidcRoles;
+            if (helper != null && helper.getClaim(rolesClaimName, Object.class) != null) {
+                oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
+            } else {
+                oidcRoles = claimValueToStringList(rawRoles);
+            }
+            if (oidcRoles == null) oidcRoles = Collections.emptyList();
             Role defaultRole =
                     configuration.getAuthenticatedDefaultRole() != null
                             ? configuration.getAuthenticatedDefaultRole()
@@ -667,7 +691,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LOGGER.info("User role set from token. {} -> {}", currentRole, newRole);
         } else {
             LOGGER.info(
-                    "Roles claim '{}' missing in token -> preserving current role: {}",
+                    "Roles claim '{}' missing in token and userinfo -> preserving current role: {}",
                     rolesClaimName,
                     currentRole);
         }
@@ -675,8 +699,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // ----- Groups -----
         List<String> oidcGroups = Collections.emptyList();
         if (configuration.getGroupsClaim() != null) {
-            oidcGroups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
-            LOGGER.info("Groups from token: {}", oidcGroups);
+            List<String> fromJwt = null;
+            if (helper != null) {
+                fromJwt = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+            }
+            if (fromJwt != null && !fromJwt.isEmpty()) {
+                oidcGroups = fromJwt;
+            } else if (userinfoMap != null) {
+                Object raw = resolveClaimFromMap(userinfoMap, configuration.getGroupsClaim());
+                if (raw != null) {
+                    oidcGroups = claimValueToStringList(raw);
+                    if (oidcGroups == null) oidcGroups = Collections.emptyList();
+                }
+            }
+            LOGGER.info("Groups from token/userinfo: {}", oidcGroups);
         }
 
         Map<String, String> groupMappings = configuration.getGroupMappings();
@@ -713,6 +749,65 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         } finally {
             LOGGER.info("User updated with the following groups: {}", user.getGroups());
         }
+    }
+
+    /**
+     * Case-insensitive claim lookup supporting dot-notation for nested maps. Mirrors the nested
+     * claim resolution behavior of {@link JWTHelper#getClaim}.
+     */
+    @SuppressWarnings("unchecked")
+    private Object resolveClaimFromMap(Map<String, Object> map, String claimName) {
+        if (map == null || StringUtils.isBlank(claimName)) return null;
+
+        if (claimName.contains(".")) {
+            String[] parts = claimName.split("\\.");
+            Map<String, Object> current = map;
+            for (int i = 0; i < parts.length - 1; i++) {
+                Object next = getIgnoreCase(current, parts[i]);
+                if (next instanceof Map) {
+                    current = (Map<String, Object>) next;
+                } else {
+                    return null;
+                }
+            }
+            return getIgnoreCase(current, parts[parts.length - 1]);
+        }
+
+        return getIgnoreCase(map, claimName);
+    }
+
+    private Object getIgnoreCase(Map<String, Object> map, String key) {
+        if (map == null || key == null) return null;
+        Object direct = map.get(key);
+        if (direct != null) return direct;
+        for (Map.Entry<String, Object> e : map.entrySet()) {
+            if (key.equalsIgnoreCase(e.getKey())) return e.getValue();
+        }
+        return null;
+    }
+
+    /**
+     * Converts a claim value (String, Collection, or other) to a List of Strings. Mirrors the
+     * behavior of {@link JWTHelper#getClaimAsList}.
+     */
+    @SuppressWarnings("unchecked")
+    private List<String> claimValueToStringList(Object value) {
+        if (value == null) return null;
+        if (value instanceof List) {
+            List<String> result = new java.util.ArrayList<>();
+            for (Object item : (List<?>) value) {
+                if (item != null) result.add(String.valueOf(item));
+            }
+            return result;
+        }
+        if (value instanceof Collection) {
+            List<String> result = new java.util.ArrayList<>();
+            for (Object item : (Collection<?>) value) {
+                if (item != null) result.add(String.valueOf(item));
+            }
+            return result;
+        }
+        return Collections.singletonList(String.valueOf(value));
     }
 
     // ---------------------------------------------------------------------

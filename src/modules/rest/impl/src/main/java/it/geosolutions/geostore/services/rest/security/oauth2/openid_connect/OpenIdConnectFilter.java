@@ -161,6 +161,9 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             if (principal != null && !principal.isEmpty()) {
                 LOGGER.info(
                         "Authenticated OIDC Bearer token for user ({}): {}", strategy, principal);
+                // Store bearer claims so createPreAuthentication() can use them
+                // for role/group extraction from userinfo/introspection response.
+                req.setAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY, bearerClaims);
                 // Place the access token on the rest template context so that
                 // createPreAuthentication() -> addAuthoritiesFromToken() can read
                 // rolesClaim / groupsClaim from the JWT.
