@@ -134,21 +134,58 @@
         references gs_tag(id);
 
     create table gs_user_favorites (
-    	user_id number(19,0) not null,
-    	resource_id number(19,0) not null,
-    	primary key (user_id, resource_id)
+        id number(19) not null,
+        resource_id number(19) not null,
+        username varchar2(255 char),
+        user_id number(19),
+
+        constraint gs_user_favorites_check
+           check (
+               (user_id is not null and username is null)
+                   or
+               (user_id is null and username is not null)
+               ),
+
+        constraint gs_user_favorites_pk
+           primary key (id),
+
+        constraint gs_user_favorites_unique_user_id
+           unique (user_id, resource_id),
+
+        constraint gs_user_favorites_unique_username
+           unique (resource_id, username),
+
+        constraint gs_user_favorites_resource_fk
+           foreign key (resource_id)
+               references gs_resource(id)
+               on delete cascade,
+
+        constraint gs_user_favorites_user_fk
+           foreign key (user_id)
+               references gs_user(id)
+               on delete cascade,
     );
 
-    alter table gs_user_favorites
-        add constraint fk_user_favorites_resource
-        foreign key (resource_id)
-        references gs_resource(id)
-        on delete cascade;
+    create table gs_ip_range (
+        id number(19,0) not null,
+        cidr varchar2(50 char) not null,
+        description varchar2(255 char),
+        ip_low number(39,0) not null,
+        ip_high number(39,0) not null,
+        constraint gs_ip_range_pkey primary key (id)
+    );
+    create index idx_ip_range_lookup on gs_ip_range(ip_low, ip_high);
 
-    alter table gs_user_favorites
-        add constraint fk_user_favorites_user
-        foreign key (user_id)
-        references gs_user(id);
+    create table gs_security_ip_range (
+        security_id number(19,0) not null,
+        ip_range_id number(19,0) not null,
+        constraint gs_security_ip_range_unique_security_id_ip_range_id unique (security_id, ip_range_id),
+        constraint fk_gs_security foreign key (security_id) references gs_security(id),
+        constraint fk_gs_ip_range foreign key (ip_range_id) references gs_ip_range(id)
+    );
+
+    create index idx_security_ip_range_ip_range_id on gs_security_ip_range (ip_range_id);
+    create index idx_security_ip_range_security_id on gs_security_ip_range (security_id);
 
     create index idx_attribute_name on gs_attribute (name);
 
