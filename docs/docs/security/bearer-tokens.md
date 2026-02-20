@@ -183,55 +183,38 @@ All claim lookups are **case-insensitive**. If the resolved claim value is an ar
 
 === "JWT (default)"
 
-    ```xml
-    <bean id="oidcOAuth2Config"
-          class="...openid_connect.OpenIdConnectConfiguration">
-        <property name="clientId" value="my-client-id" />
-        <property name="clientSecret" value="my-client-secret" />
-        <property name="discoveryUrl"
-                  value="https://idp.example.com/.well-known/openid-configuration" />
-        <!-- JWT is the default, but can be set explicitly -->
-        <property name="bearerTokenStrategy" value="jwt" />
-        <!-- Optional: reject tokens older than 1 hour -->
-        <property name="maxTokenAgeSecs" value="3600" />
-    </bean>
+    ```properties
+    # JWT is the default strategy — tokens are validated locally
+    oidcOAuth2Config.bearerTokenStrategy=jwt
+
+    # Optional: reject tokens older than 1 hour (from iat claim)
+    oidcOAuth2Config.maxTokenAgeSecs=3600
     ```
 
 === "Introspection"
 
-    ```xml
-    <bean id="oidcOAuth2Config"
-          class="...openid_connect.OpenIdConnectConfiguration">
-        <property name="clientId" value="my-client-id" />
-        <property name="clientSecret" value="my-client-secret" />
-        <property name="bearerTokenStrategy" value="introspection" />
-        <property name="introspectionEndpoint"
-                  value="https://idp.example.com/oauth2/introspect" />
-    </bean>
+    ```properties
+    # Delegate validation to the IdP's RFC 7662 introspection endpoint
+    oidcOAuth2Config.bearerTokenStrategy=introspection
+
+    # If not using discovery, set the endpoint explicitly:
+    oidcOAuth2Config.introspectionEndpoint=https://idp.example.com/oauth2/introspect
     ```
 
 === "Auto (JWT + fallback)"
 
-    ```xml
-    <bean id="oidcOAuth2Config"
-          class="...openid_connect.OpenIdConnectConfiguration">
-        <property name="clientId" value="my-client-id" />
-        <property name="clientSecret" value="my-client-secret" />
-        <property name="discoveryUrl"
-                  value="https://idp.example.com/.well-known/openid-configuration" />
-        <property name="bearerTokenStrategy" value="auto" />
-        <!-- introspectionEndpoint auto-discovered from discoveryUrl -->
-    </bean>
+    ```properties
+    # Try JWT first, fall back to introspection on failure
+    oidcOAuth2Config.bearerTokenStrategy=auto
+
+    # introspectionEndpoint is auto-discovered from discoveryUrl
     ```
 
 === "Disable Bearer Tokens"
 
-    ```xml
-    <bean id="oidcOAuth2Config"
-          class="...openid_connect.OpenIdConnectConfiguration">
-        <property name="allowBearerTokens" value="false" />
-        <!-- ... other properties ... -->
-    </bean>
+    ```properties
+    # Disable bearer token authentication entirely
+    oidcOAuth2Config.allowBearerTokens=false
     ```
 
 ---
@@ -290,23 +273,6 @@ The JWE decryptor supports the following key management algorithms:
 Content encryption methods: **A128GCM**, **A256GCM**, **A128CBC-HS256**, **A256CBC-HS512**.
 
 ### Example
-
-```xml
-<bean id="oidcOAuth2Config"
-      class="...openid_connect.OpenIdConnectConfiguration">
-    <property name="clientId" value="my-client-id" />
-    <property name="clientSecret" value="my-client-secret" />
-    <property name="discoveryUrl"
-              value="https://idp.example.com/.well-known/openid-configuration" />
-    <!-- JWE decryption -->
-    <property name="jweKeyStoreFile" value="/etc/geostore/jwe-keystore.p12" />
-    <property name="jweKeyStorePassword" value="changeit" />
-    <property name="jweKeyStoreType" value="PKCS12" />
-    <property name="jweKeyAlias" value="geostore-jwe" />
-</bean>
-```
-
-Or in `geostore-ovr.properties`:
 
 ```properties
 oidcOAuth2Config.jweKeyStoreFile=/etc/geostore/jwe-keystore.p12

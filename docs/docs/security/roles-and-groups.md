@@ -182,7 +182,7 @@ See the [Azure AD Setup Guide](../guides/azure-ad-setup.md#microsoft-graph-group
 | `groupNamesUppercase` | boolean | `false` | Convert all group names to uppercase |
 | `authenticatedDefaultRole` | String | `USER` | Default role when no role resolved from claims |
 
-All properties use the `oidcOAuth2Config.` prefix. For example: `oidcOAuth2Config.rolesClaim`.
+All properties use the `{provider}OAuth2Config.` prefix (default: `oidcOAuth2Config.`). For example: `oidcOAuth2Config.rolesClaim`. When using [multiple providers](oidc.md#multiple-oidc-providers), replace `oidc` with the provider name (e.g. `googleOAuth2Config.rolesClaim`).
 
 ### Mapping Format
 

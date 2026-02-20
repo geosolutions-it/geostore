@@ -95,6 +95,19 @@ curl -u admin:admin http://localhost:8080/geostore/rest/diagnostics/configuratio
 
 The configuration dump includes all registered OAuth2 providers with their endpoints, scopes, claim mappings, and flags. Client secrets are always shown as `********`. For OIDC providers, additional fields like `allowBearerTokens`, `bearerTokenStrategy`, `jwkURI`, and `usePKCE` are included.
 
+## `logSensitiveInfo` Property
+
+For quick debugging during development, set `logSensitiveInfo=true` on the OIDC configuration bean. This sets all security loggers (under `it.geosolutions.geostore.services.rest.security`) to DEBUG level on the first filter invocation, without needing to call the diagnostics endpoint:
+
+```properties
+oidcOAuth2Config.logSensitiveInfo=true
+```
+
+A prominent warning is logged when this flag is active. Token contents, credentials, and claim details will appear in the application logs.
+
+!!! warning "Do NOT enable in production"
+    This is a convenience shortcut for development only. For production troubleshooting, use the diagnostics endpoint below to change individual logger levels on demand without exposing all secrets.
+
 ## Dynamic Log Level Control
 
 You can change the log level of any security logger at runtime without restarting the application. Changes are **volatile** — they revert when the application restarts.

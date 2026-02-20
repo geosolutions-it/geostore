@@ -154,6 +154,28 @@ These are normally auto-filled by discovery. Set them explicitly only if you nee
 | `globalLogoutEnabled` | boolean | `false` | Enable global logout (revoke tokens on logout) |
 | `postLogoutRedirectUri` | String | -- | Where to redirect after OIDC logout |
 
+### Microsoft Graph Settings
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `msGraphEnabled` | boolean | `false` | Enable Microsoft Graph API integration for Azure AD groups overage resolution |
+| `msGraphEndpoint` | String | `https://graph.microsoft.com/v1.0` | Microsoft Graph API base URL |
+| `msGraphGroupsEnabled` | boolean | `true` | Resolve groups via `/me/memberOf` on overage detection |
+| `msGraphRolesEnabled` | boolean | `false` | Resolve app roles via `/me/appRoleAssignments` |
+| `msGraphAppId` | String | -- | Application ID for app role filtering (optional) |
+
+!!! note "MS Graph is opt-in"
+    MS Graph integration is only activated when `msGraphEnabled=true`. When enabled, GeoStore automatically detects Azure AD groups overage (>200 groups) and resolves group memberships via the Graph API. See [Azure AD Setup - Microsoft Graph](../guides/azure-ad-setup.md#microsoft-graph-group-resolution) and [Roles & Groups - Azure AD Groups Overage](roles-and-groups.md#azure-ad-groups-overage-and-microsoft-graph-resolution) for details.
+
+### Diagnostics / Debug Settings
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `logSensitiveInfo` | boolean | `false` | Set all security loggers to DEBUG level on first filter invocation, logging full token contents, credentials, and claim details |
+
+!!! warning "Do NOT enable in production"
+    When `logSensitiveInfo=true`, access tokens, ID tokens, client secrets, and full claim payloads will appear in the application logs. This is intended **only** for development and debugging. A warning is logged when this flag is active. See [Monitoring & Auditing](monitoring-and-auditing.md) for fine-grained runtime log level control via the diagnostics endpoint.
+
 ### Cache Settings
 
 | Property | Type | Default | Description |

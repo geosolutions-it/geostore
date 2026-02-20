@@ -68,6 +68,7 @@ nav:
       - Monitoring & Auditing: security/monitoring-and-auditing.md
       - Property Reference: security/properties-reference.md
   - Guides:
+      - Migration Guide: guides/migration.md
       - Keycloak Setup: guides/keycloak-setup.md
       - Azure AD / Entra ID: guides/azure-ad-setup.md
       - Google OAuth2: guides/google-setup.md

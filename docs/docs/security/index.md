@@ -41,4 +41,4 @@ Security is configured through two mechanisms:
 1. **Property overrides** (`geostore-ovr.properties`) — OAuth2/OIDC settings, session timeouts, user auto-creation
 2. **Spring XML** (`geostore-spring-security.xml`) — Filter chain order, LDAP bean configuration, authentication manager setup
 
-See the [Property Reference](properties-reference.md) for a complete list of all configurable security properties.
+See the [Property Reference](properties-reference.md) for a complete list of all configurable security properties, and the [Migration Guide](../guides/migration.md) for upgrading from earlier GeoStore versions.
