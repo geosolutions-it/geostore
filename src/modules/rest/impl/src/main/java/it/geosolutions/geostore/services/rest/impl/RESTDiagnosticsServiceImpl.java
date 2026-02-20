@@ -162,8 +162,8 @@ public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTD
         ObjectNode logging = MAPPER.createObjectNode();
         ArrayNode loggers = MAPPER.createArrayNode();
 
-        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        Collection<org.apache.logging.log4j.core.Logger> allLoggers = ctx.getLoggers();
+        Collection<org.apache.logging.log4j.core.Logger> allLoggers =
+                ((LoggerContext) LogManager.getContext(false)).getLoggers();
         for (org.apache.logging.log4j.core.Logger logger : allLoggers) {
             if (logger.getName().startsWith(SECURITY_LOGGER_PREFIX)) {
                 ObjectNode entry = MAPPER.createObjectNode();
