@@ -26,13 +26,16 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.FavoriteService;
+import it.geosolutions.geostore.services.exception.DuplicatedFavoriteServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTFavoriteService;
+import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import javax.ws.rs.core.SecurityContext;
 
-public class RESTFavoriteServiceImpl implements RESTFavoriteService {
+public class RESTFavoriteServiceImpl extends RESTServiceImpl implements RESTFavoriteService {
 
     private FavoriteService favoriteService;
 
@@ -41,18 +44,22 @@ public class RESTFavoriteServiceImpl implements RESTFavoriteService {
     }
 
     @Override
-    public void addFavorite(SecurityContext sc, long id, long resourceId) throws NotFoundWebEx {
+    public void addFavorite(SecurityContext sc, long resourceId) throws NotFoundWebEx {
         try {
-            favoriteService.addFavorite(id, resourceId);
+            User authUser = extractAuthUser(sc);
+            favoriteService.addFavorite(authUser, resourceId);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
+        } catch (DuplicatedFavoriteServiceException e) {
+            throw new ConflictWebEx(e.getMessage());
         }
     }
 
     @Override
-    public void removeFavorite(SecurityContext sc, long id, long resourceId) throws NotFoundWebEx {
+    public void removeFavorite(SecurityContext sc, long resourceId) throws NotFoundWebEx {
         try {
-            favoriteService.removeFavorite(id, resourceId);
+            User authUser = extractAuthUser(sc);
+            favoriteService.removeFavorite(authUser, resourceId);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         }

@@ -20,10 +20,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
-                    rule.getUser() != null
-                            && (user.getId().equals(rule.getUser().getId())
-                                    || user.getName() != null
-                                            && user.getName().equals(rule.getUsername()));
+                    rule.getUser() != null && (user.getId().equals(rule.getUser().getId()))
+                            || user.getName() != null && user.getName().equals(rule.getUsername());
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
             (rule, group) ->
@@ -60,7 +58,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     @Override
     public boolean canResourceBeReadByUser(Resource resource, User user) {
-        if (user.getRole().equals(Role.ADMIN)) {
+        if (user.getRole() != null && user.getRole().equals(Role.ADMIN)) {
             return true;
         }
         checkResourceSecurityRules(resource);
@@ -90,7 +88,9 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     @Override
     public boolean canResourceBeWrittenByUser(Resource resource, User user) {
-        if (!user.getRole().equals(Role.GUEST) && user.getRole().equals(Role.ADMIN)) {
+        if (user.getRole() != null
+                && !user.getRole().equals(Role.GUEST)
+                && user.getRole().equals(Role.ADMIN)) {
             return true;
         }
         checkResourceSecurityRules(resource);
@@ -98,7 +98,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     }
 
     private void checkResourceSecurityRules(Resource resource) {
-        if (resource.getSecurity() == null) {
+        if (resource != null && resource.getSecurity() == null) {
             throw new IllegalArgumentException(
                     "set resource security rules prior checking for permissions");
         }

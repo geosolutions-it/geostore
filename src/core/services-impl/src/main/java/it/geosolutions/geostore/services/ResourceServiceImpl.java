@@ -36,7 +36,7 @@ import it.geosolutions.geostore.core.dao.IpRangeDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
-import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.UserFavoriteDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
@@ -80,9 +80,9 @@ public class ResourceServiceImpl implements ResourceService {
 
     private static final Logger LOGGER = LogManager.getLogger(ResourceServiceImpl.class);
 
-    private UserDAO userDAO;
-
     private UserGroupDAO userGroupDAO;
+
+    private UserFavoriteDAO userFavoriteDAO;
 
     private ResourceDAO resourceDAO;
 
@@ -98,8 +98,8 @@ public class ResourceServiceImpl implements ResourceService {
 
     private ResourcePermissionService resourcePermissionService;
 
-    public void setUserDAO(UserDAO userDAO) {
-        this.userDAO = userDAO;
+    public void setUserFavoriteDAO(UserFavoriteDAO userFavoriteDAO) {
+        this.userFavoriteDAO = userFavoriteDAO;
     }
 
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
@@ -700,7 +700,10 @@ public class ResourceServiceImpl implements ResourceService {
 
         if (parameters.isFavoritesOnly()) {
             Long userId = parameters.getAuthUser().getId();
-            searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", userId));
+            String userName = parameters.getAuthUser().getName();
+            searchCriteria.addFilterSome(
+                    "favorites",
+                    Filter.or(Filter.equal("user.id", userId), Filter.equal("username", userName)));
         }
 
         searchCriteria.addFetches("security", "security.ipRanges");
@@ -741,7 +744,7 @@ public class ResourceServiceImpl implements ResourceService {
         searchCriteria.setDistinct(true);
         searchCriteria.addFetch("security");
         searchCriteria.addFetch("data");
-        searchCriteria.addFetch("favoritedBy");
+        searchCriteria.addFetch("favorites");
 
         securityDAO.addReadSecurityConstraints(
                 searchCriteria, resourceSearchParameters.getAuthUser());
@@ -852,7 +855,11 @@ public class ResourceServiceImpl implements ResourceService {
         searchCriteria.setDistinct(true);
 
         if (favoritesOnly) {
-            searchCriteria.addFilterSome("favoritedBy", Filter.equal("id", user.getId()));
+            searchCriteria.addFilterSome(
+                    "favorites",
+                    Filter.or(
+                            Filter.equal("user.id", user.getId()),
+                            Filter.equal("username", user.getName())));
         }
 
         securityDAO.addSecurityConstraintsToSearch(searchCriteria, user);
@@ -883,11 +890,11 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public void fetchFavoritedBy(Resource resource) {
+    public void fetchFavorites(Resource resource) {
         if (resource == null || resource.getId() == null) {
             return;
         }
 
-        resource.setFavoritedBy(new HashSet<>(userDAO.findFavoritedBy(resource.getId())));
+        resource.setFavorites(new HashSet<>(userFavoriteDAO.findByResourceId(resource.getId())));
     }
 }

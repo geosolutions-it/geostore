@@ -31,6 +31,7 @@ package it.geosolutions.geostore.core.model;
 import inet.ipaddr.IPAddress;
 import it.geosolutions.geostore.core.model.enums.Role;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.persistence.CascadeType;
@@ -89,12 +90,8 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @ManyToMany
-    @JoinTable(
-            name = "gs_user_favorites",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "resource_id"))
-    private Set<Resource> favorites;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<UserFavorite> favorites = new HashSet<>();
 
     /*
      * NOT to be saved on DB
@@ -291,11 +288,11 @@ public class User implements Serializable {
         this.trusted = trusted;
     }
 
-    public Set<Resource> getFavorites() {
+    public Set<UserFavorite> getFavorites() {
         return favorites;
     }
 
-    public void setFavorites(Set<Resource> favorites) {
+    public void setFavorites(Set<UserFavorite> favorites) {
         this.favorites = favorites;
     }
 

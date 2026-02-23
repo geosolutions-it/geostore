@@ -405,7 +405,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
-        resourceService.fetchFavoritedBy(resource);
+        resourceService.fetchFavorites(resource);
         extResourceBuilder.withIsFavorite(isResourceUserFavorite(resource, user));
 
         return extResourceBuilder.build();
@@ -421,9 +421,15 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
     }
 
     private boolean isResourceUserFavorite(Resource resource, User user) {
-        return resource.getFavoritedBy().stream()
-                .map(User::getId)
-                .anyMatch(id -> id.equals(user.getId()));
+        return resource.getFavorites().stream()
+                .anyMatch(
+                        userFavorite ->
+                                (userFavorite.getUsername() != null
+                                                && user.getName()
+                                                        .equals(userFavorite.getUsername()))
+                                        || ((userFavorite.getUser() != null)
+                                                && user.getId()
+                                                        .equals(userFavorite.getUser().getId())));
     }
 
     /**
@@ -685,7 +691,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
         User user = extractAuthUser(sc);
         resourceService.fetchSecurityRules(resource);
-        resourceService.fetchFavoritedBy(resource);
+        resourceService.fetchFavorites(resource);
 
         ShortResource shortResource = new ShortResource(resource);
 

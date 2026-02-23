@@ -127,9 +127,8 @@ public class Resource implements Serializable, CycleRecoverable {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Tag> tags;
 
-    @ManyToMany(mappedBy = "favorites", fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private Set<User> favoritedBy;
+    @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL)
+    private Set<UserFavorite> favorites;
 
     /** @return the id */
     public Long getId() {
@@ -273,12 +272,12 @@ public class Resource implements Serializable, CycleRecoverable {
     }
 
     @XmlTransient
-    public Set<User> getFavoritedBy() {
-        return favoritedBy;
+    public Set<UserFavorite> getFavorites() {
+        return favorites;
     }
 
-    public void setFavoritedBy(Set<User> favoritedBy) {
-        this.favoritedBy = favoritedBy;
+    public void setFavorites(Set<UserFavorite> favorites) {
+        this.favorites = favorites;
     }
 
     /*
