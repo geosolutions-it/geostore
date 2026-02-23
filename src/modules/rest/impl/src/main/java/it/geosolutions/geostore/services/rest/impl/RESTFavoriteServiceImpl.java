@@ -47,15 +47,7 @@ public class RESTFavoriteServiceImpl extends RESTServiceImpl implements RESTFavo
     public void addFavorite(SecurityContext sc, long resourceId) throws NotFoundWebEx {
         try {
             User authUser = extractAuthUser(sc);
-
-            if (authUser.getId() == -1) {
-                /* user ID is not available due to external security setup - using username instead */
-                favoriteService.addFavoriteByUsername(authUser.getName(), resourceId);
-                return;
-            }
-
-            favoriteService.addFavoriteByUserId(authUser.getId(), resourceId);
-
+            favoriteService.addFavorite(authUser, resourceId);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         } catch (DuplicatedFavoriteServiceException e) {
@@ -67,15 +59,7 @@ public class RESTFavoriteServiceImpl extends RESTServiceImpl implements RESTFavo
     public void removeFavorite(SecurityContext sc, long resourceId) throws NotFoundWebEx {
         try {
             User authUser = extractAuthUser(sc);
-
-            if (authUser.getId() == -1) {
-                /* user ID is not available due to external security setup - using username instead */
-                favoriteService.removeFavoriteByUsername(authUser.getName(), resourceId);
-                return;
-            }
-
-            favoriteService.removeFavoriteByUserId(authUser.getId(), resourceId);
-
+            favoriteService.removeFavorite(authUser, resourceId);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         }
