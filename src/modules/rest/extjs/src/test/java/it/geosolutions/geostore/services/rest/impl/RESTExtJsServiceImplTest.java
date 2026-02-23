@@ -1593,7 +1593,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 restCreateResource("favourite_resource", "", CAT0_NAME, userId, true);
         restCreateResource("other_resource", "", CAT0_NAME, userId, true);
 
-        favoriteService.addFavoriteByUserId(userId, favoriteResourceId);
+        favoriteService.addFavorite(userService.get(userId), favoriteResourceId);
 
         {
             ExtResourceList response =
@@ -1648,7 +1648,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long nonFavoriteResourceId =
                 restCreateResource("other_resource", "", CAT0_NAME, userId, true);
 
-        favoriteService.addFavoriteByUserId(userId, favoriteResourceId);
+        favoriteService.addFavorite(userService.get(userId), favoriteResourceId);
 
         {
             ExtResourceList response =
@@ -2398,7 +2398,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long nonFavoriteResourceId =
                 restCreateResource("other_resource", "", CAT0_NAME, userId, true);
 
-        favoriteService.addFavoriteByUserId(userId, favoriteResourceId);
+        favoriteService.addFavorite(userService.get(userId), favoriteResourceId);
 
         {
             ExtShortResource response =
