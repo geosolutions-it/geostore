@@ -17,6 +17,7 @@
     <mapping class="it.geosolutions.geostore.core.model.UserAttribute"/>
     <mapping class="it.geosolutions.geostore.core.model.UserGroup"/>
     <mapping class="it.geosolutions.geostore.core.model.UserGroupAttribute"/>
+    <mapping class="it.geosolutions.geostore.core.model.UserFavorite"/>
     <mapping class="it.geosolutions.geostore.core.model.Tag"/>
     <mapping class="it.geosolutions.geostore.core.model.IPRange"/>
   </session-factory>

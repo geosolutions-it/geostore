@@ -21,9 +21,9 @@ package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
-import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.UserFavoriteDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
 
     private UserGroupDAO userGroupDAO;
 
-    private ResourceDAO resourceDAO;
+    private UserFavoriteDAO userFavoriteDAO;
 
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
@@ -72,8 +72,8 @@ public class UserServiceImpl implements UserService {
         this.userGroupDAO = userGroupDAO;
     }
 
-    public void setResourceDAO(ResourceDAO resourceDAO) {
-        this.resourceDAO = resourceDAO;
+    public void setUserFavoriteDAO(UserFavoriteDAO userFavoriteDAO) {
+        this.userFavoriteDAO = userFavoriteDAO;
     }
 
     /*
@@ -460,6 +460,6 @@ public class UserServiceImpl implements UserService {
         if (user == null || user.getId() == null) {
             return;
         }
-        user.setFavorites(new HashSet<>(resourceDAO.findUserFavorites(user.getId())));
+        user.setFavorites(new HashSet<>(userFavoriteDAO.findByUser(user)));
     }
 }

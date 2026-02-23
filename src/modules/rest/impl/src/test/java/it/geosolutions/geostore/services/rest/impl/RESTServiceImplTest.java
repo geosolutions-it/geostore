@@ -533,6 +533,16 @@ public class RESTServiceImplTest extends ServiceTestBase {
         }
 
         @Override
+        public void fetchSecurityRules(Resource resource) {
+            /* no-op */
+        }
+
+        @Override
+        public void fetchFavorites(Resource resource) {
+            /* no-op */
+        }
+
+        @Override
         public List<SecurityRule> getUserSecurityRule(String userName, long entityId) {
             return List.of();
         }
