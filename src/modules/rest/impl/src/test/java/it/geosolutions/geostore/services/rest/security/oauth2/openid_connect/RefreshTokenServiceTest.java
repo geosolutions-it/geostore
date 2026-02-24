@@ -70,7 +70,9 @@ class RefreshTokenServiceTest {
         when(configuration.getMaxRetries()).thenReturn(3);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getAccessTokenUri()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
+        when(configuration.getBackoffMultiplier()).thenReturn(2.0);
 
         // Mock the existing OAuth2AccessToken with a refresh token
         mockOAuth2AccessToken = new DefaultOAuth2AccessToken("providedAccessToken");
@@ -130,10 +132,6 @@ class RefreshTokenServiceTest {
         when(configuration.isEnabled()).thenReturn(true);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
-        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
-        when(configuration.getMaxRetries()).thenReturn(3);
-
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.POST),
@@ -546,13 +544,7 @@ class RefreshTokenServiceTest {
                         eq(OAuth2AccessToken.class)))
                 .thenReturn(responseEntity);
 
-        // Mock config so refresh is enabled
-        when(configuration.isEnabled()).thenReturn(true);
-        when(configuration.getClientId()).thenReturn("testClientId");
-        when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
-        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
-        when(configuration.getMaxRetries()).thenReturn(3);
+        // Mock config so refresh is enabled (most already set in setUp)
 
         // Act
         SessionToken sessionToken = serviceDelegate.refresh(refreshToken, oldAccessToken);
