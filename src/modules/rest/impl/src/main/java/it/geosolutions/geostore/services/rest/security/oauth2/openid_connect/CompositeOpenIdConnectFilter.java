@@ -291,14 +291,9 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
             return;
         }
 
-        // No bearer token and not a login/callback URL: delegate to the first enabled
-        // provider filter for general request processing (e.g. redirect handling)
-        if (!providerFilters.isEmpty()) {
-            OpenIdConnectFilter firstFilter = providerFilters.values().iterator().next();
-            firstFilter.doFilter(req, res, chain);
-            return;
-        }
-
+        // No bearer token and not a login/callback URL: just chain through.
+        // The AnonymousAuthenticationFilter (later in the Spring Security chain)
+        // will set an anonymous token if needed.
         chain.doFilter(req, res);
     }
 

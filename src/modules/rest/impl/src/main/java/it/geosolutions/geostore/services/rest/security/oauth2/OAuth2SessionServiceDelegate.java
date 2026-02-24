@@ -42,7 +42,6 @@ import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -511,7 +510,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (token == null) {
             if (restTemplate != null
                     && restTemplate.getOAuth2ClientContext() != null
-                    && restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
+                    && restTemplate.getOAuth2ClientContext().getAccessToken() != null
+                    && restTemplate.getOAuth2ClientContext().getAccessToken().getRefreshToken()
+                            != null) {
                 token =
                         restTemplate
                                 .getOAuth2ClientContext()
@@ -522,10 +523,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (token == null) {
                 token = OAuth2Utils.getParameterValue(REFRESH_TOKEN_PARAM, request);
             }
-            if (token == null) {
+            if (token == null && RequestContextHolder.getRequestAttributes() != null) {
                 token =
                         (String)
-                                Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                RequestContextHolder.getRequestAttributes()
                                         .getAttribute(REFRESH_TOKEN_PARAM, 0);
             }
         }
@@ -539,10 +540,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (accessToken == null) {
                 accessToken = OAuth2Utils.getParameterValue(ACCESS_TOKEN_PARAM, request);
             }
-            if (accessToken == null) {
+            if (accessToken == null && RequestContextHolder.getRequestAttributes() != null) {
                 accessToken =
                         (String)
-                                Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                RequestContextHolder.getRequestAttributes()
                                         .getAttribute(ACCESS_TOKEN_PARAM, 0);
             }
         }
