@@ -129,7 +129,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
 
-        if (configuration != null && configuration.isEnabled()) {
+        if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
+            // No refresh token available (e.g. bearer-token auth without auth code flow,
+            // or IdP did not issue a refresh token because offline_access was not requested).
+            // Skip the refresh attempt and return the current token if still valid.
+            LOGGER.info(
+                    "No refresh token available; skipping token refresh and returning current token.");
+            warningMessage = "No refresh token available; using existing access token.";
+        } else if (configuration != null && configuration.isEnabled()) {
             LOGGER.info("Attempting to refresh the token.");
             try {
                 sessionToken = doRefresh(refreshTokenToUse, accessToken, configuration);
