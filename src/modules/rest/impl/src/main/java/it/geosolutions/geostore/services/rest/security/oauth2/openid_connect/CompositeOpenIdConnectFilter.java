@@ -54,8 +54,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
@@ -155,6 +157,12 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
             providerFilters.put(providerName, filter);
             LOGGER.info("Provider '{}' filter initialized successfully", providerName);
+
+            // Register the programmatically-created rest template and cache as Spring beans
+            // so that session service delegates (which look up beans by name) can find them.
+            registerSingletonBean(
+                    providerName + "OpenIdRestTemplate", restTemplate, "OAuth2RestTemplate");
+            registerSingletonBean("oAuth2Cache", cache, "TokenAuthenticationCache");
 
             // Register per-provider session delegate and login service for non-default providers.
             // The default "oidc" provider's session delegate and login service are already
@@ -292,6 +300,17 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
         }
 
         chain.doFilter(req, res);
+    }
+
+    private void registerSingletonBean(String name, Object bean, String label) {
+        if (applicationContext instanceof ConfigurableApplicationContext) {
+            ConfigurableListableBeanFactory factory =
+                    ((ConfigurableApplicationContext) applicationContext).getBeanFactory();
+            if (!factory.containsSingleton(name)) {
+                factory.registerSingleton(name, bean);
+                LOGGER.info("Registered {} bean as '{}'", label, name);
+            }
+        }
     }
 
     public Map<String, OpenIdConnectFilter> getProviderFilters() {

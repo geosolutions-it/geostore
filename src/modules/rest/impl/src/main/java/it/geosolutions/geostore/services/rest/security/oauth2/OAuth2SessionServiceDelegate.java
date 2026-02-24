@@ -259,6 +259,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         requestBody.add("refresh_token", refreshToken);
         requestBody.add("client_secret", configuration.getClientSecret());
         requestBody.add("client_id", configuration.getClientId());
+        if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
+            requestBody.add("scope", configuration.getScopes().replace(",", " "));
+        }
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(requestBody, headers);
 
@@ -272,7 +275,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             try {
                 ResponseEntity<OAuth2AccessToken> response =
                         restTemplate.exchange(
-                                configuration.buildRefreshTokenURI(),
+                                configuration.getAccessTokenUri(),
                                 HttpMethod.POST,
                                 requestEntity,
                                 OAuth2AccessToken.class);

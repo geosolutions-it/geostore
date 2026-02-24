@@ -216,7 +216,19 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 }
             }
         } else {
-            clearState();
+            // Populate the AccessTokenRequest with HTTP parameters (code, state)
+            // from the callback URL. When the rest template is created programmatically
+            // (e.g. by CompositeOpenIdConnectFilter), the AccessTokenRequest is not
+            // request-scoped and must be manually populated.
+            populateAccessTokenRequest(request);
+
+            // Only clear OAuth2 state for non-callback requests (initial login, etc).
+            // For callbacks (request contains an authorization code), clearState() would
+            // destroy the preserved state needed by the AuthorizationCodeAccessTokenProvider
+            // for CSRF verification against the state parameter returned by the IdP.
+            if (request.getParameter("code") == null) {
+                clearState();
+            }
             authentication = authenticateAndUpdateCache(request, response, null, null);
             token =
                     (String)
@@ -283,6 +295,39 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                 .setAttribute(PROVIDER_KEY, configuration.getProvider(), 0);
         return authentication;
+    }
+
+    /**
+     * Populates the rest template's AccessTokenRequest with the HTTP request parameters. This is
+     * required when the rest template is created programmatically (not via Spring's request-scoped
+     * proxy) so that the authorization code and state parameters from the OAuth2 callback URL are
+     * available to the AuthorizationCodeAccessTokenProvider.
+     */
+    private void populateAccessTokenRequest(HttpServletRequest request) {
+        OAuth2ClientContext clientContext = restTemplate.getOAuth2ClientContext();
+        AccessTokenRequest accessTokenRequest = clientContext.getAccessTokenRequest();
+        if (accessTokenRequest == null) return;
+
+        String code = request.getParameter("code");
+        if (code != null) {
+            // Reset the AccessTokenRequest to a clean state before populating.
+            // The same instance is shared across requests (not request-scoped), so
+            // stale stateKey/preservedState from previous requests would trigger
+            // CSRF checks in AuthorizationCodeAccessTokenProvider.
+            accessTokenRequest.setStateKey(null);
+            accessTokenRequest.setPreservedState(null);
+            accessTokenRequest.setAuthorizationCode(code);
+            // Set currentUri to the configured redirect URI (not the actual request URL)
+            // so the token exchange sends the correct redirect_uri to the IdP.
+            // The actual request URL may differ due to reverse proxy or path rewriting.
+            accessTokenRequest.setCurrentUri(configuration.getRedirectUri());
+            LOGGER.info(
+                    "Populated AccessTokenRequest with authorization code from callback (code length={})",
+                    code.length());
+        } else {
+            LOGGER.info(
+                    "No authorization code in callback request (URI={})", request.getRequestURI());
+        }
     }
 
     private void clearState() {
@@ -517,10 +562,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (e instanceof BadCredentialsException) {
             if (e.getCause() instanceof OAuth2AccessDeniedException) {
                 errorDetail = "OAuth2 access denied: " + e.getCause().getMessage();
-                LOGGER.warn("OAuth2 access denied by provider: {}", e.getCause().getMessage());
+                LOGGER.warn(
+                        "OAuth2 access denied by provider: {}",
+                        e.getCause().getMessage(),
+                        e.getCause());
             } else {
                 errorDetail = "Bad credentials: " + e.getMessage();
-                LOGGER.warn("OAuth2 bad credentials: {}", e.getMessage());
+                LOGGER.warn("OAuth2 bad credentials: {}", e.getMessage(), e);
             }
         } else if (e instanceof ResourceAccessException) {
             errorDetail = "OAuth2 provider unreachable: " + e.getMessage();
@@ -611,6 +659,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LOGGER.error("User retrieval failed for username: {}", username);
             return null;
         }
+        // Mark the user as trusted (externally authenticated via OAuth2/OIDC).
+        // This prevents getAuthUserDetails() from doing a redundant DB lookup —
+        // the User object already carries role and groups resolved from token claims.
+        user.setTrusted(true);
 
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());

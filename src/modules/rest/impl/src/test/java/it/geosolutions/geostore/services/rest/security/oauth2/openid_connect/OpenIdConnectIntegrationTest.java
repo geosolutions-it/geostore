@@ -1567,6 +1567,114 @@ public class OpenIdConnectIntegrationTest {
         assertFalse(configuration.isLogSensitiveInfo());
     }
 
+    // ── Tests for trusted flag and auth code callback flow ──────────────────
+
+    @Test
+    public void testBearerTokenUserIsTrusted() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+
+        String jwt = createSignedJwt("ritter@erdukunde.de", "test-sub-trusted", CLIENT_ID);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token should produce an authenticated user");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("ritter@erdukunde.de", user.getName());
+        assertTrue(
+                user.isTrusted(),
+                "OIDC-authenticated user should be marked as trusted so that "
+                        + "getAuthUserDetails() does not require a DB lookup");
+    }
+
+    @Test
+    public void testBearerTokenWithRolesUserIsTrusted() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        configuration.setGroupsClaim("groups");
+
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-trusted-admin")
+                        .withClaim("email", "admin-trusted@example.com")
+                        .withArrayClaim("roles", new String[] {"ADMIN"})
+                        .withArrayClaim("groups", new String[] {"team-alpha", "team-beta"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication);
+        User user = (User) authentication.getPrincipal();
+        assertEquals("admin-trusted@example.com", user.getName());
+        assertEquals(Role.ADMIN, user.getRole());
+        assertTrue(
+                user.isTrusted(),
+                "User with role and groups from token should still be marked trusted");
+        assertNotNull(user.getGroups());
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("team-alpha"));
+        assertTrue(groupNames.contains("team-beta"));
+    }
+
+    @Test
+    public void testAuthCodeCallbackPopulatesAccessTokenRequest()
+            throws IOException, ServletException {
+        // Simulate an auth code callback request with a code parameter.
+        // The filter should populate the AccessTokenRequest and skip clearState().
+        MockHttpServletRequest request = createRequest("openid/oidc/callback");
+        request.addParameter("code", CODE);
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        // The token exchange will use the code to obtain tokens from WireMock.
+        filter.doFilter(request, response, chain);
+
+        // After successful callback, the user should be authenticated
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Auth code callback should produce an authenticated user");
+        User user = (User) authentication.getPrincipal();
+        assertNotNull(user.getName(), "User should have a name extracted from userinfo");
+        assertTrue(user.isTrusted(), "Auth code flow user should be marked as trusted");
+    }
+
+    @Test
+    public void testCallbackRequestSkipsClearState() throws IOException, ServletException {
+        // Verify that a callback request with a code does not trigger clearState(),
+        // which would destroy the authorization code before the token exchange.
+        MockHttpServletRequest request = createRequest("openid/oidc/callback");
+        request.addParameter("code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        // If clearState() ran, the code would be wiped and authentication would fail.
+        // Success means clearState() was correctly skipped.
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(
+                authentication,
+                "Callback with code should authenticate (clearState must be skipped)");
+    }
+
     /**
      * Creates a PKCS12 keystore file containing the test RSA key pair for JWE decryption testing.
      */
