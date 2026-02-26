@@ -30,7 +30,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.cache.Cache;
+import com.github.benmanes.caffeine.cache.Cache;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.RESTDiagnosticsService;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
@@ -194,7 +194,7 @@ public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTD
 
         Cache<String, Authentication> cache = tokenCache.getCache();
         cacheNode.put("status", "active");
-        cacheNode.put("size", cache.size());
+        cacheNode.put("size", cache.estimatedSize());
 
         // Cache stats (may not be enabled)
         try {

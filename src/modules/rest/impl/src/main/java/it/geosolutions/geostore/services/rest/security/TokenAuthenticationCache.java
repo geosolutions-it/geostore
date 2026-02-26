@@ -27,9 +27,10 @@
  */
 package it.geosolutions.geostore.services.rest.security;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalCause;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.Expiry;
+import com.github.benmanes.caffeine.cache.RemovalCause;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
@@ -37,6 +38,7 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.checkerframework.checker.index.qual.NonNegative;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -50,12 +52,13 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * A cache for OAuth2 Authentication object. Authentication instances are identified by the
- * corresponding accessToken.
+ * corresponding accessToken. Uses per-entry expiration based on the token's actual expiry time.
  */
 public class TokenAuthenticationCache implements ApplicationContextAware {
 
     private static final Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
     private final Cache<String, Authentication> cache;
+    private final long defaultExpirationNanos;
     private ApplicationContext context;
 
     public TokenAuthenticationCache() {
@@ -63,18 +66,58 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
     }
 
     public TokenAuthenticationCache(int cacheSize, int cacheExpirationMinutes) {
-        CacheBuilder<String, Authentication> cacheBuilder =
-                CacheBuilder.newBuilder()
+        this.defaultExpirationNanos = TimeUnit.MINUTES.toNanos(cacheExpirationMinutes);
+        this.cache =
+                Caffeine.newBuilder()
                         .maximumSize(cacheSize)
-                        .expireAfterWrite(cacheExpirationMinutes, TimeUnit.MINUTES)
-                        .removalListener(
-                                notification -> {
-                                    if (notification.getCause().equals(RemovalCause.EXPIRED)) {
-                                        Authentication authentication = notification.getValue();
+                        .expireAfter(
+                                new Expiry<String, Authentication>() {
+                                    @Override
+                                    public long expireAfterCreate(
+                                            String key, Authentication value, long currentTime) {
+                                        return computeExpirationNanos(value);
+                                    }
+
+                                    @Override
+                                    public long expireAfterUpdate(
+                                            String key,
+                                            Authentication value,
+                                            long currentTime,
+                                            @NonNegative long currentDuration) {
+                                        return computeExpirationNanos(value);
+                                    }
+
+                                    @Override
+                                    public long expireAfterRead(
+                                            String key,
+                                            Authentication value,
+                                            long currentTime,
+                                            @NonNegative long currentDuration) {
+                                        return currentDuration;
+                                    }
+                                })
+                        .evictionListener(
+                                (key, authentication, cause) -> {
+                                    if (cause == RemovalCause.EXPIRED && authentication != null) {
                                         revokeAuthIfRefreshExpired(authentication);
                                     }
-                                });
-        this.cache = cacheBuilder.build();
+                                })
+                        .recordStats()
+                        .build();
+    }
+
+    private long computeExpirationNanos(Authentication authentication) {
+        TokenDetails details = OAuth2Utils.getTokenDetails(authentication);
+        if (details != null && details.getAccessToken() != null) {
+            Date exp = details.getAccessToken().getExpiration();
+            if (exp != null) {
+                long remainingMs = exp.getTime() - System.currentTimeMillis();
+                if (remainingMs > 0) {
+                    return TimeUnit.MILLISECONDS.toNanos(remainingMs);
+                }
+            }
+        }
+        return defaultExpirationNanos;
     }
 
     /**
