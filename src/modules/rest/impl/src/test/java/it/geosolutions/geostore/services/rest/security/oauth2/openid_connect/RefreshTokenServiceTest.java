@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.client.resource.UserRedirectRequiredE
 import org.springframework.security.oauth2.common.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -35,7 +36,7 @@ class RefreshTokenServiceTest {
 
     private TestOAuth2SessionServiceDelegate serviceDelegate;
     private OAuth2Configuration configuration;
-    private OAuth2RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private MockHttpServletRequest mockRequest;
     private MockHttpServletResponse mockResponse;
     private DefaultOAuth2AccessToken mockOAuth2AccessToken;
@@ -48,13 +49,13 @@ class RefreshTokenServiceTest {
 
         // Initialize mocks and dependencies
         configuration = mock(OAuth2Configuration.class);
-        restTemplate = mock(OAuth2RestTemplate.class);
+        restTemplate = mock(RestTemplate.class);
         authenticationCache = mock(TokenAuthenticationCache.class);
 
         // Create an instance of the test subclass
         serviceDelegate = spy(new TestOAuth2SessionServiceDelegate());
         // Ensure restTemplate is set correctly
-        serviceDelegate.setRestTemplate(restTemplate);
+        serviceDelegate.setRefreshRestTemplate(restTemplate);
         serviceDelegate.setConfiguration(configuration);
         serviceDelegate.authenticationCache = authenticationCache;
 
@@ -70,7 +71,9 @@ class RefreshTokenServiceTest {
         when(configuration.getMaxRetries()).thenReturn(3);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getAccessTokenUri()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
+        when(configuration.getBackoffMultiplier()).thenReturn(2.0);
 
         // Mock the existing OAuth2AccessToken with a refresh token
         mockOAuth2AccessToken = new DefaultOAuth2AccessToken("providedAccessToken");
@@ -130,10 +133,6 @@ class RefreshTokenServiceTest {
         when(configuration.isEnabled()).thenReturn(true);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
-        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
-        when(configuration.getMaxRetries()).thenReturn(3);
-
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.POST),
@@ -229,7 +228,7 @@ class RefreshTokenServiceTest {
         assertEquals(
                 "existingRefreshToken",
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged after server error");
+                "Refresh token should remain unchanged");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -513,7 +512,7 @@ class RefreshTokenServiceTest {
         String oldAccessToken = "oldAccessToken";
         String refreshToken = "validRefreshToken";
 
-        // We’ll pretend the user originally had "oldAccessToken"
+        // We'll pretend the user originally had "oldAccessToken"
         // and the current OAuth2 token in serviceDelegate is set to the same.
         DefaultOAuth2AccessToken originalAccessToken = new DefaultOAuth2AccessToken(oldAccessToken);
         OAuth2RefreshToken existingRefresh = new DefaultOAuth2RefreshToken(refreshToken);
@@ -546,13 +545,7 @@ class RefreshTokenServiceTest {
                         eq(OAuth2AccessToken.class)))
                 .thenReturn(responseEntity);
 
-        // Mock config so refresh is enabled
-        when(configuration.isEnabled()).thenReturn(true);
-        when(configuration.getClientId()).thenReturn("testClientId");
-        when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
-        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
-        when(configuration.getMaxRetries()).thenReturn(3);
+        // Mock config so refresh is enabled (most already set in setUp)
 
         // Act
         SessionToken sessionToken = serviceDelegate.refresh(refreshToken, oldAccessToken);
@@ -587,7 +580,7 @@ class RefreshTokenServiceTest {
     /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */
     class TestOAuth2SessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
-        private OAuth2RestTemplate restTemplate;
+        private RestTemplate refreshRestTemplate;
         private OAuth2Configuration configuration;
         private OAuth2AccessToken currentAccessToken;
         protected TokenAuthenticationCache authenticationCache;
@@ -596,8 +589,8 @@ class RefreshTokenServiceTest {
             super(null, null); // Mocked dependencies
         }
 
-        public void setRestTemplate(OAuth2RestTemplate restTemplate) {
-            this.restTemplate = restTemplate;
+        public void setRefreshRestTemplate(RestTemplate refreshRestTemplate) {
+            this.refreshRestTemplate = refreshRestTemplate;
         }
 
         public void setConfiguration(OAuth2Configuration configuration) {
@@ -606,7 +599,12 @@ class RefreshTokenServiceTest {
 
         @Override
         protected OAuth2RestTemplate restTemplate() {
-            return restTemplate;
+            return null;
+        }
+
+        @Override
+        protected RestTemplate createRefreshRestTemplate() {
+            return refreshRestTemplate;
         }
 
         @Override
