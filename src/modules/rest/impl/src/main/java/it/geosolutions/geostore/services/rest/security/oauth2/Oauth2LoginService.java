@@ -21,6 +21,8 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 public abstract class Oauth2LoginService implements IdPLoginService {
 
@@ -63,11 +65,11 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                                 .location(new URI(configuration.getInternalRedirectUri()));
                 LOGGER.info("AccessToken: {}", token);
                 sessionToken.setAccessToken(token);
+                sessionToken.setTokenType(BEARER_TYPE);
                 if (refreshToken != null) {
                     LOGGER.info("RefreshToken: {}", refreshToken);
-                    sessionToken.setRefreshToken(refreshToken);
+                    result.header("Set-Cookie", refreshTokenCookie(refreshToken).toString());
                 }
-                sessionToken.setTokenType(BEARER_TYPE);
                 TokenStorage tokenStorage = tokenStorage();
                 Object key = tokenStorage.buildTokenKey();
                 tokenStorage.saveToken(key, sessionToken);
@@ -117,6 +119,18 @@ public abstract class Oauth2LoginService implements IdPLoginService {
 
     protected IdPConfiguration configuration(String provider) {
         return GeoStoreContext.bean(provider + CONFIG_NAME_SUFFIX, IdPConfiguration.class);
+    }
+
+    protected NewCookie refreshTokenCookie(String value) {
+        boolean secure = isRequestSecure();
+        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, value, "/", null);
+        return new AccessCookie(cookie, "", 604800, null, secure, true, "lax");
+    }
+
+    private boolean isRequestSecure() {
+        ServletRequestAttributes attrs =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null && attrs.getRequest().isSecure();
     }
 
     protected NewCookie cookie(String name, String value) {

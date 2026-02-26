@@ -44,6 +44,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
@@ -125,6 +126,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             refreshTokenToUse = getParameterValue(REFRESH_TOKEN_PARAM, request);
         }
 
+        if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
+            refreshTokenToUse = getRefreshTokenFromCookie(request);
+        }
+
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
 
@@ -179,6 +184,13 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                 OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, sessionToken.getAccessToken());
         request.setAttribute(
                 OAuth2AuthenticationDetails.ACCESS_TOKEN_TYPE, sessionToken.getTokenType());
+
+        // Set updated refresh token as HttpOnly cookie and remove from JSON response
+        HttpServletResponse response = getResponse();
+        if (response != null && sessionToken.getRefreshToken() != null) {
+            setRefreshTokenCookie(response, sessionToken.getRefreshToken(), request.isSecure());
+            sessionToken.setRefreshToken(null);
+        }
 
         return sessionToken;
     }
@@ -375,6 +387,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             String accessToken, String refreshToken, OAuth2Configuration configuration) {
         LOGGER.info(
                 "Unable to refresh token after max retries. Clearing session and redirecting to login.");
+        HttpServletResponse response = getResponse();
+        if (response != null) {
+            clearRefreshTokenCookie(response);
+        }
         doLogout(null);
 
         try {
@@ -662,22 +678,56 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     protected void clearCookies(HttpServletRequest request, HttpServletResponse response) {
-        javax.servlet.http.Cookie[] allCookies = request.getCookies();
+        Cookie[] allCookies = request.getCookies();
         if (allCookies != null)
-            for (javax.servlet.http.Cookie toDelete : allCookies) {
+            for (Cookie toDelete : allCookies) {
                 if (deleteCookie(toDelete)) {
                     toDelete.setMaxAge(-1);
                     toDelete.setPath("/");
                     toDelete.setComment("EXPIRING COOKIE at " + System.currentTimeMillis());
+                    if (toDelete.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM)) {
+                        toDelete.setHttpOnly(true);
+                        toDelete.setSecure(request.isSecure());
+                    }
                     response.addCookie(toDelete);
                 }
             }
     }
 
-    protected boolean deleteCookie(javax.servlet.http.Cookie c) {
+    protected boolean deleteCookie(Cookie c) {
         return c.getName().equalsIgnoreCase("JSESSIONID")
                 || c.getName().equalsIgnoreCase(ACCESS_TOKEN_PARAM)
                 || c.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM);
+    }
+
+    protected String getRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (REFRESH_TOKEN_PARAM.equalsIgnoreCase(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    protected void setRefreshTokenCookie(
+            HttpServletResponse response, String refreshToken, boolean secure) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(secure);
+        cookie.setPath("/");
+        cookie.setMaxAge(604800); // 7 days
+        response.addCookie(cookie);
+    }
+
+    protected void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, "");
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
     protected TokenAuthenticationCache cache() {
