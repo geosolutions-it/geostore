@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.client.resource.UserRedirectRequiredE
 import org.springframework.security.oauth2.common.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -35,7 +36,7 @@ class RefreshTokenServiceTest {
 
     private TestOAuth2SessionServiceDelegate serviceDelegate;
     private OAuth2Configuration configuration;
-    private OAuth2RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private MockHttpServletRequest mockRequest;
     private MockHttpServletResponse mockResponse;
     private DefaultOAuth2AccessToken mockOAuth2AccessToken;
@@ -48,13 +49,13 @@ class RefreshTokenServiceTest {
 
         // Initialize mocks and dependencies
         configuration = mock(OAuth2Configuration.class);
-        restTemplate = mock(OAuth2RestTemplate.class);
+        restTemplate = mock(RestTemplate.class);
         authenticationCache = mock(TokenAuthenticationCache.class);
 
         // Create an instance of the test subclass
         serviceDelegate = spy(new TestOAuth2SessionServiceDelegate());
         // Ensure restTemplate is set correctly
-        serviceDelegate.setRestTemplate(restTemplate);
+        serviceDelegate.setRefreshRestTemplate(restTemplate);
         serviceDelegate.setConfiguration(configuration);
         serviceDelegate.authenticationCache = authenticationCache;
 
@@ -579,7 +580,7 @@ class RefreshTokenServiceTest {
     /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */
     class TestOAuth2SessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
-        private OAuth2RestTemplate restTemplate;
+        private RestTemplate refreshRestTemplate;
         private OAuth2Configuration configuration;
         private OAuth2AccessToken currentAccessToken;
         protected TokenAuthenticationCache authenticationCache;
@@ -588,8 +589,8 @@ class RefreshTokenServiceTest {
             super(null, null); // Mocked dependencies
         }
 
-        public void setRestTemplate(OAuth2RestTemplate restTemplate) {
-            this.restTemplate = restTemplate;
+        public void setRefreshRestTemplate(RestTemplate refreshRestTemplate) {
+            this.refreshRestTemplate = refreshRestTemplate;
         }
 
         public void setConfiguration(OAuth2Configuration configuration) {
@@ -598,7 +599,12 @@ class RefreshTokenServiceTest {
 
         @Override
         protected OAuth2RestTemplate restTemplate() {
-            return restTemplate;
+            return null;
+        }
+
+        @Override
+        protected RestTemplate createRefreshRestTemplate() {
+            return refreshRestTemplate;
         }
 
         @Override

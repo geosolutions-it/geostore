@@ -258,7 +258,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         String errorMessage = "";
         String warningMessage = "";
 
-        OAuth2RestTemplate restTemplate = restTemplate();
+        // Use a plain RestTemplate to avoid OAuth2RestTemplate interceptors that may
+        // trigger a UserRedirectRequiredException when the current access token is expired.
+        RestTemplate plainRestTemplate = createRefreshRestTemplate();
         HttpHeaders headers = getHttpHeaders(accessToken, configuration);
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
         requestBody.add("grant_type", "refresh_token");
@@ -280,7 +282,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
             try {
                 ResponseEntity<OAuth2AccessToken> response =
-                        restTemplate.exchange(
+                        plainRestTemplate.exchange(
                                 configuration.getAccessTokenUri(),
                                 HttpMethod.POST,
                                 requestEntity,
@@ -724,6 +726,15 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     protected abstract OAuth2RestTemplate restTemplate();
+
+    /**
+     * Creates a plain RestTemplate for token refresh requests. Using a plain RestTemplate avoids
+     * OAuth2RestTemplate interceptors that can trigger UserRedirectRequiredException when the
+     * current access token is expired.
+     */
+    protected RestTemplate createRefreshRestTemplate() {
+        return new RestTemplate();
+    }
 
     @Override
     public User getUser(String sessionId, boolean refresh, boolean autorefresh) {
