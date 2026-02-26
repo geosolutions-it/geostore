@@ -17,20 +17,13 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
-import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.Tag;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.core.model.enums.Role;
@@ -52,16 +45,6 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-import javax.ws.rs.core.SecurityContext;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -71,7 +54,28 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.web.context.request.RequestContextHolder;
 
-/** @author ETj (etj at geo-solutions.it) */
+import javax.ws.rs.core.SecurityContext;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
     private final RESTExtJsServiceImpl restExtJsService;
@@ -1215,11 +1219,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
 
-        long groupId = createGroup("group");
-        UserGroup group = userGroupService.get(groupId);
-
         long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
         SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
@@ -1267,6 +1271,114 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 adminSecurityContext,
                 unadvertisedGroupResourceId,
                 new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(3, resources.size());
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+
+            ExtResource groupResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(GROUP_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertTrue(groupResource.isCanEdit());
+            assertTrue(groupResource.isCanDelete());
+            assertTrue(groupResource.isCanCopy());
+
+            ExtResource readOnlyResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertFalse(readOnlyResource.isCanEdit());
+            assertFalse(readOnlyResource.isCanDelete());
+            assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupOwnedResourceWithLdapDirectPermissionInformation() throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
+        final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        User ldapUser = new User();
+        ldapUser.setId(-1L);
+        ldapUser.setName("user");
+        ldapUser.setRole(Role.USER);
+
+        /* with LDAP direct, groups are created from user roles */
+        String ldapGroupName = ldapUser.getRole().toString();
+
+        createCategory(CAT0_NAME);
+        SecurityContext userSecurityContext = new LdapSecurityContext(ldapUser);
+
+        /* LDAP group owned resource - advertised */
+        long advertisedGroupResourceId =
+                restCreateResource(GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+
+        SecurityRule editorGroupRule = new SecurityRule();
+        editorGroupRule.setResource(resourceService.get(advertisedGroupResourceId));
+        editorGroupRule.setGroupname(ldapGroupName);
+        editorGroupRule.setCanRead(true);
+        editorGroupRule.setCanWrite(true);
+
+        securityDAO.persist(editorGroupRule);
+
+        /* LDAP group owned resource - read only, advertised */
+        long readOnlyGroupResourceId =
+                restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+
+        SecurityRule readOnlyGroupRule = new SecurityRule();
+        readOnlyGroupRule.setResource(resourceService.get(readOnlyGroupResourceId));
+        readOnlyGroupRule.setGroupname(ldapGroupName);
+        readOnlyGroupRule.setCanRead(true);
+
+        securityDAO.persist(readOnlyGroupRule);
+
+        /* LDAP group owned resource - unadvertised */
+        long unadvertisedGroupResourceId =
+                restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
+
+        SecurityRule unadvertisedGroupRule = new SecurityRule();
+        unadvertisedGroupRule.setResource(resourceService.get(unadvertisedGroupResourceId));
+        unadvertisedGroupRule.setGroupname(ldapGroupName);
+        unadvertisedGroupRule.setCanRead(true);
+
+        securityDAO.persist(unadvertisedGroupRule);
 
         {
             ExtResourceList response =
