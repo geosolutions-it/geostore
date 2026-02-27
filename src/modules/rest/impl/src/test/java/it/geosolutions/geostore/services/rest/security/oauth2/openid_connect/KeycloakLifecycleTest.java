@@ -33,9 +33,14 @@ import dasniko.testcontainers.keycloak.KeycloakContainer;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
@@ -46,6 +51,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +62,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.token.DefaultAccessTokenRequest;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -481,6 +489,106 @@ public class KeycloakLifecycleTest {
         ServletRequestAttributes attributes = new ServletRequestAttributes(request);
         RequestContextHolder.setRequestAttributes(attributes);
         return request;
+    }
+
+    @Test
+    public void testDelegateRefreshUpdatesCache() throws IOException, ServletException {
+        // Step 1: Authenticate via bearer token to populate the cache
+        KeycloakTokens tokens = obtainTokens("testuser", "testuser123");
+
+        MockHttpServletRequest authRequest = createRequest("rest/resources");
+        authRequest.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse authResponse = new MockHttpServletResponse();
+        filter.doFilter(authRequest, authResponse, new MockFilterChain());
+
+        assertEquals(200, authResponse.getStatus());
+        Authentication originalAuth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(originalAuth, "Initial bearer auth should succeed");
+        assertNotNull(
+                cache.get(tokens.accessToken),
+                "Original access token should be in cache after auth");
+
+        // Step 2: Set up request context for the refresh call
+        MockHttpServletRequest refreshRequest = createRequest("rest/session/refreshToken");
+        MockHttpServletResponse refreshResponse = new MockHttpServletResponse();
+        RequestContextHolder.setRequestAttributes(
+                new ServletRequestAttributes(refreshRequest, refreshResponse));
+
+        // Step 3: Create the delegate that uses the test's real configuration and cache
+        OAuth2SessionServiceDelegate delegate =
+                new OAuth2SessionServiceDelegate(null, null) {
+                    @Override
+                    protected OAuth2RestTemplate restTemplate() {
+                        return null;
+                    }
+
+                    @Override
+                    protected OAuth2Configuration configuration() {
+                        return configuration;
+                    }
+
+                    @Override
+                    protected TokenAuthenticationCache cache() {
+                        return cache;
+                    }
+
+                    @Override
+                    protected HttpServletRequest getRequest() {
+                        return refreshRequest;
+                    }
+
+                    @Override
+                    protected HttpServletResponse getResponse() {
+                        return refreshResponse;
+                    }
+                };
+
+        // Step 4: Call the real refresh path
+        SessionToken sessionToken = delegate.refresh(tokens.refreshToken, tokens.accessToken);
+
+        // Step 5: Verify the refresh succeeded and cache was updated
+        assertNotNull(sessionToken, "Delegate refresh should return a SessionToken");
+        assertNotNull(sessionToken.getAccessToken(), "New access token should be present");
+        assertNotEquals(
+                tokens.accessToken,
+                sessionToken.getAccessToken(),
+                "Access token should differ after refresh");
+        assertTrue(
+                sessionToken.getExpires() > System.currentTimeMillis(),
+                "New token expiration should be in the future");
+
+        // Old token should be evicted from cache, new token should be present
+        assertNull(
+                cache.get(tokens.accessToken),
+                "Old access token should be removed from cache after refresh");
+        Authentication refreshedAuth = cache.get(sessionToken.getAccessToken());
+        assertNotNull(refreshedAuth, "New access token should be present in cache after refresh");
+
+        // Verify the cached authentication has valid TokenDetails
+        TokenDetails refreshedDetails = OAuth2Utils.getTokenDetails(refreshedAuth);
+        assertNotNull(refreshedDetails, "Refreshed auth should have TokenDetails");
+        assertNotNull(
+                refreshedDetails.getAccessToken(),
+                "TokenDetails should contain the new OAuth2AccessToken");
+        assertEquals(
+                sessionToken.getAccessToken(),
+                refreshedDetails.getAccessToken().getValue(),
+                "TokenDetails access token should match the SessionToken");
+        assertNotNull(refreshedDetails.getProvider(), "TokenDetails should have a provider set");
+
+        // Step 6: Verify the new token can authenticate through the filter
+        SecurityContextHolder.clearContext();
+        MockHttpServletRequest verifyRequest = createRequest("rest/resources");
+        verifyRequest.addHeader("Authorization", "Bearer " + sessionToken.getAccessToken());
+        MockHttpServletResponse verifyResponse = new MockHttpServletResponse();
+        filter.doFilter(verifyRequest, verifyResponse, new MockFilterChain());
+
+        assertEquals(200, verifyResponse.getStatus());
+        Authentication verifiedAuth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(verifiedAuth, "Refreshed token should authenticate via bearer");
+        User user = (User) verifiedAuth.getPrincipal();
+        assertEquals(
+                "testuser", user.getName(), "Username should be preserved after delegate refresh");
     }
 
     private static class KeycloakTokens {
