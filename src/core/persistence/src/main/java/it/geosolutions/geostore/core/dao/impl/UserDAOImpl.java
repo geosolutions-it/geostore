@@ -19,7 +19,6 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
-import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.User;
@@ -80,25 +79,12 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
     @SuppressWarnings("unchecked")
     @Override
     public List<User> search(ISearch search) {
-
-        List<Filter> filters = search.getFilters();
-
-        if (filters.stream().anyMatch(this::hasLikeToStringOperator)) {
-            return super.search(createNormalizedSearchForSql(search));
-        }
-
-        return super.search(search);
+        return super.search(normalizeSearchForSql(search));
     }
 
     @Override
     public int count(ISearch search) {
-        List<Filter> filters = search.getFilters();
-
-        if (filters.stream().anyMatch(this::hasLikeToStringOperator)) {
-            return super.count(createNormalizedSearchForSql(search));
-        }
-
-        return super.count(search);
+        return super.count(normalizeSearchForSql(search));
     }
 
     /*

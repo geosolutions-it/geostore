@@ -24,11 +24,13 @@ import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.jpa.JPASearchProcessor;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.springframework.stereotype.Repository;
 
 /**
@@ -79,7 +81,23 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
         return this.entityManager;
     }
 
-    protected Search createNormalizedSearchForSql(ISearch search) {
+    protected ISearch normalizeSearchForSql(ISearch search) {
+        if (search == null) {
+            return new Search();
+        }
+
+        if (shouldNormalize(search)) {
+            return createNormalizedSearchForSql(search);
+        }
+
+        return search;
+    }
+
+    private boolean shouldNormalize(ISearch search) {
+        return search.getFilters().stream().anyMatch(this::hasLikeToStringOperator);
+    }
+
+    private Search createNormalizedSearchForSql(ISearch search) {
         Search sqlSearch = new Search(search.getSearchClass());
 
         List<Filter> sqlFilters =
@@ -100,8 +118,8 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
         return sqlSearch;
     }
 
-    protected boolean hasLikeToStringOperator(Filter f) {
+    private boolean hasLikeToStringOperator(Filter f) {
         return f.getValue() instanceof String
-                && (f.getOperator() == Filter.OP_LIKE || f.getOperator() == Filter.OP_ILIKE);
+               && (f.getOperator() == Filter.OP_LIKE || f.getOperator() == Filter.OP_ILIKE);
     }
 }
