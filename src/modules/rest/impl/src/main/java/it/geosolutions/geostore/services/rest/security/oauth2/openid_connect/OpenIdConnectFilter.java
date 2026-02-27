@@ -29,13 +29,27 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JweTokenDecryptor;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MicrosoftGraphClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.OpenIdTokenValidator;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -43,11 +57,18 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.jwt.Jwt;
 import org.springframework.security.jwt.JwtHelper;
+import org.springframework.security.jwt.crypto.sign.RsaVerifier;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 /** OpenId Connect filter implementation. */
 public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
@@ -55,6 +76,11 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
     private static final Logger LOGGER = LogManager.getLogger(OpenIdConnectFilter.class);
 
     private final OpenIdTokenValidator bearerTokenValidator;
+    private final JwksRsaKeyProvider jwksKeyProvider;
+    private volatile JweTokenDecryptor jweDecryptor;
+    private volatile boolean jweDecryptorInitialized = false;
+    private volatile MicrosoftGraphClient graphClient;
+    private volatile boolean graphClientInitialized = false;
 
     /**
      * @param tokenServices a RemoteTokenServices instance.
@@ -62,19 +88,22 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
      * @param configuration the OAuth2 configuration.
      * @param tokenAuthenticationCache the cache.
      * @param bearerTokenValidator validator for attached Bearer tokens (may be null to disable)
+     * @param jwksKeyProvider provider for JWKS RSA keys for signature verification (may be null)
      */
     public OpenIdConnectFilter(
             RemoteTokenServices tokenServices,
             GeoStoreOAuthRestTemplate oAuth2RestTemplate,
             OAuth2Configuration configuration,
             TokenAuthenticationCache tokenAuthenticationCache,
-            OpenIdTokenValidator bearerTokenValidator) {
+            OpenIdTokenValidator bearerTokenValidator,
+            JwksRsaKeyProvider jwksKeyProvider) {
         super(tokenServices, oAuth2RestTemplate, configuration, tokenAuthenticationCache);
         if (configuration.getDiscoveryUrl() != null
                 && !"".equals(configuration.getDiscoveryUrl())) {
             new DiscoveryClient(configuration.getDiscoveryUrl()).autofill(configuration);
         }
         this.bearerTokenValidator = bearerTokenValidator;
+        this.jwksKeyProvider = jwksKeyProvider;
     }
 
     @Override
@@ -82,10 +111,13 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
     protected String getPreAuthenticatedPrincipal(
             HttpServletRequest req, HttpServletResponse resp, OAuth2AccessToken accessToken)
             throws IOException, ServletException {
-        String result = super.getPreAuthenticatedPrincipal(req, resp, accessToken);
 
         OAuth2AuthenticationType type =
                 (OAuth2AuthenticationType) req.getAttribute(OAUTH2_AUTHENTICATION_TYPE_KEY);
+
+        // For BEARER tokens with a validator configured, validate directly
+        // and extract the principal from claims — skip Spring's introspection-based
+        // super.attemptAuthentication() which can fail with OIDC-only providers.
         if (type != null
                 && type.equals(OAuth2AuthenticationType.BEARER)
                 && bearerTokenValidator != null) {
@@ -96,61 +128,541 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
                         "OIDC: received an attached Bearer token, but Bearer tokens aren't allowed!");
             }
 
-            // Resolve the token value (prefer the provided OAuth2AccessToken, then Spring
-            // attribute, then our own attribute)
-            String token = null;
-            if (accessToken != null
-                    && !accessToken.isExpired()
-                    && accessToken.getValue() != null
-                    && !accessToken.getValue().isEmpty()) {
-                token = accessToken.getValue();
-            }
-            if (token == null) {
-                Object fromSpring =
-                        req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);
-                if (fromSpring instanceof String) {
-                    token = (String) fromSpring;
-                }
-            }
-            if (token == null) {
-                Object fromOurFlow = req.getAttribute(ACCESS_TOKEN_PARAM);
-                if (fromOurFlow instanceof String) {
-                    token = (String) fromOurFlow;
-                }
-            }
-
+            // Resolve the token value
+            String token = resolveTokenValue(req, accessToken);
             if (token == null || token.isEmpty()) {
                 LOGGER.error(
                         "OIDC: Bearer token validation requested but no token was found in request context");
                 throw new IOException("Attached Bearer Token is missing");
             }
 
-            // Access Token Check response (maybe null depending on provider)
-            Map<String, Object> userinfoMap = null;
-            Object ext = req.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
-            if (ext instanceof Map) {
-                userinfoMap = (Map<String, Object>) ext;
+            // Resolve claims based on configured bearer token strategy
+            OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+            String strategy =
+                    oidcConfig.getBearerTokenStrategy() != null
+                            ? oidcConfig.getBearerTokenStrategy()
+                            : "jwt";
+            Map<String, Object> bearerClaims = resolveBearerClaims(token, strategy);
+
+            if (bearerClaims == null) {
+                LOGGER.warn(
+                        "OIDC: Bearer token could not be validated with strategy '{}'", strategy);
+                throw new IOException("Attached Bearer Token is invalid");
             }
 
-            // Decode token claims (no signature verification here; validator will verify)
-            Map<String, Object> accessTokenClaims;
-            try {
-                Jwt decodedAccessToken = JwtHelper.decode(token);
-                String claimsJson = decodedAccessToken.getClaims();
-                accessTokenClaims = (Map<String, Object>) JSONObject.fromObject(claimsJson);
-            } catch (Exception e) {
-                LOGGER.error("OIDC: Could not decode bearer token claims", e);
-                throw new IOException("Attached Bearer Token is invalid (decoding failed)", e);
+            // Extract principal from claims using configured keys and common fallbacks
+            String principal =
+                    coalesceClaimValue(
+                            bearerClaims,
+                            configuration.getUniqueUsername(),
+                            configuration.getPrincipalKey());
+            if (principal == null) {
+                principal =
+                        coalesceClaimValue(
+                                bearerClaims,
+                                "upn",
+                                "preferred_username",
+                                "unique_name",
+                                "user_name",
+                                "username",
+                                "email",
+                                "sub",
+                                "oid");
             }
 
+            if (principal != null && !principal.isEmpty()) {
+                LOGGER.info(
+                        "Authenticated OIDC Bearer token for user ({}): {}", strategy, principal);
+                // Store bearer claims so createPreAuthentication() can use them
+                // for role/group extraction from userinfo/introspection response.
+                req.setAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY, bearerClaims);
+                // Place the access token on the rest template context so that
+                // createPreAuthentication() -> addAuthoritiesFromToken() can read
+                // rolesClaim / groupsClaim from the JWT.
+                if (accessToken != null) {
+                    restTemplate.getOAuth2ClientContext().setAccessToken(accessToken);
+                }
+                return principal;
+            }
+
+            LOGGER.warn(
+                    "OIDC: Bearer token validated but no principal could be resolved from claims");
+            return null;
+        }
+
+        // For USER auth type or BEARER without validator, use the standard flow
+        return super.getPreAuthenticatedPrincipal(req, resp, accessToken);
+    }
+
+    /**
+     * Resolves the bearer token value from the request, checking OAuth2AccessToken, Spring
+     * attribute, and our own attribute.
+     */
+    private String resolveTokenValue(HttpServletRequest req, OAuth2AccessToken accessToken) {
+        String token = null;
+        if (accessToken != null
+                && !accessToken.isExpired()
+                && accessToken.getValue() != null
+                && !accessToken.getValue().isEmpty()) {
+            token = accessToken.getValue();
+        }
+        if (token == null) {
+            Object fromSpring = req.getAttribute(OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE);
+            if (fromSpring instanceof String) {
+                token = (String) fromSpring;
+            }
+        }
+        if (token == null) {
+            Object fromOurFlow = req.getAttribute(ACCESS_TOKEN_PARAM);
+            if (fromOurFlow instanceof String) {
+                token = (String) fromOurFlow;
+            }
+        }
+        return token;
+    }
+
+    /**
+     * Resolves bearer token claims based on the configured strategy.
+     *
+     * @param token the bearer token value.
+     * @param strategy "jwt" (default), "introspection", or "auto" (JWT with introspection
+     *     fallback).
+     * @return the claims map, or null if validation fails.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> resolveBearerClaims(String token, String strategy)
+            throws IOException {
+        if ("introspection".equalsIgnoreCase(strategy)) {
+            return introspectToken(token);
+        } else if ("auto".equalsIgnoreCase(strategy)) {
             try {
-                bearerTokenValidator.verifyToken(
-                        (OpenIdConnectConfiguration) configuration, accessTokenClaims, userinfoMap);
+                return validateBearerJwt(token);
             } catch (Exception e) {
-                throw new IOException("Attached Bearer Token is invalid", e);
+                LOGGER.info(
+                        "OIDC: JWT validation failed, falling back to introspection: {}",
+                        e.getMessage());
+                return introspectToken(token);
+            }
+        } else {
+            // Default: "jwt"
+            return validateBearerJwt(token);
+        }
+    }
+
+    /**
+     * Validates a bearer token as a JWT: decode, verify signature via JWKS, check exp/iat, and run
+     * the configured token validator.
+     *
+     * @return the claims map from the JWT.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> validateBearerJwt(String token) throws IOException {
+        // Decrypt JWE tokens if a decryptor is configured
+        JweTokenDecryptor decryptor = getJweDecryptor();
+        if (decryptor != null && JweTokenDecryptor.isJweToken(token)) {
+            LOGGER.debug("Detected JWE token (5 parts), attempting decryption");
+            token = decryptor.decrypt(token);
+        }
+
+        Map<String, Object> accessTokenClaims;
+        try {
+            Jwt decodedAccessToken;
+            if (jwksKeyProvider != null) {
+                String kid = extractKidFromHeader(token);
+                RSAPublicKey key = jwksKeyProvider.getKey(kid);
+                if (key == null) {
+                    throw new IOException("No JWK key found for kid: " + kid);
+                }
+                decodedAccessToken = JwtHelper.decodeAndVerify(token, new RsaVerifier(key));
+            } else {
+                LOGGER.warn(
+                        "OIDC: No JWKS key provider configured — decoding bearer token"
+                                + " WITHOUT signature verification");
+                decodedAccessToken = JwtHelper.decode(token);
+            }
+            String claimsJson = decodedAccessToken.getClaims();
+            accessTokenClaims = (Map<String, Object>) JSONObject.fromObject(claimsJson);
+        } catch (IOException e) {
+            throw e;
+        } catch (Exception e) {
+            LOGGER.error("OIDC: Could not decode/verify bearer token", e);
+            throw new IOException("Attached Bearer Token is invalid (decoding failed)", e);
+        }
+
+        // Check token expiry from claims
+        Object expObj = accessTokenClaims.get("exp");
+        if (expObj != null) {
+            long expSeconds;
+            if (expObj instanceof Number) {
+                expSeconds = ((Number) expObj).longValue();
+            } else {
+                try {
+                    expSeconds = Long.parseLong(String.valueOf(expObj));
+                } catch (NumberFormatException nfe) {
+                    throw new IOException("Bearer token 'exp' claim is not a valid number");
+                }
+            }
+            if (System.currentTimeMillis() / 1000 > expSeconds) {
+                LOGGER.warn("OIDC: Bearer token has expired (exp={})", expSeconds);
+                throw new IOException("Attached Bearer Token has expired");
             }
         }
 
-        return result;
+        // Check iat (issued-at) if maxTokenAgeSecs is configured
+        int maxTokenAgeSecs = ((OpenIdConnectConfiguration) configuration).getMaxTokenAgeSecs();
+        if (maxTokenAgeSecs > 0) {
+            Object iatObj = accessTokenClaims.get("iat");
+            if (iatObj != null) {
+                long iatSeconds;
+                if (iatObj instanceof Number) {
+                    iatSeconds = ((Number) iatObj).longValue();
+                } else {
+                    try {
+                        iatSeconds = Long.parseLong(String.valueOf(iatObj));
+                    } catch (NumberFormatException nfe) {
+                        throw new IOException("Bearer token 'iat' claim is not a valid number");
+                    }
+                }
+                long age = System.currentTimeMillis() / 1000 - iatSeconds;
+                if (age > maxTokenAgeSecs) {
+                    LOGGER.warn(
+                            "OIDC: Bearer token is too old (iat={}, age={}s, max={}s)",
+                            iatSeconds,
+                            age,
+                            maxTokenAgeSecs);
+                    throw new IOException("Attached Bearer Token is too old");
+                }
+            }
+        }
+
+        try {
+            bearerTokenValidator.verifyToken(
+                    (OpenIdConnectConfiguration) configuration, accessTokenClaims, null);
+        } catch (Exception e) {
+            LOGGER.warn("OIDC: Bearer token validator rejected the token: {}", e.getMessage());
+            throw new IOException("Attached Bearer Token is invalid: " + e.getMessage(), e);
+        }
+
+        return accessTokenClaims;
+    }
+
+    /**
+     * Validates a bearer token via RFC 7662 Token Introspection. POSTs the token to the
+     * introspection endpoint with client credentials using Basic auth.
+     *
+     * @return the claims map from the introspection response, or null if token is inactive.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> introspectToken(String token) throws IOException {
+        String introspectionUrl = configuration.getIntrospectionEndpoint();
+        if (introspectionUrl == null || introspectionUrl.isEmpty()) {
+            throw new IOException(
+                    "Bearer token introspection requested but no introspection endpoint"
+                            + " is configured");
+        }
+
+        MultiValueMap<String, String> formParams = new LinkedMultiValueMap<>();
+        formParams.add("token", token);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        // Use Basic auth with client credentials (RFC 7662 Section 2.1)
+        String clientId = configuration.getClientId();
+        String clientSecret = configuration.getClientSecret();
+        if (clientId != null
+                && !clientId.isEmpty()
+                && clientSecret != null
+                && !clientSecret.isEmpty()) {
+            String credentials = clientId + ":" + clientSecret;
+            String encoded =
+                    Base64.getEncoder()
+                            .encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            headers.set("Authorization", "Basic " + encoded);
+        }
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formParams, headers);
+
+        try {
+            RestTemplate rt = new RestTemplate();
+            Map<String, Object> response = rt.postForObject(introspectionUrl, request, Map.class);
+
+            if (response == null) {
+                LOGGER.warn("OIDC: Token introspection returned null response");
+                return null;
+            }
+
+            Object active = response.get("active");
+            boolean isActive =
+                    Boolean.TRUE.equals(active)
+                            || (active instanceof String
+                                    && "true".equalsIgnoreCase((String) active));
+            if (!isActive) {
+                LOGGER.warn("OIDC: Token introspection returned active=false");
+                return null;
+            }
+
+            LOGGER.info("OIDC: Token introspection successful (active=true)");
+            return response;
+        } catch (Exception e) {
+            LOGGER.error("OIDC: Token introspection failed", e);
+            throw new IOException("Token introspection failed", e);
+        }
+    }
+
+    /**
+     * Extracts the "kid" (key ID) from a JWT's header segment. Returns empty string if not present.
+     */
+    private String extractKidFromHeader(String token) {
+        try {
+            int firstDot = token.indexOf('.');
+            if (firstDot < 0) return "";
+            String headerSegment = token.substring(0, firstDot);
+            String headerJson =
+                    new String(
+                            Base64.getUrlDecoder().decode(headerSegment), StandardCharsets.UTF_8);
+            JSONObject header = JSONObject.fromObject(headerJson);
+            return header.optString("kid", "");
+        } catch (Exception e) {
+            LOGGER.debug("Could not extract kid from JWT header", e);
+            return "";
+        }
+    }
+
+    /**
+     * Lazily initializes the JWE token decryptor from the keystore configuration. Returns null if
+     * JWE is not configured (no jweKeyStoreFile set).
+     */
+    private JweTokenDecryptor getJweDecryptor() {
+        if (jweDecryptorInitialized) {
+            return jweDecryptor;
+        }
+        synchronized (this) {
+            if (jweDecryptorInitialized) {
+                return jweDecryptor;
+            }
+            try {
+                OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+                String keystoreFile = oidcConfig.getJweKeyStoreFile();
+                if (keystoreFile == null || keystoreFile.isEmpty()) {
+                    LOGGER.debug("JWE not configured (no jweKeyStoreFile)");
+                    jweDecryptor = null;
+                    jweDecryptorInitialized = true;
+                    return null;
+                }
+
+                String keystorePassword =
+                        oidcConfig.getJweKeyStorePassword() != null
+                                ? oidcConfig.getJweKeyStorePassword()
+                                : "";
+                String keystoreType =
+                        oidcConfig.getJweKeyStoreType() != null
+                                ? oidcConfig.getJweKeyStoreType()
+                                : "PKCS12";
+                String keyAlias = oidcConfig.getJweKeyAlias();
+                String keyPassword =
+                        oidcConfig.getJweKeyPassword() != null
+                                ? oidcConfig.getJweKeyPassword()
+                                : keystorePassword;
+
+                KeyStore keyStore = KeyStore.getInstance(keystoreType);
+                try (FileInputStream fis = new FileInputStream(keystoreFile)) {
+                    keyStore.load(fis, keystorePassword.toCharArray());
+                }
+
+                if (keyAlias == null || keyAlias.isEmpty()) {
+                    // Use the first alias in the keystore
+                    keyAlias = keyStore.aliases().nextElement();
+                }
+
+                PrivateKey privateKey =
+                        (PrivateKey) keyStore.getKey(keyAlias, keyPassword.toCharArray());
+                if (privateKey == null) {
+                    LOGGER.error(
+                            "JWE keystore '{}' does not contain a private key with alias '{}'",
+                            keystoreFile,
+                            keyAlias);
+                    jweDecryptor = null;
+                    jweDecryptorInitialized = true;
+                    return null;
+                }
+
+                jweDecryptor = new JweTokenDecryptor(privateKey);
+                LOGGER.info(
+                        "JWE token decryptor initialized with key alias '{}' from '{}'",
+                        keyAlias,
+                        keystoreFile);
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize JWE token decryptor: {}", e.getMessage(), e);
+                jweDecryptor = null;
+            }
+            jweDecryptorInitialized = true;
+            return jweDecryptor;
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void addAuthoritiesFromToken(
+            User user, String tokenString, Map<String, Object> userinfoMap) {
+        OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+        if (oidcConfig.isMsGraphEnabled()) {
+            MicrosoftGraphClient client = getGraphClient();
+            String accessToken = resolveAccessTokenForGraph();
+            if (client != null && accessToken != null) {
+                Map<String, Object> enriched =
+                        (userinfoMap != null) ? new HashMap<>(userinfoMap) : new HashMap<>();
+
+                // Groups overage resolution
+                if (oidcConfig.isMsGraphGroupsEnabled()
+                        && configuration.getGroupsClaim() != null
+                        && isGroupsOverage(tokenString, configuration.getGroupsClaim())) {
+                    List<String> graphGroups = client.fetchMemberOfGroups(accessToken);
+                    if (!graphGroups.isEmpty()) {
+                        enriched.put(configuration.getGroupsClaim(), graphGroups);
+                    }
+                }
+
+                // App roles resolution
+                if (oidcConfig.isMsGraphRolesEnabled() && configuration.getRolesClaim() != null) {
+                    List<MicrosoftGraphClient.AppRoleAssignment> assignments =
+                            client.fetchAppRoleAssignments(accessToken);
+                    if (!assignments.isEmpty()) {
+                        List<String> roleNames =
+                                client.resolveAppRoleNames(accessToken, assignments);
+                        if (!roleNames.isEmpty()) {
+                            enriched.put(configuration.getRolesClaim(), roleNames);
+                        }
+                    }
+                }
+
+                userinfoMap = enriched;
+            }
+        }
+        super.addAuthoritiesFromToken(user, tokenString, userinfoMap);
+    }
+
+    /**
+     * Checks whether the JWT payload indicates a groups overage condition. Azure AD replaces the
+     * groups claim with {@code _claim_names} containing a key for the groups claim (or {@code
+     * hasgroups=true}) when the user belongs to more than 200 groups.
+     */
+    boolean isGroupsOverage(String tokenString, String groupsClaim) {
+        if (tokenString == null || tokenString.isEmpty()) return false;
+        try {
+            // Decode the JWT payload (second segment)
+            String[] parts = tokenString.split("\\.");
+            if (parts.length < 2) return false;
+            String payloadJson =
+                    new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
+            JSONObject payload = JSONObject.fromObject(payloadJson);
+
+            // Check hasgroups=true
+            Object hasgroups = payload.get("hasgroups");
+            if (Boolean.TRUE.equals(hasgroups)
+                    || "true".equalsIgnoreCase(String.valueOf(hasgroups))) {
+                LOGGER.info("MS Graph: groups overage detected (hasgroups=true)");
+                return true;
+            }
+
+            // Check _claim_names containing the groups claim key
+            Object claimNames = payload.get("_claim_names");
+            if (claimNames instanceof Map) {
+                Map<String, Object> names = (Map<String, Object>) claimNames;
+                if (names.containsKey(groupsClaim)) {
+                    LOGGER.info(
+                            "MS Graph: groups overage detected (_claim_names contains '{}')",
+                            groupsClaim);
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (Exception e) {
+            LOGGER.debug("Could not check for groups overage in JWT", e);
+            return false;
+        }
+    }
+
+    /**
+     * Resolves the access token for Microsoft Graph API calls from the OAuth2 client context.
+     *
+     * @return the access token value, or null if unavailable.
+     */
+    private String resolveAccessTokenForGraph() {
+        try {
+            OAuth2AccessToken token = restTemplate.getOAuth2ClientContext().getAccessToken();
+            return token != null ? token.getValue() : null;
+        } catch (Exception e) {
+            LOGGER.debug("Could not resolve access token for MS Graph", e);
+            return null;
+        }
+    }
+
+    /** Lazily initializes the Microsoft Graph client. Returns null if MS Graph is not enabled. */
+    private MicrosoftGraphClient getGraphClient() {
+        if (graphClientInitialized) {
+            return graphClient;
+        }
+        synchronized (this) {
+            if (graphClientInitialized) {
+                return graphClient;
+            }
+            try {
+                OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
+                if (!oidcConfig.isMsGraphEnabled()) {
+                    LOGGER.debug("MS Graph not enabled");
+                    graphClient = null;
+                    graphClientInitialized = true;
+                    return null;
+                }
+
+                graphClient = new MicrosoftGraphClient(oidcConfig.getMsGraphEndpoint());
+                LOGGER.info(
+                        "MS Graph client initialized with endpoint '{}'",
+                        oidcConfig.getMsGraphEndpoint());
+            } catch (Exception e) {
+                LOGGER.error("Failed to initialize MS Graph client: {}", e.getMessage(), e);
+                graphClient = null;
+            }
+            graphClientInitialized = true;
+            return graphClient;
+        }
+    }
+
+    /**
+     * Look up claim values from the map by the given keys (case-insensitive), returning the first
+     * non-blank match.
+     */
+    private String coalesceClaimValue(Map<String, Object> claims, String... keys) {
+        if (claims == null) return null;
+        for (String key : keys) {
+            if (key == null || key.isEmpty()) continue;
+            // Direct lookup first
+            Object value = claims.get(key);
+            if (value == null) {
+                // Case-insensitive fallback
+                for (Map.Entry<String, Object> e : claims.entrySet()) {
+                    if (key.equalsIgnoreCase(e.getKey())) {
+                        value = e.getValue();
+                        break;
+                    }
+                }
+            }
+            if (value != null) {
+                // Handle array-type claims (e.g., ["a@b.com", "c@d.com"])
+                if (value instanceof Collection) {
+                    Collection<?> coll = (Collection<?>) value;
+                    if (!coll.isEmpty()) {
+                        value = coll.iterator().next();
+                    }
+                } else if (value.getClass().isArray() && Array.getLength(value) > 0) {
+                    value = Array.get(value, 0);
+                }
+                String str = String.valueOf(value);
+                if (!str.isEmpty()) return str;
+            }
+        }
+        return null;
     }
 }

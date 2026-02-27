@@ -38,3 +38,6 @@ src/core/security/target
 #h2_disk database
 src/web/app/test.trace.db
 src/web/app/test.h2.db
+
+# MkDocs generated site
+docs/site/

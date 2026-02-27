@@ -42,9 +42,9 @@ import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
@@ -81,6 +81,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     private static final long CLOCK_SKEW_ALLOWANCE_MILLIS = 5 * 60 * 1000; // 5 minutes
 
     protected UserService userService;
+    protected final String delegateName;
 
     /**
      * @param restSessionService the session service to which register this delegate?
@@ -89,11 +90,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     public OAuth2SessionServiceDelegate(
             RESTSessionService restSessionService, String delegateName, UserService userService) {
         restSessionService.registerDelegate(delegateName, this);
+        this.delegateName = delegateName;
         this.userService = userService;
     }
 
     public OAuth2SessionServiceDelegate(
-            RestTemplate restTemplate, OAuth2Configuration configuration) {}
+            RestTemplate restTemplate, OAuth2Configuration configuration) {
+        this.delegateName = null;
+    }
 
     @Override
     public SessionToken refresh(String refreshToken, String accessToken) {
@@ -122,10 +126,21 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             refreshTokenToUse = getParameterValue(REFRESH_TOKEN_PARAM, request);
         }
 
+        if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
+            refreshTokenToUse = getRefreshTokenFromCookie(request);
+        }
+
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
 
-        if (configuration != null && configuration.isEnabled()) {
+        if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
+            // No refresh token available (e.g. bearer-token auth without auth code flow,
+            // or IdP did not issue a refresh token because offline_access was not requested).
+            // Skip the refresh attempt and return the current token if still valid.
+            LOGGER.info(
+                    "No refresh token available; skipping token refresh and returning current token.");
+            warningMessage = "No refresh token available; using existing access token.";
+        } else if (configuration != null && configuration.isEnabled()) {
             LOGGER.info("Attempting to refresh the token.");
             try {
                 sessionToken = doRefresh(refreshTokenToUse, accessToken, configuration);
@@ -169,6 +184,13 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                 OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE, sessionToken.getAccessToken());
         request.setAttribute(
                 OAuth2AuthenticationDetails.ACCESS_TOKEN_TYPE, sessionToken.getTokenType());
+
+        // Set updated refresh token as HttpOnly cookie and remove from JSON response
+        HttpServletResponse response = getResponse();
+        if (response != null && sessionToken.getRefreshToken() != null) {
+            setRefreshTokenCookie(response, sessionToken.getRefreshToken(), request.isSecure());
+            sessionToken.setRefreshToken(null);
+        }
 
         return sessionToken;
     }
@@ -248,13 +270,18 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         String errorMessage = "";
         String warningMessage = "";
 
-        OAuth2RestTemplate restTemplate = restTemplate();
+        // Use a plain RestTemplate to avoid OAuth2RestTemplate interceptors that may
+        // trigger a UserRedirectRequiredException when the current access token is expired.
+        RestTemplate plainRestTemplate = createRefreshRestTemplate();
         HttpHeaders headers = getHttpHeaders(accessToken, configuration);
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
         requestBody.add("grant_type", "refresh_token");
         requestBody.add("refresh_token", refreshToken);
         requestBody.add("client_secret", configuration.getClientSecret());
         requestBody.add("client_id", configuration.getClientId());
+        if (configuration.getScopes() != null && !configuration.getScopes().isEmpty()) {
+            requestBody.add("scope", configuration.getScopes().replace(",", " "));
+        }
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(requestBody, headers);
 
@@ -267,8 +294,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
             try {
                 ResponseEntity<OAuth2AccessToken> response =
-                        restTemplate.exchange(
-                                configuration.buildRefreshTokenURI(),
+                        plainRestTemplate.exchange(
+                                configuration.getAccessTokenUri(),
                                 HttpMethod.POST,
                                 requestEntity,
                                 OAuth2AccessToken.class);
@@ -360,6 +387,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             String accessToken, String refreshToken, OAuth2Configuration configuration) {
         LOGGER.info(
                 "Unable to refresh token after max retries. Clearing session and redirecting to login.");
+        HttpServletResponse response = getResponse();
+        if (response != null) {
+            clearRefreshTokenCookie(response);
+        }
         doLogout(null);
 
         try {
@@ -497,7 +528,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (token == null) {
             if (restTemplate != null
                     && restTemplate.getOAuth2ClientContext() != null
-                    && restTemplate.getOAuth2ClientContext().getAccessToken() != null) {
+                    && restTemplate.getOAuth2ClientContext().getAccessToken() != null
+                    && restTemplate.getOAuth2ClientContext().getAccessToken().getRefreshToken()
+                            != null) {
                 token =
                         restTemplate
                                 .getOAuth2ClientContext()
@@ -508,10 +541,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (token == null) {
                 token = OAuth2Utils.getParameterValue(REFRESH_TOKEN_PARAM, request);
             }
-            if (token == null) {
+            if (token == null && RequestContextHolder.getRequestAttributes() != null) {
                 token =
                         (String)
-                                Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                RequestContextHolder.getRequestAttributes()
                                         .getAttribute(REFRESH_TOKEN_PARAM, 0);
             }
         }
@@ -525,10 +558,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (accessToken == null) {
                 accessToken = OAuth2Utils.getParameterValue(ACCESS_TOKEN_PARAM, request);
             }
-            if (accessToken == null) {
+            if (accessToken == null && RequestContextHolder.getRequestAttributes() != null) {
                 accessToken =
                         (String)
-                                Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
+                                RequestContextHolder.getRequestAttributes()
                                         .getAttribute(ACCESS_TOKEN_PARAM, 0);
             }
         }
@@ -542,8 +575,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     doLogoutInternal(token, configuration, accessToken);
                 if (configuration.getRevokeEndpoint() != null) clearSession(restTemplate, request);
             } else {
-                if (LOGGER.isDebugEnabled())
-                    LOGGER.info("Unable to retrieve access token. Remote logout was not executed.");
+                LOGGER.debug("Unable to retrieve access token. Remote logout was not executed.");
             }
             if (response != null) clearCookies(request, response);
         }
@@ -588,11 +620,17 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         } else if (token instanceof String) {
             tokenValue = (String) token;
         }
-        if (configuration.getRevokeEndpoint() != null && tokenValue != null) {
-            if (LOGGER.isDebugEnabled()) LOGGER.info("Performing remote logout");
+        if (tokenValue == null) return;
+
+        // Revoke the token if a revocation endpoint is available
+        if (configuration.getRevokeEndpoint() != null) {
+            LOGGER.debug("Revoking token at revocation endpoint");
             callRevokeEndpoint(tokenValue, accessToken);
-            callRemoteLogout(tokenValue, accessToken);
         }
+
+        // Call the remote logout endpoint (end_session_endpoint) independently
+        LOGGER.debug("Performing remote logout");
+        callRemoteLogout(tokenValue, accessToken);
     }
 
     protected void callRevokeEndpoint(String token, String accessToken) {
@@ -640,22 +678,56 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     protected void clearCookies(HttpServletRequest request, HttpServletResponse response) {
-        javax.servlet.http.Cookie[] allCookies = request.getCookies();
+        Cookie[] allCookies = request.getCookies();
         if (allCookies != null)
-            for (javax.servlet.http.Cookie toDelete : allCookies) {
+            for (Cookie toDelete : allCookies) {
                 if (deleteCookie(toDelete)) {
                     toDelete.setMaxAge(-1);
                     toDelete.setPath("/");
                     toDelete.setComment("EXPIRING COOKIE at " + System.currentTimeMillis());
+                    if (toDelete.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM)) {
+                        toDelete.setHttpOnly(true);
+                        toDelete.setSecure(request.isSecure());
+                    }
                     response.addCookie(toDelete);
                 }
             }
     }
 
-    protected boolean deleteCookie(javax.servlet.http.Cookie c) {
+    protected boolean deleteCookie(Cookie c) {
         return c.getName().equalsIgnoreCase("JSESSIONID")
                 || c.getName().equalsIgnoreCase(ACCESS_TOKEN_PARAM)
                 || c.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM);
+    }
+
+    protected String getRefreshTokenFromCookie(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (REFRESH_TOKEN_PARAM.equalsIgnoreCase(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
+
+    protected void setRefreshTokenCookie(
+            HttpServletResponse response, String refreshToken, boolean secure) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, refreshToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(secure);
+        cookie.setPath("/");
+        cookie.setMaxAge(604800); // 7 days
+        response.addCookie(cookie);
+    }
+
+    protected void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, "");
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
     }
 
     protected TokenAuthenticationCache cache() {
@@ -663,11 +735,23 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     /**
-     * Get the OAuth2Configuration.
+     * Get the OAuth2Configuration. Prefers the provider-specific bean ({delegateName}OAuth2Config)
+     * and falls back to iterating all enabled configurations.
      *
      * @return the OAuth2Configuration.
      */
     protected OAuth2Configuration configuration() {
+        // Try provider-specific bean first
+        if (delegateName != null) {
+            OAuth2Configuration specific =
+                    GeoStoreContext.bean(
+                            delegateName + OAuth2Configuration.CONFIG_NAME_SUFFIX,
+                            OAuth2Configuration.class);
+            if (specific != null && specific.isEnabled()) {
+                return specific;
+            }
+        }
+        // Fallback: iterate all configurations
         Map<String, OAuth2Configuration> configurations =
                 GeoStoreContext.beans(OAuth2Configuration.class);
         if (configurations != null) {
@@ -692,6 +776,15 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     protected abstract OAuth2RestTemplate restTemplate();
+
+    /**
+     * Creates a plain RestTemplate for token refresh requests. Using a plain RestTemplate avoids
+     * OAuth2RestTemplate interceptors that can trigger UserRedirectRequiredException when the
+     * current access token is expired.
+     */
+    protected RestTemplate createRefreshRestTemplate() {
+        return new RestTemplate();
+    }
 
     @Override
     public User getUser(String sessionId, boolean refresh, boolean autorefresh) {

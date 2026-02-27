@@ -32,7 +32,9 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import org.springframework.security.access.annotation.Secured;
 
@@ -56,6 +58,12 @@ public interface IdPLoginRest {
             @PathParam("provider") String provider,
             @QueryParam("identifier") String tokenIdentifier)
             throws NotFoundWebEx;
+
+    @GET
+    @Path("/providers")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
+    Response listProviders();
 
     /**
      * Registers an IdP loginService with a key equal to the provider name value.
