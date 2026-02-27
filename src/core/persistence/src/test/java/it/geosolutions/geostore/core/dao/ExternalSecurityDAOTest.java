@@ -20,15 +20,20 @@
 package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import java.util.Date;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class SecurityDAOTest.
@@ -39,7 +44,9 @@ public class ExternalSecurityDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(ExternalSecurityDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistSecurity() throws Exception {
 
@@ -285,6 +292,103 @@ public class ExternalSecurityDAOTest extends BaseDAOTest {
         {
             externalSecurityDAO.removeById(securityId);
             assertNull("Security not deleted", externalSecurityDAO.find(categoryId));
+        }
+    }
+
+    @Test
+    public void testPersistSecurityWithIpRanges() throws Exception {
+
+        long resourceId;
+        long securityId;
+
+        Category category = new Category();
+        category.setName("MAP");
+
+        categoryDAO.persist(category);
+
+        assertEquals(1, categoryDAO.count(null));
+        assertEquals(1, categoryDAO.findAll().size());
+
+        Resource resource = new Resource();
+        resource.setName("NAME");
+        resource.setCreation(new Date());
+        resource.setCategory(category);
+
+        resourceDAO.persist(resource);
+        resourceId = resource.getId();
+
+        assertEquals(1, resourceDAO.count(null));
+        assertEquals(1, resourceDAO.findAll().size());
+
+        IPRange cidrIPRange = new IPRange();
+        cidrIPRange.setCidr("0.0.0.0/0");
+        cidrIPRange.setDescription("cidr");
+
+        IPRange rangedIPRange = new IPRange();
+        rangedIPRange.setCidr("0.0.0.1/32");
+        rangedIPRange.setIpLow(BigInteger.ONE);
+        rangedIPRange.setIpHigh(BigInteger.TEN);
+        rangedIPRange.setDescription("ranged");
+
+        ipRangeDAO.persist(cidrIPRange, rangedIPRange);
+
+        //
+        // PERSIST
+        //
+        {
+            SecurityRule security = new SecurityRule();
+            security.setCanRead(true);
+            security.setCanWrite(true);
+            security.setIpRanges(Set.of(cidrIPRange));
+            security.setResource(resourceDAO.find(resourceId));
+
+            externalSecurityDAO.persist(security);
+            securityId = security.getId();
+
+            List<SecurityRule> securityRules = externalSecurityDAO.findResourceSecurityRules(resourceId);
+
+            assertEquals(1, securityRules.size());
+
+            Set<IPRange> ipRanges = securityRules.get(0).getIpRanges();
+
+            IPRange ipRange = ipRanges.stream().findFirst().orElseThrow();
+            assertEquals(cidrIPRange, ipRange);
+        }
+
+        //
+        // UPDATE
+        //
+        {
+            SecurityRule existingRule = externalSecurityDAO.find(securityId);
+
+            existingRule.setIpRanges(Set.of(cidrIPRange, rangedIPRange));
+            externalSecurityDAO.merge(existingRule);
+
+            List<SecurityRule> securityRules = externalSecurityDAO.findResourceSecurityRules(resourceId);
+
+            assertEquals(1, securityRules.size());
+
+            Set<IPRange> ipRanges = securityRules.get(0).getIpRanges();
+
+            assertTrue(Set.of(rangedIPRange, cidrIPRange).containsAll(ipRanges));
+        }
+
+        //
+        // CLEAR
+        //
+        {
+            SecurityRule existingRule = externalSecurityDAO.find(securityId);
+            existingRule.setIpRanges(Set.of());
+
+            externalSecurityDAO.merge(existingRule);
+
+            List<SecurityRule> securityRules = externalSecurityDAO.findResourceSecurityRules(resourceId);
+
+            assertEquals(1, securityRules.size());
+
+            Set<IPRange> ipRanges = securityRules.get(0).getIpRanges();
+
+            assertTrue(ipRanges.isEmpty());
         }
     }
 }
