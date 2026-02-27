@@ -640,6 +640,85 @@ public class AzureAdWireMockLifecycleTest {
         assertEquals(200, logoutResponse.getStatusCodeValue(), "Logout should return 200");
     }
 
+    @Test
+    public void testMsGraphPaginatedGroups() throws IOException, ServletException {
+        configuration.setRolesClaim("roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setMsGraphEnabled(true);
+        configuration.setMsGraphEndpoint(authService + "/graph-paged");
+
+        // Page 1: two groups with @odata.nextLink pointing to page 2
+        azureService.stubFor(
+                WireMock.get(urlPathEqualTo("/graph-paged/me/memberOf"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"@odata.nextLink\":\""
+                                                        + authService
+                                                        + "/graph-paged/me/memberOf?$skiptoken=page2\","
+                                                        + "\"value\":["
+                                                        + "{\"@odata.type\":\"#microsoft.graph.group\","
+                                                        + "\"displayName\":\"Page1 Group A\",\"id\":\"pg1a\"},"
+                                                        + "{\"@odata.type\":\"#microsoft.graph.group\","
+                                                        + "\"displayName\":\"Page1 Group B\",\"id\":\"pg1b\"}"
+                                                        + "]}")));
+
+        // Page 2: one more group, no nextLink (last page)
+        azureService.stubFor(
+                WireMock.get(urlPathEqualTo("/graph-paged/me/memberOf"))
+                        .withQueryParam("$skiptoken", equalTo("page2"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"value\":["
+                                                        + "{\"@odata.type\":\"#microsoft.graph.group\","
+                                                        + "\"displayName\":\"Page2 Group C\",\"id\":\"pg2c\"}"
+                                                        + "]}")));
+
+        recreateFilter();
+
+        // JWT with hasgroups=true to trigger MS Graph resolution
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://login.microsoftonline.com/tenant-id/v2.0")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("azure-sub-paged")
+                        .withClaim("email", "paged@contoso.com")
+                        .withClaim("hasgroups", true)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Paginated MS Graph groups should authenticate");
+        User user = (User) authentication.getPrincipal();
+
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("Page1 Group A"), "Should have Page1 Group A from first page");
+        assertTrue(
+                groupNames.contains("Page1 Group B"), "Should have Page1 Group B from first page");
+        assertTrue(
+                groupNames.contains("Page2 Group C"), "Should have Page2 Group C from second page");
+        assertEquals(3, groupNames.size(), "Should have exactly 3 groups across both pages");
+    }
+
     // ---- Helpers ----
 
     private String createSignedJwt(

@@ -492,6 +492,154 @@ public class KeycloakLifecycleTest {
     }
 
     @Test
+    public void testIntrospectionStrategy() throws IOException, ServletException {
+        // Keycloak exposes an RFC 7662 introspection endpoint
+        String authServerUrl = keycloak.getAuthServerUrl();
+        if (!authServerUrl.endsWith("/")) {
+            authServerUrl += "/";
+        }
+        String introspectionUrl =
+                authServerUrl + "realms/" + REALM + "/protocol/openid-connect/token/introspect";
+        configuration.setIntrospectionEndpoint(introspectionUrl);
+        configuration.setBearerTokenStrategy("introspection");
+        recreateFilter();
+
+        KeycloakTokens tokens = obtainTokens("testuser", "testuser123");
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Introspection strategy should authenticate a valid token");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("testuser", user.getName());
+    }
+
+    @Test
+    public void testRoleMappingsWithKeycloak() throws IOException, ServletException {
+        // Map Keycloak role USER → GUEST so testuser becomes GUEST
+        configuration.setRoleMappings("USER:GUEST,ADMIN:ADMIN");
+        recreateFilter();
+
+        KeycloakTokens tokens = obtainTokens("testuser", "testuser123");
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Mapped role token should authenticate");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("testuser", user.getName());
+        assertEquals(Role.GUEST, user.getRole(), "USER role should be mapped to GUEST");
+    }
+
+    @Test
+    public void testGroupMappingsWithKeycloak() throws IOException, ServletException {
+        // Map Keycloak group "analysts" → "gis-analysts"
+        configuration.setGroupMappings("analysts:gis-analysts,editors:gis-editors");
+        recreateFilter();
+
+        KeycloakTokens tokens = obtainTokens("testadmin", "testadmin123");
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Group-mapped token should authenticate");
+        User user = (User) authentication.getPrincipal();
+
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("gis-analysts"),
+                "analysts group should be mapped to gis-analysts");
+        assertTrue(
+                groupNames.contains("gis-editors"),
+                "editors group should be mapped to gis-editors");
+    }
+
+    @Test
+    public void testDropUnmappedGroups() throws IOException, ServletException {
+        // Map only "analysts" → "gis-analysts", drop everything else
+        configuration.setGroupMappings("analysts:gis-analysts");
+        configuration.setDropUnmapped(true);
+        recreateFilter();
+
+        KeycloakTokens tokens = obtainTokens("testadmin", "testadmin123");
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Token with dropUnmapped should authenticate");
+        User user = (User) authentication.getPrincipal();
+
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(groupNames.contains("gis-analysts"), "Mapped group should be present");
+        assertFalse(groupNames.contains("editors"), "Unmapped group 'editors' should be dropped");
+        assertFalse(groupNames.contains("gis-editors"), "Non-mapped target should not appear");
+    }
+
+    @Test
+    public void testExpiredTokenRejected() throws IOException, ServletException {
+        // Obtain a real token, then revoke it so Keycloak considers it invalid,
+        // and also wait for short-lived token to be treated as expired
+        KeycloakTokens tokens = obtainTokens("testuser", "testuser123");
+
+        // Revoke the token
+        RestTemplate revokeTemplate = new RestTemplate();
+        MultiValueMap<String, String> revokeParams = new LinkedMultiValueMap<>();
+        revokeParams.add("client_id", CLIENT_ID);
+        revokeParams.add("client_secret", CLIENT_SECRET);
+        revokeParams.add("token", tokens.accessToken);
+        revokeParams.add("token_type_hint", "access_token");
+
+        HttpHeaders revokeHeaders = new HttpHeaders();
+        revokeHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        revokeTemplate.exchange(
+                configuration.getRevokeEndpoint(),
+                HttpMethod.POST,
+                new HttpEntity<>(revokeParams, revokeHeaders),
+                String.class);
+
+        // Use introspection strategy which checks token validity server-side
+        String authServerUrl = keycloak.getAuthServerUrl();
+        if (!authServerUrl.endsWith("/")) {
+            authServerUrl += "/";
+        }
+        configuration.setIntrospectionEndpoint(
+                authServerUrl + "realms/" + REALM + "/protocol/openid-connect/token/introspect");
+        configuration.setBearerTokenStrategy("introspection");
+        recreateFilter();
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilter(request, response, new MockFilterChain());
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNull(authentication, "Revoked token should not authenticate via introspection");
+    }
+
+    @Test
     public void testDelegateRefreshUpdatesCache() throws IOException, ServletException {
         // Step 1: Authenticate via bearer token to populate the cache
         KeycloakTokens tokens = obtainTokens("testuser", "testuser123");

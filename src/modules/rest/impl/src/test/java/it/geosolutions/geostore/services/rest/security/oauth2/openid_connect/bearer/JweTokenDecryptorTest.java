@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.be
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.ECDHEncrypter;
 import com.nimbusds.jose.crypto.RSAEncrypter;
 import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jwt.EncryptedJWT;
@@ -38,8 +39,11 @@ import com.nimbusds.jwt.SignedJWT;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.security.spec.ECGenParameterSpec;
 import java.util.Date;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -50,6 +54,8 @@ public class JweTokenDecryptorTest {
     private static RSAPrivateKey rsaPrivateKey;
     private static RSAPublicKey wrongPublicKey;
     private static RSAPrivateKey wrongPrivateKey;
+    private static ECPublicKey ecPublicKey;
+    private static ECPrivateKey ecPrivateKey;
 
     @BeforeAll
     static void setUp() throws Exception {
@@ -63,6 +69,12 @@ public class JweTokenDecryptorTest {
         KeyPair wrongKeyPair = keyGen.generateKeyPair();
         wrongPublicKey = (RSAPublicKey) wrongKeyPair.getPublic();
         wrongPrivateKey = (RSAPrivateKey) wrongKeyPair.getPrivate();
+
+        KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC");
+        ecKeyGen.initialize(new ECGenParameterSpec("P-256"));
+        KeyPair ecKeyPair = ecKeyGen.generateKeyPair();
+        ecPublicKey = (ECPublicKey) ecKeyPair.getPublic();
+        ecPrivateKey = (ECPrivateKey) ecKeyPair.getPrivate();
     }
 
     @Test
@@ -153,6 +165,35 @@ public class JweTokenDecryptorTest {
         assertFalse(JweTokenDecryptor.isJweToken(decrypted));
         String[] parts = decrypted.split("\\.");
         assertEquals(3, parts.length, "Nested JWS should have 3 parts after decryption");
+    }
+
+    @Test
+    public void testDecryptJweWithEcKey() throws Exception {
+        // Create a plain JWT, encrypt with ECDH-ES+A256KW + A256GCM using EC P-256 key
+        JWTClaimsSet claims =
+                new JWTClaimsSet.Builder()
+                        .subject("ec-user")
+                        .issuer("https://test.issuer/")
+                        .audience("test-client")
+                        .claim("email", "ecuser@example.com")
+                        .expirationTime(new Date(System.currentTimeMillis() + 3600_000))
+                        .build();
+
+        JWEHeader header =
+                new JWEHeader.Builder(JWEAlgorithm.ECDH_ES_A256KW, EncryptionMethod.A256GCM)
+                        .build();
+        EncryptedJWT encryptedJWT = new EncryptedJWT(header, claims);
+        encryptedJWT.encrypt(new ECDHEncrypter(ecPublicKey));
+        String jweToken = encryptedJWT.serialize();
+
+        assertTrue(JweTokenDecryptor.isJweToken(jweToken));
+
+        // Decrypt with EC private key
+        JweTokenDecryptor decryptor = new JweTokenDecryptor(ecPrivateKey);
+        String decrypted = decryptor.decrypt(jweToken);
+        assertNotNull(decrypted);
+        assertTrue(decrypted.contains("ec-user"));
+        assertTrue(decrypted.contains("ecuser@example.com"));
     }
 
     @Test
