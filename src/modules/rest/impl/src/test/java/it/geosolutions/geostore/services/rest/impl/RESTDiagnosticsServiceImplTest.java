@@ -99,7 +99,7 @@ public class RESTDiagnosticsServiceImplTest {
         user.setRole(Role.USER);
         DefaultOAuth2AccessToken accessToken = new DefaultOAuth2AccessToken("access-token-abc123");
         accessToken.setExpiration(new Date(System.currentTimeMillis() + 3600_000));
-        TokenDetails details = new TokenDetails(accessToken, "id-token-xyz", "test-provider");
+        TokenDetails details = new TokenDetails(accessToken, null, "test-provider");
         Authentication auth =
                 new PreAuthenticatedAuthenticationToken(user, "", Collections.emptyList());
         ((PreAuthenticatedAuthenticationToken) auth).setDetails(details);
