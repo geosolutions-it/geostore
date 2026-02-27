@@ -110,6 +110,7 @@ public class KeycloakLifecycleTest {
         configuration.setScopes("openid,email");
         configuration.setSendClientSecret(true);
         configuration.setAllowBearerTokens(true);
+        configuration.setPrincipalKey("preferred_username");
         configuration.setRolesClaim("roles");
         configuration.setGroupsClaim("groups");
 
