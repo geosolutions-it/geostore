@@ -71,7 +71,7 @@ public class JweTokenDecryptorTest {
         wrongPrivateKey = (RSAPrivateKey) wrongKeyPair.getPrivate();
 
         KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC");
-        ecKeyGen.initialize(new ECGenParameterSpec("P-256"));
+        ecKeyGen.initialize(new ECGenParameterSpec("secp256r1"));
         KeyPair ecKeyPair = ecKeyGen.generateKeyPair();
         ecPublicKey = (ECPublicKey) ecKeyPair.getPublic();
         ecPrivateKey = (ECPrivateKey) ecKeyPair.getPrivate();
