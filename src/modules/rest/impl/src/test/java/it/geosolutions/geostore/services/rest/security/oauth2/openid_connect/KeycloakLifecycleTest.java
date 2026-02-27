@@ -88,6 +88,9 @@ public class KeycloakLifecycleTest {
     @BeforeEach
     void setUp() {
         String authServerUrl = keycloak.getAuthServerUrl();
+        if (!authServerUrl.endsWith("/")) {
+            authServerUrl += "/";
+        }
         String realmUrl = authServerUrl + "realms/" + REALM;
 
         configuration = new OpenIdConnectConfiguration();
@@ -214,6 +217,9 @@ public class KeycloakLifecycleTest {
     @Test
     public void testDiscoveryAutoConfiguration() {
         String authServerUrl = keycloak.getAuthServerUrl();
+        if (!authServerUrl.endsWith("/")) {
+            authServerUrl += "/";
+        }
         String realmUrl = authServerUrl + "realms/" + REALM;
 
         OpenIdConnectConfiguration discoveryConfig = new OpenIdConnectConfiguration();
