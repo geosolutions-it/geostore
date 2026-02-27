@@ -491,12 +491,11 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
-            List<User> users = userService.getAll(page, limit, sqlNameLike, includeAttributes);
+            List<User> users = userService.getAll(page, limit, nameLike, includeAttributes);
 
             long count = 0;
             if (users != null && !users.isEmpty()) {
-                count = userService.getCount(sqlNameLike);
+                count = userService.getCount(nameLike);
             }
 
             return new ExtUserList(count, users);
@@ -538,13 +537,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
             List<UserGroup> groups =
-                    groupService.getAllAllowed(authUser, page, limit, sqlNameLike, all);
+                    groupService.getAllAllowed(authUser, page, limit, nameLike, all);
 
             long count = 0;
             if (groups != null && !groups.isEmpty()) {
-                count = groupService.getCount(authUser, sqlNameLike, all);
+                count = groupService.getCount(authUser, nameLike, all);
             }
 
             return new ExtGroupList(count, groups);

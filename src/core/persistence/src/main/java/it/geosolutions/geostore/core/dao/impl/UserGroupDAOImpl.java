@@ -19,17 +19,19 @@
  */
 package it.geosolutions.geostore.core.dao.impl;
 
+import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
-import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Class UserGroupDAOImpl.
@@ -95,22 +97,35 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
         searchCriteria.addFilterEqual("groupName", name);
         UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
-        if (existingGroups.size() > 0) {
+        if (!existingGroups.isEmpty()) {
             result = existingGroups.get(0);
             initializeLazyMembers(result);
         }
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public List<UserGroup> search(ISearch search) {
+
+        List<Filter> filters = search.getFilters();
+
+        if (filters.stream().anyMatch(this::hasLikeToStringOperator)) {
+            return super.search(createNormalizedSearchForSql(search));
+        }
+
         return super.search(search);
+    }
+
+    @Override
+    public int count(ISearch search) {
+        List<Filter> filters = search.getFilters();
+
+        if (filters.stream().anyMatch(this::hasLikeToStringOperator)) {
+            return super.count(createNormalizedSearchForSql(search));
+        }
+
+        return super.count(search);
     }
 
     /*
