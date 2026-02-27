@@ -27,12 +27,13 @@ import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
-import java.util.List;
 import junit.framework.TestCase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.util.List;
 
 /**
  * Class BaseDAOTest
@@ -55,6 +56,8 @@ public abstract class BaseDAOTest extends TestCase {
     protected static SecurityDAO securityDAO;
 
     protected static SecurityDAO externalSecurityDAO;
+
+    protected static IpRangeDAO ipRangeDAO;
 
     protected static UserAttributeDAO userAttributeDAO;
 
@@ -80,6 +83,7 @@ public abstract class BaseDAOTest extends TestCase {
                 categoryDAO = (CategoryDAO) ctx.getBean("categoryDAO");
                 securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
                 externalSecurityDAO = (SecurityDAO) ctx.getBean("externalSecurityDAO");
+                ipRangeDAO = (IpRangeDAO) ctx.getBean("ipRangeDAO");
                 userAttributeDAO = (UserAttributeDAO) ctx.getBean("userAttributeDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
                 userGroupDAO = (UserGroupDAO) ctx.getBean("userGroupDAO");
@@ -103,6 +107,7 @@ public abstract class BaseDAOTest extends TestCase {
         assertNotNull(categoryDAO);
         assertNotNull(securityDAO);
         assertNotNull(externalSecurityDAO);
+        assertNotNull(ipRangeDAO);
         assertNotNull(userAttributeDAO);
         assertNotNull(userDAO);
         assertNotNull(userGroupDAO);
