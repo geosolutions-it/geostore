@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.services.dto.search;
 
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import java.io.Serializable;
@@ -30,7 +31,7 @@ import javax.xml.bind.annotation.XmlElement;
 
 /**
  * {@link SearchFilter} implementation that represent a filter by name on a {@link
- * it.geosolutions.geostore.core.model.Resource}-associated entity.
+ * Resource}-associated entity.
  */
 public abstract class AssociatedEntityFilter extends SearchFilter implements Serializable {
 
@@ -45,9 +46,9 @@ public abstract class AssociatedEntityFilter extends SearchFilter implements Ser
     private SearchOperator operator;
     private List<String> values;
 
-    public AssociatedEntityFilter() {}
+    protected AssociatedEntityFilter() {}
 
-    public AssociatedEntityFilter(String names, SearchOperator operator) {
+    protected AssociatedEntityFilter(String names, SearchOperator operator) {
         setOperator(operator);
         setNames(names);
     }
