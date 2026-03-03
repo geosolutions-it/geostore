@@ -25,12 +25,13 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
-import java.util.List;
-import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class UserDAOImpl.
@@ -75,15 +76,15 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
         return super.findAll();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public List<User> search(ISearch search) {
-        return super.search(search);
+        return super.search(normalizeSearchForSql(search));
+    }
+
+    @Override
+    public int count(ISearch search) {
+        return super.count(normalizeSearchForSql(search));
     }
 
     /*

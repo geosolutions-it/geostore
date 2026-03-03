@@ -20,10 +20,17 @@
 package it.geosolutions.geostore.core.dao.impl;
 
 import com.googlecode.genericdao.dao.jpa.GenericDAOImpl;
+import com.googlecode.genericdao.search.Filter;
+import com.googlecode.genericdao.search.ISearch;
+import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.jpa.JPASearchProcessor;
+
 import java.io.Serializable;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+
 import org.springframework.stereotype.Repository;
 
 /**
@@ -72,5 +79,47 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
     @Override
     public EntityManager em() {
         return this.entityManager;
+    }
+
+    protected ISearch normalizeSearchForSql(ISearch search) {
+        if (search == null) {
+            return new Search();
+        }
+
+        if (shouldNormalize(search)) {
+            return createNormalizedSearchForSql(search);
+        }
+
+        return search;
+    }
+
+    private boolean shouldNormalize(ISearch search) {
+        return search.getFilters().stream().anyMatch(this::hasLikeToStringOperator);
+    }
+
+    private Search createNormalizedSearchForSql(ISearch search) {
+        Search sqlSearch = new Search(search.getSearchClass());
+
+        List<Filter> sqlFilters =
+                search.getFilters().stream()
+                        .map(
+                                f -> {
+                                    if (hasLikeToStringOperator(f)) {
+                                        return new Filter(
+                                                f.getProperty(),
+                                                f.getValue().toString().replaceAll("[*]", "%"),
+                                                f.getOperator());
+                                    }
+                                    return f;
+                                })
+                        .collect(Collectors.toList());
+
+        sqlSearch.setFilters(sqlFilters);
+        return sqlSearch;
+    }
+
+    private boolean hasLikeToStringOperator(Filter f) {
+        return f.getValue() instanceof String
+               && (f.getOperator() == Filter.OP_LIKE || f.getOperator() == Filter.OP_ILIKE);
     }
 }
