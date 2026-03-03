@@ -93,6 +93,10 @@ public class OAuth2Configuration extends IdPConfiguration {
     private int cacheSize = 1000;
     private int cacheExpirationMinutes = 480;
 
+    // Smart refresh: skip IDP refresh when token is still valid
+    private boolean skipRefreshIfTokenValid = true;
+    private double refreshTokenLifetimeFraction = 0.8;
+
     // Retry and backoff configurations
     private long initialBackoffDelay = 1000; // Default: 1 second
     private double backoffMultiplier = 2.0; // Default multiplier
@@ -150,6 +154,22 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public void setBackoffMultiplier(double backoffMultiplier) {
         this.backoffMultiplier = backoffMultiplier;
+    }
+
+    public boolean isSkipRefreshIfTokenValid() {
+        return skipRefreshIfTokenValid;
+    }
+
+    public void setSkipRefreshIfTokenValid(boolean skipRefreshIfTokenValid) {
+        this.skipRefreshIfTokenValid = skipRefreshIfTokenValid;
+    }
+
+    public double getRefreshTokenLifetimeFraction() {
+        return refreshTokenLifetimeFraction;
+    }
+
+    public void setRefreshTokenLifetimeFraction(double refreshTokenLifetimeFraction) {
+        this.refreshTokenLifetimeFraction = refreshTokenLifetimeFraction;
     }
 
     /**
@@ -681,6 +701,11 @@ public class OAuth2Configuration extends IdPConfiguration {
                 && isEnableRedirectEntryPoint() == that.isEnableRedirectEntryPoint()
                 && isGroupNamesUppercase() == that.isGroupNamesUppercase()
                 && isDropUnmapped() == that.isDropUnmapped()
+                && isSkipRefreshIfTokenValid() == that.isSkipRefreshIfTokenValid()
+                && Double.compare(
+                                getRefreshTokenLifetimeFraction(),
+                                that.getRefreshTokenLifetimeFraction())
+                        == 0
                 && getInitialBackoffDelay() == that.getInitialBackoffDelay()
                 && Double.compare(getBackoffMultiplier(), that.getBackoffMultiplier()) == 0
                 && getMaxRetries() == that.getMaxRetries()
@@ -727,6 +752,8 @@ public class OAuth2Configuration extends IdPConfiguration {
                 getRoleMappings(),
                 getGroupMappings(),
                 isDropUnmapped(),
+                isSkipRefreshIfTokenValid(),
+                getRefreshTokenLifetimeFraction(),
                 getCacheSize(),
                 getCacheExpirationMinutes(),
                 getInitialBackoffDelay(),
@@ -791,6 +818,10 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + groupMappings
                 + ", dropUnmapped="
                 + dropUnmapped
+                + ", skipRefreshIfTokenValid="
+                + skipRefreshIfTokenValid
+                + ", refreshTokenLifetimeFraction="
+                + refreshTokenLifetimeFraction
                 + ", cacheSize="
                 + cacheSize
                 + ", cacheExpirationMinutes="

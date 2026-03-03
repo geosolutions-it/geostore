@@ -9,6 +9,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -653,6 +654,200 @@ class RefreshTokenServiceTest {
         assertNotNull(refreshCookie, "Refresh token cookie should be set on response");
         assertEquals("newRefreshToken", refreshCookie.getValue());
         assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
+    }
+
+    @Test
+    void testRefreshSkippedWhenTokenStillValid() {
+        // Arrange: token issued 1 minute ago, expires in 9 minutes (10% elapsed of 10-min
+        // lifetime)
+        String accessToken = "providedAccessToken";
+        long now = System.currentTimeMillis();
+        long iat = (now - 60_000) / 1000; // 1 minute ago
+        long exp = (now + 9 * 60_000) / 1000; // 9 minutes from now
+        String jwtToken = buildFakeJwt(iat, exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken("existingRefreshToken"));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        when(configuration.getRefreshTokenLifetimeFraction()).thenReturn(0.8);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(null, jwtToken);
+
+        // Assert: no IDP call, returns current token with skip warning
+        assertNotNull(sessionToken);
+        assertEquals(jwtToken, sessionToken.getAccessToken());
+        assertNotNull(sessionToken.getWarning());
+        assertTrue(sessionToken.getWarning().contains("Token still valid; refresh skipped."));
+
+        // Verify no exchange was attempted
+        verify(restTemplate, never())
+                .exchange(
+                        anyString(),
+                        any(HttpMethod.class),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshProceedsWhenTokenNearExpiry() {
+        // Arrange: token issued 9 minutes ago, expires in 1 minute (90% elapsed)
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+        long now = System.currentTimeMillis();
+        long iat = (now - 9 * 60_000) / 1000; // 9 minutes ago
+        long exp = (now + 60_000) / 1000; // 1 minute from now
+        String jwtToken = buildFakeJwt(iat, exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken(refreshToken));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        when(configuration.getRefreshTokenLifetimeFraction()).thenReturn(0.8);
+
+        // Mock a successful refresh response
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        newAccessToken.setRefreshToken(new DefaultOAuth2RefreshToken("newRefreshToken"));
+        newAccessToken.setExpiration(new Date(System.currentTimeMillis() + 7200_000));
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, jwtToken);
+
+        // Assert: IDP refresh happened, new token returned
+        assertNotNull(sessionToken);
+        assertEquals("newAccessToken", sessionToken.getAccessToken());
+
+        // Verify exchange was called
+        verify(restTemplate, atLeastOnce())
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshSkipDisabledByConfig() {
+        // Arrange: token with plenty of remaining life, but skip is disabled
+        String refreshToken = "providedRefreshToken";
+        long now = System.currentTimeMillis();
+        long iat = (now - 60_000) / 1000;
+        long exp = (now + 9 * 60_000) / 1000;
+        String jwtToken = buildFakeJwt(iat, exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken(refreshToken));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(false);
+
+        // Mock a successful refresh response
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        newAccessToken.setRefreshToken(new DefaultOAuth2RefreshToken("newRefreshToken"));
+        newAccessToken.setExpiration(new Date(System.currentTimeMillis() + 7200_000));
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, jwtToken);
+
+        // Assert: IDP refresh happened even though token has plenty of life
+        assertNotNull(sessionToken);
+        assertEquals("newAccessToken", sessionToken.getAccessToken());
+        verify(restTemplate, atLeastOnce())
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshSkipFallbackWithoutIat() {
+        // Arrange: token without iat claim, but with >5 min remaining → skip
+        String accessToken = "providedAccessToken";
+        long now = System.currentTimeMillis();
+        long exp = (now + 10 * 60_000) / 1000; // 10 minutes from now
+        String jwtToken = buildFakeJwtExpOnly(exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken("existingRefreshToken"));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        when(configuration.getRefreshTokenLifetimeFraction()).thenReturn(0.8);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(null, jwtToken);
+
+        // Assert: skipped because >5 min remaining (fallback threshold)
+        assertNotNull(sessionToken);
+        assertEquals(jwtToken, sessionToken.getAccessToken());
+        assertNotNull(sessionToken.getWarning());
+        assertTrue(sessionToken.getWarning().contains("Token still valid; refresh skipped."));
+        verify(restTemplate, never())
+                .exchange(
+                        anyString(),
+                        any(HttpMethod.class),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    /**
+     * Builds a fake unsigned JWT with both iat and exp claims. The format is
+     * base64(header).base64(payload).signature — Spring's JwtHelper.decode() can parse this.
+     */
+    private String buildFakeJwt(long iatEpochSeconds, long expEpochSeconds) {
+        String header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
+        String payload =
+                "{\"sub\":\"testuser\",\"iat\":"
+                        + iatEpochSeconds
+                        + ",\"exp\":"
+                        + expEpochSeconds
+                        + "}";
+        return Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(header.getBytes(StandardCharsets.UTF_8))
+                + "."
+                + Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(payload.getBytes(StandardCharsets.UTF_8))
+                + ".";
+    }
+
+    /** Builds a fake unsigned JWT with only an exp claim (no iat). */
+    private String buildFakeJwtExpOnly(long expEpochSeconds) {
+        String header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
+        String payload = "{\"sub\":\"testuser\",\"exp\":" + expEpochSeconds + "}";
+        return Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(header.getBytes(StandardCharsets.UTF_8))
+                + "."
+                + Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(payload.getBytes(StandardCharsets.UTF_8))
+                + ".";
     }
 
     private Cookie getRefreshTokenCookie(MockHttpServletResponse response) {
