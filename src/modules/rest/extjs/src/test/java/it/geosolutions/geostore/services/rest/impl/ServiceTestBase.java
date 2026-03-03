@@ -22,6 +22,7 @@ package it.geosolutions.geostore.services.rest.impl;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -97,6 +98,7 @@ public abstract class ServiceTestBase {
     protected static ResourceDAO resourceDAO;
     protected static SecurityDAO securityDAO;
     protected static UserDAO userDAO;
+    protected static UserGroupDAO userGroupDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
     protected final Logger LOGGER = LogManager.getLogger(getClass());
@@ -129,6 +131,7 @@ public abstract class ServiceTestBase {
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
                 securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
+                userGroupDAO = (UserGroupDAO) ctx.getBean("userGroupDAO");
             }
         }
     }
@@ -161,6 +164,7 @@ public abstract class ServiceTestBase {
 
         assertNotNull(resourceDAO);
         assertNotNull(userDAO);
+        assertNotNull(userGroupDAO);
     }
 
     protected void removeAll()
@@ -238,6 +242,9 @@ public abstract class ServiceTestBase {
     }
 
     private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
+
+        userGroupService.removeSpecialUsersGroups();
+
         List<UserGroup> list = userGroupService.getAll(null, null);
         for (UserGroup item : list) {
             LOGGER.info("Removing User: " + item.getGroupName());
