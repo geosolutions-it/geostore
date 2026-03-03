@@ -37,6 +37,8 @@ public interface FilterVisitor {
 
     void visit(AssociatedEntityFilter filter);
 
+    void visit(GroupFilter filter);
+
     void visit(FieldFilter filter) throws InternalErrorServiceEx;
 
     void visit(NotFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx;
