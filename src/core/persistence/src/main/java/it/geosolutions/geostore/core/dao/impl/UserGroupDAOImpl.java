@@ -25,11 +25,12 @@ import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
-import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Class UserGroupDAOImpl.
@@ -95,22 +96,22 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
         searchCriteria.addFilterEqual("groupName", name);
         UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
-        if (existingGroups.size() > 0) {
+        if (!existingGroups.isEmpty()) {
             result = existingGroups.get(0);
             initializeLazyMembers(result);
         }
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public List<UserGroup> search(ISearch search) {
-        return super.search(search);
+        return super.search(normalizeSearchForSql(search));
+    }
+
+    @Override
+    public int count(ISearch search) {
+        return super.count(normalizeSearchForSql(search));
     }
 
     /*

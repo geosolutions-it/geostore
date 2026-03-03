@@ -170,7 +170,7 @@ public interface RESTExtJsService {
      * Search for groups by name and return paginated results.
      *
      * @param sc security context
-     * @param nameLike a substring in the name
+     * @param nameLike pattern to match the name. Supports wildcard ('*').
      * @param start the n-th group shown as first in results.
      * @param limit max entries per page
      * @param all if <code>true</code> return also 'everyone' group
