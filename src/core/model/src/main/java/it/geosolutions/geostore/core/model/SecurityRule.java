@@ -116,9 +116,21 @@ public class SecurityRule implements Serializable {
     @Column(nullable = false, updatable = true)
     private boolean canWrite;
 
+    /**
+     * This field is used in LDAP direct configuration, where the users are not handled by GeoStore.
+     * <p>
+     * Permission on resources are then managed by matching the current user username with this field value.
+     * </p>
+     */
     @Column(nullable = true, updatable = true)
     private String username;
 
+    /**
+     * This field is used in LDAP direct configuration, where the users are not handled by GeoStore.
+     * <p>
+     * Permission on resources are then managed by matching the current user groups names with this field value.
+     * </p>
+     */
     @Column(nullable = true, updatable = true)
     private String groupname;
 
