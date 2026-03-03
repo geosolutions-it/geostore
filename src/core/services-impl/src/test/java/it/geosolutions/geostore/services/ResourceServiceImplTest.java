@@ -31,6 +31,7 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.dto.search.BaseField;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
+import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
@@ -326,6 +327,63 @@ public class ResourceServiceImplTest extends ServiceTestBase {
 
         {
             SearchFilter filter = new CategoryFilter("cat%", SearchOperator.LIKE);
+            List<ShortResource> list =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
+            assertEquals(3, list.size());
+        }
+    }
+
+    public void testGroupFilter() throws Exception {
+
+        String ownerGroupName = "owner_group_name";
+        String groupName = "group_name";
+
+        long groupId = createGroup(ownerGroupName);
+
+        SecurityRule securityRuleGroupOwner = new SecurityRule();
+        securityRuleGroupOwner.setGroup(userGroupService.get(groupId));
+
+        SecurityRule securityRuleGroupName = new SecurityRule();
+        securityRuleGroupName.setGroupname(groupName);
+
+        SecurityRule securityRuleOwnerAndName = new SecurityRule();
+        securityRuleOwnerAndName.setGroup(userGroupService.get(groupId));
+        securityRuleOwnerAndName.setGroupname(groupName);
+
+        createResource("group", "des0", "cat0", List.of(securityRuleGroupOwner));
+        createResource("name", "des1", "cat1", List.of(securityRuleGroupName));
+        createResource("group_and_name", "des2", "cat2", List.of(securityRuleOwnerAndName));
+
+        {
+            SearchFilter filter = new GroupFilter(ownerGroupName, SearchOperator.EQUAL_TO);
+            List<ShortResource> list =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
+            assertEquals(2, list.size());
+            assertTrue(list.stream().noneMatch(r -> r.getName().equals("name")));
+        }
+
+        {
+            SearchFilter filter = new GroupFilter(groupName, SearchOperator.EQUAL_TO);
+            List<ShortResource> list =
+                    resourceService.getShortResources(
+                            ResourceSearchParameters.builder()
+                                    .filter(filter)
+                                    .authUser(buildFakeAdminUser())
+                                    .build());
+            assertEquals(2, list.size());
+            assertTrue(list.stream().noneMatch(r -> r.getName().equals("group")));
+        }
+
+        {
+            SearchFilter filter = new GroupFilter("%group%", SearchOperator.LIKE);
             List<ShortResource> list =
                     resourceService.getShortResources(
                             ResourceSearchParameters.builder()
