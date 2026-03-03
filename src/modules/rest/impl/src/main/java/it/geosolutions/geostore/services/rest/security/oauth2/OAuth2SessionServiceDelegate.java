@@ -128,7 +128,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
 
-        if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
+        if (configuration != null && shouldSkipRefresh(currentToken, configuration)) {
+            LOGGER.debug("Token still has sufficient validity; skipping IDP refresh.");
+            warningMessage = "Token still valid; refresh skipped.";
+        } else if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
             // No refresh token available (e.g. bearer-token auth without auth code flow,
             // or IdP did not issue a refresh token because offline_access was not requested).
             // Skip the refresh attempt and return the current token if still valid.
@@ -236,6 +239,66 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             LOGGER.error("Failed to parse JWT token: {}", e.getMessage());
             return null;
         }
+    }
+
+    private Date getIssuedAtFromToken(String token) {
+        try {
+            Jwt decodedToken = JwtHelper.decode(token);
+            String claimsJson = decodedToken.getClaims();
+
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> claims = mapper.readValue(claimsJson, Map.class);
+
+            Object iat = claims.get("iat");
+            if (iat != null) {
+                long iatLong;
+                if (iat instanceof Integer) {
+                    iatLong = ((Integer) iat).longValue();
+                } else if (iat instanceof Long) {
+                    iatLong = (Long) iat;
+                } else if (iat instanceof String) {
+                    iatLong = Long.parseLong((String) iat);
+                } else {
+                    return null;
+                }
+                return new Date(iatLong * 1000);
+            }
+            return null;
+        } catch (Exception e) {
+            LOGGER.debug("Failed to parse 'iat' from JWT token: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    boolean shouldSkipRefresh(OAuth2AccessToken token, OAuth2Configuration config) {
+        if (!config.isSkipRefreshIfTokenValid()) {
+            return false;
+        }
+
+        Date expiration = token.getExpiration();
+        if (expiration == null) {
+            expiration = getExpirationDateFromToken(token.getValue());
+        }
+        if (expiration == null) {
+            return false;
+        }
+
+        long now = System.currentTimeMillis();
+        if (expiration.getTime() <= now) {
+            return false;
+        }
+
+        Date issuedAt = getIssuedAtFromToken(token.getValue());
+        if (issuedAt != null) {
+            long totalLifetime = expiration.getTime() - issuedAt.getTime();
+            long elapsed = now - issuedAt.getTime();
+            double fraction = config.getRefreshTokenLifetimeFraction();
+            return elapsed < totalLifetime * fraction;
+        }
+
+        // Fallback: skip if more than 5 minutes remaining
+        long remaining = expiration.getTime() - now;
+        return remaining > CLOCK_SKEW_ALLOWANCE_MILLIS;
     }
 
     /**
