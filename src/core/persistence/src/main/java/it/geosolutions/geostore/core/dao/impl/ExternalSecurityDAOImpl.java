@@ -26,6 +26,7 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,56 +42,11 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
 
     @Override
     public void persist(SecurityRule... entities) {
-        SecurityRule[] entitiesWithNames = extractNames(entities);
+        SecurityRule[] entitiesWithNames = extractNames(entities).toArray(new SecurityRule[0]);
         super.persist(entitiesWithNames);
         for (int i = 0; i < entitiesWithNames.length; i++) {
             entities[i].setId(entitiesWithNames[i].getId());
         }
-    }
-
-    @Override
-    public List<SecurityRule> findAll() {
-        return fillFromNames(super.findAll());
-    }
-
-    /**
-     * Returns a new list populating User object from username and UserGroup object from groupname
-     * so that using external users is transparent for higher levels.
-     *
-     * @param rules input rules
-     * @return rules with populated user objects
-     */
-    private List<SecurityRule> fillFromNames(List<SecurityRule> rules) {
-        List<SecurityRule> filled = new ArrayList<SecurityRule>();
-        for (SecurityRule rule : rules) {
-            SecurityRule filledRule = new SecurityRule();
-            filledRule.setId(rule.getId());
-            filledRule.setResource(rule.getResource());
-            filledRule.setCanRead(rule.isCanRead());
-            filledRule.setCanWrite(rule.isCanWrite());
-            if (rule.getUsername() != null) {
-                filledRule.setUsername(rule.getUsername());
-                if (rule.getUser() == null) {
-                    User user = new User();
-                    user.setId(-1L);
-                    user.setEnabled(true);
-                    user.setName(rule.getUsername());
-                    filledRule.setUser(user);
-                }
-            }
-            if (rule.getGroupname() != null) {
-                filledRule.setGroupname(rule.getGroupname());
-                if (rule.getGroup() == null) {
-                    UserGroup group = new UserGroup();
-                    group.setId(-1L);
-                    group.setEnabled(true);
-                    group.setGroupName(rule.getGroupname());
-                    filledRule.setGroup(group);
-                }
-            }
-            filled.add(filledRule);
-        }
-        return filled;
     }
 
     /**
@@ -100,14 +56,15 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
      * @param rules input rules
      * @return
      */
-    private SecurityRule[] extractNames(SecurityRule[] rules) {
-        List<SecurityRule> extracted = new ArrayList<SecurityRule>();
+    private List<SecurityRule> extractNames(SecurityRule[] rules) {
+        List<SecurityRule> extracted = new ArrayList<>();
         for (SecurityRule rule : rules) {
             SecurityRule extractedRule = new SecurityRule();
             extractedRule.setId(rule.getId());
             extractedRule.setResource(rule.getResource());
             extractedRule.setCanRead(rule.isCanRead());
             extractedRule.setCanWrite(rule.isCanWrite());
+            extractedRule.setIpRanges(rule.getIpRanges());
             if (rule.getUser() != null) {
                 extractedRule.setUsername(rule.getUser().getName());
             } else {
@@ -120,7 +77,12 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
             }
             extracted.add(extractedRule);
         }
-        return extracted.toArray(new SecurityRule[] {});
+        return extracted;
+    }
+
+    @Override
+    public List<SecurityRule> findAll() {
+        return fillFromNames(super.findAll());
     }
 
     @Override
@@ -128,7 +90,9 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
         return fillFromNames(super.search(search));
     }
 
-    /** Add security filtering in order to filter out resources the user has not read access to */
+    /**
+     * Add security filtering in order to filter out resources the user has not read access to
+     */
     @Override
     public void addReadSecurityConstraints(Search searchCriteria, User user) {
         // no further constraints for admin user
@@ -152,6 +116,7 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
 
         searchCriteria.addFilter(securityFilter);
     }
+
     /**
      * @param userName
      * @param resourceId
@@ -186,12 +151,53 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
         List<SecurityRule> rules = findResourceSecurityRules(resourceId);
         // WORKAROUND
-        List<SecurityRule> filteredRules = new ArrayList<SecurityRule>();
+        List<SecurityRule> filteredRules = new ArrayList<>();
         for (SecurityRule sr : rules) {
             if (sr.getGroupname() != null && groupNames.contains(sr.getGroupname())) {
                 filteredRules.add(sr);
             }
         }
         return fillFromNames(filteredRules);
+    }
+
+    /**
+     * Returns a new list populating User object from username and UserGroup object from groupname
+     * so that using external users is transparent for higher levels.
+     *
+     * @param rules input rules
+     * @return rules with populated user objects
+     */
+    private List<SecurityRule> fillFromNames(List<SecurityRule> rules) {
+        List<SecurityRule> filled = new ArrayList<>();
+        for (SecurityRule rule : rules) {
+            SecurityRule filledRule = new SecurityRule();
+            filledRule.setId(rule.getId());
+            filledRule.setResource(rule.getResource());
+            filledRule.setCanRead(rule.isCanRead());
+            filledRule.setCanWrite(rule.isCanWrite());
+            filledRule.setIpRanges(rule.getIpRanges());
+            if (rule.getUsername() != null) {
+                filledRule.setUsername(rule.getUsername());
+                if (rule.getUser() == null) {
+                    User user = new User();
+                    user.setId(-1L);
+                    user.setEnabled(true);
+                    user.setName(rule.getUsername());
+                    filledRule.setUser(user);
+                }
+            }
+            if (rule.getGroupname() != null) {
+                filledRule.setGroupname(rule.getGroupname());
+                if (rule.getGroup() == null) {
+                    UserGroup group = new UserGroup();
+                    group.setId(-1L);
+                    group.setEnabled(true);
+                    group.setGroupName(rule.getGroupname());
+                    filledRule.setGroup(group);
+                }
+            }
+            filled.add(filledRule);
+        }
+        return filled;
     }
 }
