@@ -19,11 +19,8 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
@@ -53,11 +50,6 @@ import it.geosolutions.geostore.services.rest.model.RESTCategory;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.utils.Convert;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -71,6 +63,16 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import javax.ws.rs.core.SecurityContext;
+import java.security.Principal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Class ServiceTestBase.
@@ -93,18 +95,20 @@ public abstract class ServiceTestBase {
     protected static ResourcePermissionService resourcePermissionService;
 
     protected static ResourceDAO resourceDAO;
+    protected static SecurityDAO securityDAO;
     protected static UserDAO userDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
     protected final Logger LOGGER = LogManager.getLogger(getClass());
-    @Rule public TestName testName = new TestName();
+    @Rule
+    public TestName testName = new TestName();
 
     public ServiceTestBase() {
 
         synchronized (ServiceTestBase.class) {
             if (ctx == null) {
                 String[] paths = {"classpath*:applicationContext.xml"
-                    // ,"applicationContext-test.xml"
+                        // ,"applicationContext-test.xml"
                 };
                 ctx = new ClassPathXmlApplicationContext(paths);
 
@@ -123,6 +127,7 @@ public abstract class ServiceTestBase {
                         (ResourcePermissionService) ctx.getBean("resourcePermissionService");
 
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
+                securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
             }
         }
@@ -134,9 +139,9 @@ public abstract class ServiceTestBase {
 
         LOGGER.info(
                 "################ Running "
-                        + getClass().getSimpleName()
-                        + "::"
-                        + testName.getMethodName());
+                + getClass().getSimpleName()
+                + "::"
+                + testName.getMethodName());
         removeAll();
     }
 
@@ -454,10 +459,48 @@ public abstract class ServiceTestBase {
 
         private Principal userPrincipal;
 
-        public SimpleSecurityContext() {}
-
         public SimpleSecurityContext(long userId) {
             userPrincipal = new UsernamePasswordAuthenticationToken(userDAO.find(userId), null);
+        }
+
+        @Override
+        public Principal getUserPrincipal() {
+            return userPrincipal;
+        }
+
+        public void setUserPrincipal(Principal userPrincipal) {
+            this.userPrincipal = userPrincipal;
+        }
+
+        @Override
+        public boolean isUserInRole(String role) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean isSecure() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getAuthenticationScheme() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
+    static class LdapSecurityContext implements SecurityContext {
+
+        private Principal userPrincipal;
+
+        public LdapSecurityContext(User user) {
+
+            UserGroup ldapRoleGroup = new UserGroup();
+            ldapRoleGroup.setId(-1L);
+            ldapRoleGroup.setGroupName(user.getRole().toString());
+
+            user.setGroups(Set.of(ldapRoleGroup));
+
+            userPrincipal = new UsernamePasswordAuthenticationToken(user, null);
         }
 
         @Override
