@@ -19,6 +19,8 @@
  */
 package it.geosolutions.geostore.services.dto.search;
 
+import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
+import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /** Filter by group name */
@@ -34,5 +36,14 @@ public class GroupFilter extends AssociatedEntityFilter {
     @Override
     public String property() {
         return "security.group.groupName";
+    }
+
+    public String additionalProperty() {
+        return "security.groupname";
+    }
+
+    @Override
+    public void accept(FilterVisitor visitor) throws BadRequestServiceEx, InternalErrorServiceEx {
+        visitor.visit(this);
     }
 }
