@@ -31,8 +31,10 @@ import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.Tag;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -47,6 +49,7 @@ import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtShortResource;
+import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
@@ -2444,6 +2447,105 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, userGroups.size());
             UserGroup userGroup = userGroups.get(0);
             assertEquals(groupAName, userGroup.getGroupName());
+        }
+    }
+
+    @Test
+    public void testGetUsersListWithNameLike() throws Exception {
+
+        final String userAName = "userA";
+        final String userBName = "usuarioB";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        restCreateUser(userAName, Role.USER, null, "p0");
+        restCreateUser(userBName, Role.USER, null, "p0");
+
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(adminSecurityContext, "*", 0, 1000, true);
+            /* 2 users, 1 admin */
+            assertEquals(3, response.getCount());
+            assertEquals(3, response.getList().size());
+        }
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(adminSecurityContext, "us*", 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(adminSecurityContext, "user*", 0, 1000, true);
+            assertEquals(1, response.getCount());
+            List<User> users = response.getList();
+            assertEquals(1, users.size());
+            User user = users.get(0);
+            assertEquals(userAName, user.getName());
+        }
+    }
+
+    @Test
+    public void testGetGroupsListWithNameLike() throws Exception {
+        final String groupAName = "groupA";
+        final String groupBName = "gruppoB";
+
+        createGroup(groupAName);
+        createGroup(groupBName);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, "*", 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, "gr*", 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, "group*", 0, 1000, true);
+            assertEquals(1, response.getCount());
+            List<UserGroup> userGroups = response.getList();
+            assertEquals(1, userGroups.size());
+            UserGroup userGroup = userGroups.get(0);
+            assertEquals(groupAName, userGroup.getGroupName());
+        }
+    }
+
+    @Test
+    public void testGetGroupsListWithReserved() throws Exception {
+        final String groupName = "group";
+        createGroup(groupName);
+
+        UserGroup reservedGroup = new UserGroup();
+        reservedGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
+        userGroupDAO.persist(reservedGroup);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, null, 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, null, 0, 1000, false);
+            assertEquals(1, response.getCount());
+            List<UserGroup> userGroups = response.getList();
+            assertEquals(1, userGroups.size());
+            UserGroup userGroup = userGroups.get(0);
+            assertEquals(groupName, userGroup.getGroupName());
         }
     }
 
