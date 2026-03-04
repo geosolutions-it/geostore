@@ -41,6 +41,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import java.io.IOException;
 import java.util.Collection;
@@ -63,8 +64,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -108,8 +111,12 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     public static final String OAUTH2_AUTHENTICATION_TYPE_KEY = "oauth2.authenticationType";
     public static final String OAUTH2_ACCESS_TOKEN_CHECK_KEY = "oauth2.AccessTokenCheckResponse";
 
+    private static final String SECURITY_LOGGER_NAME =
+            "it.geosolutions.geostore.services.rest.security";
+
     private final AuthenticationEntryPoint authEntryPoint;
     private final TokenAuthenticationCache cache;
+    private volatile boolean sensitiveLoggingConfigured = false;
 
     @Autowired protected UserService userService;
     @Autowired protected UserGroupService userGroupService;
@@ -165,6 +172,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
             throws IOException, ServletException {
+        configureSensitiveLogging();
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (configuration.isEnabled() && !configuration.isInvalid() && authentication == null) {
             super.doFilter(req, res, chain);
@@ -208,7 +216,19 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 }
             }
         } else {
-            clearState();
+            // Populate the AccessTokenRequest with HTTP parameters (code, state)
+            // from the callback URL. When the rest template is created programmatically
+            // (e.g. by CompositeOpenIdConnectFilter), the AccessTokenRequest is not
+            // request-scoped and must be manually populated.
+            populateAccessTokenRequest(request);
+
+            // Only clear OAuth2 state for non-callback requests (initial login, etc).
+            // For callbacks (request contains an authorization code), clearState() would
+            // destroy the preserved state needed by the AuthorizationCodeAccessTokenProvider
+            // for CSRF verification against the state parameter returned by the IdP.
+            if (request.getParameter("code") == null) {
+                clearState();
+            }
             authentication = authenticateAndUpdateCache(request, response, null, null);
             token =
                     (String)
@@ -275,6 +295,39 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                 .setAttribute(PROVIDER_KEY, configuration.getProvider(), 0);
         return authentication;
+    }
+
+    /**
+     * Populates the rest template's AccessTokenRequest with the HTTP request parameters. This is
+     * required when the rest template is created programmatically (not via Spring's request-scoped
+     * proxy) so that the authorization code and state parameters from the OAuth2 callback URL are
+     * available to the AuthorizationCodeAccessTokenProvider.
+     */
+    private void populateAccessTokenRequest(HttpServletRequest request) {
+        OAuth2ClientContext clientContext = restTemplate.getOAuth2ClientContext();
+        AccessTokenRequest accessTokenRequest = clientContext.getAccessTokenRequest();
+        if (accessTokenRequest == null) return;
+
+        String code = request.getParameter("code");
+        if (code != null) {
+            // Reset the AccessTokenRequest to a clean state before populating.
+            // The same instance is shared across requests (not request-scoped), so
+            // stale stateKey/preservedState from previous requests would trigger
+            // CSRF checks in AuthorizationCodeAccessTokenProvider.
+            accessTokenRequest.setStateKey(null);
+            accessTokenRequest.setPreservedState(null);
+            accessTokenRequest.setAuthorizationCode(code);
+            // Set currentUri to the configured redirect URI (not the actual request URL)
+            // so the token exchange sends the correct redirect_uri to the IdP.
+            // The actual request URL may differ due to reverse proxy or path rewriting.
+            accessTokenRequest.setCurrentUri(configuration.getRedirectUri());
+            LOGGER.info(
+                    "Populated AccessTokenRequest with authorization code from callback (code length={})",
+                    code.length());
+        } else {
+            LOGGER.info(
+                    "No authorization code in callback request (URI={})", request.getRequestURI());
+        }
     }
 
     private void clearState() {
@@ -502,24 +555,30 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (e instanceof UserRedirectRequiredException
                 && configuration.isEnableRedirectEntryPoint()) {
             handleUserRedirection(req, resp);
-        } else if (e instanceof BadCredentialsException || e instanceof ResourceAccessException) {
-            if (e.getCause() instanceof OAuth2AccessDeniedException) {
-                LOGGER.warn(
-                        "Error while trying to authenticate to OAuth2 Provider. Cause: ",
-                        e.getCause());
-            } else if (e instanceof ResourceAccessException) {
-                LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
-            } else if (e.getCause() instanceof OAuth2AccessDeniedException) {
-                LOGGER.warn(
-                        "If you try to validate credentials against an SSH protected endpoint, you need your server exposed on a secure SSL channel or OAuth2 Provider Certificate to be trusted on your JVM.");
-                LOGGER.info(
-                        "Refer to the GeoServer OAuth2 Plugin Documentation for steps to import SSH certificates.");
-            } else {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.error("Could not authorize OAuth2 Resource due to exception: ", e);
-                }
-            }
+            return;
         }
+
+        String errorDetail;
+        if (e instanceof BadCredentialsException) {
+            if (e.getCause() instanceof OAuth2AccessDeniedException) {
+                errorDetail = "OAuth2 access denied: " + e.getCause().getMessage();
+                LOGGER.warn(
+                        "OAuth2 access denied by provider: {}",
+                        e.getCause().getMessage(),
+                        e.getCause());
+            } else {
+                errorDetail = "Bad credentials: " + e.getMessage();
+                LOGGER.warn("OAuth2 bad credentials: {}", e.getMessage(), e);
+            }
+        } else if (e instanceof ResourceAccessException) {
+            errorDetail = "OAuth2 provider unreachable: " + e.getMessage();
+            LOGGER.error("Could not reach OAuth2 provider: {}", e.getMessage(), e);
+        } else {
+            errorDetail = "Authentication error: " + e.getMessage();
+            LOGGER.warn("OAuth2 authentication error: {}", e.getMessage(), e);
+        }
+
+        req.setAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY, errorDetail);
     }
 
     private void handleUserRedirection(HttpServletRequest req, HttpServletResponse resp)
@@ -561,6 +620,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         details.setScope(parseScopes(scopesJoined));
     }
 
+    private void configureSensitiveLogging() {
+        if (!sensitiveLoggingConfigured && configuration.isLogSensitiveInfo()) {
+            sensitiveLoggingConfigured = true;
+            Configurator.setLevel(SECURITY_LOGGER_NAME, Level.DEBUG);
+            LOGGER.warn(
+                    "logSensitiveInfo is ENABLED for provider '{}'. "
+                            + "Security logger '{}' set to DEBUG. "
+                            + "Token contents and credentials may appear in logs. "
+                            + "Do NOT use in production.",
+                    configuration.getProvider(),
+                    SECURITY_LOGGER_NAME);
+        }
+    }
+
     protected List<String> parseScopes(String commaSeparatedScopes) {
         List<String> scopes = newArrayList();
         if (StringUtils.isBlank(commaSeparatedScopes)) return scopes;
@@ -586,6 +659,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LOGGER.error("User retrieval failed for username: {}", username);
             return null;
         }
+        // Mark the user as trusted (externally authenticated via OAuth2/OIDC).
+        // This prevents getAuthUserDetails() from doing a redundant DB lookup —
+        // the User object already carries role and groups resolved from token claims.
+        user.setTrusted(true);
 
         SimpleGrantedAuthority authority =
                 new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
@@ -607,7 +684,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (StringUtils.isNotBlank(tokenForClaims)
                 && (StringUtils.isNotBlank(configuration.getGroupsClaim())
                         || StringUtils.isNotBlank(configuration.getRolesClaim()))) {
-            addAuthoritiesFromToken(user, tokenForClaims);
+            // Read userinfo/introspection response stored by getPreAuthenticatedPrincipal()
+            @SuppressWarnings("unchecked")
+            Map<String, Object> userinfoMap =
+                    (Map<String, Object>) request.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
+            addAuthoritiesFromToken(user, tokenForClaims, userinfoMap);
         }
 
         authenticationToken.setDetails(
@@ -634,18 +715,27 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
     /**
      * Add authorities from token claims: - recompute Role if roles claim is present (supports
-     * demotion), - reconcile remote groups for THIS provider against IdP groups.
+     * demotion), - reconcile remote groups for THIS provider against IdP groups. Delegates to the
+     * overloaded version with a null userinfo map.
      */
     protected void addAuthoritiesFromToken(User user, String tokenString) {
+        addAuthoritiesFromToken(user, tokenString, null);
+    }
+
+    /**
+     * Add authorities from token claims with optional userinfo/introspection fallback. Tries JWT
+     * extraction first; if the claim is not found in the JWT, falls back to the userinfo map.
+     */
+    @SuppressWarnings("unchecked")
+    protected void addAuthoritiesFromToken(
+            User user, String tokenString, Map<String, Object> userinfoMap) {
         LOGGER.info("Syncing authorities from token claims.");
 
-        JWTHelper helper;
+        JWTHelper helper = null;
         try {
             helper = new JWTHelper(tokenString);
         } catch (Exception e) {
-            // Fail soft if token is opaque or not a valid JWT
-            LOGGER.warn("Token is not a valid JWT; skipping authorities sync from claims.", e);
-            return;
+            LOGGER.warn("Token is not a valid JWT; will try userinfo map for claims.", e);
         }
 
         // ----- Roles -----
@@ -653,11 +743,22 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         String rolesClaimName = configuration.getRolesClaim();
         Object rawRoles = null;
         if (StringUtils.isNotBlank(rolesClaimName)) {
-            rawRoles = helper.getClaim(rolesClaimName, Object.class);
+            if (helper != null) {
+                rawRoles = helper.getClaim(rolesClaimName, Object.class);
+            }
+            if (rawRoles == null && userinfoMap != null) {
+                rawRoles = ClaimPathResolver.resolveIgnoreCase(userinfoMap, rolesClaimName);
+            }
         }
 
         if (rawRoles != null) {
-            List<String> oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
+            List<String> oidcRoles;
+            if (helper != null && helper.getClaim(rolesClaimName, Object.class) != null) {
+                oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
+            } else {
+                oidcRoles = ClaimPathResolver.toStringList(rawRoles);
+            }
+            if (oidcRoles == null) oidcRoles = Collections.emptyList();
             Role defaultRole =
                     configuration.getAuthenticatedDefaultRole() != null
                             ? configuration.getAuthenticatedDefaultRole()
@@ -667,7 +768,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LOGGER.info("User role set from token. {} -> {}", currentRole, newRole);
         } else {
             LOGGER.info(
-                    "Roles claim '{}' missing in token -> preserving current role: {}",
+                    "Roles claim '{}' missing in token and userinfo -> preserving current role: {}",
                     rolesClaimName,
                     currentRole);
         }
@@ -675,8 +776,37 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // ----- Groups -----
         List<String> oidcGroups = Collections.emptyList();
         if (configuration.getGroupsClaim() != null) {
-            oidcGroups = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
-            LOGGER.info("Groups from token: {}", oidcGroups);
+            List<String> fromJwt = null;
+            if (helper != null) {
+                fromJwt = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+            }
+            if (fromJwt != null && !fromJwt.isEmpty()) {
+                oidcGroups = fromJwt;
+            } else if (userinfoMap != null) {
+                List<String> fromUserinfo =
+                        ClaimPathResolver.resolveAsListIgnoreCase(
+                                userinfoMap, configuration.getGroupsClaim());
+                if (fromUserinfo != null) {
+                    oidcGroups = fromUserinfo;
+                }
+            }
+            LOGGER.info("Groups from token/userinfo: {}", oidcGroups);
+        }
+
+        Map<String, String> groupMappings = configuration.getGroupMappings();
+        boolean dropUnmapped = configuration.isDropUnmapped();
+        if (groupMappings != null && !oidcGroups.isEmpty()) {
+            List<String> mapped = new java.util.ArrayList<>();
+            for (String g : oidcGroups) {
+                if (g == null) continue;
+                String m = groupMappings.get(g.toUpperCase(Locale.ROOT));
+                if (m != null) {
+                    mapped.add(m);
+                } else if (!dropUnmapped) {
+                    mapped.add(g);
+                }
+            }
+            oidcGroups = mapped;
         }
 
         reconcileRemoteGroups(user, new LinkedHashSet<>(oidcGroups));
@@ -707,10 +837,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (rolesFromToken == null || rolesFromToken.isEmpty()) {
             return (defaultRole != null) ? defaultRole : Role.USER;
         }
+        Map<String, String> roleMappings = configuration.getRoleMappings();
+        boolean dropUnmapped = configuration.isDropUnmapped();
         Role resolved = (defaultRole != null) ? defaultRole : Role.USER;
         for (String r : rolesFromToken) {
             if (r == null) continue;
             String rr = r.trim();
+            if (roleMappings != null) {
+                String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
+                if (mapped != null) {
+                    rr = mapped;
+                } else if (dropUnmapped) {
+                    continue;
+                }
+            }
             if (rr.equalsIgnoreCase(Role.ADMIN.name())) return Role.ADMIN;
             if (rr.equalsIgnoreCase(Role.GUEST.name())) resolved = Role.GUEST;
         }
@@ -808,22 +948,29 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             boolean alreadyAssigned =
                     user.getGroups().stream()
                             .anyMatch(
-                                    g ->
-                                            g != null
-                                                    && Objects.equals(
-                                                            g.getId(), finalGroup.getId()));
+                                    g -> {
+                                        if (g == null) return false;
+                                        if (finalGroup.getId() != null && g.getId() != null) {
+                                            return Objects.equals(g.getId(), finalGroup.getId());
+                                        }
+                                        return Objects.equals(
+                                                normalizeGroupName(g.getGroupName()),
+                                                normalizeGroupName(finalGroup.getGroupName()));
+                                    });
             if (!alreadyAssigned) {
-                try {
-                    userGroupService.assignUserGroup(user.getId(), group.getId());
-                    user.getGroups().add(group);
-                    LOGGER.info("Assigned user {} to group '{}'", user.getId(), groupName);
-                } catch (NotFoundServiceEx e) {
-                    LOGGER.error(
-                            "Assignment of user {} to group '{}' failed: {}",
-                            user.getId(),
-                            groupName,
-                            e.getMessage());
+                if (userGroupService != null && user.getId() != null && group.getId() != null) {
+                    try {
+                        userGroupService.assignUserGroup(user.getId(), group.getId());
+                        LOGGER.info("Assigned user {} to group '{}'", user.getId(), groupName);
+                    } catch (NotFoundServiceEx e) {
+                        LOGGER.error(
+                                "Assignment of user {} to group '{}' failed: {}",
+                                user.getId(),
+                                groupName,
+                                e.getMessage());
+                    }
                 }
+                user.getGroups().add(group);
             }
         }
 

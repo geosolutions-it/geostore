@@ -36,13 +36,21 @@ import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 /** OpenID Connect implementation of the {@link OAuth2SessionServiceDelegate}. */
 public class OpenIdConnectSessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
+    private final String providerName;
+
+    public OpenIdConnectSessionServiceDelegate(
+            RESTSessionService restSessionService, UserService userService, String providerName) {
+        super(restSessionService, providerName, userService);
+        this.providerName = providerName;
+    }
+
     public OpenIdConnectSessionServiceDelegate(
             RESTSessionService restSessionService, UserService userService) {
-        super(restSessionService, "oidc", userService);
+        this(restSessionService, userService, "oidc");
     }
 
     @Override
     protected OAuth2RestTemplate restTemplate() {
-        return GeoStoreContext.bean("oidcOpenIdRestTemplate", OAuth2RestTemplate.class);
+        return GeoStoreContext.bean(providerName + "OpenIdRestTemplate", OAuth2RestTemplate.class);
     }
 }

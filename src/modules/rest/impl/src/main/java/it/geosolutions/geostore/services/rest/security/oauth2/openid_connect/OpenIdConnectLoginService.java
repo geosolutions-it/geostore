@@ -49,8 +49,12 @@ import org.springframework.web.context.request.RequestContextHolder;
  */
 public class OpenIdConnectLoginService extends Oauth2LoginService {
 
+    public OpenIdConnectLoginService(IdPLoginRest loginRest, String providerName) {
+        loginRest.registerService(providerName, this);
+    }
+
     public OpenIdConnectLoginService(IdPLoginRest loginRest) {
-        loginRest.registerService("oidc", this);
+        this(loginRest, "oidc");
     }
 
     /**
