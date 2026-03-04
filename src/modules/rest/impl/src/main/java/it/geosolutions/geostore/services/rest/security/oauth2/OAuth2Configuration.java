@@ -79,6 +79,14 @@ public class OAuth2Configuration extends IdPConfiguration {
     private String groupsClaim;
     private boolean groupNamesUppercase = false;
 
+    // Cache configuration
+    private int cacheSize = 1000;
+    private int cacheExpirationMinutes = 480;
+
+    // Smart refresh: skip IDP refresh when token is still valid
+    private boolean skipRefreshIfTokenValid = true;
+    private double refreshTokenLifetimeFraction = 0.8;
+
     // Retry and backoff configurations
     private long initialBackoffDelay = 1000; // Default: 1 second
     private double backoffMultiplier = 2.0; // Default multiplier
@@ -136,6 +144,22 @@ public class OAuth2Configuration extends IdPConfiguration {
      */
     public void setBackoffMultiplier(double backoffMultiplier) {
         this.backoffMultiplier = backoffMultiplier;
+    }
+
+    public boolean isSkipRefreshIfTokenValid() {
+        return skipRefreshIfTokenValid;
+    }
+
+    public void setSkipRefreshIfTokenValid(boolean skipRefreshIfTokenValid) {
+        this.skipRefreshIfTokenValid = skipRefreshIfTokenValid;
+    }
+
+    public double getRefreshTokenLifetimeFraction() {
+        return refreshTokenLifetimeFraction;
+    }
+
+    public void setRefreshTokenLifetimeFraction(double refreshTokenLifetimeFraction) {
+        this.refreshTokenLifetimeFraction = refreshTokenLifetimeFraction;
     }
 
     /**
@@ -584,6 +608,22 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.groupNamesUppercase = groupNamesUppercase;
     }
 
+    public int getCacheSize() {
+        return cacheSize;
+    }
+
+    public void setCacheSize(int cacheSize) {
+        this.cacheSize = cacheSize;
+    }
+
+    public int getCacheExpirationMinutes() {
+        return cacheExpirationMinutes;
+    }
+
+    public void setCacheExpirationMinutes(int cacheExpirationMinutes) {
+        this.cacheExpirationMinutes = cacheExpirationMinutes;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof OAuth2Configuration)) return false;
@@ -591,6 +631,13 @@ public class OAuth2Configuration extends IdPConfiguration {
         return isGlobalLogoutEnabled() == that.isGlobalLogoutEnabled()
                 && isEnableRedirectEntryPoint() == that.isEnableRedirectEntryPoint()
                 && isGroupNamesUppercase() == that.isGroupNamesUppercase()
+                && isSkipRefreshIfTokenValid() == that.isSkipRefreshIfTokenValid()
+                && Double.compare(
+                                getRefreshTokenLifetimeFraction(),
+                                that.getRefreshTokenLifetimeFraction())
+                        == 0
+                && getCacheSize() == that.getCacheSize()
+                && getCacheExpirationMinutes() == that.getCacheExpirationMinutes()
                 && getInitialBackoffDelay() == that.getInitialBackoffDelay()
                 && Double.compare(getBackoffMultiplier(), that.getBackoffMultiplier()) == 0
                 && getMaxRetries() == that.getMaxRetries()
@@ -630,6 +677,10 @@ public class OAuth2Configuration extends IdPConfiguration {
                 getRolesClaim(),
                 getGroupsClaim(),
                 isGroupNamesUppercase(),
+                isSkipRefreshIfTokenValid(),
+                getRefreshTokenLifetimeFraction(),
+                getCacheSize(),
+                getCacheExpirationMinutes(),
                 getInitialBackoffDelay(),
                 getBackoffMultiplier(),
                 getMaxRetries());
@@ -686,6 +737,14 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + '\''
                 + ", groupNamesUppercase="
                 + groupNamesUppercase
+                + ", skipRefreshIfTokenValid="
+                + skipRefreshIfTokenValid
+                + ", refreshTokenLifetimeFraction="
+                + refreshTokenLifetimeFraction
+                + ", cacheSize="
+                + cacheSize
+                + ", cacheExpirationMinutes="
+                + cacheExpirationMinutes
                 + ", initialBackoffDelay="
                 + initialBackoffDelay
                 + ", backoffMultiplier="

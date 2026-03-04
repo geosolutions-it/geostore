@@ -9,6 +9,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuratio
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,6 +28,7 @@ import org.springframework.security.oauth2.client.resource.UserRedirectRequiredE
 import org.springframework.security.oauth2.common.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -35,7 +37,7 @@ class RefreshTokenServiceTest {
 
     private TestOAuth2SessionServiceDelegate serviceDelegate;
     private OAuth2Configuration configuration;
-    private OAuth2RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private MockHttpServletRequest mockRequest;
     private MockHttpServletResponse mockResponse;
     private DefaultOAuth2AccessToken mockOAuth2AccessToken;
@@ -48,13 +50,13 @@ class RefreshTokenServiceTest {
 
         // Initialize mocks and dependencies
         configuration = mock(OAuth2Configuration.class);
-        restTemplate = mock(OAuth2RestTemplate.class);
+        restTemplate = mock(RestTemplate.class);
         authenticationCache = mock(TokenAuthenticationCache.class);
 
         // Create an instance of the test subclass
         serviceDelegate = spy(new TestOAuth2SessionServiceDelegate());
         // Ensure restTemplate is set correctly
-        serviceDelegate.setRestTemplate(restTemplate);
+        serviceDelegate.setRefreshRestTemplate(restTemplate);
         serviceDelegate.setConfiguration(configuration);
         serviceDelegate.authenticationCache = authenticationCache;
 
@@ -70,7 +72,9 @@ class RefreshTokenServiceTest {
         when(configuration.getMaxRetries()).thenReturn(3);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getAccessTokenUri()).thenReturn("https://example.com/oauth2/token");
+        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
+        when(configuration.getBackoffMultiplier()).thenReturn(2.0);
 
         // Mock the existing OAuth2AccessToken with a refresh token
         mockOAuth2AccessToken = new DefaultOAuth2AccessToken("providedAccessToken");
@@ -130,10 +134,6 @@ class RefreshTokenServiceTest {
         when(configuration.isEnabled()).thenReturn(true);
         when(configuration.getClientId()).thenReturn("testClientId");
         when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
-        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
-        when(configuration.getMaxRetries()).thenReturn(3);
-
         when(restTemplate.exchange(
                         anyString(),
                         eq(HttpMethod.POST),
@@ -229,7 +229,7 @@ class RefreshTokenServiceTest {
         assertEquals(
                 "existingRefreshToken",
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged after server error");
+                "Refresh token should remain unchanged");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -513,7 +513,7 @@ class RefreshTokenServiceTest {
         String oldAccessToken = "oldAccessToken";
         String refreshToken = "validRefreshToken";
 
-        // We’ll pretend the user originally had "oldAccessToken"
+        // We'll pretend the user originally had "oldAccessToken"
         // and the current OAuth2 token in serviceDelegate is set to the same.
         DefaultOAuth2AccessToken originalAccessToken = new DefaultOAuth2AccessToken(oldAccessToken);
         OAuth2RefreshToken existingRefresh = new DefaultOAuth2RefreshToken(refreshToken);
@@ -546,13 +546,7 @@ class RefreshTokenServiceTest {
                         eq(OAuth2AccessToken.class)))
                 .thenReturn(responseEntity);
 
-        // Mock config so refresh is enabled
-        when(configuration.isEnabled()).thenReturn(true);
-        when(configuration.getClientId()).thenReturn("testClientId");
-        when(configuration.getClientSecret()).thenReturn("testClientSecret");
-        when(configuration.buildRefreshTokenURI()).thenReturn("https://example.com/oauth2/token");
-        when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
-        when(configuration.getMaxRetries()).thenReturn(3);
+        // Mock config so refresh is enabled (most already set in setUp)
 
         // Act
         SessionToken sessionToken = serviceDelegate.refresh(refreshToken, oldAccessToken);
@@ -584,10 +578,204 @@ class RefreshTokenServiceTest {
                 "Service delegate must store the new refresh token internally.");
     }
 
+    @Test
+    void testRefreshSkippedWhenTokenStillValid() {
+        // Arrange: token issued 1 minute ago, expires in 9 minutes (10% elapsed of 10-min
+        // lifetime)
+        String accessToken = "providedAccessToken";
+        long now = System.currentTimeMillis();
+        long iat = (now - 60_000) / 1000; // 1 minute ago
+        long exp = (now + 9 * 60_000) / 1000; // 9 minutes from now
+        String jwtToken = buildFakeJwt(iat, exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken("existingRefreshToken"));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        when(configuration.getRefreshTokenLifetimeFraction()).thenReturn(0.8);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(null, jwtToken);
+
+        // Assert: no IDP call, returns current token with skip warning
+        assertNotNull(sessionToken);
+        assertEquals(jwtToken, sessionToken.getAccessToken());
+        assertNotNull(sessionToken.getWarning());
+        assertTrue(sessionToken.getWarning().contains("Token still valid; refresh skipped."));
+
+        // Verify no exchange was attempted
+        verify(restTemplate, never())
+                .exchange(
+                        anyString(),
+                        any(HttpMethod.class),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshProceedsWhenTokenNearExpiry() {
+        // Arrange: token issued 9 minutes ago, expires in 1 minute (90% elapsed)
+        String refreshToken = "providedRefreshToken";
+        String accessToken = "providedAccessToken";
+        long now = System.currentTimeMillis();
+        long iat = (now - 9 * 60_000) / 1000; // 9 minutes ago
+        long exp = (now + 60_000) / 1000; // 1 minute from now
+        String jwtToken = buildFakeJwt(iat, exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken(refreshToken));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        when(configuration.getRefreshTokenLifetimeFraction()).thenReturn(0.8);
+
+        // Mock a successful refresh response
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        newAccessToken.setRefreshToken(new DefaultOAuth2RefreshToken("newRefreshToken"));
+        newAccessToken.setExpiration(new Date(System.currentTimeMillis() + 7200_000));
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, jwtToken);
+
+        // Assert: IDP refresh happened, new token returned
+        assertNotNull(sessionToken);
+        assertEquals("newAccessToken", sessionToken.getAccessToken());
+
+        // Verify exchange was called
+        verify(restTemplate, atLeastOnce())
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshSkipDisabledByConfig() {
+        // Arrange: token with plenty of remaining life, but skip is disabled
+        String refreshToken = "providedRefreshToken";
+        long now = System.currentTimeMillis();
+        long iat = (now - 60_000) / 1000;
+        long exp = (now + 9 * 60_000) / 1000;
+        String jwtToken = buildFakeJwt(iat, exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken(refreshToken));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(false);
+
+        // Mock a successful refresh response
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        newAccessToken.setRefreshToken(new DefaultOAuth2RefreshToken("newRefreshToken"));
+        newAccessToken.setExpiration(new Date(System.currentTimeMillis() + 7200_000));
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, jwtToken);
+
+        // Assert: IDP refresh happened even though token has plenty of life
+        assertNotNull(sessionToken);
+        assertEquals("newAccessToken", sessionToken.getAccessToken());
+        verify(restTemplate, atLeastOnce())
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    @Test
+    void testRefreshSkipFallbackWithoutIat() {
+        // Arrange: token without iat claim, but with >5 min remaining → skip
+        String accessToken = "providedAccessToken";
+        long now = System.currentTimeMillis();
+        long exp = (now + 10 * 60_000) / 1000; // 10 minutes from now
+        String jwtToken = buildFakeJwtExpOnly(exp);
+
+        DefaultOAuth2AccessToken tokenWithJwt = new DefaultOAuth2AccessToken(jwtToken);
+        tokenWithJwt.setExpiration(new Date(exp * 1000));
+        tokenWithJwt.setRefreshToken(new DefaultOAuth2RefreshToken("existingRefreshToken"));
+        serviceDelegate.currentAccessToken = tokenWithJwt;
+
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        when(configuration.getRefreshTokenLifetimeFraction()).thenReturn(0.8);
+
+        // Act
+        SessionToken sessionToken = serviceDelegate.refresh(null, jwtToken);
+
+        // Assert: skipped because >5 min remaining (fallback threshold)
+        assertNotNull(sessionToken);
+        assertEquals(jwtToken, sessionToken.getAccessToken());
+        assertNotNull(sessionToken.getWarning());
+        assertTrue(sessionToken.getWarning().contains("Token still valid; refresh skipped."));
+        verify(restTemplate, never())
+                .exchange(
+                        anyString(),
+                        any(HttpMethod.class),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class));
+    }
+
+    /**
+     * Builds a fake unsigned JWT with both iat and exp claims. The format is
+     * base64(header).base64(payload).signature — Spring's JwtHelper.decode() can parse this.
+     */
+    private String buildFakeJwt(long iatEpochSeconds, long expEpochSeconds) {
+        String header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
+        String payload =
+                "{\"sub\":\"testuser\",\"iat\":"
+                        + iatEpochSeconds
+                        + ",\"exp\":"
+                        + expEpochSeconds
+                        + "}";
+        return Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(header.getBytes(StandardCharsets.UTF_8))
+                + "."
+                + Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(payload.getBytes(StandardCharsets.UTF_8))
+                + ".";
+    }
+
+    /** Builds a fake unsigned JWT with only an exp claim (no iat). */
+    private String buildFakeJwtExpOnly(long expEpochSeconds) {
+        String header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
+        String payload = "{\"sub\":\"testuser\",\"exp\":" + expEpochSeconds + "}";
+        return Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(header.getBytes(StandardCharsets.UTF_8))
+                + "."
+                + Base64.getUrlEncoder()
+                        .withoutPadding()
+                        .encodeToString(payload.getBytes(StandardCharsets.UTF_8))
+                + ".";
+    }
+
     /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */
     class TestOAuth2SessionServiceDelegate extends OAuth2SessionServiceDelegate {
 
-        private OAuth2RestTemplate restTemplate;
+        private RestTemplate refreshRestTemplate;
         private OAuth2Configuration configuration;
         private OAuth2AccessToken currentAccessToken;
         protected TokenAuthenticationCache authenticationCache;
@@ -596,8 +784,8 @@ class RefreshTokenServiceTest {
             super(null, null); // Mocked dependencies
         }
 
-        public void setRestTemplate(OAuth2RestTemplate restTemplate) {
-            this.restTemplate = restTemplate;
+        public void setRefreshRestTemplate(RestTemplate refreshRestTemplate) {
+            this.refreshRestTemplate = refreshRestTemplate;
         }
 
         public void setConfiguration(OAuth2Configuration configuration) {
@@ -606,7 +794,12 @@ class RefreshTokenServiceTest {
 
         @Override
         protected OAuth2RestTemplate restTemplate() {
-            return restTemplate;
+            return null;
+        }
+
+        @Override
+        protected RestTemplate createRefreshRestTemplate() {
+            return refreshRestTemplate;
         }
 
         @Override
