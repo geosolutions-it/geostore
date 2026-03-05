@@ -8,12 +8,11 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
@@ -21,13 +20,15 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
-                    rule.getUser() != null && (user.getId().equals(rule.getUser().getId()))
-                    || user.getName() != null && user.getName().equals(rule.getUsername());
+                    rule.getUsername() != null && rule.getUsername().equals(user.getName())
+                            || rule.getUser() != null
+                                    && rule.getUser().getId().equals(user.getId());
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
             (rule, group) ->
-                    rule.getGroup() != null && (group.getId().equals(rule.getGroup().getId()))
-                    || group.getGroupName() != null && group.getGroupName().equals(rule.getGroupname());
+                    rule.getGroupname() != null && rule.getGroupname().equals(group.getGroupName())
+                            || rule.getGroup() != null
+                                    && rule.getGroup().getId().equals(group.getId());
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccess =
             (rule, user) -> isUserIPAllowed(user, rule.getIpRanges());
@@ -61,8 +62,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private boolean canUserAccessWithReadPermission(Resource resource, User user) {
         return hasUserOwnershipWithReadPermission(user, resource)
-               || haveUserGroupsOwnershipWithReadPermission(user, resource)
-               || hasUserAccessByIpWithReadPermission(user, resource);
+                || haveUserGroupsOwnershipWithReadPermission(user, resource)
+                || hasUserAccessByIpWithReadPermission(user, resource);
     }
 
     private boolean hasUserOwnershipWithReadPermission(User user, Resource resource) {
@@ -83,8 +84,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     @Override
     public boolean canResourceBeWrittenByUser(Resource resource, User user) {
         if (user.getRole() != null
-            && !user.getRole().equals(Role.GUEST)
-            && user.getRole().equals(Role.ADMIN)) {
+                && !user.getRole().equals(Role.GUEST)
+                && user.getRole().equals(Role.ADMIN)) {
             return true;
         }
         checkResourceSecurityRules(resource);
@@ -100,8 +101,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private boolean canUserAccessWithWritePermission(Resource resource, User user) {
         return hasUserOwnershipWithWritePermission(user, resource)
-               || haveUserGroupsOwnershipWithWritePermission(user, resource)
-               || hasUserAccessByIpWithWritePermission(user, resource);
+                || haveUserGroupsOwnershipWithWritePermission(user, resource)
+                || hasUserAccessByIpWithWritePermission(user, resource);
     }
 
     private boolean hasUserOwnershipWithWritePermission(User user, Resource resource) {
