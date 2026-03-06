@@ -70,7 +70,37 @@ public class ResourcePermissionServiceImplTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void testCanReadByGroupnameMatch() {
+=======
+    public void testCannotWriteByRuleFilledUserId() {
+        // LDAP direct user
+        User user = new User();
+        user.setId(-1L);
+        user.setName("alice");
+        user.setRole(Role.USER);
+
+        // with external security, security rules contain a dummy user
+        User filledUser = new User();
+        filledUser.setId(null);
+        filledUser.setName("admin");
+        SecurityRule filledRule = new SecurityRule();
+        filledRule.setCanRead(true);
+        filledRule.setCanWrite(true);
+        filledRule.setUser(filledUser);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(filledRule));
+
+        // Assert that read is NOT allowed
+        assertFalse(
+                "User shouldn't have write access",
+                service.canResourceBeWrittenByUser(resource, filledUser));
+    }
+
+    @Test
+    public void testCanReadByGroupNameMatch() {
+>>>>>>> 6f5763d (Fixed canwrite check based on dummy ids. (#507))
         // Create a user and assign to a group named "editors"
         UserGroup group = new UserGroup();
         group.setId(10L);
@@ -95,7 +125,95 @@ public class ResourcePermissionServiceImplTest {
 
         // Assert that read is allowed via groupname matching
         assertTrue(
+<<<<<<< HEAD
                 "User should have read access via groupname match",
+=======
+                "User should have read access via group's name match",
+                service.canResourceBeReadByUser(resource, user));
+    }
+
+    @Test
+    public void testCanReadByRuleGroupnameMatch() {
+        // Create a user and assign to a group named "editors"
+        UserGroup group = new UserGroup();
+        group.setId(-1L);
+        group.setGroupName("editors");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("bob");
+        user.setRole(Role.USER);
+        user.setGroups(Collections.singleton(group));
+
+        // Create a security rule: match on rule groupname
+        SecurityRule rule = new SecurityRule();
+        rule.setGroupname("editors");
+        rule.setCanRead(true);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(rule));
+
+        // Assert that read is allowed via rule groupname matching
+        assertTrue(
+                "User should have read access via group name match",
+                service.canResourceBeReadByUser(resource, user));
+    }
+
+    @Test
+    public void testCannotWriteByRuleFilledGroupId() {
+        // LDAP direct group
+        UserGroup group = new UserGroup();
+        group.setId(-1L);
+        group.setGroupName("group");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("bob");
+        user.setRole(Role.USER);
+        user.setGroups(Collections.singleton(group));
+
+        // with external security, security rules contain a dummy group
+        UserGroup filledGroup = new UserGroup();
+        filledGroup.setId(null);
+        filledGroup.setGroupName("admins");
+        SecurityRule filledRule = new SecurityRule();
+        filledRule.setCanRead(true);
+        filledRule.setCanWrite(true);
+        filledRule.setGroup(filledGroup);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(filledRule));
+
+        // Assert that read is NOT allowed
+        assertFalse(
+                "User shouldn't have write access",
+                service.canResourceBeWrittenByUser(resource, user));
+    }
+
+    @Test
+    public void testGuestCanReadEveryoneResource() {
+        UserGroup group = new UserGroup();
+        group.setId(-1L);
+        group.setGroupName(GroupReservedNames.EVERYONE.groupName());
+
+        User user = new User();
+        user.setId(null);
+        user.setName("guest");
+        user.setRole(Role.GUEST);
+        user.setGroups(Collections.singleton(group));
+
+        // Create a security rule: match on rule groupname
+        SecurityRule rule = new SecurityRule();
+        rule.setGroupname(GroupReservedNames.EVERYONE.groupName());
+        rule.setCanRead(true);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(rule));
+
+        // Assert that read is allowed via rule groupname matching
+        assertTrue(
+                "User should have read access via everyone group match",
+>>>>>>> 6f5763d (Fixed canwrite check based on dummy ids. (#507))
                 service.canResourceBeReadByUser(resource, user));
     }
 

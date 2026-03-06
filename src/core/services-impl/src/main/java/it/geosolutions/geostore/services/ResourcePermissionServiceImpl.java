@@ -21,6 +21,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
+<<<<<<< HEAD
                     rule.getUser() != null && (user.getId().equals(rule.getUser().getId()))
                     || user.getName() != null && user.getName().equals(rule.getUsername());
 
@@ -28,6 +29,19 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
             (rule, group) ->
                     rule.getGroup() != null && (group.getId().equals(rule.getGroup().getId()))
                     || group.getGroupName() != null && group.getGroupName().equals(rule.getGroupname());
+=======
+                    rule.getUsername() != null && rule.getUsername().equals(user.getName())
+                            || rule.getUser() != null
+                                    && rule.getUser().getId() != null
+                                    && rule.getUser().getId().equals(user.getId());
+
+    private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
+            (rule, group) ->
+                    rule.getGroupname() != null && rule.getGroupname().equals(group.getGroupName())
+                            || rule.getGroup() != null
+                                    && rule.getGroup().getId() != null
+                                    && rule.getGroup().getId().equals(group.getId());
+>>>>>>> 6f5763d (Fixed canwrite check based on dummy ids. (#507))
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccess =
             (rule, user) -> isUserIPAllowed(user, rule.getIpRanges());
