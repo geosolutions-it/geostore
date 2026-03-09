@@ -426,7 +426,7 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testGetAllAllowedForRegularUser() throws Exception {
+    public void testGetAllAllowedForUser() throws Exception {
         long g1 = userGroupService.insert(group("A"));
         long g2 = userGroupService.insert(group("B"));
         long g3 = userGroupService.insert(group("C"));
@@ -439,6 +439,21 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         List<UserGroup> allowed = userGroupService.getAllAllowed(u, null, null, null, true);
         assertEquals(
                 Set.of(g1, g3), allowed.stream().map(UserGroup::getId).collect(Collectors.toSet()));
+    }
+
+    @Test
+    public void testGetAllAllowedForAdmin() throws Exception {
+        long g1 = userGroupService.insert(group("A"));
+        long g2 = userGroupService.insert(group("B"));
+        long g3 = userGroupService.insert(group("C"));
+
+        long uid = userService.insert(admin("administrator"));
+
+        User u = userService.get(uid);
+        List<UserGroup> allowed = userGroupService.getAllAllowed(u, null, null, null, true);
+        assertEquals(
+                Set.of(g1, g2, g3),
+                allowed.stream().map(UserGroup::getId).collect(Collectors.toSet()));
     }
 
     @Test
@@ -608,6 +623,12 @@ public class UserGroupServiceImplTest extends ServiceTestBase {
         UserGroup g = new UserGroup();
         g.setGroupName(name);
         return g;
+    }
+
+    private static User admin(String name) {
+        User admin = user(name);
+        admin.setRole(Role.ADMIN);
+        return admin;
     }
 
     private static User user(String name) {

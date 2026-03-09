@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.core.dao.ldap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
@@ -28,6 +29,8 @@ import it.geosolutions.geostore.core.ldap.MockContextSource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.Test;
 
 public class UserGroupDAOTest extends BaseDAOTest {
@@ -44,16 +47,122 @@ public class UserGroupDAOTest extends BaseDAOTest {
     }
 
     @Test
-    public void testSearchByname() {
+    public void testSearchByName() {
         UserGroupDAOImpl userGroupDAO =
                 new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
         userGroupDAO.setSearchBase("ou=groups");
-        Search search = new Search(User.class);
-        List<UserGroup> groups =
-                userGroupDAO.search(search.addFilter(Filter.equal("groupName", "group")));
+
+        Search search = new Search().addFilter(Filter.equal("groupName", "group"));
+
+        List<UserGroup> groups = userGroupDAO.search(search);
+
         assertEquals(1, groups.size());
         UserGroup group = groups.get(0);
         assertEquals("group", group.getGroupName());
+    }
+
+    @Test
+    public void testSearchByUser() {
+        UserGroupDAOImpl userGroupDAO =
+                new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+
+        userGroupDAO.setSearchBase("ou=groups");
+        userGroupDAO.setAddEveryOneGroup(true);
+
+        Set<String> userRoles = Set.of("USER", "MANAGER", "EDITOR");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("user");
+        /* with LDAP direct, groups are created from user roles */
+        user.setGroups(
+                userRoles.stream()
+                        .map(
+                                groupName -> {
+                                    UserGroup userGroup = new UserGroup();
+                                    userGroup.setGroupName(groupName);
+                                    return userGroup;
+                                })
+                        .collect(Collectors.toSet()));
+
+        List<UserGroup> groups = userGroupDAO.searchByUser(user, new Search());
+
+        assertEquals(4, groups.size());
+
+        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals("everyone")));
+
+        List<String> groupsNames =
+                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        assertTrue(groupsNames.containsAll(userRoles));
+    }
+
+    @Test
+    public void testSearchByUserWithNameLikeFilter() {
+        UserGroupDAOImpl userGroupDAO =
+                new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+
+        Set<String> userRoles = Set.of("USER", "USERS", "EDITOR");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("user");
+        /* with LDAP direct, groups are created from user roles */
+        user.setGroups(
+                userRoles.stream()
+                        .map(
+                                groupName -> {
+                                    UserGroup userGroup = new UserGroup();
+                                    userGroup.setGroupName(groupName);
+                                    return userGroup;
+                                })
+                        .collect(Collectors.toSet()));
+
+        Search filteredSearch = new Search().addFilterILike("groupName", "user*");
+
+        List<UserGroup> groups = userGroupDAO.searchByUser(user, filteredSearch);
+
+        assertEquals(2, groups.size());
+
+        List<String> groupsNames =
+                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        assertTrue(groupsNames.containsAll(Set.of("USER", "USERS")));
+    }
+
+    @Test
+    public void testSearchByUserWithNameLikeWildcardFilter() {
+        UserGroupDAOImpl userGroupDAO =
+                new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+
+        userGroupDAO.setSearchBase("ou=groups");
+        userGroupDAO.setAddEveryOneGroup(true);
+
+        Set<String> userRoles = Set.of("USER", "USERS", "EDITOR");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("user");
+        /* with LDAP direct, groups are created from user roles */
+        user.setGroups(
+                userRoles.stream()
+                        .map(
+                                groupName -> {
+                                    UserGroup userGroup = new UserGroup();
+                                    userGroup.setGroupName(groupName);
+                                    return userGroup;
+                                })
+                        .collect(Collectors.toSet()));
+
+        Search filteredSearch = new Search().addFilterILike("groupName", "*");
+
+        List<UserGroup> groups = userGroupDAO.searchByUser(user, filteredSearch);
+
+        assertEquals(4, groups.size());
+
+        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals("everyone")));
+
+        List<String> groupsNames =
+                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        assertTrue(groupsNames.containsAll(userRoles));
     }
 
     @Test
@@ -62,9 +171,11 @@ public class UserGroupDAOTest extends BaseDAOTest {
                 new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
         userGroupDAO.setSearchBase("ou=groups");
         userGroupDAO.setAddEveryOneGroup(true);
+
         List<UserGroup> groups = userGroupDAO.findAll();
-        assertEquals(3, groups.size());
-        UserGroup group = groups.get(2);
-        assertEquals("everyone", group.getGroupName());
+
+        List<String> groupsNames =
+                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        assertTrue(groupsNames.containsAll(List.of("group", "group2", "everyone")));
     }
 }
