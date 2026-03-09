@@ -22,12 +22,14 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
             (rule, user) ->
                     rule.getUsername() != null && rule.getUsername().equals(user.getName())
                             || rule.getUser() != null
+                                    && rule.getUser().getId() != null
                                     && rule.getUser().getId().equals(user.getId());
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
             (rule, group) ->
                     rule.getGroupname() != null && rule.getGroupname().equals(group.getGroupName())
                             || rule.getGroup() != null
+                                    && rule.getGroup().getId() != null
                                     && rule.getGroup().getId().equals(group.getId());
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccess =
