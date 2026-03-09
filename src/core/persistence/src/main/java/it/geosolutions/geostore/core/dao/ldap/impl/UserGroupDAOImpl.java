@@ -25,11 +25,17 @@ import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import javax.naming.directory.SearchControls;
 import org.springframework.expression.Expression;
 import org.springframework.ldap.core.ContextSource;
@@ -128,17 +134,71 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         searchCriteria.addFilterEqual(nameAttribute, name);
         UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
-        if (existingGroups.size() > 0) {
+        if (!existingGroups.isEmpty()) {
             result = existingGroups.get(0);
         }
         return result;
     }
 
-    /*
-     * (non-Javadoc)
+    /**
+     * This search limits the results by the user's groups.
      *
-     * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
+     * <p>This implementation filters user groups only by <code>groupName ILIKE</code> if present in
+     * the <code>search</code> parameter.
      */
+    @Override
+    public List<UserGroup> searchByUser(User user, Search search) {
+        List<UserGroup> ldapGroups = search(search);
+
+        Set<UserGroup> userGroups = retrieveUserGroups(user, search);
+        userGroups.addAll(ldapGroups);
+
+        return new ArrayList<>(userGroups);
+    }
+
+    private Set<UserGroup> retrieveUserGroups(User user, Search search) {
+        Set<UserGroup> userGroups = user.getGroups();
+
+        if (userGroups == null) {
+            return Set.of();
+        }
+
+        return applyGroupNameFilter(userGroups, search);
+    }
+
+    private Set<UserGroup> applyGroupNameFilter(Set<UserGroup> userGroups, Search search) {
+
+        Optional<Object> groupNameFilterValue = retrieveGroupNameFilterValue(search);
+
+        if (groupNameFilterValue.isEmpty()) {
+            return userGroups;
+        }
+
+        Pattern pattern = buildGroupNameILikePattern((String) groupNameFilterValue.get());
+
+        return userGroups.stream()
+                .filter(
+                        ug ->
+                                ug.getGroupName() != null
+                                        && pattern.matcher(ug.getGroupName()).matches())
+                .collect(Collectors.toSet());
+    }
+
+    private Optional<Object> retrieveGroupNameFilterValue(ISearch search) {
+        return search.getFilters().stream()
+                .filter(
+                        filter ->
+                                "groupName".equals(filter.getProperty())
+                                        && Filter.OP_ILIKE == filter.getOperator())
+                .findFirst()
+                .map(Filter::getValue);
+    }
+
+    private Pattern buildGroupNameILikePattern(String groupNameILike) {
+        String regex = groupNameILike.replace("*", ".*");
+        return Pattern.compile("^" + regex + "$", Pattern.CASE_INSENSITIVE);
+    }
+
     @Override
     public List<UserGroup> search(ISearch search) {
         String filter;
@@ -149,10 +209,12 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         } else {
             filter = getLdapFilter(search, getPropertyMapper());
         }
-        return addEveryOne(
+
+        List<UserGroup> ldapGroups =
                 ldapSearch(
-                        combineFilters(baseFilter, filter), getProcessorForSearch(search), search),
-                search);
+                        combineFilters(baseFilter, filter), getProcessorForSearch(search), search);
+
+        return addEveryOne(ldapGroups, search);
     }
 
     /**
@@ -203,7 +265,16 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
     }
 
     /**
-     * Add the everyOne group to the LDAP returned list.
+     * Add the "everyone" group to the groups list.
+     *
+     * <p>the "everyone" group will be added if not present already and if one of these conditions
+     * is met:
+     *
+     * <ul>
+     *   <li>no search is being performed
+     *   <li>there is a search for the "everyone" group
+     *   <li>there is a wildcard ("*") search for the group name
+     * </ul>
      *
      * @param groups
      * @param search
@@ -214,7 +285,9 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
         everyoneGroup.setId((long) (groups.size() + 1));
         everyoneGroup.setEnabled(true);
-        if (search == null || matchFilters(everyoneGroup, search)) {
+        if (search == null
+                || matchFilters(everyoneGroup, search)
+                || wildcardGroupNameSearch(search)) {
             boolean everyoneFound = false;
             for (UserGroup group : groups) {
                 if (group.getGroupName().equals(everyoneGroup.getGroupName())) {
@@ -238,6 +311,10 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
     protected boolean matchFilters(UserGroup group, ISearch search) {
         Expression matchExpression = getSearchExpression(search);
         return matchExpression.getValue(group, Boolean.class);
+    }
+
+    private boolean wildcardGroupNameSearch(ISearch search) {
+        return retrieveGroupNameFilterValue(search).map("*"::equals).orElse(false);
     }
 
     /*
