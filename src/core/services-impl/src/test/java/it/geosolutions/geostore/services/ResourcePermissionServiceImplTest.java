@@ -28,6 +28,7 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.Collections;
 import java.util.List;
@@ -45,14 +46,14 @@ public class ResourcePermissionServiceImplTest {
     }
 
     @Test
-    public void testCanReadByUsernameMatch() {
+    public void testCanReadByUserNameMatch() {
         // Create a user with name "alice" and a dummy ID
         User user = new User();
         user.setId(100L);
         user.setName("alice");
         user.setRole(Role.USER);
 
-        // Create a security rule: mismatch on user ID, but match on username
+        // Create a security rule: mismatch on user ID, but match on user's name
         SecurityRule rule = new SecurityRule();
         User ruleUser = new User();
         ruleUser.setId(999L);
@@ -63,16 +64,35 @@ public class ResourcePermissionServiceImplTest {
         Resource resource = new Resource();
         resource.setSecurity(Collections.singletonList(rule));
 
-        // Assert that read is allowed via username matching
+        // Assert that read is allowed via user's name matching
+        assertTrue(
+                "User should have read access via user's name match",
+                service.canResourceBeReadByUser(resource, user));
+    }
+
+    @Test
+    public void testCanReadByRuleUsernameMatch() {
+        // Create a user with name "alice" and a dummy ID
+        User user = new User();
+        user.setId(-1L);
+        user.setName("alice");
+        user.setRole(Role.USER);
+
+        // Create a security rule: match on rule username
+        SecurityRule rule = new SecurityRule();
+        rule.setUsername("alice");
+        rule.setCanRead(true);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(rule));
+
+        // Assert that read is allowed via rule username matching
         assertTrue(
                 "User should have read access via username match",
                 service.canResourceBeReadByUser(resource, user));
     }
 
     @Test
-<<<<<<< HEAD
-    public void testCanReadByGroupnameMatch() {
-=======
     public void testCannotWriteByRuleFilledUserId() {
         // LDAP direct user
         User user = new User();
@@ -100,7 +120,6 @@ public class ResourcePermissionServiceImplTest {
 
     @Test
     public void testCanReadByGroupNameMatch() {
->>>>>>> 6f5763d (Fixed canwrite check based on dummy ids. (#507))
         // Create a user and assign to a group named "editors"
         UserGroup group = new UserGroup();
         group.setId(10L);
@@ -112,7 +131,7 @@ public class ResourcePermissionServiceImplTest {
         user.setRole(Role.USER);
         user.setGroups(Collections.singleton(group));
 
-        // Create a security rule: mismatch on group ID, but match on groupname
+        // Create a security rule: mismatch on group ID, but match on group's name
         SecurityRule rule = new SecurityRule();
         UserGroup ruleGroup = new UserGroup();
         ruleGroup.setId(888L);
@@ -123,11 +142,8 @@ public class ResourcePermissionServiceImplTest {
         Resource resource = new Resource();
         resource.setSecurity(Collections.singletonList(rule));
 
-        // Assert that read is allowed via groupname matching
+        // Assert that read is allowed via group's name matching
         assertTrue(
-<<<<<<< HEAD
-                "User should have read access via groupname match",
-=======
                 "User should have read access via group's name match",
                 service.canResourceBeReadByUser(resource, user));
     }
@@ -213,7 +229,6 @@ public class ResourcePermissionServiceImplTest {
         // Assert that read is allowed via rule groupname matching
         assertTrue(
                 "User should have read access via everyone group match",
->>>>>>> 6f5763d (Fixed canwrite check based on dummy ids. (#507))
                 service.canResourceBeReadByUser(resource, user));
     }
 

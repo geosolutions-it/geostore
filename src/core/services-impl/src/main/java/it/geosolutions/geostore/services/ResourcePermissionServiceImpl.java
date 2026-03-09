@@ -8,12 +8,11 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 
@@ -21,15 +20,6 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
-<<<<<<< HEAD
-                    rule.getUser() != null && (user.getId().equals(rule.getUser().getId()))
-                    || user.getName() != null && user.getName().equals(rule.getUsername());
-
-    private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
-            (rule, group) ->
-                    rule.getGroup() != null && (group.getId().equals(rule.getGroup().getId()))
-                    || group.getGroupName() != null && group.getGroupName().equals(rule.getGroupname());
-=======
                     rule.getUsername() != null && rule.getUsername().equals(user.getName())
                             || rule.getUser() != null
                                     && rule.getUser().getId() != null
@@ -41,7 +31,6 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
                             || rule.getGroup() != null
                                     && rule.getGroup().getId() != null
                                     && rule.getGroup().getId().equals(group.getId());
->>>>>>> 6f5763d (Fixed canwrite check based on dummy ids. (#507))
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccess =
             (rule, user) -> isUserIPAllowed(user, rule.getIpRanges());
