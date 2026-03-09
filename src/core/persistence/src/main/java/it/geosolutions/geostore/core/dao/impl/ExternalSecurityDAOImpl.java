@@ -26,7 +26,6 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,9 +89,7 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
         return fillFromNames(super.search(search));
     }
 
-    /**
-     * Add security filtering in order to filter out resources the user has not read access to
-     */
+    /** Add security filtering in order to filter out resources the user has not read access to */
     @Override
     public void addReadSecurityConstraints(Search searchCriteria, User user) {
         // no further constraints for admin user
@@ -180,7 +177,7 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
                 filledRule.setUsername(rule.getUsername());
                 if (rule.getUser() == null) {
                     User user = new User();
-                    user.setId(-1L);
+                    user.setId(null);
                     user.setEnabled(true);
                     user.setName(rule.getUsername());
                     filledRule.setUser(user);
@@ -190,7 +187,7 @@ public class ExternalSecurityDAOImpl extends SecurityDAOImpl {
                 filledRule.setGroupname(rule.getGroupname());
                 if (rule.getGroup() == null) {
                     UserGroup group = new UserGroup();
-                    group.setId(-1L);
+                    group.setId(null);
                     group.setEnabled(true);
                     group.setGroupName(rule.getGroupname());
                     filledRule.setGroup(group);

@@ -93,6 +93,32 @@ public class ResourcePermissionServiceImplTest {
     }
 
     @Test
+    public void testCannotWriteByRuleFilledUserId() {
+        // LDAP direct user
+        User user = new User();
+        user.setId(-1L);
+        user.setName("alice");
+        user.setRole(Role.USER);
+
+        // with external security, security rules contain a dummy user
+        User filledUser = new User();
+        filledUser.setId(null);
+        filledUser.setName("admin");
+        SecurityRule filledRule = new SecurityRule();
+        filledRule.setCanRead(true);
+        filledRule.setCanWrite(true);
+        filledRule.setUser(filledUser);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(filledRule));
+
+        // Assert that read is NOT allowed
+        assertFalse(
+                "User shouldn't have write access",
+                service.canResourceBeWrittenByUser(resource, filledUser));
+    }
+
+    @Test
     public void testCanReadByGroupNameMatch() {
         // Create a user and assign to a group named "editors"
         UserGroup group = new UserGroup();
@@ -147,6 +173,37 @@ public class ResourcePermissionServiceImplTest {
         assertTrue(
                 "User should have read access via group name match",
                 service.canResourceBeReadByUser(resource, user));
+    }
+
+    @Test
+    public void testCannotWriteByRuleFilledGroupId() {
+        // LDAP direct group
+        UserGroup group = new UserGroup();
+        group.setId(-1L);
+        group.setGroupName("group");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("bob");
+        user.setRole(Role.USER);
+        user.setGroups(Collections.singleton(group));
+
+        // with external security, security rules contain a dummy group
+        UserGroup filledGroup = new UserGroup();
+        filledGroup.setId(null);
+        filledGroup.setGroupName("admins");
+        SecurityRule filledRule = new SecurityRule();
+        filledRule.setCanRead(true);
+        filledRule.setCanWrite(true);
+        filledRule.setGroup(filledGroup);
+
+        Resource resource = new Resource();
+        resource.setSecurity(Collections.singletonList(filledRule));
+
+        // Assert that read is NOT allowed
+        assertFalse(
+                "User shouldn't have write access",
+                service.canResourceBeWrittenByUser(resource, user));
     }
 
     @Test
