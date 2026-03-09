@@ -25,11 +25,14 @@ import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.naming.directory.SearchControls;
 import org.springframework.expression.Expression;
 import org.springframework.ldap.core.ContextSource;
@@ -128,17 +131,22 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         searchCriteria.addFilterEqual(nameAttribute, name);
         UserGroup result = null;
         List<UserGroup> existingGroups = search(searchCriteria);
-        if (existingGroups.size() > 0) {
+        if (!existingGroups.isEmpty()) {
             result = existingGroups.get(0);
         }
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
-     */
+    @Override
+    public List<UserGroup> searchByUser(User user, Search search) {
+        List<UserGroup> ldapGroups = search(search);
+        Set<UserGroup> userGroups = user.getGroups();
+
+        userGroups.addAll(ldapGroups);
+
+        return new ArrayList<>(userGroups);
+    }
+
     @Override
     public List<UserGroup> search(ISearch search) {
         String filter;
@@ -149,10 +157,12 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         } else {
             filter = getLdapFilter(search, getPropertyMapper());
         }
-        return addEveryOne(
+
+        List<UserGroup> ldapGroups =
                 ldapSearch(
-                        combineFilters(baseFilter, filter), getProcessorForSearch(search), search),
-                search);
+                        combineFilters(baseFilter, filter), getProcessorForSearch(search), search);
+
+        return addEveryOne(ldapGroups, search);
     }
 
     /**

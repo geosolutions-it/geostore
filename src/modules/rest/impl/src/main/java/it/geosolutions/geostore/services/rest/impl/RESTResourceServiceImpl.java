@@ -579,6 +579,7 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
         }
     }
 
+    /* TODO (alessandro): this permission check could be just a canwrite check on the resource */
     @Override
     public SecurityRuleList getSecurityRules(SecurityContext sc, long resourceId) {
         //
