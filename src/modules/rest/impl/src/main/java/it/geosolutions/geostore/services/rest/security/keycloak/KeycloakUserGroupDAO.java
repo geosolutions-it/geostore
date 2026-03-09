@@ -32,6 +32,7 @@ import static it.geosolutions.geostore.core.model.enums.GroupReservedNames.EVERY
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -145,6 +146,12 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
     @Override
     public boolean removeById(Long id) {
         return false;
+    }
+
+    /** This method just calls {@link #search(ISearch)}. */
+    @Override
+    public List<UserGroup> searchByUser(User user, Search search) {
+        return search(search);
     }
 
     @Override

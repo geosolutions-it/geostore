@@ -23,14 +23,16 @@ import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
+import it.geosolutions.geostore.core.model.enums.Role;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Class UserGroupDAOImpl.
@@ -101,6 +103,19 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
             initializeLazyMembers(result);
         }
         return result;
+    }
+
+    @Override
+    public List<UserGroup> searchByUser(User user, Search search) {
+
+        if (user.getRole() == Role.USER) {
+            List<Long> userGroupsIds =
+                    user.getGroups().stream().map(UserGroup::getId).collect(Collectors.toList());
+
+            search.addFilterIn("id", userGroupsIds);
+        }
+
+        return search(search);
     }
 
     @SuppressWarnings("unchecked")
