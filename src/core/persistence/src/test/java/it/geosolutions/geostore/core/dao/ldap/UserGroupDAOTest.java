@@ -88,6 +88,76 @@ public class UserGroupDAOTest extends BaseDAOTest {
         List<UserGroup> groups = userGroupDAO.searchByUser(user, new Search());
 
         assertEquals(4, groups.size());
+
+        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals("everyone")));
+
+        List<String> groupsNames =
+                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        assertTrue(groupsNames.containsAll(userRoles));
+    }
+
+    @Test
+    public void testSearchByUserWithNameLikeFilter() {
+        UserGroupDAOImpl userGroupDAO =
+                new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+
+        Set<String> userRoles = Set.of("USER", "USERS", "EDITOR");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("user");
+        /* with LDAP direct, groups are created from user roles */
+        user.setGroups(
+                userRoles.stream()
+                        .map(
+                                groupName -> {
+                                    UserGroup userGroup = new UserGroup();
+                                    userGroup.setGroupName(groupName);
+                                    return userGroup;
+                                })
+                        .collect(Collectors.toSet()));
+
+        Search filteredSearch = new Search().addFilterILike("groupName", "user*");
+
+        List<UserGroup> groups = userGroupDAO.searchByUser(user, filteredSearch);
+
+        assertEquals(2, groups.size());
+
+        List<String> groupsNames =
+                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        assertTrue(groupsNames.containsAll(Set.of("USER", "USERS")));
+    }
+
+    @Test
+    public void testSearchByUserWithNameLikeWildcardFilter() {
+        UserGroupDAOImpl userGroupDAO =
+                new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
+
+        userGroupDAO.setSearchBase("ou=groups");
+        userGroupDAO.setAddEveryOneGroup(true);
+
+        Set<String> userRoles = Set.of("USER", "USERS", "EDITOR");
+
+        User user = new User();
+        user.setId(-1L);
+        user.setName("user");
+        /* with LDAP direct, groups are created from user roles */
+        user.setGroups(
+                userRoles.stream()
+                        .map(
+                                groupName -> {
+                                    UserGroup userGroup = new UserGroup();
+                                    userGroup.setGroupName(groupName);
+                                    return userGroup;
+                                })
+                        .collect(Collectors.toSet()));
+
+        Search filteredSearch = new Search().addFilterILike("groupName", "*");
+
+        List<UserGroup> groups = userGroupDAO.searchByUser(user, filteredSearch);
+
+        assertEquals(4, groups.size());
+
         assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals("everyone")));
 
         List<String> groupsNames =

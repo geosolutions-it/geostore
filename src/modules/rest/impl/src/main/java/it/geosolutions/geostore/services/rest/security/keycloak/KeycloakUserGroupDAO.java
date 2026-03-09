@@ -148,6 +148,7 @@ public class KeycloakUserGroupDAO extends BaseKeycloakDAO implements UserGroupDA
         return false;
     }
 
+    /** This method just calls {@link #search(ISearch)}. */
     @Override
     public List<UserGroup> searchByUser(User user, Search search) {
         return search(search);
