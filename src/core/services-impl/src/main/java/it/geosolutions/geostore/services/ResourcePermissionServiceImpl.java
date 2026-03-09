@@ -64,8 +64,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private boolean canUserAccessWithReadPermission(Resource resource, User user) {
         return hasUserOwnershipWithReadPermission(user, resource)
-               || haveUserGroupsOwnershipWithReadPermission(user, resource)
-               || hasUserAccessByIpWithReadPermission(user, resource);
+                || haveUserGroupsOwnershipWithReadPermission(user, resource)
+                || hasUserAccessByIpWithReadPermission(user, resource);
     }
 
     private boolean hasUserOwnershipWithReadPermission(User user, Resource resource) {
@@ -86,8 +86,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
     @Override
     public boolean canResourceBeWrittenByUser(Resource resource, User user) {
         if (user.getRole() != null
-            && !user.getRole().equals(Role.GUEST)
-            && user.getRole().equals(Role.ADMIN)) {
+                && !user.getRole().equals(Role.GUEST)
+                && user.getRole().equals(Role.ADMIN)) {
             return true;
         }
         checkResourceSecurityRules(resource);
@@ -103,8 +103,8 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private boolean canUserAccessWithWritePermission(Resource resource, User user) {
         return hasUserOwnershipWithWritePermission(user, resource)
-               || haveUserGroupsOwnershipWithWritePermission(user, resource)
-               || hasUserAccessByIpWithWritePermission(user, resource);
+                || haveUserGroupsOwnershipWithWritePermission(user, resource)
+                || hasUserAccessByIpWithWritePermission(user, resource);
     }
 
     private boolean hasUserOwnershipWithWritePermission(User user, Resource resource) {
