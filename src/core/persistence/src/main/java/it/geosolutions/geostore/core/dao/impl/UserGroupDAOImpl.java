@@ -25,12 +25,11 @@ import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Class UserGroupDAOImpl.
