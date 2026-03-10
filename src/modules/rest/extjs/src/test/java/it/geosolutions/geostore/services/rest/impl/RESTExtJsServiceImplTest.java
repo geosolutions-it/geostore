@@ -17,6 +17,14 @@
 
 package it.geosolutions.geostore.services.rest.impl;
 
+import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
@@ -47,16 +55,6 @@ import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.web.context.request.RequestContextHolder;
-
-import javax.ws.rs.core.SecurityContext;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -66,18 +64,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.ws.rs.core.SecurityContext;
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.springframework.web.context.request.RequestContextHolder;
 
-import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-
-/**
- * @author ETj (etj at geo-solutions.it)
- */
+/** @author ETj (etj at geo-solutions.it) */
 public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
     private final RESTExtJsServiceImpl restExtJsService;
@@ -1329,7 +1326,8 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
-    public void testExtResourcesList_groupOwnedResourceWithLdapDirectPermissionInformation() throws Exception {
+    public void testExtResourcesList_groupOwnedResourceWithLdapDirectPermissionInformation()
+            throws Exception {
         final String CAT0_NAME = "CAT000";
         final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
