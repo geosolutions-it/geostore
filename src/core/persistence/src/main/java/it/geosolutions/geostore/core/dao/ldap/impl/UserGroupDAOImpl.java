@@ -28,6 +28,7 @@ import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,6 +38,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.naming.directory.SearchControls;
+
+import it.geosolutions.geostore.core.model.enums.Role;
 import org.springframework.expression.Expression;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextOperations;
@@ -148,12 +151,11 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public List<UserGroup> searchByUser(User user, Search search) {
-        List<UserGroup> ldapGroups = search(search);
-
-        Set<UserGroup> userGroups = retrieveUserGroups(user, search);
-        userGroups.addAll(ldapGroups);
-
-        return new ArrayList<>(userGroups);
+        if (user.getRole() == Role.ADMIN) {
+            return search(search);
+        } else {
+            return new ArrayList<>(retrieveUserGroups(user, search));
+        }
     }
 
     private Set<UserGroup> retrieveUserGroups(User user, Search search) {
@@ -162,6 +164,8 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         if (userGroups == null) {
             return Set.of();
         }
+
+        userGroups.add(createEveryoneGroup(userGroups.size() + 1));
 
         return applyGroupNameFilter(userGroups, search);
     }
@@ -180,7 +184,7 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
                 .filter(
                         ug ->
                                 ug.getGroupName() != null
-                                        && pattern.matcher(ug.getGroupName()).matches())
+                                && pattern.matcher(ug.getGroupName()).matches())
                 .collect(Collectors.toSet());
     }
 
@@ -189,7 +193,7 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
                 .filter(
                         filter ->
                                 "groupName".equals(filter.getProperty())
-                                        && Filter.OP_ILIKE == filter.getOperator())
+                                && Filter.OP_ILIKE == filter.getOperator())
                 .findFirst()
                 .map(Filter::getValue);
     }
@@ -281,13 +285,10 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
      * @return
      */
     private List<UserGroup> addEveryOne(List<UserGroup> groups, ISearch search) {
-        UserGroup everyoneGroup = new UserGroup();
-        everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
-        everyoneGroup.setId((long) (groups.size() + 1));
-        everyoneGroup.setEnabled(true);
+        UserGroup everyoneGroup = createEveryoneGroup(groups.size() + 1);
         if (search == null
-                || matchFilters(everyoneGroup, search)
-                || wildcardGroupNameSearch(search)) {
+            || matchFilters(everyoneGroup, search)
+            || wildcardGroupNameSearch(search)) {
             boolean everyoneFound = false;
             for (UserGroup group : groups) {
                 if (group.getGroupName().equals(everyoneGroup.getGroupName())) {
@@ -299,6 +300,14 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
             }
         }
         return groups;
+    }
+
+    private UserGroup createEveryoneGroup(int id) {
+        UserGroup everyoneGroup = new UserGroup();
+        everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
+        everyoneGroup.setId((long) id);
+        everyoneGroup.setEnabled(true);
+        return everyoneGroup;
     }
 
     /**
