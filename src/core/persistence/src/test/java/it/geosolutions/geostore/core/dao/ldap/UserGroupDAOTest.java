@@ -117,7 +117,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
                                 })
                         .collect(Collectors.toSet()));
 
-        Search filteredSearch = new Search().addFilterILike("groupName", "user*");
+        Search filteredSearch = new Search().addFilterILike("groupName", "*se*");
 
         List<UserGroup> groups = userGroupDAO.searchByUser(user, filteredSearch);
 

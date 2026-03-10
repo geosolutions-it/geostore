@@ -28,6 +28,7 @@ import it.geosolutions.geostore.core.dao.search.GeoStoreISearchWrapper;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -148,12 +149,11 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
      */
     @Override
     public List<UserGroup> searchByUser(User user, Search search) {
-        List<UserGroup> ldapGroups = search(search);
-
-        Set<UserGroup> userGroups = retrieveUserGroups(user, search);
-        userGroups.addAll(ldapGroups);
-
-        return new ArrayList<>(userGroups);
+        if (user.getRole() == Role.ADMIN) {
+            return search(search);
+        } else {
+            return new ArrayList<>(retrieveUserGroups(user, search));
+        }
     }
 
     private Set<UserGroup> retrieveUserGroups(User user, Search search) {
@@ -162,6 +162,8 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         if (userGroups == null) {
             return Set.of();
         }
+
+        userGroups.add(createEveryoneGroup(userGroups.size() + 1));
 
         return applyGroupNameFilter(userGroups, search);
     }
@@ -281,10 +283,7 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
      * @return
      */
     private List<UserGroup> addEveryOne(List<UserGroup> groups, ISearch search) {
-        UserGroup everyoneGroup = new UserGroup();
-        everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
-        everyoneGroup.setId((long) (groups.size() + 1));
-        everyoneGroup.setEnabled(true);
+        UserGroup everyoneGroup = createEveryoneGroup(groups.size() + 1);
         if (search == null
                 || matchFilters(everyoneGroup, search)
                 || wildcardGroupNameSearch(search)) {
@@ -299,6 +298,14 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
             }
         }
         return groups;
+    }
+
+    private UserGroup createEveryoneGroup(int id) {
+        UserGroup everyoneGroup = new UserGroup();
+        everyoneGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
+        everyoneGroup.setId((long) id);
+        everyoneGroup.setEnabled(true);
+        return everyoneGroup;
     }
 
     /**
