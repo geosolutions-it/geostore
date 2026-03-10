@@ -30,14 +30,13 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class SecurityDAOImpl.
@@ -147,9 +146,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         return super.removeById(id);
     }
 
-    /**
-     * Add security filtering in order to filter out resources the user has not read access to
-     */
+    /** Add security filtering in order to filter out resources the user has not read access to */
     public void addReadSecurityConstraints(Search searchCriteria, User user) {
         // no further constraints for admin user
         if (user.getRole() == Role.ADMIN) {
@@ -210,7 +207,9 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
                     user.getGroups().stream().map(UserGroup::getId).collect(Collectors.toList());
 
             List<String> groupNames =
-                    user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+                    user.getGroups().stream()
+                            .map(UserGroup::getGroupName)
+                            .collect(Collectors.toList());
 
             ownershipFilter =
                     Filter.or(
@@ -219,8 +218,7 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
                                     /* Resource should be accessible by user's group id or by group name (the latter in LDAP direct setup) */
                                     Filter.or(
                                             Filter.in("group.id", groupIds),
-                                            Filter.in("groupname", groupNames)
-                                    ),
+                                            Filter.in("groupname", groupNames)),
                                     /* When the user is part of a group, he should only access the group's advertised resources */
                                     Filter.equal("resource.advertised", true)));
         }
