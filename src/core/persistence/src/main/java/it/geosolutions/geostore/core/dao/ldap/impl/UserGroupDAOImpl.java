@@ -144,6 +144,9 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
     /**
      * This search limits the results by the user's groups.
      *
+     * <p>LDAP search is performed only for ADMIN role. USER role gets groups from the user object
+     * only.
+     *
      * <p>This implementation filters user groups only by <code>groupName ILIKE</code> if present in
      * the <code>search</code> parameter.
      */
@@ -162,8 +165,6 @@ public class UserGroupDAOImpl extends LdapBaseDAOImpl implements UserGroupDAO {
         if (userGroups == null) {
             return Set.of();
         }
-
-        userGroups.add(createEveryoneGroup(userGroups.size() + 1));
 
         return applyGroupNameFilter(userGroups, search);
     }
