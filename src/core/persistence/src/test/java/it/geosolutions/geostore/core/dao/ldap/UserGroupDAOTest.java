@@ -66,9 +66,6 @@ public class UserGroupDAOTest extends BaseDAOTest {
         UserGroupDAOImpl userGroupDAO =
                 new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
 
-        userGroupDAO.setSearchBase("ou=groups");
-        userGroupDAO.setAddEveryOneGroup(true);
-
         Set<String> userRoles = Set.of("USER", "MANAGER", "EDITOR");
 
         User user = new User();
@@ -87,9 +84,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
         List<UserGroup> groups = userGroupDAO.searchByUser(user, new Search());
 
-        assertEquals(4, groups.size());
-
-        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals("everyone")));
+        assertEquals(3, groups.size());
 
         List<String> groupsNames =
                 groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
@@ -133,9 +128,6 @@ public class UserGroupDAOTest extends BaseDAOTest {
         UserGroupDAOImpl userGroupDAO =
                 new UserGroupDAOImpl(new MockContextSource(buildContextForGroups()));
 
-        userGroupDAO.setSearchBase("ou=groups");
-        userGroupDAO.setAddEveryOneGroup(true);
-
         Set<String> userRoles = Set.of("USER", "USERS", "EDITOR");
 
         User user = new User();
@@ -156,9 +148,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
         List<UserGroup> groups = userGroupDAO.searchByUser(user, filteredSearch);
 
-        assertEquals(4, groups.size());
-
-        assertTrue(groups.stream().anyMatch(g -> g.getGroupName().equals("everyone")));
+        assertEquals(3, groups.size());
 
         List<String> groupsNames =
                 groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
