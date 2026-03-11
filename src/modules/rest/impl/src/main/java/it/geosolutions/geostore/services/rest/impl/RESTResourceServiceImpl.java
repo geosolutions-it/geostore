@@ -581,6 +581,9 @@ public class RESTResourceServiceImpl extends RESTServiceImpl implements RESTReso
 
     @Override
     public SecurityRuleList getSecurityRules(SecurityContext sc, long resourceId) {
+        /* TODO: check if the following checks are really needed to return the security rule list.
+         * Seems that can be avoided with resourcePermissionService.canResourceBeWrittenByUser
+         */
         //
         // Authorization check.
         //
