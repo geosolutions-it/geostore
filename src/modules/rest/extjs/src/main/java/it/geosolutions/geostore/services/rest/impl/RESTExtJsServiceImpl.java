@@ -396,12 +396,17 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ExtResource convertToExtResource(Resource resource, User user) {
 
-        ExtResource.Builder extResourceBuilder =
-                ExtResource.builder(resource)
-                        /* setting copy permission as in ResourceEnvelop.isCanCopy */
-                        .withCanCopy(user != null);
+        if (user == null) {
+            throw new InternalErrorWebEx("user should not be null");
+        }
 
-        if (user != null && hasUserEditAndDeletePermissionsOnResource(user, resource)) {
+        ExtResource.Builder extResourceBuilder = ExtResource.builder(resource);
+
+        if (isUserNotAGuest(user)) {
+            extResourceBuilder.withCanCopy(true);
+        }
+
+        if (hasUserEditAndDeletePermissionsOnResource(user, resource)) {
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
@@ -694,7 +699,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         ShortResource shortResource = new ShortResource(resource);
 
         if (resourcePermissionService.canResourceBeReadByUser(resource, user)) {
-            shortResource.setCanCopy(true);
+            shortResource.setCanCopy(isUserNotAGuest(user));
         } else {
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
@@ -715,6 +720,10 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 .withTagList(createTagList(resource.getTags()))
                 .withIsFavorite(isResourceUserFavorite(resource, user))
                 .build();
+    }
+
+    private boolean isUserNotAGuest(User user) {
+        return Role.GUEST != user.getRole();
     }
 
     private ShortAttributeList createShortAttributeList(List<Attribute> attributes) {
