@@ -56,6 +56,8 @@ public abstract class BaseDAOTest extends TestCase {
 
     protected static SecurityDAO externalSecurityDAO;
 
+    protected static IpRangeDAO ipRangeDAO;
+
     protected static UserAttributeDAO userAttributeDAO;
 
     protected static UserDAO userDAO;
@@ -80,6 +82,7 @@ public abstract class BaseDAOTest extends TestCase {
                 categoryDAO = (CategoryDAO) ctx.getBean("categoryDAO");
                 securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
                 externalSecurityDAO = (SecurityDAO) ctx.getBean("externalSecurityDAO");
+                ipRangeDAO = (IpRangeDAO) ctx.getBean("ipRangeDAO");
                 userAttributeDAO = (UserAttributeDAO) ctx.getBean("userAttributeDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
                 userGroupDAO = (UserGroupDAO) ctx.getBean("userGroupDAO");
@@ -103,6 +106,7 @@ public abstract class BaseDAOTest extends TestCase {
         assertNotNull(categoryDAO);
         assertNotNull(securityDAO);
         assertNotNull(externalSecurityDAO);
+        assertNotNull(ipRangeDAO);
         assertNotNull(userAttributeDAO);
         assertNotNull(userDAO);
         assertNotNull(userGroupDAO);

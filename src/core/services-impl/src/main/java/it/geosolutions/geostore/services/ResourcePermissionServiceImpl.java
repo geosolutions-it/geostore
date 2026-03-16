@@ -20,14 +20,17 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
 
     private final BiPredicate<SecurityRule, User> resourceUserOwnership =
             (rule, user) ->
-                    rule.getUser() != null && (user.getId().equals(rule.getUser().getId()))
-                            || user.getName() != null && user.getName().equals(rule.getUsername());
+                    rule.getUsername() != null && rule.getUsername().equals(user.getName())
+                            || rule.getUser() != null
+                                    && rule.getUser().getId() != null
+                                    && rule.getUser().getId().equals(user.getId());
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnership =
             (rule, group) ->
-                    (group.getId().equals(rule.getGroup().getId())
-                            || group.getGroupName() != null
-                                    && group.getGroupName().equals(rule.getGroupname()));
+                    rule.getGroupname() != null && rule.getGroupname().equals(group.getGroupName())
+                            || rule.getGroup() != null
+                                    && rule.getGroup().getId() != null
+                                    && rule.getGroup().getId().equals(group.getId());
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccess =
             (rule, user) -> isUserIPAllowed(user, rule.getIpRanges());
@@ -36,10 +39,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
             (rule, user) -> resourceUserOwnership.test(rule, user) && rule.isCanRead();
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnershipWithReadPermission =
-            (rule, group) ->
-                    rule.getGroup() != null
-                            && resourceGroupOwnership.test(rule, group)
-                            && rule.isCanRead();
+            (rule, group) -> resourceGroupOwnership.test(rule, group) && rule.isCanRead();
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccessWithReadPermission =
             (rule, user) -> resourceUserIPAccess.test(rule, user) && rule.isCanRead();
@@ -48,10 +48,7 @@ public class ResourcePermissionServiceImpl implements ResourcePermissionService 
             (rule, user) -> resourceUserOwnership.test(rule, user) && rule.isCanWrite();
 
     private final BiPredicate<SecurityRule, UserGroup> resourceGroupOwnershipWithWritePermission =
-            (rule, group) ->
-                    rule.getGroup() != null
-                            && resourceGroupOwnership.test(rule, group)
-                            && rule.isCanWrite();
+            (rule, group) -> resourceGroupOwnership.test(rule, group) && rule.isCanWrite();
 
     private final BiPredicate<SecurityRule, User> resourceUserIPAccessWithWritePermission =
             (rule, user) -> resourceUserIPAccess.test(rule, user) && rule.isCanWrite();

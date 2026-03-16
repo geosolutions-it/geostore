@@ -199,18 +199,9 @@ public class UserGroupServiceImpl implements UserGroupService {
 
         if (user == null) throw new BadRequestServiceEx("User must be defined.");
 
-        Search searchCriteria = createGetAllSearchCriteria(page, entries, nameLike, all);
-
-        if (user.getRole() == Role.USER) {
-            Set<UserGroup> userGrp = user.getGroups();
-            List<Long> grpIds = new ArrayList<>(userGrp.size());
-            for (UserGroup grp : userGrp) {
-                grpIds.add(grp.getId());
-            }
-            searchCriteria.addFilterIn("id", grpIds);
-        }
-
-        return remapWithoutAttributes(userGroupDAO.search(searchCriteria));
+        return remapWithoutAttributes(
+                userGroupDAO.searchByUser(
+                        user, createGetAllSearchCriteria(page, entries, nameLike, all)));
     }
 
     @Override

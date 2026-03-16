@@ -28,6 +28,7 @@ import it.geosolutions.geostore.services.dto.search.AttributeFilter;
 import it.geosolutions.geostore.services.dto.search.CategoryFilter;
 import it.geosolutions.geostore.services.dto.search.FieldFilter;
 import it.geosolutions.geostore.services.dto.search.FilterVisitor;
+import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.NotFilter;
 import it.geosolutions.geostore.services.dto.search.OrFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
@@ -108,9 +109,6 @@ public class SearchConverter implements FilterVisitor {
 
     private SearchConverter() {}
 
-    /*
-     * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.AndFilter)
-     */
     @Override
     public void visit(AndFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
         trgFilter = Filter.and();
@@ -120,6 +118,27 @@ public class SearchConverter implements FilterVisitor {
             searchFilter.accept(sc);
             trgFilter.add(sc.trgFilter);
         }
+    }
+
+    @Override
+    public void visit(OrFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
+        trgFilter = Filter.or();
+
+        for (SearchFilter searchFilter : filter.getFilters()) {
+            SearchConverter sc = new SearchConverter();
+            searchFilter.accept(sc);
+            trgFilter.add(sc.trgFilter);
+        }
+    }
+
+    @Override
+    public void visit(NotFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
+        SearchFilter notFilter = filter.getFilter();
+
+        SearchConverter sc = new SearchConverter();
+        notFilter.accept(sc);
+
+        trgFilter = Filter.not(sc.trgFilter);
     }
 
     /**
@@ -136,14 +155,10 @@ public class SearchConverter implements FilterVisitor {
                 && (filter.getOperator() != null)
                 && (filter.getValue() != null)) {
 
-            Integer trg_op = ops_rest_trg.get(filter.getOperator());
-
-            if (trg_op == null) {
-                throw new IllegalStateException("Unknown op " + filter.getOperator());
-            }
+            Integer op = calculateOperator(filter.getOperator());
 
             String fieldValueName;
-            Object value = null;
+            Object value;
 
             switch (filter.getType()) {
                 case DATE:
@@ -182,7 +197,7 @@ public class SearchConverter implements FilterVisitor {
                             "attribute",
                             Filter.and(
                                     Filter.equal("name", filter.getName()),
-                                    new Filter(fieldValueName, value, trg_op)));
+                                    new Filter(fieldValueName, value, op)));
 
         } else {
             throw new BadRequestServiceEx("Bad payload. One or more field are missing");
@@ -202,14 +217,10 @@ public class SearchConverter implements FilterVisitor {
 
         Filter f = new Filter();
 
-        Integer op = ops_rest_trg.get(filter.getOperator());
-
-        if (op == null) {
-            throw new IllegalStateException("Unknown op " + filter.getOperator());
-        }
+        Integer operator = calculateOperator(filter.getOperator());
 
         f.setProperty(property);
-        f.setOperator(op);
+        f.setOperator(operator);
 
         if (type == Date.class) {
             try {
@@ -240,14 +251,10 @@ public class SearchConverter implements FilterVisitor {
     public void visit(CategoryFilter filter) {
         CategoryFilter.checkOperator(filter.getOperator());
 
-        Integer op = ops_rest_trg.get(filter.getOperator());
-
-        if (op == null) {
-            throw new IllegalStateException("Unknown op " + filter.getOperator());
-        }
+        Integer operator = calculateOperator(filter.getOperator());
 
         Filter f = new Filter();
-        f.setOperator(op);
+        f.setOperator(operator);
         f.setProperty("category.name");
         f.setValue(filter.getName());
 
@@ -260,48 +267,52 @@ public class SearchConverter implements FilterVisitor {
         SearchOperator searchOperator = filter.getOperator();
         List<String> values = filter.values();
 
-        Integer operator = ops_rest_trg.get(searchOperator);
-        if (operator == null) {
-            throw new IllegalStateException("Unknown op " + searchOperator);
-        }
+        Integer operator = calculateOperator(searchOperator);
 
         Filter f = new Filter();
         f.setOperator(operator);
         f.setProperty(filter.property());
-
-        if (SearchOperator.IN == searchOperator) {
-            f.setValue(values);
-        } else {
-            f.setValue(values.get(0));
-        }
+        f.setValue(calculateOperatorValue(searchOperator, values));
 
         trgFilter = f;
     }
 
-    /*
-     * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.NotFilter)
-     */
     @Override
-    public void visit(NotFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
-        SearchFilter notFilter = filter.getFilter();
+    public void visit(GroupFilter filter) {
 
-        SearchConverter sc = new SearchConverter();
-        notFilter.accept(sc);
+        SearchOperator searchOperator = filter.getOperator();
+        List<String> values = filter.values();
 
-        trgFilter = Filter.not(sc.trgFilter);
+        int operator = calculateOperator(searchOperator);
+
+        Object value = calculateOperatorValue(searchOperator, values);
+
+        Filter propertyFilter = new Filter();
+        propertyFilter.setOperator(operator);
+        propertyFilter.setProperty(filter.property());
+        propertyFilter.setValue(value);
+
+        Filter additionalPropertyFilter = new Filter();
+        additionalPropertyFilter.setOperator(operator);
+        additionalPropertyFilter.setProperty(filter.additionalProperty());
+        additionalPropertyFilter.setValue(value);
+
+        trgFilter = Filter.or(propertyFilter, additionalPropertyFilter);
     }
 
-    /*
-     * (non-Javadoc) @see it.geosolutions.geostore.services.dto.search.FilterVisitor#visit(it.geosolutions.geostore.services.dto.search.OrFilter)
-     */
-    @Override
-    public void visit(OrFilter filter) throws BadRequestServiceEx, InternalErrorServiceEx {
-        trgFilter = Filter.or();
+    private Integer calculateOperator(SearchOperator filter) {
+        Integer operator = ops_rest_trg.get(filter);
+        if (operator == null) {
+            throw new IllegalStateException("Unknown op " + filter);
+        }
+        return operator;
+    }
 
-        for (SearchFilter searchFilter : filter.getFilters()) {
-            SearchConverter sc = new SearchConverter();
-            searchFilter.accept(sc);
-            trgFilter.add(sc.trgFilter);
+    private Object calculateOperatorValue(SearchOperator searchOperator, List<String> values) {
+        if (SearchOperator.IN == searchOperator) {
+            return values;
+        } else {
+            return values.get(0);
         }
     }
 }

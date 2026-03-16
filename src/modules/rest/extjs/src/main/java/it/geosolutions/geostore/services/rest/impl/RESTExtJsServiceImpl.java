@@ -396,12 +396,17 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
 
     private ExtResource convertToExtResource(Resource resource, User user) {
 
-        ExtResource.Builder extResourceBuilder =
-                ExtResource.builder(resource)
-                        /* setting copy permission as in ResourceEnvelop.isCanCopy */
-                        .withCanCopy(user != null);
+        if (user == null) {
+            throw new InternalErrorWebEx("user should not be null");
+        }
 
-        if (user != null && hasUserEditAndDeletePermissionsOnResource(user, resource)) {
+        ExtResource.Builder extResourceBuilder = ExtResource.builder(resource);
+
+        if (isUserNotAGuest(user)) {
+            extResourceBuilder.withCanCopy(true);
+        }
+
+        if (hasUserEditAndDeletePermissionsOnResource(user, resource)) {
             extResourceBuilder.withCanEdit(true).withCanDelete(true);
         }
 
@@ -491,12 +496,11 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
-            List<User> users = userService.getAll(page, limit, sqlNameLike, includeAttributes);
+            List<User> users = userService.getAll(page, limit, nameLike, includeAttributes);
 
             long count = 0;
             if (users != null && !users.isEmpty()) {
-                count = userService.getCount(sqlNameLike);
+                count = userService.getCount(nameLike);
             }
 
             return new ExtUserList(count, users);
@@ -538,13 +542,12 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         }
 
         try {
-            String sqlNameLike = convertNameLikeToSqlSyntax(nameLike);
             List<UserGroup> groups =
-                    groupService.getAllAllowed(authUser, page, limit, sqlNameLike, all);
+                    groupService.getAllAllowed(authUser, page, limit, nameLike, all);
 
             long count = 0;
             if (groups != null && !groups.isEmpty()) {
-                count = groupService.getCount(authUser, sqlNameLike, all);
+                count = groupService.getCount(authUser, nameLike, all);
             }
 
             return new ExtGroupList(count, groups);
@@ -696,7 +699,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         ShortResource shortResource = new ShortResource(resource);
 
         if (resourcePermissionService.canResourceBeReadByUser(resource, user)) {
-            shortResource.setCanCopy(true);
+            shortResource.setCanCopy(isUserNotAGuest(user));
         } else {
             throw new ForbiddenErrorWebEx("Resource is protected");
         }
@@ -717,6 +720,10 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 .withTagList(createTagList(resource.getTags()))
                 .withIsFavorite(isResourceUserFavorite(resource, user))
                 .build();
+    }
+
+    private boolean isUserNotAGuest(User user) {
+        return Role.GUEST != user.getRole();
     }
 
     private ShortAttributeList createShortAttributeList(List<Attribute> attributes) {

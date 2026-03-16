@@ -196,9 +196,8 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     private Filter createOwnershipFilter(User user) {
         Filter userFilter =
                 Filter.or(
-                        Filter.equal(
-                                "username",
-                                user.getName()), // is SecurityRule's username even used?
+                        /* Resource should be accessible by user entity name or by username (the latter in LDAP direct setup) */
+                        Filter.equal("username", user.getName()),
                         Filter.equal("user.name", user.getName()));
 
         Filter ownershipFilter = userFilter;
@@ -207,12 +206,20 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
             List<Long> groupIds =
                     user.getGroups().stream().map(UserGroup::getId).collect(Collectors.toList());
 
-            /* When the user is part of a group, he should only see the group's advertised resources */
+            List<String> groupNames =
+                    user.getGroups().stream()
+                            .map(UserGroup::getGroupName)
+                            .collect(Collectors.toList());
+
             ownershipFilter =
                     Filter.or(
                             userFilter,
                             Filter.and(
-                                    Filter.in("group.id", groupIds),
+                                    /* Resource should be accessible by user's group id or by group name (the latter in LDAP direct setup) */
+                                    Filter.or(
+                                            Filter.in("group.id", groupIds),
+                                            Filter.in("groupname", groupNames)),
+                                    /* When the user is part of a group, he should only access the group's advertised resources */
                                     Filter.equal("resource.advertised", true)));
         }
         return ownershipFilter;

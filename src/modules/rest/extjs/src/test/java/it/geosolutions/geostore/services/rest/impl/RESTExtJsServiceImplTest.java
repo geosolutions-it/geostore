@@ -31,8 +31,10 @@ import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.Tag;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.DataType;
+import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
 import it.geosolutions.geostore.services.dto.ShortAttribute;
@@ -47,6 +49,7 @@ import it.geosolutions.geostore.services.model.ExtGroupList;
 import it.geosolutions.geostore.services.model.ExtResource;
 import it.geosolutions.geostore.services.model.ExtResourceList;
 import it.geosolutions.geostore.services.model.ExtShortResource;
+import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
@@ -1215,11 +1218,11 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
 
-        long groupId = createGroup("group");
-        UserGroup group = userGroupService.get(groupId);
-
         long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
         SecurityContext userSecurityContext = new SimpleSecurityContext(userId);
@@ -1267,6 +1270,115 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                 adminSecurityContext,
                 unadvertisedGroupResourceId,
                 new SecurityRuleList(securityRulesUnadvertisedGroupResource));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(3, resources.size());
+            assertTrue(
+                    resources.stream()
+                            .allMatch(r -> r.isCanEdit() && r.isCanDelete() && r.isCanCopy()));
+        }
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            userSecurityContext,
+                            0,
+                            1000,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+            List<ExtResource> resources = response.getList();
+            assertEquals(2, resources.size());
+
+            ExtResource groupResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(GROUP_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertTrue(groupResource.isCanEdit());
+            assertTrue(groupResource.isCanDelete());
+            assertTrue(groupResource.isCanCopy());
+
+            ExtResource readOnlyResource =
+                    resources.stream()
+                            .filter(r -> r.getName().equals(READ_ONLY_RESOURCE_NAME))
+                            .findFirst()
+                            .orElseThrow();
+            assertFalse(readOnlyResource.isCanEdit());
+            assertFalse(readOnlyResource.isCanDelete());
+            assertTrue(readOnlyResource.isCanCopy());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_groupOwnedResourceWithLdapDirectPermissionInformation()
+            throws Exception {
+        final String CAT0_NAME = "CAT000";
+        final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
+        final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        User ldapUser = new User();
+        ldapUser.setId(-1L);
+        ldapUser.setName("user");
+        ldapUser.setRole(Role.USER);
+
+        /* with LDAP direct, groups are created from user roles */
+        String ldapGroupName = ldapUser.getRole().toString();
+
+        createCategory(CAT0_NAME);
+        SecurityContext userSecurityContext = new LdapSecurityContext(ldapUser);
+
+        /* LDAP group owned resource - advertised */
+        long advertisedGroupResourceId =
+                restCreateResource(GROUP_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+
+        SecurityRule editorGroupRule = new SecurityRule();
+        editorGroupRule.setResource(resourceService.get(advertisedGroupResourceId));
+        editorGroupRule.setGroupname(ldapGroupName);
+        editorGroupRule.setCanRead(true);
+        editorGroupRule.setCanWrite(true);
+
+        securityDAO.persist(editorGroupRule);
+
+        /* LDAP group owned resource - read only, advertised */
+        long readOnlyGroupResourceId =
+                restCreateResource(READ_ONLY_RESOURCE_NAME, "", CAT0_NAME, adminId, true);
+
+        SecurityRule readOnlyGroupRule = new SecurityRule();
+        readOnlyGroupRule.setResource(resourceService.get(readOnlyGroupResourceId));
+        readOnlyGroupRule.setGroupname(ldapGroupName);
+        readOnlyGroupRule.setCanRead(true);
+
+        securityDAO.persist(readOnlyGroupRule);
+
+        /* LDAP group owned resource - unadvertised */
+        long unadvertisedGroupResourceId =
+                restCreateResource("unadvertisedGroupResource", "", CAT0_NAME, adminId, false);
+
+        SecurityRule unadvertisedGroupRule = new SecurityRule();
+        unadvertisedGroupRule.setResource(resourceService.get(unadvertisedGroupResourceId));
+        unadvertisedGroupRule.setGroupname(ldapGroupName);
+        unadvertisedGroupRule.setCanRead(true);
+
+        securityDAO.persist(unadvertisedGroupRule);
 
         {
             ExtResourceList response =
@@ -1676,6 +1788,70 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             .findFirst()
                             .orElseThrow();
             assertFalse(nonFavoriteResource.isFavorite());
+        }
+    }
+
+    @Test
+    public void testExtResourcesList_canCopyWhenGuest() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("_guest", Role.GUEST, Collections.singleton(group), "guest");
+        SecurityContext guestSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("everyone_resource", "", CAT0_NAME, adminId, true);
+
+        SecurityRule everyoneGroupSecurityRule = new SecurityRule();
+        everyoneGroupSecurityRule.setCanRead(true);
+        everyoneGroupSecurityRule.setCanWrite(true);
+        everyoneGroupSecurityRule.setGroup(group);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                resourceId,
+                new SecurityRuleList(Collections.singletonList(everyoneGroupSecurityRule)));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource resource = resources.get(0);
+            assertTrue(resource.isCanCopy());
+        }
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            guestSecurityContext,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource resource = resources.get(0);
+            assertFalse(resource.isCanCopy());
         }
     }
 
@@ -2416,6 +2592,46 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testGetExtResource_canCopyWhenGuest() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("_guest", Role.GUEST, Collections.singleton(group), "guest");
+        SecurityContext guestSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("everyone_resource", "", CAT0_NAME, adminId, true);
+
+        SecurityRule everyoneGroupSecurityRule = new SecurityRule();
+        everyoneGroupSecurityRule.setCanRead(true);
+        everyoneGroupSecurityRule.setCanWrite(true);
+        everyoneGroupSecurityRule.setGroup(group);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                resourceId,
+                new SecurityRuleList(Collections.singletonList(everyoneGroupSecurityRule)));
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, resourceId, false, false, true);
+            assertTrue(response.isCanCopy());
+        }
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            guestSecurityContext, resourceId, false, false, true);
+            assertFalse(response.isCanCopy());
+        }
+    }
+
+    @Test
     public void testGetGroupsList() throws Exception {
         final String groupAName = "groupA";
 
@@ -2444,6 +2660,105 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, userGroups.size());
             UserGroup userGroup = userGroups.get(0);
             assertEquals(groupAName, userGroup.getGroupName());
+        }
+    }
+
+    @Test
+    public void testGetUsersListWithNameLike() throws Exception {
+
+        final String userAName = "userA";
+        final String userBName = "usuarioB";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        restCreateUser(userAName, Role.USER, null, "p0");
+        restCreateUser(userBName, Role.USER, null, "p0");
+
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(adminSecurityContext, "*", 0, 1000, true);
+            /* 2 users, 1 admin */
+            assertEquals(3, response.getCount());
+            assertEquals(3, response.getList().size());
+        }
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(adminSecurityContext, "us*", 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(adminSecurityContext, "user*", 0, 1000, true);
+            assertEquals(1, response.getCount());
+            List<User> users = response.getList();
+            assertEquals(1, users.size());
+            User user = users.get(0);
+            assertEquals(userAName, user.getName());
+        }
+    }
+
+    @Test
+    public void testGetGroupsListWithNameLike() throws Exception {
+        final String groupAName = "groupA";
+        final String groupBName = "gruppoB";
+
+        createGroup(groupAName);
+        createGroup(groupBName);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, "*", 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, "gr*", 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, "group*", 0, 1000, true);
+            assertEquals(1, response.getCount());
+            List<UserGroup> userGroups = response.getList();
+            assertEquals(1, userGroups.size());
+            UserGroup userGroup = userGroups.get(0);
+            assertEquals(groupAName, userGroup.getGroupName());
+        }
+    }
+
+    @Test
+    public void testGetGroupsListWithReserved() throws Exception {
+        final String groupName = "group";
+        createGroup(groupName);
+
+        UserGroup reservedGroup = new UserGroup();
+        reservedGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
+        userGroupDAO.persist(reservedGroup);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, null, 0, 1000, true);
+            assertEquals(2, response.getCount());
+            assertEquals(2, response.getList().size());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(adminSecurityContext, null, 0, 1000, false);
+            assertEquals(1, response.getCount());
+            List<UserGroup> userGroups = response.getList();
+            assertEquals(1, userGroups.size());
+            UserGroup userGroup = userGroups.get(0);
+            assertEquals(groupName, userGroup.getGroupName());
         }
     }
 

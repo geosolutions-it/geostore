@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.TagDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
@@ -76,6 +77,8 @@ public abstract class ServiceTestBase extends TestCase {
 
     protected static ResourcePermissionService resourcePermissionService;
 
+    protected static SecurityDAO securityDAO;
+
     protected static ResourceDAO resourceDAO;
 
     protected static TagDAO tagDAO;
@@ -104,6 +107,7 @@ public abstract class ServiceTestBase extends TestCase {
                 ipRangeService = (IPRangeService) ctx.getBean("ipRangeService");
                 resourcePermissionService =
                         (ResourcePermissionService) ctx.getBean("resourcePermissionService");
+                securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
                 tagDAO = (TagDAO) ctx.getBean("tagDAO");
                 ipRangeDAO = (IpRangeDAO) ctx.getBean("ipRangeDAO");

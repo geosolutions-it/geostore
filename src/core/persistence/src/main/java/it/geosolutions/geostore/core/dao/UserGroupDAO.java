@@ -19,7 +19,10 @@
  */
 package it.geosolutions.geostore.core.dao;
 
+import com.googlecode.genericdao.search.Search;
+import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import java.util.List;
 
 /**
  * Interface UserGroupDAO.
@@ -29,6 +32,9 @@ import it.geosolutions.geostore.core.model.UserGroup;
 public interface UserGroupDAO extends RestrictedGenericDAO<UserGroup> {
 
     UserGroup findByName(String name);
+
+    /** This search limits the results by the user's groups. */
+    List<UserGroup> searchByUser(User user, Search search);
 
     /**
      * Returns the {@link UserGroup} with the given id with its attributes eagerly initialized (e.g.

@@ -24,7 +24,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import it.geosolutions.geostore.core.dao.ResourceDAO;
+import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
+import it.geosolutions.geostore.core.dao.UserGroupDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -93,7 +95,9 @@ public abstract class ServiceTestBase {
     protected static ResourcePermissionService resourcePermissionService;
 
     protected static ResourceDAO resourceDAO;
+    protected static SecurityDAO securityDAO;
     protected static UserDAO userDAO;
+    protected static UserGroupDAO userGroupDAO;
 
     protected static ClassPathXmlApplicationContext ctx = null;
     protected final Logger LOGGER = LogManager.getLogger(getClass());
@@ -123,7 +127,9 @@ public abstract class ServiceTestBase {
                         (ResourcePermissionService) ctx.getBean("resourcePermissionService");
 
                 resourceDAO = (ResourceDAO) ctx.getBean("resourceDAO");
+                securityDAO = (SecurityDAO) ctx.getBean("securityDAO");
                 userDAO = (UserDAO) ctx.getBean("userDAO");
+                userGroupDAO = (UserGroupDAO) ctx.getBean("userGroupDAO");
             }
         }
     }
@@ -156,6 +162,7 @@ public abstract class ServiceTestBase {
 
         assertNotNull(resourceDAO);
         assertNotNull(userDAO);
+        assertNotNull(userGroupDAO);
     }
 
     protected void removeAll()
@@ -233,6 +240,9 @@ public abstract class ServiceTestBase {
     }
 
     private void removeAllUserGroup() throws BadRequestServiceEx, NotFoundServiceEx {
+
+        userGroupService.removeSpecialUsersGroups();
+
         List<UserGroup> list = userGroupService.getAll(null, null);
         for (UserGroup item : list) {
             LOGGER.info("Removing User: " + item.getGroupName());
@@ -454,10 +464,48 @@ public abstract class ServiceTestBase {
 
         private Principal userPrincipal;
 
-        public SimpleSecurityContext() {}
-
         public SimpleSecurityContext(long userId) {
             userPrincipal = new UsernamePasswordAuthenticationToken(userDAO.find(userId), null);
+        }
+
+        @Override
+        public Principal getUserPrincipal() {
+            return userPrincipal;
+        }
+
+        public void setUserPrincipal(Principal userPrincipal) {
+            this.userPrincipal = userPrincipal;
+        }
+
+        @Override
+        public boolean isUserInRole(String role) {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public boolean isSecure() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public String getAuthenticationScheme() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+    }
+
+    static class LdapSecurityContext implements SecurityContext {
+
+        private Principal userPrincipal;
+
+        public LdapSecurityContext(User user) {
+
+            UserGroup ldapRoleGroup = new UserGroup();
+            ldapRoleGroup.setId(-1L);
+            ldapRoleGroup.setGroupName(user.getRole().toString());
+
+            user.setGroups(Set.of(ldapRoleGroup));
+
+            userPrincipal = new UsernamePasswordAuthenticationToken(user, null);
         }
 
         @Override

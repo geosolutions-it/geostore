@@ -75,15 +75,15 @@ public class UserDAOImpl extends BaseDAO<User, Long> implements UserDAO {
         return super.findAll();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see com.trg.dao.jpa.GenericDAOImpl#search(com.trg.search.ISearch)
-     */
     @SuppressWarnings("unchecked")
     @Override
     public List<User> search(ISearch search) {
-        return super.search(search);
+        return super.search(normalizeSearchForSql(search));
+    }
+
+    @Override
+    public int count(ISearch search) {
+        return super.count(normalizeSearchForSql(search));
     }
 
     /*
