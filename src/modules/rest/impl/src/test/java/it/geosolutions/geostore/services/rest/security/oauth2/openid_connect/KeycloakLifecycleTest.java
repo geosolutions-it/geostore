@@ -118,6 +118,7 @@ public class KeycloakLifecycleTest {
         configuration.setScopes("openid,email");
         configuration.setSendClientSecret(true);
         configuration.setAllowBearerTokens(true);
+        configuration.setSkipRefreshIfTokenValid(false);
         configuration.setPrincipalKey("preferred_username");
         configuration.setRolesClaim("roles");
         configuration.setGroupsClaim("groups");
@@ -737,6 +738,94 @@ public class KeycloakLifecycleTest {
         User user = (User) verifiedAuth.getPrincipal();
         assertEquals(
                 "testuser", user.getName(), "Username should be preserved after delegate refresh");
+    }
+
+    @Test
+    public void testDelegateRefreshSkippedWhenTokenStillValid()
+            throws IOException, ServletException {
+        // Enable skip-refresh (the production default)
+        configuration.setSkipRefreshIfTokenValid(true);
+        recreateFilter();
+
+        // Step 1: Authenticate via bearer token to populate the cache
+        KeycloakTokens tokens = obtainTokens("testuser", "testuser123");
+
+        MockHttpServletRequest authRequest = createRequest("rest/resources");
+        authRequest.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse authResponse = new MockHttpServletResponse();
+        filter.doFilter(authRequest, authResponse, new MockFilterChain());
+
+        assertEquals(200, authResponse.getStatus());
+        assertNotNull(
+                cache.get(tokens.accessToken),
+                "Original access token should be in cache after auth");
+
+        // Step 2: Set up request context for the refresh call
+        MockHttpServletRequest refreshRequest = createRequest("rest/session/refreshToken");
+        MockHttpServletResponse refreshResponse = new MockHttpServletResponse();
+        RequestContextHolder.setRequestAttributes(
+                new ServletRequestAttributes(refreshRequest, refreshResponse));
+
+        // Step 3: Create the delegate
+        OAuth2SessionServiceDelegate delegate =
+                new OAuth2SessionServiceDelegate(null, null) {
+                    @Override
+                    protected OAuth2RestTemplate restTemplate() {
+                        return null;
+                    }
+
+                    @Override
+                    protected OAuth2Configuration configuration() {
+                        return configuration;
+                    }
+
+                    @Override
+                    protected TokenAuthenticationCache cache() {
+                        return cache;
+                    }
+
+                    @Override
+                    protected HttpServletRequest getRequest() {
+                        return refreshRequest;
+                    }
+
+                    @Override
+                    protected HttpServletResponse getResponse() {
+                        return refreshResponse;
+                    }
+                };
+
+        // Step 4: Call refresh — token is fresh, so IDP refresh should be skipped
+        SessionToken sessionToken = delegate.refresh(tokens.refreshToken, tokens.accessToken);
+
+        // Step 5: Verify the same access token is returned (no IDP round-trip)
+        assertNotNull(sessionToken, "Delegate refresh should return a SessionToken");
+        assertEquals(
+                tokens.accessToken,
+                sessionToken.getAccessToken(),
+                "Access token should be unchanged when refresh is skipped");
+        assertNotNull(sessionToken.getWarning(), "A skip warning should be set");
+        assertTrue(
+                sessionToken.getWarning().contains("Token still valid"),
+                "Warning should indicate refresh was skipped");
+
+        // Step 6: Original token should still be in cache and still authenticate
+        assertNotNull(
+                cache.get(tokens.accessToken),
+                "Original access token should remain in cache");
+
+        SecurityContextHolder.clearContext();
+        MockHttpServletRequest verifyRequest = createRequest("rest/resources");
+        verifyRequest.addHeader("Authorization", "Bearer " + tokens.accessToken);
+        MockHttpServletResponse verifyResponse = new MockHttpServletResponse();
+        filter.doFilter(verifyRequest, verifyResponse, new MockFilterChain());
+
+        assertEquals(200, verifyResponse.getStatus());
+        Authentication verifiedAuth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(verifiedAuth, "Original token should still authenticate after skipped refresh");
+        User user = (User) verifiedAuth.getPrincipal();
+        assertEquals(
+                "testuser", user.getName(), "Username should be preserved after skipped refresh");
     }
 
     private static class KeycloakTokens {
