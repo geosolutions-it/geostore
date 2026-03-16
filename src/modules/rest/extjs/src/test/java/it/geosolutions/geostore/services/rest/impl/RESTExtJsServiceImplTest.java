@@ -1792,6 +1792,70 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testExtResourcesList_canCopyWhenGuest() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("_guest", Role.GUEST, Collections.singleton(group), "guest");
+        SecurityContext guestSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("everyone_resource", "", CAT0_NAME, adminId, true);
+
+        SecurityRule everyoneGroupSecurityRule = new SecurityRule();
+        everyoneGroupSecurityRule.setCanRead(true);
+        everyoneGroupSecurityRule.setCanWrite(true);
+        everyoneGroupSecurityRule.setGroup(group);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                resourceId,
+                new SecurityRuleList(Collections.singletonList(everyoneGroupSecurityRule)));
+
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            adminSecurityContext,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource resource = resources.get(0);
+            assertTrue(resource.isCanCopy());
+        }
+        {
+            ExtResourceList response =
+                    restExtJsService.getExtResourcesList(
+                            guestSecurityContext,
+                            0,
+                            100,
+                            new Sort("", ""),
+                            false,
+                            false,
+                            false,
+                            false,
+                            new AndFilter());
+
+            List<ExtResource> resources = response.getList();
+            assertEquals(1, resources.size());
+            ExtResource resource = resources.get(0);
+            assertFalse(resource.isCanCopy());
+        }
+    }
+
+    @Test
     public void testGetExtResource_withoutSecurityInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
 
@@ -2524,6 +2588,46 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                     restExtJsService.getExtResource(
                             userSecurityContext, nonFavoriteResourceId, false, false, true);
             assertFalse(response.isFavorite());
+        }
+    }
+
+    @Test
+    public void testGetExtResource_canCopyWhenGuest() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long groupId = createGroup("group");
+        UserGroup group = userGroupService.get(groupId);
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        long userId = restCreateUser("_guest", Role.GUEST, Collections.singleton(group), "guest");
+        SecurityContext guestSecurityContext = new SimpleSecurityContext(userId);
+
+        createCategory(CAT0_NAME);
+
+        long resourceId = restCreateResource("everyone_resource", "", CAT0_NAME, adminId, true);
+
+        SecurityRule everyoneGroupSecurityRule = new SecurityRule();
+        everyoneGroupSecurityRule.setCanRead(true);
+        everyoneGroupSecurityRule.setCanWrite(true);
+        everyoneGroupSecurityRule.setGroup(group);
+        restResourceService.updateSecurityRules(
+                adminSecurityContext,
+                resourceId,
+                new SecurityRuleList(Collections.singletonList(everyoneGroupSecurityRule)));
+
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            adminSecurityContext, resourceId, false, false, true);
+            assertTrue(response.isCanCopy());
+        }
+        {
+            ExtShortResource response =
+                    restExtJsService.getExtResource(
+                            guestSecurityContext, resourceId, false, false, true);
+            assertFalse(response.isCanCopy());
         }
     }
 
