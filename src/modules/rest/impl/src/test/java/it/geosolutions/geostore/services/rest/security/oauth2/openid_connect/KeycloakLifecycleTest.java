@@ -811,8 +811,7 @@ public class KeycloakLifecycleTest {
 
         // Step 6: Original token should still be in cache and still authenticate
         assertNotNull(
-                cache.get(tokens.accessToken),
-                "Original access token should remain in cache");
+                cache.get(tokens.accessToken), "Original access token should remain in cache");
 
         SecurityContextHolder.clearContext();
         MockHttpServletRequest verifyRequest = createRequest("rest/resources");
@@ -822,7 +821,8 @@ public class KeycloakLifecycleTest {
 
         assertEquals(200, verifyResponse.getStatus());
         Authentication verifiedAuth = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(verifiedAuth, "Original token should still authenticate after skipped refresh");
+        assertNotNull(
+                verifiedAuth, "Original token should still authenticate after skipped refresh");
         User user = (User) verifiedAuth.getPrincipal();
         assertEquals(
                 "testuser", user.getName(), "Username should be preserved after skipped refresh");

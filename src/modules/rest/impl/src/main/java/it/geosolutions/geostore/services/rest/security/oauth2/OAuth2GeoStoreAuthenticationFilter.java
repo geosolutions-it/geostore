@@ -212,6 +212,10 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                     if (accessToken.isExpired()) {
                         authentication =
                                 authenticateAndUpdateCache(request, response, token, accessToken);
+                    } else {
+                        // Re-sync role from DB so that role changes (promotions/demotions)
+                        // take effect immediately without waiting for token expiry.
+                        authentication = refreshCachedUserRole(authentication, token);
                     }
                 }
             }
@@ -255,6 +259,48 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     private TokenDetails tokenDetails(Authentication authentication) {
         Object details = authentication != null ? authentication.getDetails() : null;
         return (details instanceof TokenDetails) ? (TokenDetails) details : null;
+    }
+
+    /**
+     * Re-reads the user's current role from the database and, if it has changed since the
+     * authentication was cached, rebuilds the authentication with the updated authority. This
+     * ensures that role changes (promotions/demotions via admin UI or DB) take effect immediately
+     * without waiting for token expiry or cache eviction.
+     */
+    private Authentication refreshCachedUserRole(Authentication authentication, String token) {
+        Object principal = authentication.getPrincipal();
+        if (!(principal instanceof User)) {
+            return authentication;
+        }
+        User cachedUser = (User) principal;
+        String username = cachedUser.getName();
+        if (username == null || userService == null) {
+            return authentication;
+        }
+        try {
+            User dbUser = userService.get(username);
+            if (dbUser != null && dbUser.getRole() != cachedUser.getRole()) {
+                LOGGER.info(
+                        "Role changed in DB for user '{}': {} -> {}. Updating cached authentication.",
+                        username,
+                        cachedUser.getRole(),
+                        dbUser.getRole());
+                cachedUser.setRole(dbUser.getRole());
+                SimpleGrantedAuthority authority =
+                        new SimpleGrantedAuthority("ROLE_" + dbUser.getRole().toString());
+                PreAuthenticatedAuthenticationToken updated =
+                        new PreAuthenticatedAuthenticationToken(
+                                cachedUser,
+                                authentication.getCredentials(),
+                                Collections.singletonList(authority));
+                updated.setDetails(authentication.getDetails());
+                cache.putCacheEntry(token, updated);
+                return updated;
+            }
+        } catch (NotFoundServiceEx e) {
+            LOGGER.debug("User '{}' not found in DB during role refresh.", username);
+        }
+        return authentication;
     }
 
     private Authentication authenticateAndUpdateCache(
@@ -664,12 +710,6 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // the User object already carries role and groups resolved from token claims.
         user.setTrusted(true);
 
-        SimpleGrantedAuthority authority =
-                new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
-        PreAuthenticatedAuthenticationToken authenticationToken =
-                new PreAuthenticatedAuthenticationToken(
-                        user, null, Collections.singletonList(authority));
-
         // Prefer ID token for claim enrichment, else access token
         String idToken = OAuth2Utils.getIdToken();
         OAuth2AccessToken accessToken = null;
@@ -690,6 +730,14 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                     (Map<String, Object>) request.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
             addAuthoritiesFromToken(user, tokenForClaims, userinfoMap);
         }
+
+        // Build the auth token AFTER claim processing so the granted authority
+        // reflects the role resolved from token claims, not the stale DB role.
+        SimpleGrantedAuthority authority =
+                new SimpleGrantedAuthority("ROLE_" + user.getRole().toString());
+        PreAuthenticatedAuthenticationToken authenticationToken =
+                new PreAuthenticatedAuthenticationToken(
+                        user, null, Collections.singletonList(authority));
 
         authenticationToken.setDetails(
                 new TokenDetails(accessToken, idToken, configuration.getBeanName()));
@@ -766,11 +814,23 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             Role newRole = computeRole(oidcRoles, defaultRole);
             user.setRole(newRole);
             LOGGER.info("User role set from token. {} -> {}", currentRole, newRole);
-        } else {
+        } else if (StringUtils.isNotBlank(rolesClaimName)) {
+            // rolesClaim is configured but missing from the token — the IdP is the
+            // source of truth.  Fall back to authenticatedDefaultRole (USER by default)
+            // instead of preserving whatever is in the database.
+            Role defaultRole =
+                    configuration.getAuthenticatedDefaultRole() != null
+                            ? configuration.getAuthenticatedDefaultRole()
+                            : Role.USER;
+            user.setRole(defaultRole);
             LOGGER.info(
-                    "Roles claim '{}' missing in token and userinfo -> preserving current role: {}",
+                    "Roles claim '{}' missing in token and userinfo -> "
+                            + "falling back to authenticatedDefaultRole: {} (was: {})",
                     rolesClaimName,
+                    defaultRole,
                     currentRole);
+        } else {
+            LOGGER.info("No rolesClaim configured -> preserving current role: {}", currentRole);
         }
 
         // ----- Groups -----
@@ -1036,13 +1096,18 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (username != null && userService != null) {
             try {
                 user = userService.get(username);
+                LOGGER.info(
+                        "Found existing user '{}' in DB: id={}, role={}",
+                        username,
+                        user.getId(),
+                        user.getRole());
             } catch (NotFoundServiceEx notFoundServiceEx) {
-                LOGGER.info("User with username {} not found.", username);
+                LOGGER.info("User '{}' not found in DB, will attempt creation.", username);
             }
         }
         if (user == null) {
             try {
-                user = createUser(username, null, "");
+                user = createUser(username, "", "");
             } catch (BadRequestServiceEx | NotFoundServiceEx e) {
                 LOGGER.error("Error while auto-creating the user: {}", username, e);
             }
@@ -1054,7 +1119,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             throws BadRequestServiceEx, NotFoundServiceEx {
         User user = new User();
         user.setName(userName);
-        user.setNewPassword(credentials);
+        user.setNewPassword(credentials != null ? credentials : "");
         user.setEnabled(true);
         UserAttribute userAttribute = new UserAttribute();
         userAttribute.setName(OAuth2Configuration.CONFIGURATION_NAME);
@@ -1063,10 +1128,23 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         Set<UserGroup> groups = new HashSet<>();
         user.setGroups(groups);
         user.setRole(Role.USER);
+        LOGGER.info(
+                "createUser called for '{}': autoCreateUser={}, userService={}",
+                userName,
+                configuration.isAutoCreateUser(),
+                userService != null ? "available" : "null");
         if (userService != null && configuration.isAutoCreateUser()) {
             long id = userService.insert(user);
             user = new User(user);
             user.setId(id);
+            LOGGER.info("Persisted OIDC user '{}' with id {}", userName, id);
+        } else if (userService == null) {
+            LOGGER.warn("Cannot persist user '{}': userService is null", userName);
+        } else {
+            LOGGER.warn(
+                    "User '{}' will NOT be persisted (autoCreateUser=false). "
+                            + "Group assignments and role sync will not work.",
+                    userName);
         }
         return user;
     }

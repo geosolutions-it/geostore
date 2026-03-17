@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration.CONFIG_NAME_SUFFIX;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 
+import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
@@ -154,6 +155,19 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
             OpenIdConnectFilter filter =
                     new OpenIdConnectFilter(
                             tokenServices, restTemplate, config, cache, validator, jwksKeyProvider);
+
+            // Wire services needed for user/group persistence and sync
+            try {
+                filter.setUserService(applicationContext.getBean("userService", UserService.class));
+            } catch (Exception e) {
+                LOGGER.warn("userService bean not found; user auto-creation will be disabled");
+            }
+            try {
+                filter.setUserGroupService(
+                        applicationContext.getBean("userGroupService", UserGroupService.class));
+            } catch (Exception e) {
+                LOGGER.warn("userGroupService bean not found; group sync will be disabled");
+            }
 
             providerFilters.put(providerName, filter);
             LOGGER.info("Provider '{}' filter initialized successfully", providerName);

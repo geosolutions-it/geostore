@@ -45,12 +45,14 @@ import com.nimbusds.jwt.SignedJWT;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
+import it.geosolutions.geostore.services.rest.utils.MockedUserService;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -95,6 +97,7 @@ public class OpenIdConnectIntegrationTest {
     private String authService;
     private OpenIdConnectFilter filter;
     private OpenIdConnectConfiguration configuration;
+    private TokenAuthenticationCache cache;
 
     @BeforeAll
     static void beforeClass() throws Exception {
@@ -249,7 +252,7 @@ public class OpenIdConnectIntegrationTest {
         JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(configuration.getPrincipalKey());
-        TokenAuthenticationCache cache =
+        this.cache =
                 new TokenAuthenticationCache(
                         configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
         MultiTokenValidator validator =
@@ -261,7 +264,7 @@ public class OpenIdConnectIntegrationTest {
                         tokenServices,
                         restTemplate,
                         configuration,
-                        cache,
+                        this.cache,
                         validator,
                         jwksKeyProvider);
     }
@@ -1888,6 +1891,274 @@ public class OpenIdConnectIntegrationTest {
         return jweObject.serialize();
     }
 
+    /**
+     * Integration test: when a user's role is changed in the DB, the next bearer token request
+     * (even with a cached, non-expired token) must reflect the new role.
+     */
+    @Test
+    public void testCachedBearerTokenRoleSyncOnDbChange() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        MockedUserService userService = new MockedUserService();
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // First request: authenticate with bearer token (auto-creates user as USER)
+        String jwt = createSignedJwt("role-sync@example.com", "sub-role-sync", CLIENT_ID);
+
+        MockHttpServletRequest request1 = createRequest("rest/resources");
+        request1.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request1, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth1 = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth1, "First bearer request should authenticate");
+        User user = (User) auth1.getPrincipal();
+        assertEquals("role-sync@example.com", user.getName());
+        assertEquals(Role.USER, user.getRole(), "Auto-created user should have USER role");
+        assertNotNull(cache.get(jwt), "Token should be in cache after first request");
+
+        // Simulate admin promoting the user to ADMIN in the DB
+        User dbUser = userService.get("role-sync@example.com");
+        dbUser.setRole(Role.ADMIN);
+        userService.update(dbUser);
+
+        // Second request with same bearer token — should pick up the role change
+        SecurityContextHolder.clearContext();
+        MockHttpServletRequest request2 = createRequest("rest/resources");
+        request2.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request2, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth2 = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth2, "Second bearer request should authenticate from cache");
+        User user2 = (User) auth2.getPrincipal();
+        assertEquals(
+                Role.ADMIN,
+                user2.getRole(),
+                "Role should be ADMIN after DB promotion, even with cached token");
+        assertTrue(
+                auth2.getAuthorities().stream()
+                        .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority())),
+                "Granted authority should be ROLE_ADMIN after promotion");
+    }
+
+    /** Integration test: demotion from ADMIN to USER via DB change is reflected immediately. */
+    @Test
+    public void testCachedBearerTokenDemotionReflected() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        MockedUserService userService = new MockedUserService();
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // Authenticate as ADMIN via roles claim in JWT
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-demote")
+                        .withClaim("email", "demote@example.com")
+                        .withArrayClaim("roles", new String[] {"ADMIN"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request1 = createRequest("rest/resources");
+        request1.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request1, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth1 = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth1);
+        assertEquals(Role.ADMIN, ((User) auth1.getPrincipal()).getRole());
+
+        // Demote user to USER in DB (simulates admin action)
+        User dbUser = userService.get("demote@example.com");
+        dbUser.setRole(Role.USER);
+        userService.update(dbUser);
+
+        // Second request — should reflect demotion
+        SecurityContextHolder.clearContext();
+        MockHttpServletRequest request2 = createRequest("rest/resources");
+        request2.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request2, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth2 = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth2, "Second request should still authenticate");
+        assertEquals(
+                Role.USER,
+                ((User) auth2.getPrincipal()).getRole(),
+                "Role should be demoted to USER after DB change");
+    }
+
+    /**
+     * Integration test: autoCreateUser creates the user in DB on first bearer token authentication.
+     */
+    @Test
+    public void testAutoCreateUserOnBearerToken() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setAutoCreateUser(true);
+        MockedUserService userService = new MockedUserService();
+        recreateFilter();
+        filter.setUserService(userService);
+
+        String jwt = createSignedJwt("newuser@example.com", "sub-autocreate", CLIENT_ID);
+
+        // Verify user does not exist yet
+        try {
+            userService.get("newuser@example.com");
+            fail("User should not exist before first authentication");
+        } catch (NotFoundServiceEx expected) {
+            // expected
+        }
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token should authenticate via auto-create");
+        User user = (User) authentication.getPrincipal();
+        assertEquals("newuser@example.com", user.getName());
+        assertEquals(Role.USER, user.getRole(), "Auto-created user should default to USER role");
+        assertTrue(user.isEnabled(), "Auto-created user should be enabled");
+
+        // Verify user was persisted in the service
+        User persisted = userService.get("newuser@example.com");
+        assertNotNull(persisted, "User should be persisted after auto-create");
+        assertEquals(Role.USER, persisted.getRole());
+    }
+
+    /**
+     * Integration test: when autoCreateUser=false, OIDC-authenticated users are NOT persisted to
+     * the DB. They can still authenticate but won't appear in the admin UI.
+     */
+    @Test
+    public void testAutoCreateUserDisabledDoesNotPersist() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setAutoCreateUser(false);
+        MockedUserService userService = new MockedUserService();
+        recreateFilter();
+        filter.setUserService(userService);
+
+        String jwt = createSignedJwt("transient@example.com", "sub-transient", CLIENT_ID);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null) {
+            // User should NOT be persisted
+            try {
+                userService.get("transient@example.com");
+                fail("User should not be persisted when autoCreateUser is false");
+            } catch (NotFoundServiceEx expected) {
+                // expected — transient user only
+            }
+        }
+    }
+
+    /**
+     * Integration test: when rolesClaim is configured but the JWT does not contain that claim, an
+     * existing DB user with ADMIN role should be downgraded to authenticatedDefaultRole (USER).
+     * This simulates the Azure AD scenario where the JWT has no "roles" claim.
+     */
+    @Test
+    public void testMissingRolesClaimFallsBackToDefaultRole() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        MockedUserService userService = new MockedUserService();
+
+        // Pre-create user as ADMIN in the DB (simulates a previously promoted user)
+        User existingUser = new User();
+        existingUser.setName("admin-user@example.com");
+        existingUser.setRole(Role.ADMIN);
+        existingUser.setEnabled(true);
+        existingUser.setNewPassword("");
+        userService.insert(existingUser);
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // JWT with NO "roles" claim (like Azure AD tokens)
+        String jwt = createSignedJwt("admin-user@example.com", "sub-no-roles", CLIENT_ID);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "Existing ADMIN user should be downgraded to USER when roles claim is missing");
+        assertTrue(
+                auth.getAuthorities().stream().anyMatch(a -> "ROLE_USER".equals(a.getAuthority())),
+                "Granted authority should be ROLE_USER");
+
+        // Verify the role change was persisted to the DB
+        User dbUser = userService.get("admin-user@example.com");
+        assertEquals(
+                Role.USER,
+                dbUser.getRole(),
+                "DB role should be updated to USER after login without roles claim");
+    }
+
+    /**
+     * Integration test: when rolesClaim is configured AND the JWT contains the claim with ADMIN, an
+     * existing DB user with USER role should be promoted to ADMIN.
+     */
+    @Test
+    public void testRolesClaimPresent_PromotesToAdmin() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        MockedUserService userService = new MockedUserService();
+
+        // Pre-create user as USER in the DB
+        User existingUser = new User();
+        existingUser.setName("promote@example.com");
+        existingUser.setRole(Role.USER);
+        existingUser.setEnabled(true);
+        existingUser.setNewPassword("");
+        userService.insert(existingUser);
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // JWT WITH "roles" claim containing ADMIN
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-promote")
+                        .withClaim("email", "promote@example.com")
+                        .withArrayClaim("roles", new String[] {"ADMIN"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.ADMIN,
+                principal.getRole(),
+                "USER should be promoted to ADMIN when roles claim contains ADMIN");
+        assertTrue(
+                auth.getAuthorities().stream().anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority())),
+                "Granted authority should be ROLE_ADMIN");
+    }
+
     /** Recreates the filter with current configuration (picks up JWE config changes). */
     private void recreateFilter() {
         GeoStoreOAuthRestTemplate restTemplate =
@@ -1896,7 +2167,7 @@ public class OpenIdConnectIntegrationTest {
         JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(configuration.getPrincipalKey());
-        TokenAuthenticationCache cache =
+        this.cache =
                 new TokenAuthenticationCache(
                         configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
         MultiTokenValidator validator =
@@ -1908,7 +2179,7 @@ public class OpenIdConnectIntegrationTest {
                         tokenServices,
                         restTemplate,
                         configuration,
-                        cache,
+                        this.cache,
                         validator,
                         jwksKeyProvider);
     }

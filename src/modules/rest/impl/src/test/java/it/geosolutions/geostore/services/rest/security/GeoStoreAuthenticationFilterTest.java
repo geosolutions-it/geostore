@@ -32,6 +32,7 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.GeoStoreRequestHeadersAuthenticationFilter;
+import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
@@ -55,6 +56,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
@@ -622,6 +625,190 @@ public class GeoStoreAuthenticationFilterTest {
         assertEquals(1, with2.getAttributes().size());
         assertEquals("B", with2.getAttributes().get(0).getValue());
         assertEquals("sourceservice", with2.getAttributes().get(0).getName());
+    }
+
+    /**
+     * Cached bearer token authentication must reflect DB role changes immediately. When an admin
+     * demotes a user (or promotes), the next request with the same (non-expired) token must see the
+     * new role — not the stale cached one.
+     */
+    @Test
+    public void testCachedBearerTokenReflectsDbRoleChange() throws Exception {
+        MockedUserService mockedUserService = new MockedUserService();
+        TokenAuthenticationCache tokenCache = new TokenAuthenticationCache(100, 60);
+
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
+        config.setRolesClaim(null); // no roles claim -> role comes from DB
+        config.setBeanName("testBean");
+        config.setAutoCreateUser(true);
+
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("bearer-token"));
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
+
+        // Pre-create user as ADMIN in the mock service
+        User dbUser = new User();
+        dbUser.setName("testuser");
+        dbUser.setRole(Role.ADMIN);
+        dbUser.setEnabled(true);
+        dbUser.setAttribute(Collections.emptyList());
+        dbUser.setGroups(new HashSet<>());
+        mockedUserService.insert(dbUser);
+
+        OAuth2GeoStoreAuthenticationFilter oauth2Filter =
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, tokenCache) {
+
+                    @Override
+                    protected User retrieveUserWithAuthorities(
+                            String username,
+                            HttpServletRequest request,
+                            HttpServletResponse response) {
+                        try {
+                            return mockedUserService.get(username);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    protected void configureRestTemplate() {
+                        /* no-op */
+                    }
+                };
+        oauth2Filter.setUserService(mockedUserService);
+
+        // Simulate first authentication: user is ADMIN, put into cache
+        User cachedUser = new User();
+        cachedUser.setId(dbUser.getId());
+        cachedUser.setName("testuser");
+        cachedUser.setRole(Role.ADMIN);
+        cachedUser.setEnabled(true);
+        cachedUser.setTrusted(true);
+
+        SimpleGrantedAuthority adminAuthority = new SimpleGrantedAuthority("ROLE_ADMIN");
+        PreAuthenticatedAuthenticationToken cachedAuth =
+                new PreAuthenticatedAuthenticationToken(
+                        cachedUser, null, Collections.singletonList(adminAuthority));
+        // Need TokenDetails with a non-expired token for the cache hit path
+        DefaultOAuth2AccessToken accessToken = new DefaultOAuth2AccessToken("bearer-token");
+        accessToken.setExpiration(new Date(System.currentTimeMillis() + 3600_000));
+        cachedAuth.setDetails(
+                new it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails(
+                        accessToken, null, "testBean"));
+        tokenCache.putCacheEntry("bearer-token", cachedAuth);
+
+        // Verify cache has ADMIN
+        Authentication fromCache = tokenCache.get("bearer-token");
+        assertNotNull(fromCache);
+        assertEquals(Role.ADMIN, ((User) fromCache.getPrincipal()).getRole());
+
+        // Now demote user to USER in DB
+        dbUser.setRole(Role.USER);
+        mockedUserService.update(dbUser);
+
+        // Next request with same bearer token should see USER role
+        MockHttpServletRequest req2 = new MockHttpServletRequest();
+        req2.addHeader("Authorization", "Bearer bearer-token");
+        ServletRequestAttributes attrs = new ServletRequestAttributes(req2);
+        RequestContextHolder.setRequestAttributes(attrs);
+
+        Authentication result =
+                oauth2Filter.attemptAuthentication(req2, new MockHttpServletResponse());
+        assertNotNull("Authentication should succeed from cache", result);
+        User resultUser = (User) result.getPrincipal();
+        assertEquals(
+                "Role should be demoted to USER after DB change", Role.USER, resultUser.getRole());
+        assertTrue(
+                "Granted authority should be ROLE_USER",
+                result.getAuthorities().stream()
+                        .anyMatch(a -> "ROLE_USER".equals(a.getAuthority())));
+
+        // Cache should also be updated
+        Authentication updatedCache = tokenCache.get("bearer-token");
+        assertNotNull(updatedCache);
+        assertEquals(
+                "Cache should reflect the demoted role",
+                Role.USER,
+                ((User) updatedCache.getPrincipal()).getRole());
+    }
+
+    /** Cached bearer token with no role change should return the same authentication. */
+    @Test
+    public void testCachedBearerTokenNoRoleChange() throws Exception {
+        MockedUserService mockedUserService = new MockedUserService();
+        TokenAuthenticationCache tokenCache = new TokenAuthenticationCache(100, 60);
+
+        TestOAuth2Configuration config = new TestOAuth2Configuration();
+        config.setBeanName("testBean");
+        config.setAutoCreateUser(true);
+
+        GeoStoreOAuthRestTemplate rt = Mockito.mock(GeoStoreOAuthRestTemplate.class);
+        OAuth2ClientContext ctx = Mockito.mock(OAuth2ClientContext.class);
+        Mockito.when(ctx.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("bearer-token"));
+        Mockito.when(rt.getOAuth2ClientContext()).thenReturn(ctx);
+
+        // Pre-create user as USER
+        User dbUser = new User();
+        dbUser.setName("stableuser");
+        dbUser.setRole(Role.USER);
+        dbUser.setEnabled(true);
+        dbUser.setAttribute(Collections.emptyList());
+        dbUser.setGroups(new HashSet<>());
+        mockedUserService.insert(dbUser);
+
+        OAuth2GeoStoreAuthenticationFilter oauth2Filter =
+                new OAuth2GeoStoreAuthenticationFilter(null, rt, config, tokenCache) {
+
+                    @Override
+                    protected User retrieveUserWithAuthorities(
+                            String username,
+                            HttpServletRequest request,
+                            HttpServletResponse response) {
+                        try {
+                            return mockedUserService.get(username);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    }
+
+                    @Override
+                    protected void configureRestTemplate() {
+                        /* no-op */
+                    }
+                };
+        oauth2Filter.setUserService(mockedUserService);
+
+        // Put USER into cache
+        User cachedUser = new User();
+        cachedUser.setId(dbUser.getId());
+        cachedUser.setName("stableuser");
+        cachedUser.setRole(Role.USER);
+        cachedUser.setEnabled(true);
+        cachedUser.setTrusted(true);
+
+        SimpleGrantedAuthority userAuthority = new SimpleGrantedAuthority("ROLE_USER");
+        PreAuthenticatedAuthenticationToken cachedAuth =
+                new PreAuthenticatedAuthenticationToken(
+                        cachedUser, null, Collections.singletonList(userAuthority));
+        DefaultOAuth2AccessToken accessToken = new DefaultOAuth2AccessToken("bearer-token");
+        accessToken.setExpiration(new Date(System.currentTimeMillis() + 3600_000));
+        cachedAuth.setDetails(
+                new it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails(
+                        accessToken, null, "testBean"));
+        tokenCache.putCacheEntry("bearer-token", cachedAuth);
+
+        // Request with same token, no DB change
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.addHeader("Authorization", "Bearer bearer-token");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(req));
+
+        Authentication result =
+                oauth2Filter.attemptAuthentication(req, new MockHttpServletResponse());
+        assertNotNull(result);
+        assertEquals(Role.USER, ((User) result.getPrincipal()).getRole());
+        // Should be the same object (no rebuild needed)
+        assertSame("Should return same auth when role unchanged", cachedAuth, result);
     }
 
     // ---------------------------------------------------------------------
