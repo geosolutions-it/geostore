@@ -2159,6 +2159,756 @@ public class OpenIdConnectIntegrationTest {
                 "Granted authority should be ROLE_ADMIN");
     }
 
+    /**
+     * When authenticatedDefaultRole is GUEST and the token contains a role that maps to USER via
+     * roleMappings, the user should be elevated to USER (not left as GUEST). This tests that
+     * computeRole has an explicit USER branch.
+     */
+    @Test
+    public void testRoleMappingToUser_OverridesGuestDefault() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setAuthenticatedDefaultRole("GUEST");
+        configuration.setRoleMappings("demo:USER,realm_admin:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // JWT with nested realm_access.roles containing "demo" (maps to USER)
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> realmAccess = new java.util.HashMap<>();
+        realmAccess.put(
+                "roles",
+                java.util.Arrays.asList(
+                        "default-roles-ams2", "offline_access", "uma_authorization", "demo"));
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-demo-user")
+                        .withClaim("email", "demo-user@example.com")
+                        .withClaim("realm_access", realmAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "demo role mapped to USER should override GUEST default");
+    }
+
+    /**
+     * When roleMappings are configured, unmapped IdP role names should NOT be compared against
+     * GeoStore role names. An IdP role literally named "admin" (without a mapping) should not grant
+     * ADMIN access.
+     */
+    @Test
+    public void testUnmappedIdpRoleNamedAdmin_DoesNotGrantAdmin() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        // Only map "realm_admin" to ADMIN — a raw "admin" role should be ignored
+        configuration.setRoleMappings("realm_admin:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // JWT with a role literally named "admin" but NOT in roleMappings
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-sneaky")
+                        .withClaim("email", "sneaky@example.com")
+                        .withArrayClaim("roles", new String[] {"admin", "viewer"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "Unmapped IdP role named 'admin' should NOT grant ADMIN when roleMappings are set");
+    }
+
+    /**
+     * Deeply nested role claim: resource_access.account.roles — a 3-level Keycloak structure.
+     * Verifies that role mapping to USER works through a deeply nested path.
+     */
+    @Test
+    public void testDeeplyNestedRoles_ResourceAccessAccountRoles() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("resource_access.account.roles");
+        configuration.setAuthenticatedDefaultRole("GUEST");
+        configuration.setRoleMappings("manage-account:USER,manage-realm:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        // Mirrors real Keycloak token: resource_access.account.roles
+        java.util.Map<String, Object> accountAccess = new java.util.HashMap<>();
+        accountAccess.put(
+                "roles",
+                java.util.Arrays.asList("manage-account", "manage-account-links", "view-profile"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-deep-roles")
+                        .withClaim("email", "deep-roles@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "manage-account mapped to USER should override GUEST default "
+                        + "via resource_access.account.roles");
+    }
+
+    /**
+     * Deeply nested role claim resolving to ADMIN: resource_access.app.roles with a role that maps
+     * to ADMIN. Verifies ADMIN promotion through a 3-level path.
+     */
+    @Test
+    public void testDeeplyNestedRoles_ResourceAccessApp_AdminPromotion() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("resource_access.myapp.roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings("app-admin:ADMIN,app-viewer:GUEST");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> appAccess = new java.util.HashMap<>();
+        appAccess.put("roles", java.util.Arrays.asList("app-admin", "app-viewer"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("myapp", appAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-deep-admin")
+                        .withClaim("email", "deep-admin@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.ADMIN,
+                principal.getRole(),
+                "app-admin mapped to ADMIN should promote via resource_access.myapp.roles");
+    }
+
+    /**
+     * Deeply nested groups claim: resource_access.geostore.groups with group mappings. Verifies
+     * groups are extracted from a 3-level path and mapped correctly.
+     */
+    @Test
+    public void testDeeplyNestedGroups_WithMappings() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("resource_access.geostore.groups");
+        configuration.setGroupMappings("devs:developers,ops:operations");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> geostoreAccess = new java.util.HashMap<>();
+        geostoreAccess.put("groups", java.util.Arrays.asList("devs", "ops", "external"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("geostore", geostoreAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-deep-groups")
+                        .withClaim("email", "deep-groups@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(groupNames.contains("developers"), "devs should be mapped to developers");
+        assertTrue(groupNames.contains("operations"), "ops should be mapped to operations");
+        assertTrue(
+                groupNames.contains("external"),
+                "external should pass through (dropUnmapped=false)");
+    }
+
+    /** Deeply nested groups claim with dropUnmapped=true: only mapped groups survive. */
+    @Test
+    public void testDeeplyNestedGroups_DropUnmapped() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("resource_access.geostore.groups");
+        configuration.setGroupMappings("devs:developers");
+        configuration.setDropUnmapped(true);
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> geostoreAccess = new java.util.HashMap<>();
+        geostoreAccess.put("groups", java.util.Arrays.asList("devs", "unmapped-group"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("geostore", geostoreAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-drop-groups")
+                        .withClaim("email", "drop-groups@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(groupNames.contains("developers"), "devs should be mapped to developers");
+        assertFalse(
+                groupNames.contains("unmapped-group"),
+                "unmapped-group should be dropped when dropUnmapped=true");
+    }
+
+    /**
+     * Combined test: deeply nested roles AND groups from the same token, with role mapping to USER.
+     * Mirrors a real Keycloak token structure with both realm_access.roles and a custom groups
+     * claim.
+     */
+    @Test
+    public void testCombinedNestedRolesAndGroups_UserRole() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("resource_access.geostore.groups");
+        configuration.setAuthenticatedDefaultRole("GUEST");
+        configuration.setRoleMappings("demo:USER,realm_admin:ADMIN");
+        configuration.setGroupMappings("analysts:gis-analysts");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        // Build a realistic Keycloak-like JWT
+        java.util.Map<String, Object> realmAccess = new java.util.HashMap<>();
+        realmAccess.put(
+                "roles",
+                java.util.Arrays.asList(
+                        "default-roles-ams2", "offline_access", "uma_authorization", "demo"));
+        java.util.Map<String, Object> geostoreAccess = new java.util.HashMap<>();
+        geostoreAccess.put("groups", java.util.Arrays.asList("analysts", "editors"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("geostore", geostoreAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-combined")
+                        .withClaim("email", "combined@example.com")
+                        .withClaim("realm_access", realmAccess)
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+
+        // Role: "demo" maps to USER, overriding GUEST default
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "demo mapped to USER should override GUEST default");
+
+        // Groups: "analysts" mapped to "gis-analysts", "editors" passes through
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(groupNames.contains("gis-analysts"), "analysts should map to gis-analysts");
+        assertTrue(groupNames.contains("editors"), "editors should pass through unmapped");
+    }
+
+    /**
+     * Wildcard JsonPath for roles: $.resource_access.*.roles collects roles across all resource
+     * clients. Verifies that a role mapped to USER is found even when spread across clients.
+     */
+    @Test
+    public void testWildcardJsonPathRoles_UserMapping() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("$.resource_access.*.roles");
+        configuration.setAuthenticatedDefaultRole("GUEST");
+        configuration.setRoleMappings("view-profile:USER,manage-realm:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> accountAccess = new java.util.HashMap<>();
+        accountAccess.put("roles", java.util.Arrays.asList("manage-account", "view-profile"));
+        java.util.Map<String, Object> appAccess = new java.util.HashMap<>();
+        appAccess.put("roles", java.util.Arrays.asList("app-reader"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountAccess);
+        resourceAccess.put("myapp", appAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-wildcard-user")
+                        .withClaim("email", "wildcard-user@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "view-profile mapped to USER via wildcard path should override GUEST default");
+    }
+
+    // -----------------------------------------------------------------------
+    // Issue-specific regression tests
+    // -----------------------------------------------------------------------
+
+    /**
+     * Regression: an existing ADMIN user must still receive groups from the token. The reported bug
+     * is "se sei admin non ti aggiunge i gruppi" — groups are not synced for ADMIN users.
+     */
+    @Test
+    public void testAdminUser_GroupsStillSynced() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        MockedUserService userService = new MockedUserService();
+
+        // Pre-create an ADMIN user in the DB (simulates an existing admin)
+        User adminUser = new User();
+        adminUser.setName("admin@example.com");
+        adminUser.setRole(Role.ADMIN);
+        adminUser.setEnabled(true);
+        adminUser.setNewPassword("");
+        adminUser.setGroups(new java.util.HashSet<>());
+        userService.insert(adminUser);
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> realmAccess = new java.util.HashMap<>();
+        realmAccess.put("roles", java.util.Arrays.asList("ADMIN"));
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-admin-groups")
+                        .withClaim("email", "admin@example.com")
+                        .withClaim("realm_access", realmAccess)
+                        .withClaim(
+                                "groups",
+                                java.util.Arrays.asList("analysts", "editors", "managers"))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(Role.ADMIN, principal.getRole(), "User should remain ADMIN");
+
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("analysts"),
+                "ADMIN user should have 'analysts' group from token");
+        assertTrue(
+                groupNames.contains("editors"),
+                "ADMIN user should have 'editors' group from token");
+        assertTrue(
+                groupNames.contains("managers"),
+                "ADMIN user should have 'managers' group from token");
+        assertEquals(3, groupNames.size(), "ADMIN user should have exactly 3 groups from token");
+    }
+
+    /**
+     * Regression: an existing ADMIN user with nested roles (realm_access.roles) AND nested groups
+     * (resource_access.geostore.groups) must get both role and groups synced.
+     */
+    @Test
+    public void testAdminUser_NestedRolesAndGroups() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("resource_access.geostore.groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings("realm_admin:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        // Pre-create ADMIN user
+        User adminUser = new User();
+        adminUser.setName("nested-admin@example.com");
+        adminUser.setRole(Role.ADMIN);
+        adminUser.setEnabled(true);
+        adminUser.setNewPassword("");
+        adminUser.setGroups(new java.util.HashSet<>());
+        userService.insert(adminUser);
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> realmAccess = new java.util.HashMap<>();
+        realmAccess.put("roles", java.util.Arrays.asList("realm_admin", "offline_access"));
+        java.util.Map<String, Object> geostoreAccess = new java.util.HashMap<>();
+        geostoreAccess.put("groups", java.util.Arrays.asList("gis-team", "data-admins"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("geostore", geostoreAccess);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-nested-admin")
+                        .withClaim("email", "nested-admin@example.com")
+                        .withClaim("realm_access", realmAccess)
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(Role.ADMIN, principal.getRole(), "realm_admin should map to ADMIN");
+
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("gis-team"),
+                "ADMIN user should have 'gis-team' from nested groups");
+        assertTrue(
+                groupNames.contains("data-admins"),
+                "ADMIN user should have 'data-admins' from nested groups");
+    }
+
+    /**
+     * Regression: rolesClaim=resource_access.account.roles should resolve roles from the deeply
+     * nested Keycloak client-scoped roles. Tests with a realistic Keycloak token structure where
+     * resource_access contains multiple clients.
+     */
+    @Test
+    public void testResourceAccessAccountRoles_RealisticKeycloakToken() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("resource_access.account.roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        // Map Keycloak's client-level "manage-account" role to ADMIN
+        configuration.setRoleMappings("manage-account:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        // Realistic Keycloak token structure with multiple resource_access clients
+        java.util.Map<String, Object> accountRoles = new java.util.HashMap<>();
+        accountRoles.put(
+                "roles",
+                java.util.Arrays.asList("manage-account", "manage-account-links", "view-profile"));
+        java.util.Map<String, Object> realmMgmtRoles = new java.util.HashMap<>();
+        realmMgmtRoles.put("roles", java.util.Arrays.asList("view-realm", "view-users"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountRoles);
+        resourceAccess.put("realm-management", realmMgmtRoles);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-resource-access")
+                        .withClaim("email", "resource-user@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.ADMIN,
+                principal.getRole(),
+                "manage-account from resource_access.account.roles should map to ADMIN");
+    }
+
+    /**
+     * Regression: resource_access.account.roles with no matching role mappings should fall back to
+     * authenticatedDefaultRole. Verifies that the deeply nested path resolves correctly even when
+     * no role matches.
+     */
+    @Test
+    public void testResourceAccessAccountRoles_NoMatchFallsBackToDefault() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("resource_access.account.roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        // Only map something that is NOT in the token
+        configuration.setRoleMappings("super-admin:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> accountRoles = new java.util.HashMap<>();
+        accountRoles.put(
+                "roles",
+                java.util.Arrays.asList("manage-account", "manage-account-links", "view-profile"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountRoles);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-resource-default")
+                        .withClaim("email", "resource-default@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(
+                Role.USER,
+                principal.getRole(),
+                "No matching role mapping should fall back to USER default");
+    }
+
+    /**
+     * Regression: combined test with resource_access.account.roles for roles AND a separate groups
+     * claim. Verifies both work together correctly, including for ADMIN users.
+     */
+    @Test
+    public void testResourceAccessAccountRoles_WithGroupsCombined() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("resource_access.account.roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings("manage-account:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> accountRoles = new java.util.HashMap<>();
+        accountRoles.put(
+                "roles",
+                java.util.Arrays.asList("manage-account", "manage-account-links", "view-profile"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountRoles);
+
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-combined-resource")
+                        .withClaim("email", "combined-resource@example.com")
+                        .withClaim("resource_access", resourceAccess)
+                        .withClaim("groups", java.util.Arrays.asList("team-a", "team-b"))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(Role.ADMIN, principal.getRole(), "manage-account should map to ADMIN");
+
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("team-a"),
+                "ADMIN from resource_access claim should still get groups");
+        assertTrue(
+                groupNames.contains("team-b"),
+                "ADMIN from resource_access claim should still get groups");
+    }
+
+    /**
+     * Regression: a newly auto-created ADMIN user (not pre-existing in DB) must receive groups.
+     * This tests the createUser → addAuthoritiesFromToken flow end-to-end.
+     */
+    @Test
+    public void testNewAdminUser_AutoCreatedWithGroups() throws Exception {
+        configuration.setAllowBearerTokens(true);
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setAutoCreateUser(true);
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // User does NOT pre-exist in DB — will be auto-created
+        long now = System.currentTimeMillis() / 1000;
+        java.util.Map<String, Object> realmAccess = new java.util.HashMap<>();
+        realmAccess.put("roles", java.util.Arrays.asList("ADMIN"));
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-new-admin")
+                        .withClaim("email", "new-admin@example.com")
+                        .withClaim("realm_access", realmAccess)
+                        .withClaim("groups", java.util.Arrays.asList("ops", "infra"))
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "Bearer request should authenticate");
+        User principal = (User) auth.getPrincipal();
+        assertEquals(Role.ADMIN, principal.getRole(), "New user should be ADMIN from token");
+
+        Set<String> groupNames =
+                principal.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(groupNames.contains("ops"), "Auto-created ADMIN should have 'ops' group");
+        assertTrue(groupNames.contains("infra"), "Auto-created ADMIN should have 'infra' group");
+    }
+
     /** Recreates the filter with current configuration (picks up JWE config changes). */
     private void recreateFilter() {
         GeoStoreOAuthRestTemplate restTemplate =

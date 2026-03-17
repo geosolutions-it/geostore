@@ -800,17 +800,9 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         }
 
         if (rawRoles != null) {
-            List<String> oidcRoles;
-            if (helper != null && helper.getClaim(rolesClaimName, Object.class) != null) {
-                oidcRoles = helper.getClaimAsList(rolesClaimName, String.class);
-            } else {
-                oidcRoles = ClaimPathResolver.toStringList(rawRoles);
-            }
+            List<String> oidcRoles = ClaimPathResolver.toStringList(rawRoles);
             if (oidcRoles == null) oidcRoles = Collections.emptyList();
-            Role defaultRole =
-                    configuration.getAuthenticatedDefaultRole() != null
-                            ? configuration.getAuthenticatedDefaultRole()
-                            : Role.USER;
+            Role defaultRole = configuration.getAuthenticatedDefaultRole();
             Role newRole = computeRole(oidcRoles, defaultRole);
             user.setRole(newRole);
             LOGGER.info("User role set from token. {} -> {}", currentRole, newRole);
@@ -903,16 +895,27 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         for (String r : rolesFromToken) {
             if (r == null) continue;
             String rr = r.trim();
+            boolean wasMapped = false;
             if (roleMappings != null) {
                 String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
                 if (mapped != null) {
                     rr = mapped;
+                    wasMapped = true;
                 } else if (dropUnmapped) {
                     continue;
                 }
             }
-            if (rr.equalsIgnoreCase(Role.ADMIN.name())) return Role.ADMIN;
-            if (rr.equalsIgnoreCase(Role.GUEST.name())) resolved = Role.GUEST;
+            // Only compare against GeoStore role names if the value was explicitly mapped
+            // or if there are no roleMappings configured.  Unmapped IdP role names
+            // (e.g. "guest", "admin") should not accidentally match GeoStore roles.
+            if (wasMapped || roleMappings == null || roleMappings.isEmpty()) {
+                if (rr.equalsIgnoreCase(Role.ADMIN.name())) return Role.ADMIN;
+                if (rr.equalsIgnoreCase(Role.USER.name())) {
+                    resolved = Role.USER;
+                    continue;
+                }
+                if (rr.equalsIgnoreCase(Role.GUEST.name())) resolved = Role.GUEST;
+            }
         }
         return resolved;
     }
