@@ -211,12 +211,26 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the complete authorization URI.
      */
     public String buildLoginUri(String accessType, String... additionalScopes) {
+        if (getAuthorizationUri() == null) {
+            LOGGER.error(
+                    "authorizationUri is NULL for this configuration. "
+                            + "discoveryUrl={}, clientId={}, enabled={}. "
+                            + "If discoveryUrl is set, the discovery document fetch likely failed "
+                            + "(check for network errors or unreachable IdP). "
+                            + "Otherwise, set authorizationUri explicitly.",
+                    getDiscoveryUrl(),
+                    getClientId(),
+                    isEnabled());
+            throw new IllegalStateException(
+                    "authorizationUri is null — OIDC discovery may have failed for discoveryUrl: "
+                            + getDiscoveryUrl());
+        }
         StringBuilder loginUri = new StringBuilder(getAuthorizationUri());
         loginUri.append("?response_type=code")
                 .append("&client_id=")
                 .append(getClientId())
                 .append("&scope=")
-                .append(getScopes().replace(",", "%20"));
+                .append(getScopes() != null ? getScopes().replace(",", "%20") : "openid");
 
         for (String scope : additionalScopes) {
             loginUri.append("%20").append(scope);

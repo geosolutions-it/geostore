@@ -91,9 +91,12 @@ public class DiscoveryClient {
      * @param conf the OAuth2Configuration.
      */
     public void autofill(OAuth2Configuration conf) {
-        if (location == null) return;
+        if (location == null) {
+            LOGGER.warn("Discovery location is null; skipping autofill");
+            return;
+        }
         try {
-            LOGGER.debug("Fetching OIDC discovery document from {}", location);
+            LOGGER.info("Fetching OIDC discovery document from {}", location);
             Map response = restTemplate.getForObject(this.location, Map.class);
             if (response == null) {
                 LOGGER.error(
@@ -101,20 +104,53 @@ public class DiscoveryClient {
                         location);
                 return;
             }
+            LOGGER.info(
+                    "Discovery document received from {} with {} keys: {}",
+                    location,
+                    response.size(),
+                    response.keySet());
             Optional.ofNullable(response.get(getAuthorizationEndpointAttrName()))
-                    .ifPresent(uri -> conf.setAuthorizationUri((String) uri));
+                    .ifPresent(
+                            uri -> {
+                                LOGGER.info("  authorization_endpoint = {}", uri);
+                                conf.setAuthorizationUri((String) uri);
+                            });
             Optional.ofNullable(response.get(getTokenEndpointAttrName()))
-                    .ifPresent(uri -> conf.setAccessTokenUri((String) uri));
+                    .ifPresent(
+                            uri -> {
+                                LOGGER.info("  token_endpoint = {}", uri);
+                                conf.setAccessTokenUri((String) uri);
+                            });
             Optional.ofNullable(response.get(getUserinfoEndpointAttrName()))
-                    .ifPresent(uri -> conf.setCheckTokenEndpointUrl((String) uri));
+                    .ifPresent(
+                            uri -> {
+                                LOGGER.info("  userinfo_endpoint = {}", uri);
+                                conf.setCheckTokenEndpointUrl((String) uri);
+                            });
             Optional.ofNullable(response.get(getJwkSetUriAttrName()))
-                    .ifPresent(uri -> conf.setIdTokenUri((String) uri));
+                    .ifPresent(
+                            uri -> {
+                                LOGGER.info("  jwks_uri = {}", uri);
+                                conf.setIdTokenUri((String) uri);
+                            });
             Optional.ofNullable(response.get(getEndSessionEndpoint()))
-                    .ifPresent(uri -> conf.setLogoutUri((String) uri));
+                    .ifPresent(
+                            uri -> {
+                                LOGGER.info("  end_session_endpoint = {}", uri);
+                                conf.setLogoutUri((String) uri);
+                            });
             Optional.ofNullable(response.get(getRevocationEndpoint()))
-                    .ifPresent(s -> conf.setRevokeEndpoint((String) s));
+                    .ifPresent(
+                            s -> {
+                                LOGGER.info("  revocation_endpoint = {}", s);
+                                conf.setRevokeEndpoint((String) s);
+                            });
             Optional.ofNullable(response.get(getIntrospectionEndpoint()))
-                    .ifPresent(s -> conf.setIntrospectionEndpoint((String) s));
+                    .ifPresent(
+                            s -> {
+                                LOGGER.info("  introspection_endpoint = {}", s);
+                                conf.setIntrospectionEndpoint((String) s);
+                            });
             if (conf.getScopes() == null || conf.getScopes().isEmpty()) {
                 Optional.ofNullable(response.get(getScopesSupported()))
                         .ifPresent(
@@ -122,12 +158,15 @@ public class DiscoveryClient {
                                     @SuppressWarnings("unchecked")
                                     List<String> scopes = (List<String>) s;
                                     conf.setScopes(collectScopes(scopes));
+                                    LOGGER.info("  scopes_supported = {}", scopes);
                                 });
             }
             LOGGER.info("OIDC discovery successful from {}", location);
         } catch (Exception e) {
             LOGGER.error(
-                    "Failed to fetch OIDC discovery document from {}: {}",
+                    "Failed to fetch OIDC discovery document from {}: {}. "
+                            + "Endpoints (authorizationUri, accessTokenUri, etc.) will remain null. "
+                            + "Login will fail with NullPointerException.",
                     location,
                     e.getMessage(),
                     e);

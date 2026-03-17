@@ -156,6 +156,47 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                     new OpenIdConnectFilter(
                             tokenServices, restTemplate, config, cache, validator, jwksKeyProvider);
 
+            // Log configuration state after discovery has run (inside the filter constructor)
+            LOGGER.info(
+                    "Provider '{}' config after discovery: authorizationUri={}, accessTokenUri={}, "
+                            + "discoveryUrl={}, clientId={}, redirectUri={}, scopes={}, "
+                            + "isInvalid={}",
+                    providerName,
+                    config.getAuthorizationUri(),
+                    config.getAccessTokenUri(),
+                    config.getDiscoveryUrl(),
+                    config.getClientId(),
+                    config.getRedirectUri(),
+                    config.getScopes(),
+                    config.isInvalid());
+
+            if (config.isInvalid()) {
+                LOGGER.error(
+                        "Provider '{}' configuration is INVALID after discovery. "
+                                + "This provider will not work correctly. "
+                                + "Ensure discoveryUrl is reachable or set endpoints manually.",
+                        providerName);
+            }
+
+            // Validate that redirectUri contains the correct provider name in the path.
+            // A common misconfiguration is using /openid/oidc/callback for all providers,
+            // which causes the callback to look up the wrong configuration bean.
+            String redirectUri = config.getRedirectUri();
+            if (redirectUri != null) {
+                String expectedPathSegment = "/openid/" + providerName + "/callback";
+                if (!redirectUri.contains(expectedPathSegment)) {
+                    LOGGER.warn(
+                            "Provider '{}' has redirectUri='{}' which does not contain '{}'. "
+                                    + "The callback URL path must include the provider name so "
+                                    + "the correct configuration is used. "
+                                    + "Expected pattern: .../openid/{}/callback",
+                            providerName,
+                            redirectUri,
+                            expectedPathSegment,
+                            providerName);
+                }
+            }
+
             // Wire services needed for user/group persistence and sync
             try {
                 filter.setUserService(applicationContext.getBean("userService", UserService.class));

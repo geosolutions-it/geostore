@@ -30,10 +30,36 @@ public abstract class Oauth2LoginService implements IdPLoginService {
 
     @Override
     public void doLogin(HttpServletRequest request, HttpServletResponse response, String provider) {
+        LOGGER.info("doLogin called for provider '{}'", provider);
         HttpServletResponse resp = OAuth2Utils.getResponse();
         OAuth2Configuration configuration = oauth2Configuration(provider);
+        if (configuration == null) {
+            LOGGER.error(
+                    "No OAuth2Configuration bean found for provider '{}' (expected bean name: '{}')",
+                    provider,
+                    provider + CONFIG_NAME_SUFFIX);
+            throw new RuntimeException("No OAuth2Configuration found for provider: " + provider);
+        }
+        LOGGER.info(
+                "Provider '{}' config: enabled={}, clientId={}, authorizationUri={}, "
+                        + "accessTokenUri={}, discoveryUrl={}, redirectUri={}, scopes={}",
+                provider,
+                configuration.isEnabled(),
+                configuration.getClientId(),
+                configuration.getAuthorizationUri(),
+                configuration.getAccessTokenUri(),
+                configuration.getDiscoveryUrl(),
+                configuration.getRedirectUri(),
+                configuration.getScopes());
+        if (configuration.isInvalid()) {
+            LOGGER.error(
+                    "Provider '{}' configuration is INVALID (missing clientId, clientSecret, "
+                            + "authorizationUri, or accessTokenUri). Discovery may have failed.",
+                    provider);
+        }
         String login = configuration.buildLoginUri();
         try {
+            LOGGER.info("Redirecting to login URI for provider '{}': {}", provider, login);
             resp.sendRedirect(login);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -53,6 +79,16 @@ public abstract class Oauth2LoginService implements IdPLoginService {
         Response.ResponseBuilder result = new ResponseBuilderImpl();
         IdPConfiguration configuration = configuration(provider);
         LOGGER.info("Callback Provider: {}", provider);
+        if (configuration == null) {
+            LOGGER.error(
+                    "No IdPConfiguration bean found for provider '{}' (expected bean name: '{}'). "
+                            + "The bean may not have been registered in GeoStoreContext's "
+                            + "ApplicationContext.",
+                    provider,
+                    provider + CONFIG_NAME_SUFFIX);
+            throw new RuntimeException(
+                    "No IdPConfiguration found for callback provider: " + provider);
+        }
         LOGGER.info("Token: {}", token);
         LOGGER.info("Redirect uri: {}", configuration.getRedirectUri());
         LOGGER.info("Internal redirect uri: {}", configuration.getInternalRedirectUri());
@@ -114,11 +150,39 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     }
 
     protected OAuth2Configuration oauth2Configuration(String provider) {
-        return GeoStoreContext.bean(provider + CONFIG_NAME_SUFFIX, OAuth2Configuration.class);
+        String beanName = provider + CONFIG_NAME_SUFFIX;
+        OAuth2Configuration config = GeoStoreContext.bean(beanName, OAuth2Configuration.class);
+        if (config == null) {
+            LOGGER.error(
+                    "GeoStoreContext.bean('{}', OAuth2Configuration.class) returned null. "
+                            + "Trying raw lookup...",
+                    beanName);
+            Object raw = GeoStoreContext.bean(beanName);
+            LOGGER.error(
+                    "Raw bean '{}': {} (type: {})",
+                    beanName,
+                    raw,
+                    raw != null ? raw.getClass().getName() : "null");
+        }
+        return config;
     }
 
     protected IdPConfiguration configuration(String provider) {
-        return GeoStoreContext.bean(provider + CONFIG_NAME_SUFFIX, IdPConfiguration.class);
+        String beanName = provider + CONFIG_NAME_SUFFIX;
+        IdPConfiguration config = GeoStoreContext.bean(beanName, IdPConfiguration.class);
+        if (config == null) {
+            LOGGER.error(
+                    "GeoStoreContext.bean('{}', IdPConfiguration.class) returned null. "
+                            + "Trying raw lookup...",
+                    beanName);
+            Object raw = GeoStoreContext.bean(beanName);
+            LOGGER.error(
+                    "Raw bean '{}': {} (type: {})",
+                    beanName,
+                    raw,
+                    raw != null ? raw.getClass().getName() : "null");
+        }
+        return config;
     }
 
     protected NewCookie refreshTokenCookie(String value) {
