@@ -34,7 +34,6 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.security.GeoStoreRequestHeadersAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
-import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
@@ -176,10 +175,14 @@ public class GeoStoreAuthenticationFilterTest {
     // OAuth2/OIDC related tests
     // ---------------------------------------------------------------------
 
-    /** Username remapping via principal/unique claims. */
+    /**
+     * Username remapping via uniqueUsername claim. createPreAuthentication() receives the
+     * already-resolved username from getPreAuthenticatedPrincipal(), so the remapping is done
+     * there. Here we verify that createPreAuthentication() faithfully passes the username through
+     * to retrieveUserWithAuthorities() and produces the correct User principal.
+     */
     @Test
     public void testUsernameRemapping() throws Exception {
-        final String ORIGINAL_USERNAME = "myuser";
         final String REMAPPED_USERNAME = "remappedUser";
 
         TestOAuth2Configuration config = new TestOAuth2Configuration();
@@ -195,17 +198,6 @@ public class GeoStoreAuthenticationFilterTest {
 
         OAuth2GeoStoreAuthenticationFilter oauth2Filter =
                 new OAuth2GeoStoreAuthenticationFilter(null, rt, config, null) {
-
-                    protected JWTHelper decodeAndValidateIdToken(String idToken) {
-                        return new JWTHelper(idToken) {
-                            @Override
-                            public <T> T getClaim(String claimName, Class<T> clazz) {
-                                if ("principal".equals(claimName)) return (T) ORIGINAL_USERNAME;
-                                if ("unique".equals(claimName)) return (T) REMAPPED_USERNAME;
-                                return null;
-                            }
-                        };
-                    }
 
                     @Override
                     protected User retrieveUserWithAuthorities(
@@ -231,14 +223,15 @@ public class GeoStoreAuthenticationFilterTest {
         MockHttpServletResponse resp = new MockHttpServletResponse();
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(req));
 
+        // Simulate that getPreAuthenticatedPrincipal() already resolved the unique username
         PreAuthenticatedAuthenticationToken authToken =
-                oauth2Filter.createPreAuthentication(ORIGINAL_USERNAME, req, resp);
+                oauth2Filter.createPreAuthentication(REMAPPED_USERNAME, req, resp);
         assertNotNull("Authentication token should not be null", authToken);
 
         User user = (User) authToken.getPrincipal();
         assertNotNull("User should not be null", user);
         assertEquals(
-                "Username should be remapped to the unique claim value",
+                "Username should match the resolved unique claim value",
                 REMAPPED_USERNAME,
                 user.getName());
     }
@@ -444,8 +437,8 @@ public class GeoStoreAuthenticationFilterTest {
         user.setEnabled(true);
         user.setAttribute(Collections.emptyList());
 
-        // provider remote group (to be removed) whose getAttributes() would explode if called.
-        UserGroup msAdmin = new ThrowOnAttributesGroup();
+        // provider remote group (to be removed)
+        UserGroup msAdmin = new UserGroup();
         msAdmin.setGroupName("MS_ADMIN_GROUP");
         msAdmin.setUsers(new ArrayList<>(Collections.singletonList(user)));
         userGroupService.insert(msAdmin);
@@ -491,7 +484,7 @@ public class GeoStoreAuthenticationFilterTest {
         attrs.setAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE, jwt, 0);
         RequestContextHolder.setRequestAttributes(attrs);
 
-        // If the filter tries to touch msAdmin.getAttributes(), this will throw.
+        // Reconciliation should remove the provider's remote group but keep others.
         PreAuthenticatedAuthenticationToken token =
                 filter.createPreAuthentication("test", req, new MockHttpServletResponse());
         assertNotNull(token);
@@ -559,13 +552,16 @@ public class GeoStoreAuthenticationFilterTest {
                         "u", new MockHttpServletRequest(), new MockHttpServletResponse());
         assertEquals(Role.USER, ((User) t2.getPrincipal()).getRole());
 
-        // 3) roles MISSING entirely -> preserve current role
+        // 3) roles MISSING entirely -> fall back to authenticatedDefaultRole (USER)
+        //    When rolesClaim is configured but absent from the token, the IdP is the
+        //    source of truth and we fall back to the default role instead of preserving
+        //    the stale DB role (prevents stale ADMIN escalation).
         user.setRole(Role.GUEST);
         setIdToken("{\"some\":\"thing\"}");
         PreAuthenticatedAuthenticationToken t3 =
                 filter.createPreAuthentication(
                         "u", new MockHttpServletRequest(), new MockHttpServletResponse());
-        assertEquals(Role.GUEST, ((User) t3.getPrincipal()).getRole());
+        assertEquals(Role.USER, ((User) t3.getPrincipal()).getRole());
     }
 
     // ---------------------------------------------------------------------

@@ -269,6 +269,14 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- JUnit Vintage Engine: allows Surefire/JUnit Platform to discover JUnit 4 tests -->
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>5.9.1</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- Mockito for JUnit 5 -->
         <dependency>
             <groupId>org.mockito</groupId>
