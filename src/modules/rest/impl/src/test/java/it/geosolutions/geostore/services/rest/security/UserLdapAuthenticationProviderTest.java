@@ -105,7 +105,7 @@ public class UserLdapAuthenticationProviderTest {
      * ignoreUsernameCase; or a setter + XML/Java config property injection.
      */
     @Test
-    // @Ignore("Requires @Value or a setter for ignoreUsernameCase on the provider")
+    @org.junit.Ignore("Requires @Value or a setter for ignoreUsernameCase on the provider")
     public void ignoreUsernameCase_isBoundFromProps() {
         try (AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext()) {
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
