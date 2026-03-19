@@ -30,6 +30,9 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,6 +69,7 @@ public class OAuth2Configuration extends IdPConfiguration {
     private String checkTokenEndpointUrl;
     private String logoutUri;
     private String revokeEndpoint;
+    private String introspectionEndpoint;
 
     // Additional settings
     private boolean globalLogoutEnabled = false;
@@ -78,6 +82,12 @@ public class OAuth2Configuration extends IdPConfiguration {
     private String rolesClaim;
     private String groupsClaim;
     private boolean groupNamesUppercase = false;
+    private Map<String, String> roleMappings;
+    private Map<String, String> groupMappings;
+    private boolean dropUnmapped = false;
+
+    // Sensitive information logging
+    private boolean logSensitiveInfo = false;
 
     // Cache configuration
     private int cacheSize = 1000;
@@ -201,12 +211,26 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the complete authorization URI.
      */
     public String buildLoginUri(String accessType, String... additionalScopes) {
+        if (getAuthorizationUri() == null) {
+            LOGGER.error(
+                    "authorizationUri is NULL for this configuration. "
+                            + "discoveryUrl={}, clientId={}, enabled={}. "
+                            + "If discoveryUrl is set, the discovery document fetch likely failed "
+                            + "(check for network errors or unreachable IdP). "
+                            + "Otherwise, set authorizationUri explicitly.",
+                    getDiscoveryUrl(),
+                    getClientId(),
+                    isEnabled());
+            throw new IllegalStateException(
+                    "authorizationUri is null — OIDC discovery may have failed for discoveryUrl: "
+                            + getDiscoveryUrl());
+        }
         StringBuilder loginUri = new StringBuilder(getAuthorizationUri());
         loginUri.append("?response_type=code")
                 .append("&client_id=")
                 .append(getClientId())
                 .append("&scope=")
-                .append(getScopes().replace(",", "%20"));
+                .append(getScopes() != null ? getScopes().replace(",", "%20") : "openid");
 
         for (String scope : additionalScopes) {
             loginUri.append("%20").append(scope);
@@ -423,6 +447,20 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.revokeEndpoint = revokeEndpoint;
     }
 
+    /** @return the token introspection endpoint (RFC 7662). */
+    public String getIntrospectionEndpoint() {
+        return introspectionEndpoint;
+    }
+
+    /**
+     * Set the token introspection endpoint.
+     *
+     * @param introspectionEndpoint the introspection endpoint URL.
+     */
+    public void setIntrospectionEndpoint(String introspectionEndpoint) {
+        this.introspectionEndpoint = introspectionEndpoint;
+    }
+
     /**
      * Get the string identifier the provider associated with the configuration.
      *
@@ -608,6 +646,30 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.groupNamesUppercase = groupNamesUppercase;
     }
 
+    public Map<String, String> getRoleMappings() {
+        return roleMappings;
+    }
+
+    public void setRoleMappings(String roleMappings) {
+        this.roleMappings = parseMappings(roleMappings);
+    }
+
+    public Map<String, String> getGroupMappings() {
+        return groupMappings;
+    }
+
+    public void setGroupMappings(String groupMappings) {
+        this.groupMappings = parseMappings(groupMappings);
+    }
+
+    public boolean isDropUnmapped() {
+        return dropUnmapped;
+    }
+
+    public void setDropUnmapped(boolean dropUnmapped) {
+        this.dropUnmapped = dropUnmapped;
+    }
+
     public int getCacheSize() {
         return cacheSize;
     }
@@ -624,6 +686,27 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.cacheExpirationMinutes = cacheExpirationMinutes;
     }
 
+    public boolean isLogSensitiveInfo() {
+        return logSensitiveInfo;
+    }
+
+    public void setLogSensitiveInfo(boolean logSensitiveInfo) {
+        this.logSensitiveInfo = logSensitiveInfo;
+    }
+
+    static Map<String, String> parseMappings(String mappings) {
+        if (mappings == null || mappings.trim().isEmpty()) return null;
+        String[] pairs = mappings.split(",");
+        Map<String, String> map = new HashMap<>(pairs.length);
+        for (String pair : pairs) {
+            String[] parts = pair.split(":", 2);
+            if (parts.length == 2) {
+                map.put(parts[0].trim().toUpperCase(Locale.ROOT), parts[1].trim());
+            }
+        }
+        return map.isEmpty() ? null : map;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof OAuth2Configuration)) return false;
@@ -631,16 +714,17 @@ public class OAuth2Configuration extends IdPConfiguration {
         return isGlobalLogoutEnabled() == that.isGlobalLogoutEnabled()
                 && isEnableRedirectEntryPoint() == that.isEnableRedirectEntryPoint()
                 && isGroupNamesUppercase() == that.isGroupNamesUppercase()
+                && isDropUnmapped() == that.isDropUnmapped()
                 && isSkipRefreshIfTokenValid() == that.isSkipRefreshIfTokenValid()
                 && Double.compare(
                                 getRefreshTokenLifetimeFraction(),
                                 that.getRefreshTokenLifetimeFraction())
                         == 0
-                && getCacheSize() == that.getCacheSize()
-                && getCacheExpirationMinutes() == that.getCacheExpirationMinutes()
                 && getInitialBackoffDelay() == that.getInitialBackoffDelay()
                 && Double.compare(getBackoffMultiplier(), that.getBackoffMultiplier()) == 0
                 && getMaxRetries() == that.getMaxRetries()
+                && getCacheSize() == that.getCacheSize()
+                && getCacheExpirationMinutes() == that.getCacheExpirationMinutes()
                 && Objects.equals(getClientId(), that.getClientId())
                 && Objects.equals(getClientSecret(), that.getClientSecret())
                 && Objects.equals(getAccessTokenUri(), that.getAccessTokenUri())
@@ -654,7 +738,9 @@ public class OAuth2Configuration extends IdPConfiguration {
                 && Objects.equals(getPrincipalKey(), that.getPrincipalKey())
                 && Objects.equals(getUniqueUsername(), that.getUniqueUsername())
                 && Objects.equals(getRolesClaim(), that.getRolesClaim())
-                && Objects.equals(getGroupsClaim(), that.getGroupsClaim());
+                && Objects.equals(getGroupsClaim(), that.getGroupsClaim())
+                && Objects.equals(getRoleMappings(), that.getRoleMappings())
+                && Objects.equals(getGroupMappings(), that.getGroupMappings());
     }
 
     @Override
@@ -677,6 +763,9 @@ public class OAuth2Configuration extends IdPConfiguration {
                 getRolesClaim(),
                 getGroupsClaim(),
                 isGroupNamesUppercase(),
+                getRoleMappings(),
+                getGroupMappings(),
+                isDropUnmapped(),
                 isSkipRefreshIfTokenValid(),
                 getRefreshTokenLifetimeFraction(),
                 getCacheSize(),
@@ -737,6 +826,12 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + '\''
                 + ", groupNamesUppercase="
                 + groupNamesUppercase
+                + ", roleMappings="
+                + roleMappings
+                + ", groupMappings="
+                + groupMappings
+                + ", dropUnmapped="
+                + dropUnmapped
                 + ", skipRefreshIfTokenValid="
                 + skipRefreshIfTokenValid
                 + ", refreshTokenLifetimeFraction="

@@ -48,6 +48,8 @@ public class RestAuthenticationEntryPoint extends BasicAuthenticationEntryPoint 
     private static final String SESSION_LOGIN_PATH = "session/";
     private static final Logger LOGGER = LogManager.getLogger(RestAuthenticationEntryPoint.class);
 
+    public static final String OAUTH2_AUTH_ERROR_KEY = "oauth2.AuthError";
+
     @Override
     public void commence(
             HttpServletRequest request,
@@ -70,6 +72,28 @@ public class RestAuthenticationEntryPoint extends BasicAuthenticationEntryPoint 
         if (url.getPath().contains(LOGIN_PATH) || url.getPath().contains(SESSION_LOGIN_PATH)) {
             response.setHeader("WWW-Authenticate", "FormBased");
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+
+            String errorDetail = null;
+            Object attrVal = request.getAttribute(OAUTH2_AUTH_ERROR_KEY);
+            if (attrVal instanceof String) {
+                errorDetail = (String) attrVal;
+            }
+            String message =
+                    (errorDetail != null)
+                            ? errorDetail
+                            : (authException != null && authException.getMessage() != null)
+                                    ? authException.getMessage()
+                                    : "Authentication failed";
+
+            LOGGER.warn("Authentication failed for {}: {}", url.getPath(), message);
+
+            response.getWriter()
+                    .write(
+                            "{\"error\":\"unauthorized\",\"message\":\""
+                                    + message.replace("\"", "\\\"")
+                                    + "\"}");
+            response.getWriter().flush();
         } else {
             super.commence(request, response, authException);
         }

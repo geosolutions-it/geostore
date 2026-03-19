@@ -28,13 +28,14 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
+import java.util.Collections;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 
-/** RemoteTokenServices that handles specifically the GoogleResponse. */
+/** Calls the OIDC userinfo endpoint to resolve token claims. */
 public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
     public OpenIdConnectTokenServices(String principalKey) {
@@ -46,17 +47,21 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
     @Override
     protected Map<String, Object> checkToken(String accessToken) {
-        LOGGER.info("Checking token: {}", accessToken);
-        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-        formData.add("token", accessToken);
+        if (checkTokenEndpointUrl == null || checkTokenEndpointUrl.trim().isEmpty()) {
+            LOGGER.debug("No userinfo endpoint configured; skipping userinfo call.");
+            return Collections.emptyMap();
+        }
+        LOGGER.debug("Checking token via userinfo endpoint");
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", getAuthorizationHeader(accessToken));
-        LOGGER.info("Headers: {}", headers);
-        String accessTokenUrl = checkTokenEndpointUrl + "?access_token=" + accessToken;
-        LOGGER.info("Checking token with url: {}", accessTokenUrl);
-        Map<String, Object> reults =
-                sendRequestForMap(accessTokenUrl, formData, headers, HttpMethod.GET);
-        LOGGER.info("Got sendRequestForMap results: {}", reults);
-        return reults;
+        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+        Map<String, Object> results =
+                sendRequestForMap(
+                        checkTokenEndpointUrl,
+                        new LinkedMultiValueMap<>(),
+                        headers,
+                        HttpMethod.GET);
+        LOGGER.debug("Got userinfo results: {}", results);
+        return results;
     }
 }

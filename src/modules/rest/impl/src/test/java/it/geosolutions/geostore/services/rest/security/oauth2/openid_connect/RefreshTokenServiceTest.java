@@ -11,6 +11,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.*;
@@ -152,14 +153,21 @@ class RefreshTokenServiceTest {
         assertNotNull(sessionToken, "SessionToken should not be null");
         assertEquals(
                 "newAccessToken", sessionToken.getAccessToken(), "Access token should be updated");
-        assertEquals(
-                "newRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should be updated");
+                "Refresh token should not be in the JSON response body");
         assertTrue(
                 sessionToken.getExpires() > System.currentTimeMillis(),
                 "Token expiration should be in the future");
         assertEquals("bearer", sessionToken.getTokenType(), "Token type should be 'bearer'");
+
+        // Verify that the refresh token was set as an HttpOnly cookie
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("newRefreshToken", refreshCookie.getValue());
+        assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
+        assertEquals("/", refreshCookie.getPath());
+        assertEquals(604800, refreshCookie.getMaxAge());
 
         // Verify that the cache was updated with the new token
         verify(authenticationCache).putCacheEntry(eq("newAccessToken"), any(Authentication.class));
@@ -192,10 +200,13 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -226,10 +237,12 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged after server error");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -267,10 +280,12 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -296,10 +311,12 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
         // Verify that no exchange was attempted
         verify(restTemplate, never())
                 .exchange(
@@ -350,10 +367,12 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
     }
 
     @Test
@@ -380,10 +399,12 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
     }
 
     @Test
@@ -421,10 +442,13 @@ class RefreshTokenServiceTest {
         assertNotNull(sessionToken, "SessionToken should not be null");
         assertEquals(
                 "newAccessToken", sessionToken.getAccessToken(), "Access token should be updated");
-        assertEquals(
-                "newRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should be updated");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("newRefreshToken", refreshCookie.getValue());
+        assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
         assertTrue(
                 sessionToken.getExpires() > System.currentTimeMillis(),
                 "Token expiration should be in the future");
@@ -491,10 +515,12 @@ class RefreshTokenServiceTest {
                 "providedAccessToken",
                 sessionToken.getAccessToken(),
                 "Access token should remain unchanged");
-        assertEquals(
-                "existingRefreshToken",
+        assertNull(
                 sessionToken.getRefreshToken(),
-                "Refresh token should remain unchanged");
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
+        assertEquals("existingRefreshToken", refreshCookie.getValue());
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken
@@ -513,7 +539,7 @@ class RefreshTokenServiceTest {
         String oldAccessToken = "oldAccessToken";
         String refreshToken = "validRefreshToken";
 
-        // We'll pretend the user originally had "oldAccessToken"
+        // We’ll pretend the user originally had "oldAccessToken"
         // and the current OAuth2 token in serviceDelegate is set to the same.
         DefaultOAuth2AccessToken originalAccessToken = new DefaultOAuth2AccessToken(oldAccessToken);
         OAuth2RefreshToken existingRefresh = new DefaultOAuth2RefreshToken(refreshToken);
@@ -557,10 +583,16 @@ class RefreshTokenServiceTest {
                 refreshedAccessTokenValue,
                 sessionToken.getAccessToken(),
                 "The SessionToken's accessToken must be updated to the new value.");
+        assertNull(
+                sessionToken.getRefreshToken(),
+                "Refresh token should not be in JSON response body");
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set");
         assertEquals(
                 "brandNewRefreshToken",
-                sessionToken.getRefreshToken(),
-                "The SessionToken's refreshToken must be updated to the new value.");
+                refreshCookie.getValue(),
+                "Cookie must contain the new refresh token value.");
+        assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
 
         // Also verify the old token was removed from the cache and the new one added
         verify(authenticationCache).removeEntry(eq(oldAccessToken));
@@ -576,6 +608,52 @@ class RefreshTokenServiceTest {
                 "brandNewRefreshToken",
                 serviceDelegate.currentAccessToken.getRefreshToken().getValue(),
                 "Service delegate must store the new refresh token internally.");
+    }
+
+    @Test
+    void testRefreshReadsCookieWhenNoRefreshTokenInParams() {
+        // Arrange: no refresh token passed as parameter, but present as a cookie
+        String accessToken = "providedAccessToken";
+
+        // Remove refresh token from the current OAuth2 access token so it's not found there
+        mockOAuth2AccessToken.setRefreshToken(null);
+        serviceDelegate.currentAccessToken = mockOAuth2AccessToken;
+
+        // Set refresh token as an HttpOnly cookie on the request
+        mockRequest.setCookies(new Cookie("refresh_token", "cookieRefreshToken"));
+
+        // Mock a successful refresh response
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        OAuth2RefreshToken newRefreshToken = new DefaultOAuth2RefreshToken("newRefreshToken");
+        newAccessToken.setRefreshToken(newRefreshToken);
+        newAccessToken.setExpiration(new Date(System.currentTimeMillis() + 7200 * 1000));
+
+        ResponseEntity<OAuth2AccessToken> responseEntity =
+                new ResponseEntity<>(newAccessToken, HttpStatus.OK);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(responseEntity);
+
+        when(serviceDelegate.getRequest()).thenReturn(mockRequest);
+        when(serviceDelegate.getResponse()).thenReturn(mockResponse);
+
+        // Act: pass null refresh token — delegate should read from cookie
+        SessionToken sessionToken = serviceDelegate.refresh(null, accessToken);
+
+        // Assert
+        assertNotNull(sessionToken, "SessionToken should not be null");
+        assertEquals("newAccessToken", sessionToken.getAccessToken());
+        assertNull(
+                sessionToken.getRefreshToken(),
+                "Refresh token should not be in JSON response body");
+
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "Refresh token cookie should be set on response");
+        assertEquals("newRefreshToken", refreshCookie.getValue());
+        assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
     }
 
     @Test
@@ -770,6 +848,19 @@ class RefreshTokenServiceTest {
                         .withoutPadding()
                         .encodeToString(payload.getBytes(StandardCharsets.UTF_8))
                 + ".";
+    }
+
+    private Cookie getRefreshTokenCookie(MockHttpServletResponse response) {
+        Cookie[] cookies = response.getCookies();
+        Cookie result = null;
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh_token".equalsIgnoreCase(cookie.getName())) {
+                    result = cookie;
+                }
+            }
+        }
+        return result;
     }
 
     /** Test subclass of OAuth2SessionServiceDelegate for testing purposes. */

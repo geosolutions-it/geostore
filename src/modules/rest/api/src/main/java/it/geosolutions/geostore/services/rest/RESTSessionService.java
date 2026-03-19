@@ -129,7 +129,7 @@ public interface RESTSessionService {
      */
     @DELETE
     @Path("/{sessionId}")
-    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     @Deprecated
     public void removeSession(@PathParam("sessionId") String sessionId);
 
@@ -146,7 +146,7 @@ public interface RESTSessionService {
      */
     @DELETE
     @Path("/logout")
-    @Secured({"ROLE_ADMIN", "ROLE_USER"})
+    @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     public void removeSession();
 
     /**
