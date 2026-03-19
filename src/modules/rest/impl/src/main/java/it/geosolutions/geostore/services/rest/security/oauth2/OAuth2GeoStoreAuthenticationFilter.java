@@ -710,7 +710,9 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // the User object already carries role and groups resolved from token claims.
         user.setTrusted(true);
 
-        // Prefer ID token for claim enrichment, else access token
+        // Collect both ID token and access token for claim enrichment.
+        // Some claims (e.g. realm_access, resource_access) are only in the access token,
+        // while others (e.g. email, name) are only in the ID token.
         String idToken = OAuth2Utils.getIdToken();
         OAuth2AccessToken accessToken = null;
         try {
@@ -719,8 +721,17 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             LOGGER.debug("No access token in context yet.", e);
         }
 
-        String tokenForClaims =
-                (idToken != null) ? idToken : (accessToken != null ? accessToken.getValue() : null);
+        String idTokenValue = idToken;
+        String accessTokenValue = accessToken != null ? accessToken.getValue() : null;
+        // Use ID token as primary, access token as fallback
+        String tokenForClaims = (idTokenValue != null) ? idTokenValue : accessTokenValue;
+        LOGGER.info(
+                "Token selection for claims: idToken={}, accessToken={}, using={}",
+                idTokenValue != null ? "present" : "null",
+                accessTokenValue != null ? "present" : "null",
+                tokenForClaims != null
+                        ? (tokenForClaims.equals(idTokenValue) ? "ID_TOKEN" : "ACCESS_TOKEN")
+                        : "NONE");
         if (StringUtils.isNotBlank(tokenForClaims)
                 && (StringUtils.isNotBlank(configuration.getGroupsClaim())
                         || StringUtils.isNotBlank(configuration.getRolesClaim()))) {
@@ -728,7 +739,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             @SuppressWarnings("unchecked")
             Map<String, Object> userinfoMap =
                     (Map<String, Object>) request.getAttribute(OAUTH2_ACCESS_TOKEN_CHECK_KEY);
-            addAuthoritiesFromToken(user, tokenForClaims, userinfoMap);
+            addAuthoritiesFromToken(user, tokenForClaims, accessTokenValue, userinfoMap);
         }
 
         // Build the auth token AFTER claim processing so the granted authority
@@ -767,23 +778,45 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
      * overloaded version with a null userinfo map.
      */
     protected void addAuthoritiesFromToken(User user, String tokenString) {
-        addAuthoritiesFromToken(user, tokenString, null);
+        addAuthoritiesFromToken(user, tokenString, null, null);
     }
 
     /**
-     * Add authorities from token claims with optional userinfo/introspection fallback. Tries JWT
-     * extraction first; if the claim is not found in the JWT, falls back to the userinfo map.
+     * Add authorities from token claims with optional access token and userinfo fallback. Tries the
+     * primary token (usually ID token) first; if a claim is not found, falls back to the access
+     * token (which in Keycloak contains realm_access, resource_access, groups, etc.), and finally
+     * to the userinfo map.
      */
     @SuppressWarnings("unchecked")
     protected void addAuthoritiesFromToken(
-            User user, String tokenString, Map<String, Object> userinfoMap) {
-        LOGGER.info("Syncing authorities from token claims.");
+            User user,
+            String tokenString,
+            String accessTokenString,
+            Map<String, Object> userinfoMap) {
+        LOGGER.info(
+                "Syncing authorities from token claims for user '{}' (id={}, currentRole={}).",
+                user.getName(),
+                user.getId(),
+                user.getRole());
 
-        JWTHelper helper = null;
+        JWTHelper primaryHelper = null;
         try {
-            helper = new JWTHelper(tokenString);
+            primaryHelper = new JWTHelper(tokenString);
         } catch (Exception e) {
-            LOGGER.warn("Token is not a valid JWT; will try userinfo map for claims.", e);
+            LOGGER.warn("Primary token is not a valid JWT; will try fallbacks.", e);
+        }
+
+        // Build a separate helper for the access token (if different from the primary).
+        // In Keycloak, claims like realm_access, resource_access, and groups are typically
+        // only present in the access token, not in the ID token.
+        JWTHelper accessHelper = null;
+        if (accessTokenString != null && !accessTokenString.equals(tokenString)) {
+            try {
+                accessHelper = new JWTHelper(accessTokenString);
+                LOGGER.info("Access token available as fallback for claim resolution.");
+            } catch (Exception e) {
+                LOGGER.warn("Access token is not a valid JWT; skipping as fallback.", e);
+            }
         }
 
         // ----- Roles -----
@@ -791,17 +824,44 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         String rolesClaimName = configuration.getRolesClaim();
         Object rawRoles = null;
         if (StringUtils.isNotBlank(rolesClaimName)) {
-            if (helper != null) {
-                rawRoles = helper.getClaim(rolesClaimName, Object.class);
+            // 1) Try primary token (usually ID token)
+            if (primaryHelper != null) {
+                rawRoles = primaryHelper.getClaim(rolesClaimName, Object.class);
+                LOGGER.info(
+                        "Roles claim '{}' from primary token: {} (type={})",
+                        rolesClaimName,
+                        rawRoles,
+                        rawRoles != null ? rawRoles.getClass().getSimpleName() : "null");
             }
+            // 2) Fallback: access token (Keycloak puts realm_access here)
+            if (rawRoles == null && accessHelper != null) {
+                rawRoles = accessHelper.getClaim(rolesClaimName, Object.class);
+                LOGGER.info(
+                        "Roles claim '{}' from access token (fallback): {} (type={})",
+                        rolesClaimName,
+                        rawRoles,
+                        rawRoles != null ? rawRoles.getClass().getSimpleName() : "null");
+            }
+            // 3) Fallback: userinfo map
             if (rawRoles == null && userinfoMap != null) {
                 rawRoles = ClaimPathResolver.resolveIgnoreCase(userinfoMap, rolesClaimName);
+                LOGGER.info(
+                        "Roles claim '{}' from userinfo: {} (type={})",
+                        rolesClaimName,
+                        rawRoles,
+                        rawRoles != null ? rawRoles.getClass().getSimpleName() : "null");
             }
+        } else {
+            LOGGER.info("No rolesClaim configured.");
         }
 
         if (rawRoles != null) {
             List<String> oidcRoles = ClaimPathResolver.toStringList(rawRoles);
             if (oidcRoles == null) oidcRoles = Collections.emptyList();
+            LOGGER.info(
+                    "Resolved role strings from token: {} (roleMappings={})",
+                    oidcRoles,
+                    configuration.getRoleMappings());
             Role defaultRole = configuration.getAuthenticatedDefaultRole();
             Role newRole = computeRole(oidcRoles, defaultRole);
             user.setRole(newRole);
@@ -827,22 +887,37 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
         // ----- Groups -----
         List<String> oidcGroups = Collections.emptyList();
-        if (configuration.getGroupsClaim() != null) {
+        String groupsClaimName = configuration.getGroupsClaim();
+        if (groupsClaimName != null) {
+            LOGGER.info("Resolving groups from claim '{}'", groupsClaimName);
             List<String> fromJwt = null;
-            if (helper != null) {
-                fromJwt = helper.getClaimAsList(configuration.getGroupsClaim(), String.class);
+            // 1) Try primary token
+            if (primaryHelper != null) {
+                fromJwt = primaryHelper.getClaimAsList(groupsClaimName, String.class);
+                LOGGER.info("Groups from primary token claim '{}': {}", groupsClaimName, fromJwt);
+            }
+            // 2) Fallback: access token
+            if ((fromJwt == null || fromJwt.isEmpty()) && accessHelper != null) {
+                fromJwt = accessHelper.getClaimAsList(groupsClaimName, String.class);
+                LOGGER.info(
+                        "Groups from access token claim '{}' (fallback): {}",
+                        groupsClaimName,
+                        fromJwt);
             }
             if (fromJwt != null && !fromJwt.isEmpty()) {
                 oidcGroups = fromJwt;
             } else if (userinfoMap != null) {
+                // 3) Fallback: userinfo map
                 List<String> fromUserinfo =
-                        ClaimPathResolver.resolveAsListIgnoreCase(
-                                userinfoMap, configuration.getGroupsClaim());
+                        ClaimPathResolver.resolveAsListIgnoreCase(userinfoMap, groupsClaimName);
+                LOGGER.info("Groups from userinfo claim '{}': {}", groupsClaimName, fromUserinfo);
                 if (fromUserinfo != null) {
                     oidcGroups = fromUserinfo;
                 }
             }
-            LOGGER.info("Groups from token/userinfo: {}", oidcGroups);
+            LOGGER.info("Groups resolved from token/userinfo: {}", oidcGroups);
+        } else {
+            LOGGER.info("No groupsClaim configured -> skipping group sync.");
         }
 
         Map<String, String> groupMappings = configuration.getGroupMappings();
@@ -854,18 +929,34 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 String m = groupMappings.get(g.toUpperCase(Locale.ROOT));
                 if (m != null) {
                     mapped.add(m);
+                    LOGGER.info("Group '{}' mapped to '{}'", g, m);
                 } else if (!dropUnmapped) {
                     mapped.add(g);
+                } else {
+                    LOGGER.info("Group '{}' dropped (unmapped, dropUnmapped=true)", g);
                 }
             }
             oidcGroups = mapped;
         }
 
+        LOGGER.info(
+                "Final groups to reconcile: {} (user.role={}, user.id={})",
+                oidcGroups,
+                user.getRole(),
+                user.getId());
         reconcileRemoteGroups(user, new LinkedHashSet<>(oidcGroups));
 
         // ----- Persist user after role & group sync -----
         try {
-            if (userService != null) userService.update(user);
+            if (userService != null) {
+                LOGGER.info(
+                        "Persisting user '{}' (id={}, role={}, groups={})",
+                        user.getName(),
+                        user.getId(),
+                        user.getRole(),
+                        user.getGroups());
+                userService.update(user);
+            }
         } catch (BadRequestServiceEx | NotFoundServiceEx e) {
             LOGGER.error(
                     "Updating user with synchronized groups found in claims failed: {}",
@@ -876,8 +967,18 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                     "Updating user with synchronized groups data integrity violation: {}",
                     e.getMessage(),
                     e);
+        } catch (RuntimeException e) {
+            LOGGER.error(
+                    "Unexpected error persisting user '{}' with groups: {}",
+                    user.getName(),
+                    e.getMessage(),
+                    e);
         } finally {
-            LOGGER.info("User updated with the following groups: {}", user.getGroups());
+            LOGGER.info(
+                    "User '{}' after sync: role={}, groups={}",
+                    user.getName(),
+                    user.getRole(),
+                    user.getGroups());
         }
     }
 
@@ -886,8 +987,16 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     // ---------------------------------------------------------------------
 
     private Role computeRole(List<String> rolesFromToken, Role defaultRole) {
+        LOGGER.info(
+                "computeRole: rolesFromToken={}, defaultRole={}, roleMappings={}, dropUnmapped={}",
+                rolesFromToken,
+                defaultRole,
+                configuration.getRoleMappings(),
+                configuration.isDropUnmapped());
         if (rolesFromToken == null || rolesFromToken.isEmpty()) {
-            return (defaultRole != null) ? defaultRole : Role.USER;
+            Role result = (defaultRole != null) ? defaultRole : Role.USER;
+            LOGGER.info("computeRole: no roles in token -> returning {}", result);
+            return result;
         }
         Map<String, String> roleMappings = configuration.getRoleMappings();
         boolean dropUnmapped = configuration.isDropUnmapped();
@@ -899,24 +1008,39 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             if (roleMappings != null) {
                 String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
                 if (mapped != null) {
+                    LOGGER.info("computeRole: '{}' mapped to '{}' via roleMappings", rr, mapped);
                     rr = mapped;
                     wasMapped = true;
                 } else if (dropUnmapped) {
+                    LOGGER.info(
+                            "computeRole: '{}' not in roleMappings, dropping (dropUnmapped)", rr);
                     continue;
+                } else {
+                    LOGGER.info(
+                            "computeRole: '{}' not in roleMappings, keeping (dropUnmapped=false)",
+                            rr);
                 }
             }
             // Only compare against GeoStore role names if the value was explicitly mapped
             // or if there are no roleMappings configured.  Unmapped IdP role names
             // (e.g. "guest", "admin") should not accidentally match GeoStore roles.
             if (wasMapped || roleMappings == null || roleMappings.isEmpty()) {
-                if (rr.equalsIgnoreCase(Role.ADMIN.name())) return Role.ADMIN;
+                if (rr.equalsIgnoreCase(Role.ADMIN.name())) {
+                    LOGGER.info("computeRole: '{}' matches ADMIN -> returning ADMIN", rr);
+                    return Role.ADMIN;
+                }
                 if (rr.equalsIgnoreCase(Role.USER.name())) {
+                    LOGGER.info("computeRole: '{}' matches USER", rr);
                     resolved = Role.USER;
                     continue;
                 }
-                if (rr.equalsIgnoreCase(Role.GUEST.name())) resolved = Role.GUEST;
+                if (rr.equalsIgnoreCase(Role.GUEST.name())) {
+                    LOGGER.info("computeRole: '{}' matches GUEST", rr);
+                    resolved = Role.GUEST;
+                }
             }
         }
+        LOGGER.info("computeRole: final resolved role = {}", resolved);
         return resolved;
     }
 
@@ -956,7 +1080,20 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             return;
         }
 
+        LOGGER.info(
+                "reconcileRemoteGroups: user='{}' (id={}, role={}), "
+                        + "provider='{}', newGroupNames={}, "
+                        + "currentGroups={} (type={})",
+                user.getName(),
+                user.getId(),
+                user.getRole(),
+                provider,
+                newGroupNamesRaw,
+                user.getGroups(),
+                user.getGroups() != null ? user.getGroups().getClass().getSimpleName() : "null");
+
         if (user.getGroups() == null) {
+            LOGGER.info("User groups is null, initializing empty set.");
             user.setGroups(new LinkedHashSet<>());
         }
 

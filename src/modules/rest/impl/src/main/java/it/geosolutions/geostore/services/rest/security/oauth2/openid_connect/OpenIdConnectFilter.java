@@ -504,7 +504,10 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
     @Override
     @SuppressWarnings("unchecked")
     protected void addAuthoritiesFromToken(
-            User user, String tokenString, Map<String, Object> userinfoMap) {
+            User user,
+            String tokenString,
+            String accessTokenString,
+            Map<String, Object> userinfoMap) {
         OpenIdConnectConfiguration oidcConfig = (OpenIdConnectConfiguration) configuration;
         if (oidcConfig.isMsGraphEnabled()) {
             MicrosoftGraphClient client = getGraphClient();
@@ -539,7 +542,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
                 userinfoMap = enriched;
             }
         }
-        super.addAuthoritiesFromToken(user, tokenString, userinfoMap);
+        super.addAuthoritiesFromToken(user, tokenString, accessTokenString, userinfoMap);
     }
 
     /**

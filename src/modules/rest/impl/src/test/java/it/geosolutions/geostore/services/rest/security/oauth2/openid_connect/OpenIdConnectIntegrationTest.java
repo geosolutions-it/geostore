@@ -2909,6 +2909,315 @@ public class OpenIdConnectIntegrationTest {
         assertTrue(groupNames.contains("infra"), "Auto-created ADMIN should have 'infra' group");
     }
 
+    // -----------------------------------------------------------------------
+    // Keycloak split-token tests: ID token vs access token claim resolution
+    // In real Keycloak, the ID token does NOT contain realm_access,
+    // resource_access, or groups — only the access token does.
+    // -----------------------------------------------------------------------
+
+    /** Helper: creates a minimal Keycloak-like ID token (no realm_access, no groups). */
+    private String createKeycloakIdToken(String email) {
+        long now = System.currentTimeMillis() / 1000;
+        return JWT.create()
+                .withKeyId(TEST_KID)
+                .withIssuer("https://test.issuer/")
+                .withAudience(CLIENT_ID)
+                .withSubject("sub-" + email)
+                .withClaim("email", email)
+                .withClaim("preferred_username", email)
+                .withClaim("name", "Test User")
+                .withClaim("given_name", "Test")
+                .withClaim("family_name", "User")
+                // NO realm_access, NO resource_access, NO groups
+                .withIssuedAt(new Date(now * 1000))
+                .withExpiresAt(new Date((now + 3600) * 1000))
+                .sign(rsaAlgorithm);
+    }
+
+    /**
+     * Helper: creates a Keycloak-like access token WITH realm_access, resource_access, and groups.
+     */
+    private String createKeycloakAccessToken(
+            String email,
+            java.util.List<String> realmRoles,
+            java.util.Map<String, Object> resourceAccess,
+            java.util.List<String> groups) {
+        long now = System.currentTimeMillis() / 1000;
+        com.auth0.jwt.JWTCreator.Builder builder =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("sub-" + email)
+                        .withClaim("preferred_username", email)
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000));
+        if (realmRoles != null) {
+            java.util.Map<String, Object> realmAccess = new java.util.HashMap<>();
+            realmAccess.put("roles", realmRoles);
+            builder = builder.withClaim("realm_access", realmAccess);
+        }
+        if (resourceAccess != null) {
+            builder = builder.withClaim("resource_access", resourceAccess);
+        }
+        if (groups != null) {
+            builder = builder.withClaim("groups", groups);
+        }
+        return builder.sign(rsaAlgorithm);
+    }
+
+    /**
+     * Scenario 1a: rolesClaim=realm_access.roles, NO roleMappings. Keycloak ID token does NOT
+     * contain realm_access → falls back to access token. Access token has realm_access.roles =
+     * [default-roles-ams2, offline_access, ...]. Without roleMappings, none of these match
+     * ADMIN/USER/GUEST → user stays at defaultRole=USER. Groups claim (groups) is also only in
+     * access token.
+     *
+     * <p>Expected: USER role, but groups SHOULD still be synced from access token. This reproduces
+     * "sarai user e non avrai gruppi" — before the fix, both realm_access.roles and groups would
+     * resolve to null because only the ID token was checked.
+     */
+    @Test
+    public void testKeycloakSplitToken_NoRoleMappings_UserWithGroups() throws Exception {
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        // No roleMappings configured
+        configuration.setRoleMappings(null);
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        // Create a user first (simulating auto-create)
+        User user = new User();
+        user.setName("keycloak-user@example.com");
+        user.setRole(Role.USER);
+        user.setEnabled(true);
+        user.setNewPassword("");
+        user.setGroups(new java.util.HashSet<>());
+        userService.insert(user);
+
+        // Simulate what createPreAuthentication does: ID token primary, access token fallback
+        String idToken = createKeycloakIdToken("keycloak-user@example.com");
+        String accessToken =
+                createKeycloakAccessToken(
+                        "keycloak-user@example.com",
+                        java.util.Arrays.asList(
+                                "default-roles-ams2", "offline_access", "uma_authorization"),
+                        null,
+                        java.util.Arrays.asList("analysts", "editors"));
+
+        // Retrieve the user as the filter would
+        User dbUser = userService.get("keycloak-user@example.com");
+
+        // Call addAuthoritiesFromToken with split tokens (the fix)
+        filter.addAuthoritiesFromToken(dbUser, idToken, accessToken, null);
+
+        assertEquals(
+                Role.USER,
+                dbUser.getRole(),
+                "No roleMappings → unmapped Keycloak roles should not match → USER");
+
+        Set<String> groupNames =
+                dbUser.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(
+                groupNames.contains("analysts"),
+                "Groups from access token should be synced even when user is USER");
+        assertTrue(
+                groupNames.contains("editors"),
+                "Groups from access token should be synced even when user is USER");
+    }
+
+    /**
+     * Scenario 1b: rolesClaim=realm_access.roles, WITH roleMappings=default-roles-ams2:ADMIN.
+     * Keycloak ID token does NOT contain realm_access → falls back to access token. Access token
+     * has realm_access.roles = [default-roles-ams2, ...]. With the mapping, default-roles-ams2 →
+     * ADMIN.
+     *
+     * <p>Expected: ADMIN role AND groups synced. This reproduces "se metti la riga
+     * roleMappings=default-roles-ams2:ADMIN, sarai admin e avrai i gruppi".
+     */
+    @Test
+    public void testKeycloakSplitToken_WithRoleMappings_AdminWithGroups() throws Exception {
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings("default-roles-ams2:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        User user = new User();
+        user.setName("keycloak-admin@example.com");
+        user.setRole(Role.USER);
+        user.setEnabled(true);
+        user.setNewPassword("");
+        user.setGroups(new java.util.HashSet<>());
+        userService.insert(user);
+
+        String idToken = createKeycloakIdToken("keycloak-admin@example.com");
+        String accessToken =
+                createKeycloakAccessToken(
+                        "keycloak-admin@example.com",
+                        java.util.Arrays.asList(
+                                "default-roles-ams2", "offline_access", "uma_authorization"),
+                        null,
+                        java.util.Arrays.asList("analysts", "editors", "managers"));
+
+        User dbUser = userService.get("keycloak-admin@example.com");
+        filter.addAuthoritiesFromToken(dbUser, idToken, accessToken, null);
+
+        assertEquals(
+                Role.ADMIN,
+                dbUser.getRole(),
+                "default-roles-ams2 mapped to ADMIN via roleMappings");
+
+        Set<String> groupNames =
+                dbUser.getGroups().stream()
+                        .map(UserGroup::getGroupName)
+                        .collect(Collectors.toSet());
+        assertTrue(groupNames.contains("analysts"), "ADMIN should have groups from access token");
+        assertTrue(groupNames.contains("editors"), "ADMIN should have groups from access token");
+        assertTrue(groupNames.contains("managers"), "ADMIN should have groups from access token");
+    }
+
+    /**
+     * Scenario 2: rolesClaim=resource_access.account.roles, WITH roleMappings=manage-account:ADMIN.
+     * The comment "Questo non funziona" in the config refers to this. Keycloak ID token does NOT
+     * contain resource_access → must fall back to access token.
+     *
+     * <p>Expected: ADMIN role (manage-account mapped to ADMIN).
+     */
+    @Test
+    public void testKeycloakSplitToken_ResourceAccessAccountRoles() throws Exception {
+        configuration.setRolesClaim("resource_access.account.roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings("manage-account:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        User user = new User();
+        user.setName("resource-user@example.com");
+        user.setRole(Role.USER);
+        user.setEnabled(true);
+        user.setNewPassword("");
+        user.setGroups(new java.util.HashSet<>());
+        userService.insert(user);
+
+        // ID token: NO resource_access
+        String idToken = createKeycloakIdToken("resource-user@example.com");
+        // Access token: HAS resource_access.account.roles
+        java.util.Map<String, Object> accountRoles = new java.util.HashMap<>();
+        accountRoles.put(
+                "roles",
+                java.util.Arrays.asList("manage-account", "manage-account-links", "view-profile"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountRoles);
+
+        String accessToken =
+                createKeycloakAccessToken("resource-user@example.com", null, resourceAccess, null);
+
+        User dbUser = userService.get("resource-user@example.com");
+        filter.addAuthoritiesFromToken(dbUser, idToken, accessToken, null);
+
+        assertEquals(
+                Role.ADMIN,
+                dbUser.getRole(),
+                "resource_access.account.roles with manage-account:ADMIN mapping "
+                        + "should resolve from access token fallback");
+    }
+
+    /**
+     * Scenario 2b: rolesClaim=resource_access.account.roles, WITHOUT roleMappings. Even though
+     * resource_access.account.roles resolves, none of the values (manage-account,
+     * manage-account-links, view-profile) match GeoStore roles.
+     *
+     * <p>Expected: falls back to authenticatedDefaultRole=USER.
+     */
+    @Test
+    public void testKeycloakSplitToken_ResourceAccessAccountRoles_NoMapping() throws Exception {
+        configuration.setRolesClaim("resource_access.account.roles");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings(null);
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        User user = new User();
+        user.setName("resource-nomatch@example.com");
+        user.setRole(Role.USER);
+        user.setEnabled(true);
+        user.setNewPassword("");
+        user.setGroups(new java.util.HashSet<>());
+        userService.insert(user);
+
+        String idToken = createKeycloakIdToken("resource-nomatch@example.com");
+        java.util.Map<String, Object> accountRoles = new java.util.HashMap<>();
+        accountRoles.put(
+                "roles",
+                java.util.Arrays.asList("manage-account", "manage-account-links", "view-profile"));
+        java.util.Map<String, Object> resourceAccess = new java.util.HashMap<>();
+        resourceAccess.put("account", accountRoles);
+
+        String accessToken =
+                createKeycloakAccessToken(
+                        "resource-nomatch@example.com", null, resourceAccess, null);
+
+        User dbUser = userService.get("resource-nomatch@example.com");
+        filter.addAuthoritiesFromToken(dbUser, idToken, accessToken, null);
+
+        assertEquals(
+                Role.USER,
+                dbUser.getRole(),
+                "No roleMappings and Keycloak client roles don't match GeoStore roles → USER");
+    }
+
+    /**
+     * Scenario 3: Verify that when ONLY the ID token is provided (no access token fallback),
+     * realm_access.roles resolves to null — confirming the pre-fix behavior. This proves the access
+     * token fallback is essential.
+     */
+    @Test
+    public void testKeycloakIdTokenOnly_RealmAccessNotFound() throws Exception {
+        configuration.setRolesClaim("realm_access.roles");
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultRole("USER");
+        configuration.setRoleMappings("default-roles-ams2:ADMIN");
+        MockedUserService userService = new MockedUserService();
+
+        recreateFilter();
+        filter.setUserService(userService);
+
+        User user = new User();
+        user.setName("idtoken-only@example.com");
+        user.setRole(Role.USER);
+        user.setEnabled(true);
+        user.setNewPassword("");
+        user.setGroups(new java.util.HashSet<>());
+        userService.insert(user);
+
+        // Only pass ID token, NO access token fallback (simulates the pre-fix behavior)
+        String idToken = createKeycloakIdToken("idtoken-only@example.com");
+
+        User dbUser = userService.get("idtoken-only@example.com");
+        filter.addAuthoritiesFromToken(dbUser, idToken, null, null);
+
+        // Without access token fallback, realm_access.roles is not in ID token → USER
+        assertEquals(
+                Role.USER,
+                dbUser.getRole(),
+                "ID token alone should NOT contain realm_access → falls back to USER");
+        assertTrue(
+                dbUser.getGroups().isEmpty(), "ID token alone should NOT contain groups → empty");
+    }
+
     /** Recreates the filter with current configuration (picks up JWE config changes). */
     private void recreateFilter() {
         GeoStoreOAuthRestTemplate restTemplate =
