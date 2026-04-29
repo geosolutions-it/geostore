@@ -46,7 +46,7 @@ import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.SecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

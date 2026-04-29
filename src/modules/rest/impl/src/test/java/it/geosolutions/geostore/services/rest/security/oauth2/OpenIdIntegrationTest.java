@@ -61,7 +61,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import org.apache.commons.codec.binary.Base64;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -648,8 +648,8 @@ public class OpenIdIntegrationTest {
                     @Override
                     protected User retrieveUserWithAuthorities(
                             String username,
-                            javax.servlet.http.HttpServletRequest request,
-                            javax.servlet.http.HttpServletResponse response) {
+                            jakarta.servlet.http.HttpServletRequest request,
+                            jakarta.servlet.http.HttpServletResponse response) {
                         return seeded;
                     }
                 };
