@@ -18,7 +18,7 @@
 	<!-- ==================================================================== -->
 	<!-- === REST Security ================================================== -->
 	<!-- ==================================================================== -->
-	<security:global-method-security secured-annotations="enabled" />
+	<security:method-security secured-enabled="true" />
 
 	<security:http auto-config="true" create-session="never" >
 		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>
