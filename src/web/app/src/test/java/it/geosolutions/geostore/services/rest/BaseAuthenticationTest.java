@@ -20,9 +20,9 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.InputStream;
-import jakarta.servlet.http.HttpServletRequest;
 import junit.framework.TestCase;
 import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.io.FileUtils;
