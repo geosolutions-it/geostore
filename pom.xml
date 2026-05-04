@@ -94,7 +94,7 @@
         <commons-lang-version>3.17.0</commons-lang-version>
         <commons-collections-version>3.2.2</commons-collections-version>
         <commons-beanutils-version>1.9.4</commons-beanutils-version>
-        <commons-dbcp-version>1.2.2</commons-dbcp-version>
+        <commons-dbcp-version>2.14.0</commons-dbcp-version>
         <commons-codec-version>1.16.0</commons-codec-version>
 
         <!-- JAXB/JPA/Hibernate (kept as GeoStore had) -->

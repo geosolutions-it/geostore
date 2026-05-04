@@ -43,7 +43,7 @@
 
     <!-- ====================================================================-->
 
-    <bean id="geostoreDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+    <bean id="geostoreDataSource" class="org.apache.commons.dbcp2.BasicDataSource">
         <property name="driverClassName" value="org.h2.Driver" />
         <property name="url" value="jdbc:h2:mem:geostore" />
         <property name="username" value="geostore" />
