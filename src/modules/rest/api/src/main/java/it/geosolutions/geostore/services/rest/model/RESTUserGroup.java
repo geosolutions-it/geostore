@@ -22,11 +22,11 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /** @author DamianoG */
 @XmlRootElement(name = "UserGroup")

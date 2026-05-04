@@ -22,12 +22,12 @@ package it.geosolutions.geostore.services.dto.search;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+import jakarta.xml.bind.annotation.XmlElement;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.xml.bind.annotation.XmlElement;
 
 /**
  * {@link SearchFilter} implementation that represent a filter by name on a {@link

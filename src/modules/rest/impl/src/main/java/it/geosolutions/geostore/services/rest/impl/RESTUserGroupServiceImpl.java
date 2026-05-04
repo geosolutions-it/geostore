@@ -35,6 +35,7 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +43,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

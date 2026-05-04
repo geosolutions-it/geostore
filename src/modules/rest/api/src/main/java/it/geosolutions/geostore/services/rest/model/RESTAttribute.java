@@ -1,9 +1,9 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.services.dto.ShortAttribute;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * DTO for attribute object

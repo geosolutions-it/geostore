@@ -64,12 +64,6 @@
 
         <!-- =========================================================== -->
         <!-- TEST -->
-        <!-- <dependency> -->
-        <!-- <groupId>javax.servlet</groupId> -->
-        <!-- <artifactId>javax.servlet-api</artifactId> -->
-        <!-- <scope>provided</scope> -->
-        <!-- </dependency> -->
-
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
@@ -123,7 +117,7 @@
             <scope>test</scope>
         </dependency>
         <!-- =========================================================== -->
-        <!--     JAVAX SERVLET & JSP                                     -->
+        <!--     JAKARTA SERVLET & JSP                                     -->
         <!-- =========================================================== -->
         <dependency>
             <groupId>jakarta.servlet</groupId>
@@ -254,13 +248,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.6</version>
+                <version>3.4.0</version>
                 <configuration>
                     <packagingExcludes>WEB-INF/lib/apacheds-all*.jar</packagingExcludes>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
             </plugin>
-
-            <!-- Run the application using "mvn jetty:run" -->
             <plugin>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>

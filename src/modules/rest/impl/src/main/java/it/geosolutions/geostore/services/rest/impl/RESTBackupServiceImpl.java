@@ -48,8 +48,8 @@ import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCa
 import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.utils.Convert;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.List;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

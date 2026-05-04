@@ -28,10 +28,10 @@ import it.geosolutions.geostore.core.model.UserFavorite;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.exception.DuplicatedFavoriteServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import jakarta.ws.rs.ForbiddenException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.ForbiddenException;
 
 public class FavoriteServiceImplTest extends ServiceTestBase {
 

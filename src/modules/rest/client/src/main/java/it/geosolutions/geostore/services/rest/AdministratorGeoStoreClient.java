@@ -8,8 +8,8 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 /**
  * Advanced GeoStore client for user management

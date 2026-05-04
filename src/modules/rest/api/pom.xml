@@ -73,17 +73,6 @@
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
         </dependency>
-		<!-- dependency>
-			<groupId>com.google.code.cxf-spring-security</groupId>
-			<artifactId>cxf-spring-security</artifactId>
-		</dependency -->
-
-        <!-- needed for @RolesAllowed
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>jsr250-api</artifactId>
-            <version>1.0</version>
-        </dependency>-->
 
         <!-- ================================================================-->
         <!-- Spring Security -->
@@ -112,8 +101,8 @@
         </dependency>
 
         <dependency>
-            <groupId>javax.xml.ws</groupId>
-            <artifactId>jaxws-api</artifactId>
+            <groupId>jakarta.xml.ws</groupId>
+            <artifactId>jakarta.xml.ws-api</artifactId>
         </dependency>
 
         <dependency>

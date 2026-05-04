@@ -40,11 +40,11 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
+import jakarta.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -29,9 +29,9 @@
 package it.geosolutions.geostore.services.dto;
 
 import it.geosolutions.geostore.core.model.Resource;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Date;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class ShortResource.

@@ -1,9 +1,9 @@
 package it.geosolutions.geostore.services.model;
 
 import it.geosolutions.geostore.core.model.Resource;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.Objects;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * An extended version of the {@link Resource} class that includes additional flags to indicate

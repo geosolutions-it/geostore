@@ -34,7 +34,7 @@ import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.enums.RawFormat;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MediaType;
 
 /** @author ETj (etj at geo-solutions.it) */
 public class GeoStoreClient {

@@ -1,7 +1,7 @@
 package it.geosolutions.geostore.services.rest.model;
 
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.QueryParam;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.QueryParam;
 
 public class Sort {
 

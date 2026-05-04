@@ -35,7 +35,6 @@
     <modules>
         <module>api</module>
         <module>impl</module>
-        <module>client</module>
         <module>extjs</module>
         <module>test</module>
         <module>auditing</module>

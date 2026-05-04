@@ -29,12 +29,12 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class SecurityRuleList.

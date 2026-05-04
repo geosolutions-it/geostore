@@ -19,7 +19,7 @@
  */
 package it.geosolutions.geostore.services.dto.search;
 
-import javax.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.XmlType;
 
 /**
  * Enum SearchOperator.

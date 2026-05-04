@@ -362,8 +362,8 @@
             <!--     APACHE CXF                                              -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>javax.xml.ws</groupId>
-                <artifactId>jaxws-api</artifactId>
+                <groupId>jakarta.xml.ws</groupId>
+                <artifactId>jakarta.xml.ws-api</artifactId>
                 <version>${jaxws-version}</version>
                 <exclusions>
                     <exclusion>
@@ -476,13 +476,13 @@
             <!--     JAXB                                                    -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>javax.xml.bind</groupId>
-                <artifactId>jaxb-api</artifactId>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>${jaxb-api-version}</version>
             </dependency>
             <dependency>
-                <groupId>com.sun.xml.bind</groupId>
-                <artifactId>jaxb-impl</artifactId>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
                 <version>${jaxb-impl-version}</version>
             </dependency>
 
@@ -670,7 +670,7 @@
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     JAVAX PERSISTENCE                                       -->
+            <!--     JAKARTA PERSISTENCE                                       -->
             <!-- =========================================================== -->
             <dependency>
                 <groupId>jakarta.persistence</groupId>
@@ -679,7 +679,7 @@
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     JAVAX SERVLET                                           -->
+            <!--     JAKARTA SERVLET                                           -->
             <!-- =========================================================== -->
             <dependency>
                 <groupId>jakarta.servlet</groupId>
@@ -757,7 +757,7 @@
             <!--     HIBERNATE                                               -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>org.hibernate</groupId>
+                <groupId>org.hibernate.orm</groupId>
                 <artifactId>hibernate-core</artifactId>
                 <version>${hibernate-version}</version>
             </dependency>
