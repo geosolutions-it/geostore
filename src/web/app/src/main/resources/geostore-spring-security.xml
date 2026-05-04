@@ -27,6 +27,7 @@
 		<security:custom-filter ref="sessionTokenProcessingFilter" after="FORM_LOGIN_FILTER"/>
 <!--		<security:custom-filter ref="compositeOpenIdFilter" before="OPENID_FILTER"/>-->
 		<security:anonymous />
+		<security:intercept-url pattern="/**" access="permitAll" />
 	</security:http>
 
 
