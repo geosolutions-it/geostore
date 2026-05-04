@@ -45,6 +45,10 @@
             <groupId>it.geosolutions.geostore</groupId>
             <artifactId>geostore-security</artifactId>
         </dependency>
+        <dependency>
+          <groupId>jakarta.persistence</groupId>
+          <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
 
 
         <!-- ================================================================-->
@@ -106,25 +110,6 @@
             <artifactId>spring-security-ldap</artifactId>
         </dependency>
 
-        <!-- =========================================================== -->
-        <!--     SPRING SECURITY                                         -->
-        <!-- =========================================================== -->
-        <!--		<dependency>
-                    <groupId>org.springframework.security</groupId>
-                    <artifactId>spring-security-core</artifactId>
-                </dependency>
-                <dependency>
-                    <groupId>javax.persistence</groupId>
-                    <artifactId>persistence-api</artifactId>
-                </dependency>-->
-
-        <!-- https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.1-api -->
-        <dependency>
-            <groupId>org.hibernate.javax.persistence</groupId>
-            <artifactId>hibernate-jpa-2.1-api</artifactId>
-        </dependency>
-
-
         <!-- HIBERNATE-GENERIC-DAO -->
         <dependency>
             <groupId>com.googlecode.genericdao</groupId>
@@ -168,10 +153,6 @@
                     <artifactId>cglib</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-ehcache</artifactId>
         </dependency>
 
         <!-- CGLIB -->

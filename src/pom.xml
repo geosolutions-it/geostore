@@ -672,18 +672,10 @@
             <!-- =========================================================== -->
             <!--     JAVAX PERSISTENCE                                       -->
             <!-- =========================================================== -->
-            <!--dependency>
-                <groupId>javax.persistence</groupId>
-                <artifactId>persistence-api</artifactId>
-                <version>${persistence-version}</version>
-            </dependency-->
-
-            <!-- https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.0-api -->
-            <!-- https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.1-api -->
             <dependency>
-                <groupId>org.hibernate.javax.persistence</groupId>
-                <artifactId>hibernate-jpa-2.1-api</artifactId>
-                <version>${hibernate-jpa-2.1-api.version}</version>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>3.2.0</version>
             </dependency>
 
             <!-- =========================================================== -->
@@ -767,12 +759,6 @@
             <dependency>
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-core</artifactId>
-                <version>${hibernate-version}</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-ehcache -->
-            <dependency>
-                <groupId>org.hibernate</groupId>
-                <artifactId>hibernate-ehcache</artifactId>
                 <version>${hibernate-version}</version>
             </dependency>
 

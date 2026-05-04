@@ -33,6 +33,11 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+
   	<!-- JAXB -->
         <dependency>
             <groupId>javax.xml.bind</groupId>
