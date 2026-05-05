@@ -57,10 +57,6 @@
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-rs-json-basic</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.codehaus.jettison</groupId>
-            <artifactId>jettison</artifactId>
-        </dependency>
 
         <!-- =========================================================== -->
         <!-- TEST -->

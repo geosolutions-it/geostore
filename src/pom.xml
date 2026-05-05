@@ -333,32 +333,6 @@
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     JERSEY                                                  -->
-            <!-- =========================================================== -->
-            <dependency>
-                <groupId>org.glassfish.jersey.containers</groupId>
-                <artifactId>jersey-container-servlet</artifactId>
-                <version>${jersey-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.glassfish.jersey.ext</groupId>
-                <artifactId>jersey-spring3</artifactId>
-                <version>${jersey-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.sun.jersey.contribs</groupId>
-                <artifactId>jersey-apache-client</artifactId>
-                <version>${jersey-apache-client.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-client</artifactId>
-                <version>${jersey-apache-client.version}</version>
-            </dependency>
-            <!-- =========================================================== -->
             <!--     APACHE CXF                                              -->
             <!-- =========================================================== -->
             <dependency>
@@ -705,26 +679,6 @@
                 <groupId>cglib</groupId>
                 <artifactId>cglib-nodep</artifactId>
                 <version>${cglib-version}</version>
-            </dependency>
-
-            <!-- =========================================================== -->
-            <!--     HTTP UTILS                                              -->
-            <!-- =========================================================== -->
-            <dependency>
-                <groupId>org.codehaus.jettison</groupId>
-                <artifactId>jettison</artifactId>
-                <version>${jettison-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjrt</artifactId>
-                <version>${aspectj-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjweaver</artifactId>
-                <version>${aspectj-version}</version>
             </dependency>
 
             <!-- =========================================================== -->
