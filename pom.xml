@@ -75,9 +75,7 @@
         <spring-version>7.0.7</spring-version>
         <spring-security-version>7.0.5</spring-security-version>
 
-        <!-- Camel, Velocity, WS, etc. -->
-        <camel-version>1.6.1.2-fuse</camel-version>
-        <velocity-version>1.6.2</velocity-version>
+        <!-- etc. -->
         <javax-mail-version>1.4</javax-mail-version>
         <javax-annotation-version>1.0</javax-annotation-version>
         <xalan-version>2.7.0</xalan-version>
@@ -88,7 +86,6 @@
         <!-- Logging & commons (aligned) -->
         <log4j.version>2.19.0</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <commons-logging-version>1.2</commons-logging-version>
         <commons-lang-version>3.17.0</commons-lang-version>
         <commons-collections-version>3.2.2</commons-collections-version>
         <commons-beanutils-version>1.9.4</commons-beanutils-version>
@@ -163,12 +160,11 @@
         <jetty.version>6.1.23</jetty.version>
         <jettison-version>1.5.4</jettison-version>
         <!-- Build plugins -->
-        <maven-assembly-plugin-version>2.2-beta-5</maven-assembly-plugin-version>
-        <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
         <maven-source-plugin.version>3.0.1</maven-source-plugin.version>
         <maven-release-plugin.version>2.5.2</maven-release-plugin.version>
         <maven-jar-plugin.version>2.4</maven-jar-plugin.version>
+        <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
         <maven-resources-plugin.version>3.0.1</maven-resources-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
         <dependency-check-maven.version>9.0.9</dependency-check-maven.version>
@@ -178,12 +174,12 @@
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <coveralls-maven-plugin.version>4.1.0</coveralls-maven-plugin.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
-        <spotbugs-maven-pligin>3.1.12.2</spotbugs-maven-pligin>
-        <pmd.version>6.42.0</pmd.version>
-        <errorProne.version>2.18.0</errorProne.version>
+        <spotbugs-maven-plugin>4.9.8.3</spotbugs-maven-plugin>
+        <pmd.version>6.55.0</pmd.version>
+        <maven-pmd-plugin.version>3.21.2</maven-pmd-plugin.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven-compiler-plugin.source>11</maven-compiler-plugin.source>
-        <maven-compiler-plugin.target>11</maven-compiler-plugin.target>
+        <maven-compiler-plugin.source>17</maven-compiler-plugin.source>
+        <maven-compiler-plugin.target>17</maven-compiler-plugin.target>
     </properties>
 
     <ciManagement>

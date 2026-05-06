@@ -30,7 +30,6 @@ package it.geosolutions.geostore.services.rest.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.RESTDiagnosticsService;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
@@ -41,7 +40,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.springframework.security.core.Authentication;
 
 /** Admin-only diagnostics endpoint for runtime observability. */
 public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTDiagnosticsService {
@@ -314,30 +312,30 @@ public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTD
 
     // ---- Helpers ----
 
-    private static String maskToken(String token) {
-        if (token == null) return "null";
-        if (token.length() <= 8) return "***";
-        return token.substring(0, 8) + "...";
-    }
-
-    private static String extractPrincipalName(Authentication auth) {
-        if (auth == null || auth.getPrincipal() == null) return "unknown";
-        Object principal = auth.getPrincipal();
-        if (principal instanceof User) {
-            return ((User) principal).getName();
-        }
-        return principal.toString();
-    }
-
-    private static String extractRole(Authentication auth) {
-        if (auth == null || auth.getPrincipal() == null) return "unknown";
-        Object principal = auth.getPrincipal();
-        if (principal instanceof User) {
-            User user = (User) principal;
-            return user.getRole() != null ? user.getRole().name() : "unknown";
-        }
-        return "unknown";
-    }
+    //    private static String maskToken(String token) {
+    //        if (token == null) return "null";
+    //        if (token.length() <= 8) return "***";
+    //        return token.substring(0, 8) + "...";
+    //    }
+    //
+    //    private static String extractPrincipalName(Authentication auth) {
+    //        if (auth == null || auth.getPrincipal() == null) return "unknown";
+    //        Object principal = auth.getPrincipal();
+    //        if (principal instanceof User) {
+    //            return ((User) principal).getName();
+    //        }
+    //        return principal.toString();
+    //    }
+    //
+    //    private static String extractRole(Authentication auth) {
+    //        if (auth == null || auth.getPrincipal() == null) return "unknown";
+    //        Object principal = auth.getPrincipal();
+    //        if (principal instanceof User) {
+    //            User user = (User) principal;
+    //            return user.getRole() != null ? user.getRole().name() : "unknown";
+    //        }
+    //        return "unknown";
+    //    }
 
     //    private static TokenDetails getTokenDetails(Authentication auth) {
     //        if (auth != null && auth.getDetails() instanceof TokenDetails) {
@@ -346,9 +344,9 @@ public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTD
     //        return null;
     //    }
 
-    private static String nullSafe(String value) {
-        return value != null ? value : "";
-    }
+    //    private static String nullSafe(String value) {
+    //        return value != null ? value : "";
+    //    }
 
     private static Response errorResponse(int status, String message) {
         try {
