@@ -127,11 +127,6 @@
         </dependency>
 
         <!-- HIBERNATE -->
-
-        <!--        <dependency>
-                    <groupId>org.hibernate</groupId>
-                    <artifactId>hibernate-validator</artifactId>
-                </dependency>-->
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>

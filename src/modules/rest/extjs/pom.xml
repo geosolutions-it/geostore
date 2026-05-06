@@ -47,43 +47,18 @@
             <artifactId>geostore-rest-impl</artifactId>
         </dependency>
 
-        <!--dependency>
-            <groupId>it.geosolutions.geostore</groupId>
-            <artifactId>geostore-services-impl</artifactId>
-        </dependency-->
-
-        <!-- ================================================================-->
-        <!-- Core lib -->
-        <!-- ================================================================-->
-
-        <!-- ================================================================-->
-        <!--  Misc support libs -->
-        <!-- ================================================================-->
-
-        <!--dependency>
-            <groupId>org.apache.cxf</groupId>
-            <artifactId>cxf-rt-frontend-jaxrs</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>jsr250-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javassist</groupId>
-            <artifactId>javassist</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-beans</artifactId>
-        </dependency-->
-
         <dependency>
             <groupId>net.sf.json-lib</groupId>
             <artifactId>json-lib</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.parsson</groupId>
+            <artifactId>parsson</artifactId>
         </dependency>
 
         <dependency>
