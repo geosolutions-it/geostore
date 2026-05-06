@@ -99,20 +99,19 @@
         </dependency>
 
         <dependency>
-            <groupId>jdom</groupId>
-            <artifactId>jdom</artifactId>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom2</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.seancfoley</groupId>
+            <artifactId>ipaddress</artifactId>
         </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.seancfoley</groupId>
-            <artifactId>ipaddress</artifactId>
-            <version>5.5.1</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 

@@ -117,7 +117,7 @@
         <!-- Additional tooling -->
         <gson.version>2.9.0</gson.version>
         <quartz.version>1.5.2</quartz.version>
-        <jdom.version>1.0</jdom.version>
+        <jdom.version>2.0.6.1</jdom.version>
 
         <!-- HTTP, JSON, testing (aligned) -->
         <httpclient.version>4.5.13</httpclient.version>
@@ -144,9 +144,7 @@
         <!-- More integrations -->
         <picocli.version>4.6.1</picocli.version>
         <ojdbc6.version>11.2.0</ojdbc6.version>
-        <spring-support>2.0.8</spring-support>
-        <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
-        <java-jwt.version>3.18.3</java-jwt.version>
+        <java-jwt.version>4.5.2</java-jwt.version>
         <json-path.version>2.9.0</json-path.version>
         <nimbus-jose-jwt.version>9.37.3</nimbus-jose-jwt.version>
         <jasypt.version>1.9.3</jasypt.version>
