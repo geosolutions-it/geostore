@@ -167,7 +167,6 @@
         <maven-war-plugin.version>3.4.0</maven-war-plugin.version>
         <maven-resources-plugin.version>3.0.1</maven-resources-plugin.version>
         <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
-        <dependency-check-maven.version>9.0.9</dependency-check-maven.version>
         <fmt-maven-plugin.version>2.9.1</fmt-maven-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
         <wagon-ssh.version>3.5.3</wagon-ssh.version>
@@ -320,23 +319,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-                <version>${dependency-check-maven.version}</version>
-                <configuration>
-                    <skip>true</skip>
-                    <!-- <nvdApiKey>******-****-****-****-*********</nvdApiKey> -->
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>com.coveo</groupId>
                 <artifactId>fmt-maven-plugin</artifactId>
                 <version>${fmt-maven-plugin.version}</version>
@@ -399,6 +381,32 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <profiles>
+        <profile>
+            <id>owasp</id>
+            <activation>
+                <property>
+                    <name>owasp</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.owasp</groupId>
+                        <artifactId>dependency-check-maven</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <modules>
         <module>src</module>
