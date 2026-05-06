@@ -161,6 +161,7 @@
         <apacheds-all.version>1.5.5</apacheds-all.version>
         <shared-ldap.version>0.9.16</shared-ldap.version>
         <jetty.version>6.1.23</jetty.version>
+        <jettison-version>1.5.4</jettison-version>
         <!-- Build plugins -->
         <maven-assembly-plugin-version>2.2-beta-5</maven-assembly-plugin-version>
         <maven-pmd-plugin.version>3.11.0</maven-pmd-plugin.version>
