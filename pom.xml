@@ -84,11 +84,11 @@
         <jaxws-version>4.0.3</jaxws-version>
 
         <!-- Logging & commons (aligned) -->
-        <log4j.version>2.19.0</log4j.version>
+        <log4j.version>2.26.0</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <commons-lang-version>3.17.0</commons-lang-version>
+        <commons-lang-version>3.20.0</commons-lang-version>
         <commons-collections-version>3.2.2</commons-collections-version>
-        <commons-beanutils-version>1.9.4</commons-beanutils-version>
+        <commons-beanutils-version>1.11.0</commons-beanutils-version>
         <commons-dbcp-version>2.14.0</commons-dbcp-version>
         <commons-codec-version>1.16.0</commons-codec-version>
 
@@ -116,7 +116,6 @@
 
         <!-- Additional tooling -->
         <gson.version>2.9.0</gson.version>
-        <quartz.version>1.5.2</quartz.version>
         <jdom.version>2.0.6.1</jdom.version>
 
         <!-- HTTP, JSON, testing (aligned) -->
@@ -125,7 +124,7 @@
         <json-lib.version>2.4.2-geoserver</json-lib.version>
         <acegi-security-tiger.version>1.0.7</acegi-security-tiger.version>
         <hibernate-jpa-2.1-api.version>1.0.2.Final</hibernate-jpa-2.1-api.version>
-        <jakarta.servlet-api.version>5.0.0</jakarta.servlet-api.version>
+        <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
         <junit.version>4.13.2</junit.version>
 
         <!-- GeoStore-specific persistence bits -->

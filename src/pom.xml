@@ -187,14 +187,6 @@
                 <scope>test</scope>
             </dependency>
 
-            <!-- =========================================================== -->
-            <!--     Quartz                                                  -->
-            <!-- =========================================================== -->
-            <dependency>
-                <groupId>quartz</groupId>
-                <artifactId>quartz</artifactId>
-                <version>${quartz.version}</version>
-            </dependency>
             <dependency>
                 <groupId>javassist</groupId>
                 <artifactId>javassist</artifactId>
