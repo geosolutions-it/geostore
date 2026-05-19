@@ -106,13 +106,13 @@
 
         <!-- Guava & friends (aligned) -->
         <guava-version>32.0.0-jre</guava-version>
-        <mockito-version>4.0.0</mockito-version>
+        <mockito-version>5.23.0</mockito-version>
         <javassist-version>3.8.0.GA</javassist-version>
 
         <!-- GeoTools, Jackson (aligned) -->
         <geoapi-version>2.3-M1</geoapi-version>
         <gt-version>31.3</gt-version>
-        <jackson-version>2.16.1</jackson-version>
+        <jackson-version>2.21.3</jackson-version>
 
         <!-- Additional tooling -->
         <gson.version>2.9.0</gson.version>

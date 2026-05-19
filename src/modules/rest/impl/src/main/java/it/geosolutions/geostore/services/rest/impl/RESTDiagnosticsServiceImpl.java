@@ -54,8 +54,8 @@ public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTD
         try {
             ObjectNode root = MAPPER.createObjectNode();
             root.set("logging", buildLoggingNode());
-            //            root.set("cache", buildCacheNode());
-            //            root.set("configuration", buildConfigurationNode());
+            //                        root.set("cache", buildCacheNode());
+            //                        root.set("configuration", buildConfigurationNode());
             root.put("timestamp", Instant.now().toString());
             return Response.ok(MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(root))
                     .type("application/json")
