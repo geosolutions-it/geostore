@@ -18,7 +18,11 @@
 	<!-- ==================================================================== -->
 	<!-- === REST Security ================================================== -->
 	<!-- ==================================================================== -->
-	<security:method-security secured-enabled="true" />
+	<!-- Method-level security (@Secured / @RolesAllowed) is enabled via the
+	     Java @EnableMethodSecurity configuration in MethodSecurityConfig. The
+	     XML form was removed because in Spring Security 7 it silently loses to
+	     any Java @EnableMethodSecurity overlay an operator might add. -->
+	<bean class="it.geosolutions.geostore.services.rest.security.MethodSecurityConfig"/>
 
 	<security:http auto-config="true" create-session="never" >
 		<security:http-basic entry-point-ref="restAuthenticationEntryPoint"/>

@@ -64,12 +64,12 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
 
         if (user != null) {
             String role = user.getRole().toString();
-            // return null;
             List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-            Authentication a = new UsernamePasswordAuthenticationToken(user, pw, authorities);
-            // a.setAuthenticated(true);
-            return a;
+            // credentials intentionally null post-authentication so the plaintext
+            // password is not retained on the SecurityContext (avoids leakage via
+            // session serialization / audit interceptors)
+            return new UsernamePasswordAuthenticationToken(user, null, authorities);
         } else {
             throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
         }

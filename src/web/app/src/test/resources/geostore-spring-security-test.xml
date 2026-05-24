@@ -18,13 +18,8 @@
 	<!-- ==================================================================== -->
 	<!-- === REST Security ================================================== -->
 	<!-- ==================================================================== -->
-	<security:method-security secured-enabled="true" jsr250-enabled="true" >
-
-<!-- 		<security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTCategoryService.update(*))" access="ROLE_USER, ROLE_ADMIN" /> -->
-<!-- 		<security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTCategoryService.delete(*))" access="ROLE_USER, ROLE_ADMIN" /> -->
-<!-- 		<security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTCategoryService.get(*))" access="ROLE_USER, ROLE_ADMIN, ROLE_ANONYMOUS" /> -->
-
-	</security:method-security>
+	<!-- Method-level security is enabled via MethodSecurityConfig (@EnableMethodSecurity). -->
+	<bean class="it.geosolutions.geostore.services.rest.security.MethodSecurityConfig"/>
 
 	<security:http auto-config="true">
 		<security:http-basic />
