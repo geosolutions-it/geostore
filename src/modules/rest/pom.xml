@@ -38,6 +38,7 @@
         <module>extjs</module>
         <module>test</module>
         <module>auditing</module>
+        <module>client</module>
     </modules>
 
 </project>
