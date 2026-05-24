@@ -682,22 +682,68 @@ public class ResourceServiceImpl implements ResourceService {
             throw new BadRequestServiceEx("Page and entries params should be declared together");
         }
 
-        Search searchCriteria = SearchConverter.convert(parameters.getFilter());
-
+        // Hibernate emits "HHH000104: firstResult/maxResults specified with collection fetch;
+        // applying in memory!" whenever LIMIT/OFFSET is combined with a join-fetched collection
+        // (here: security + security.ipRanges). Splits the work into two queries so SQL-level
+        // pagination is used and the collection fetches are loaded by IN-list on a follow-up.
         if (parameters.getPage() != null) {
-            searchCriteria.setMaxResults(parameters.getEntries());
-            searchCriteria.setPage(parameters.getPage());
+            return searchResourcesPaginated(parameters);
+        }
+        return searchResourcesUnpaginated(parameters);
+    }
+
+    /**
+     * Pagination path: phase 1 paginates IDs with no collection fetches (so Hibernate uses real SQL
+     * LIMIT/OFFSET); phase 2 loads the paged set with the security + ipRanges fetches in a single
+     * query, no pagination. The same sort is re-applied on phase 2 so the returned list preserves
+     * the same order as the paged ID query.
+     */
+    private List<Resource> searchResourcesPaginated(ResourceSearchParameters parameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+        Search pageCriteria = buildBaseSearchCriteria(parameters);
+        pageCriteria.setMaxResults(parameters.getEntries());
+        pageCriteria.setPage(parameters.getPage());
+        pageCriteria.setDistinct(true);
+        securityDAO.addSecurityConstraintsToSearch(pageCriteria, parameters.getAuthUser());
+
+        List<Resource> page = this.search(pageCriteria);
+        if (page.isEmpty()) {
+            return page;
         }
 
+        List<Long> ids = page.stream().map(Resource::getId).toList();
+        Search fetchCriteria = new Search(Resource.class);
+        fetchCriteria.addFilterIn("id", ids);
+        fetchCriteria.addFetches("security", "security.ipRanges");
+        fetchCriteria.setDistinct(true);
+        if (parameters.getSortBy() != null && !parameters.getSortBy().isBlank()) {
+            fetchCriteria.addSort(
+                    parameters.getSortBy(), "DESC".equalsIgnoreCase(parameters.getSortOrder()));
+        }
+        return this.search(fetchCriteria);
+    }
+
+    /** No-pagination path: one query with the collection fetches (no HHH000104). */
+    private List<Resource> searchResourcesUnpaginated(ResourceSearchParameters parameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+        Search searchCriteria = buildBaseSearchCriteria(parameters);
+        searchCriteria.addFetches("security", "security.ipRanges");
+        searchCriteria.setDistinct(true);
+        securityDAO.addSecurityConstraintsToSearch(searchCriteria, parameters.getAuthUser());
+        return this.search(searchCriteria);
+    }
+
+    /** Shared filter/sort assembly used by both paginated and unpaginated paths. */
+    private Search buildBaseSearchCriteria(ResourceSearchParameters parameters)
+            throws BadRequestServiceEx, InternalErrorServiceEx {
+        Search searchCriteria = SearchConverter.convert(parameters.getFilter());
         if (parameters.getSortBy() != null && !parameters.getSortBy().isBlank()) {
             searchCriteria.addSort(
                     parameters.getSortBy(), "DESC".equalsIgnoreCase(parameters.getSortOrder()));
         }
-
         if (parameters.getNameLike() != null) {
             searchCriteria.addFilterILike("name", parameters.getNameLike());
         }
-
         if (parameters.isFavoritesOnly()) {
             Long userId = parameters.getAuthUser().getId();
             String userName = parameters.getAuthUser().getName();
@@ -705,12 +751,7 @@ public class ResourceServiceImpl implements ResourceService {
                     "favorites",
                     Filter.or(Filter.equal("user.id", userId), Filter.equal("username", userName)));
         }
-
-        searchCriteria.addFetches("security", "security.ipRanges");
-        searchCriteria.setDistinct(true);
-
-        securityDAO.addSecurityConstraintsToSearch(searchCriteria, parameters.getAuthUser());
-        return this.search(searchCriteria);
+        return searchCriteria;
     }
 
     /**
