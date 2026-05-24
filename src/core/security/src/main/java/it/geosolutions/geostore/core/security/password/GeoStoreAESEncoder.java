@@ -7,7 +7,6 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import org.acegisecurity.providers.encoding.PasswordEncoder;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.dao.DataAccessException;
 
@@ -26,8 +25,9 @@ public class GeoStoreAESEncoder extends AbstractGeoStorePasswordEncoder {
     }
 
     @Override
-    protected PasswordEncoder createStringEncoder() {
-        // TODO Auto-generated method stub
+    protected InternalPasswordEncoder createStringEncoder() {
+        // AES path overrides encodePassword / isPasswordValid directly; the string-encoder
+        // delegate is not used. Return null to match the legacy behaviour.
         return null;
     }
 

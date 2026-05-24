@@ -19,18 +19,22 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
-import org.acegisecurity.providers.encoding.PasswordEncoder;
 import org.springframework.dao.DataAccessException;
 
 /**
  * Abstract base implementation, delegating the encoding to third party encoders implementing {@link
- * PasswordEncoder}
+ * InternalPasswordEncoder}.
+ *
+ * <p>The legacy {@code org.acegisecurity.providers.encoding.PasswordEncoder} interface dependency
+ * was dropped — the internal contract is now {@link InternalPasswordEncoder}, a package-local
+ * interface with the same two-method shape so concrete subclasses keep wrapping Jasypt directly and
+ * the password wire format is preserved.
  *
  * @author Lorenzo Natali
  */
 public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswordEncoder {
 
-    protected volatile PasswordEncoder stringEncoder;
+    protected volatile InternalPasswordEncoder stringEncoder;
     protected volatile CharArrayPasswordEncoder charEncoder;
 
     protected String name;
@@ -47,7 +51,7 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
         this.name = beanName;
     }
 
-    protected PasswordEncoder getStringEncoder() {
+    protected InternalPasswordEncoder getStringEncoder() {
         if (stringEncoder == null) {
             synchronized (this) {
                 if (stringEncoder == null) {
@@ -59,7 +63,7 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
     }
 
     /** Creates the encoder instance used when source is a string. */
-    protected abstract PasswordEncoder createStringEncoder();
+    protected abstract InternalPasswordEncoder createStringEncoder();
 
     protected CharArrayPasswordEncoder getCharEncoder() {
         if (charEncoder == null) {
@@ -75,8 +79,8 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
     /** Creates the encoder instance used when source is a char array. */
     protected abstract CharArrayPasswordEncoder createCharEncoder();
 
-    /** @return the concrete {@link PasswordEncoder} object */
-    protected final PasswordEncoder getActualEncoder() {
+    /** @return the concrete {@link InternalPasswordEncoder} object */
+    protected final InternalPasswordEncoder getActualEncoder() {
         return null;
     }
 

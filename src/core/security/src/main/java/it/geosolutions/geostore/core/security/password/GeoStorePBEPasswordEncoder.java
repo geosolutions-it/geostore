@@ -27,8 +27,6 @@ import static it.geosolutions.geostore.core.security.password.SecurityUtils.toCh
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;
-import org.acegisecurity.providers.encoding.PasswordEncoder;
-import org.jasypt.acegisecurity.PBEPasswordEncoder;
 import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 
@@ -84,7 +82,7 @@ public class GeoStorePBEPasswordEncoder extends AbstractGeoStorePasswordEncoder 
     }
 
     @Override
-    protected PasswordEncoder createStringEncoder() {
+    protected InternalPasswordEncoder createStringEncoder() {
         byte[] password = lookupPasswordFromKeyStore();
 
         char[] chars = toChars(password);
@@ -97,10 +95,24 @@ public class GeoStorePBEPasswordEncoder extends AbstractGeoStorePasswordEncoder 
             }
             stringEncrypter.setAlgorithm(getAlgorithm());
 
-            PBEPasswordEncoder encoder = new PBEPasswordEncoder();
-            encoder.setPbeStringEncryptor(stringEncrypter);
+            // Wrap the Jasypt PBE encryptor directly — same wire format as the legacy
+            // org.jasypt.acegisecurity.PBEPasswordEncoder adapter we replaced.
+            final StandardPBEStringEncryptor enc = stringEncrypter;
+            return new InternalPasswordEncoder() {
+                @Override
+                public String encodePassword(String rawPass, Object salt) {
+                    return enc.encrypt(rawPass);
+                }
 
-            return encoder;
+                @Override
+                public boolean isPasswordValid(String encPass, String rawPass, Object salt) {
+                    try {
+                        return enc.decrypt(encPass).equals(rawPass);
+                    } catch (RuntimeException e) {
+                        return false;
+                    }
+                }
+            };
         } finally {
             scramble(password);
             scramble(chars);
