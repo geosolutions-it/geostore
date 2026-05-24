@@ -28,7 +28,6 @@ import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
 import jakarta.ws.rs.core.SecurityContext;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -111,18 +110,14 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         assertEquals(3, firstPage.getCount());
         List<RESTUserGroup> firstPageGroups = firstPage.getUserGroupList();
         List<String> firstPageGroupsNames =
-                firstPageGroups.stream()
-                        .map(RESTUserGroup::getGroupName)
-                        .collect(Collectors.toList());
+                firstPageGroups.stream().map(RESTUserGroup::getGroupName).toList();
         assertEquals(List.of(firstGroupName, secondGroupName), firstPageGroupsNames);
 
         UserGroupList secondPage = restService.getAll(sc, 1, 2, false, false, null);
         assertEquals(3, firstPage.getCount());
         List<RESTUserGroup> secondPageGroups = secondPage.getUserGroupList();
         List<String> secondPageGroupsNames =
-                secondPageGroups.stream()
-                        .map(RESTUserGroup::getGroupName)
-                        .collect(Collectors.toList());
+                secondPageGroups.stream().map(RESTUserGroup::getGroupName).toList();
         assertEquals(List.of(thirdGroupName), secondPageGroupsNames);
     }
 
@@ -144,17 +139,13 @@ public class RESTUserGroupServiceImplTest extends ServiceTestBase {
         UserGroupList allGroupsMatched = restService.getAll(sc, null, null, false, false, "group%");
         List<RESTUserGroup> allGroupsMatchedGroups = allGroupsMatched.getUserGroupList();
         List<String> allGroupsMatchedGroupsNames =
-                allGroupsMatchedGroups.stream()
-                        .map(RESTUserGroup::getGroupName)
-                        .collect(Collectors.toList());
+                allGroupsMatchedGroups.stream().map(RESTUserGroup::getGroupName).toList();
         assertTrue(List.of(groupAName, groupBName).containsAll(allGroupsMatchedGroupsNames));
 
         UserGroupList oneGroupMatched = restService.getAll(sc, null, null, false, false, "group_a");
         List<RESTUserGroup> oneGroupsMatchedGroups = oneGroupMatched.getUserGroupList();
         List<String> oneGroupMatchedGroupsNames =
-                oneGroupsMatchedGroups.stream()
-                        .map(RESTUserGroup::getGroupName)
-                        .collect(Collectors.toList());
+                oneGroupsMatchedGroups.stream().map(RESTUserGroup::getGroupName).toList();
         assertEquals(List.of(groupAName), oneGroupMatchedGroupsNames);
     }
 }

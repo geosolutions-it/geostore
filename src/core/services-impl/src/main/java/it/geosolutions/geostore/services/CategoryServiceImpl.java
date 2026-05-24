@@ -29,6 +29,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class CategoryServiceImpl.
@@ -37,6 +38,7 @@ import org.apache.logging.log4j.Logger;
  * @author ETj (etj at geo-solutions.it)
  */
 @SuppressWarnings("PMD.UnusedPrivateField")
+@Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
 
     private static final Logger LOGGER = LogManager.getLogger(CategoryServiceImpl.class);
@@ -61,6 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @see it.geosolutions.geostore.services.CategoryService#insert(it.geosolutions.geostore.core.model.Category)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long insert(Category category) throws BadRequestServiceEx, NotFoundServiceEx {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting Category ... ");
@@ -96,6 +99,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @see it.geosolutions.geostore.services.CategoryService#update(it.geosolutions.geostore.core.model.Category)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long update(Category category) throws BadRequestServiceEx {
         throw new BadRequestServiceEx("Category can not be updated !");
     }
@@ -139,6 +143,7 @@ public class CategoryServiceImpl implements CategoryService {
      * @see it.geosolutions.geostore.services.CategoryService#delete(long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean delete(long id) {
         return categoryDAO.removeById(id);
     }

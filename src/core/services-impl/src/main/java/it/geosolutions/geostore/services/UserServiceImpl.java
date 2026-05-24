@@ -41,6 +41,7 @@ import java.util.Set;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class UserServiceImpl.
@@ -48,6 +49,7 @@ import org.apache.logging.log4j.Logger;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
+@Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private static final Logger LOGGER = LogManager.getLogger(UserServiceImpl.class);
@@ -82,6 +84,7 @@ public class UserServiceImpl implements UserService {
      * @see it.geosolutions.geostore.services.UserService#insert(it.geosolutions.geostore.core.model.User)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long insert(User user) throws BadRequestServiceEx, NotFoundServiceEx {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting User ... ");
@@ -166,6 +169,7 @@ public class UserServiceImpl implements UserService {
      * @see it.geosolutions.geostore.services.UserService#update(it.geosolutions.geostore.core.model.User)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long update(User user) throws NotFoundServiceEx, BadRequestServiceEx {
         User orig = get(user.getId());
 
@@ -234,6 +238,7 @@ public class UserServiceImpl implements UserService {
      * @see it.geosolutions.geostore.services.UserService#updateAttributes(long, java.util.List)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx {
         User user = userDAO.find(id);
         if (user == null) {
@@ -301,6 +306,7 @@ public class UserServiceImpl implements UserService {
      * @see it.geosolutions.geostore.services.UserService#delete(long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean delete(long id) {
         return userDAO.removeById(id);
     }
@@ -402,6 +408,7 @@ public class UserServiceImpl implements UserService {
      * @see it.geosolutions.geostore.services.UserService#insertSpecialUsers()
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean insertSpecialUsers() {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting Reserved Users... ");

@@ -27,7 +27,6 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * {@link SearchFilter} implementation that represent a filter by name on a {@link
@@ -74,7 +73,7 @@ public abstract class AssociatedEntityFilter extends SearchFilter implements Ser
                             .matcher(names)
                             .results()
                             .map(r -> r.group(1) != null ? r.group(1) : r.group(2))
-                            .collect(Collectors.toList());
+                            .toList();
         } else {
             this.values = Collections.singletonList(names);
         }

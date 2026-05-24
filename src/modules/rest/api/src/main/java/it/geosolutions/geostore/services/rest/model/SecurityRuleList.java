@@ -34,7 +34,6 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class SecurityRuleList.
@@ -55,7 +54,7 @@ public class SecurityRuleList implements Iterable<RESTSecurityRule> {
             return;
         }
 
-        this.list = list.stream().map(RESTSecurityRule::new).collect(Collectors.toList());
+        this.list = list.stream().map(RESTSecurityRule::new).toList();
     }
 
     /** @return List<Category> */

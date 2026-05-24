@@ -86,8 +86,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
         assertEquals(3, groups.size());
 
-        List<String> groupsNames =
-                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        List<String> groupsNames = groups.stream().map(UserGroup::getGroupName).toList();
         assertTrue(groupsNames.containsAll(userRoles));
     }
 
@@ -118,8 +117,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
         assertEquals(2, groups.size());
 
-        List<String> groupsNames =
-                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        List<String> groupsNames = groups.stream().map(UserGroup::getGroupName).toList();
         assertTrue(groupsNames.containsAll(Set.of("USER", "USERS")));
     }
 
@@ -150,8 +148,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
         assertEquals(3, groups.size());
 
-        List<String> groupsNames =
-                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        List<String> groupsNames = groups.stream().map(UserGroup::getGroupName).toList();
         assertTrue(groupsNames.containsAll(userRoles));
     }
 
@@ -164,8 +161,7 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
         List<UserGroup> groups = userGroupDAO.findAll();
 
-        List<String> groupsNames =
-                groups.stream().map(UserGroup::getGroupName).collect(Collectors.toList());
+        List<String> groupsNames = groups.stream().map(UserGroup::getGroupName).toList();
         assertTrue(groupsNames.containsAll(List.of("group", "group2", "everyone")));
     }
 }
