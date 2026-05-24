@@ -53,6 +53,8 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Class Attribute.
@@ -72,7 +74,7 @@ import java.util.Date;
             @Index(name = "idx_attribute_type", columnList = "attribute_type"),
             @Index(name = "idx_attribute_resource", columnList = "resource_id"),
         })
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_attribute")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_attribute")
 @XmlRootElement(name = "Attribute")
 public class Attribute implements Serializable {
 

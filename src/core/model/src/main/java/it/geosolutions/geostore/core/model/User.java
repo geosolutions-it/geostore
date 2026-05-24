@@ -54,6 +54,8 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -72,7 +74,7 @@ import org.hibernate.annotations.FetchMode;
             @Index(name = "idx_user_password", columnList = "user_password"),
             @Index(name = "idx_user_role", columnList = "user_role")
         })
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user")
 @XmlRootElement(name = "User")
 public class User implements Serializable {
 

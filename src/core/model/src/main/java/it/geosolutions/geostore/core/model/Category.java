@@ -42,6 +42,8 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.List;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Class Category.
@@ -54,7 +56,7 @@ import java.util.List;
         name = "gs_category",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})},
         indexes = {@Index(name = "idx_category_type", columnList = "name")})
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_category")
 @XmlRootElement(name = "Category")
 public class Category implements Serializable {
 

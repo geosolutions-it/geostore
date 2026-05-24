@@ -47,6 +47,8 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Class Security.
@@ -74,7 +76,7 @@ import java.util.Set;
             @Index(name = "idx_security_username", columnList = "username"),
             @Index(name = "idx_security_groupname", columnList = "groupname")
         })
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_security")
 @XmlRootElement(name = "Security")
 public class SecurityRule implements Serializable {
 

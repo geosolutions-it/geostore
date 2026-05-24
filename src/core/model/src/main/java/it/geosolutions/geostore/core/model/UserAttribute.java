@@ -41,6 +41,8 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Class Attribute.
@@ -56,7 +58,7 @@ import java.io.Serializable;
             @Index(name = "idx_user_attribute_text", columnList = "string"),
             @Index(name = "idx_attribute_user", columnList = "user_id")
         })
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_user_attribute")
 @XmlRootElement(name = "UserAttribute")
 public class UserAttribute implements Serializable {
 

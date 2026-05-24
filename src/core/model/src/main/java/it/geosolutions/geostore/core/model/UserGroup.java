@@ -45,6 +45,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Class Group.
@@ -56,7 +58,7 @@ import java.util.stream.Collectors;
         name = "gs_usergroup",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"groupName"})},
         indexes = {@Index(name = "idx_usergroup_name", columnList = "groupName")})
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_usergroup")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_usergroup")
 @XmlRootElement(name = "UserGroup")
 public class UserGroup implements Serializable {
 

@@ -38,6 +38,8 @@ import jakarta.validation.constraints.Size;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 /**
  * Class StoredData.
@@ -47,7 +49,7 @@ import java.io.Serializable;
  */
 @Entity(name = "StoreData")
 @Table(name = "gs_stored_data")
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_stored_data")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_stored_data")
 @XmlRootElement(name = "StoredData")
 public class StoredData implements Serializable {
 

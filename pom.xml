@@ -147,6 +147,8 @@
         <json-path.version>2.9.0</json-path.version>
         <nimbus-jose-jwt.version>9.37.3</nimbus-jose-jwt.version>
         <jasypt.version>1.9.3</jasypt.version>
+        <!-- Hibernate 2nd-level cache: JCache (JSR-107) region factory + Caffeine provider -->
+        <caffeine.version>3.1.8</caffeine.version>
         <wiremock-standalone.version>2.1.12</wiremock-standalone.version>
         <testcontainers.version>1.20.2</testcontainers.version>
         <testcontainers-keycloak.version>3.7.0</testcontainers-keycloak.version>

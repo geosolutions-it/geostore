@@ -63,6 +63,14 @@
                 <entry key="hibernate.default_schema" value="public" />
                 <!-- sequence retro-compatibility with hibernate 6+ -->
                 <entry key="hibernate.id.db_structure_naming_strategy" value="legacy"/>
+                <!-- 2nd-level cache: JCache region factory + Caffeine provider -->
+                <entry key="hibernate.cache.use_second_level_cache" value="true"/>
+                <entry key="hibernate.cache.use_query_cache" value="false"/>
+                <entry key="hibernate.cache.region.factory_class"
+                       value="org.hibernate.cache.jcache.internal.JCacheRegionFactory"/>
+                <entry key="hibernate.javax.cache.provider"
+                       value="com.github.benmanes.caffeine.jcache.spi.CaffeineCachingProvider"/>
+                <entry key="hibernate.javax.cache.missing_cache_strategy" value="create"/>
             </map>
         </property>
     </bean>

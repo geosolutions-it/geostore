@@ -51,6 +51,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import org.glassfish.jaxb.runtime.CycleRecoverable;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -73,7 +75,7 @@ import org.hibernate.annotations.OnDeleteAction;
             @Index(name = "idx_resource_advertised", columnList = "advertised"),
             @Index(name = "idx_resource_category", columnList = "category_id")
         })
-// @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = "gs_resource")
 @XmlRootElement(name = "Resource")
 public class Resource implements Serializable, CycleRecoverable {
 
