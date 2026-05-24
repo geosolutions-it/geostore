@@ -39,7 +39,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
@@ -94,6 +93,6 @@ public interface RESTBackupService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN" })
     @Secured({"ROLE_ADMIN"})
-    String quickRestore(@Context SecurityContext sc, @Multipart("backup") RESTQuickBackup backup)
+    String quickRestore(@Context SecurityContext sc, RESTQuickBackup backup)
             throws BadRequestServiceEx;
 }

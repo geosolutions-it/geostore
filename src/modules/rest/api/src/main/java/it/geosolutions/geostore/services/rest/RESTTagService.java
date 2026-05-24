@@ -44,7 +44,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
@@ -63,7 +62,7 @@ public interface RESTTagService {
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN"})
-    long insert(@Context SecurityContext sc, @Multipart("tag") Tag tag) throws BadRequestServiceEx;
+    long insert(@Context SecurityContext sc, Tag tag) throws BadRequestServiceEx;
 
     /**
      * @param sc the security context
@@ -106,7 +105,7 @@ public interface RESTTagService {
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML})
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN"})
-    long update(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("tag") Tag tag)
+    long update(@Context SecurityContext sc, @PathParam("id") long id, Tag tag)
             throws NotFoundWebEx, BadRequestWebEx;
 
     /**

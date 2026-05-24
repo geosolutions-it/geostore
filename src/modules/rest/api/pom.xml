@@ -56,7 +56,7 @@
         <!--  Misc support libs -->
         <!-- ================================================================-->
 
-        <!-- needed for @Multipart -->
+        <!-- CXF JAX-RS frontend (annotation processor for @Path / @GET / @POST / ... ) -->
         <dependency>
             <groupId>org.apache.cxf</groupId>
             <artifactId>cxf-rt-frontend-jaxrs</artifactId>

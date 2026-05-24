@@ -45,7 +45,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
@@ -68,7 +67,7 @@ public interface RESTCategoryService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN" })
     @Secured({"ROLE_ADMIN"})
-    long insert(@Context SecurityContext sc, @Multipart("category") Category category)
+    long insert(@Context SecurityContext sc, Category category)
             throws BadRequestServiceEx, NotFoundServiceEx;
 
     /**
@@ -83,10 +82,7 @@ public interface RESTCategoryService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN" })
     @Secured({"ROLE_ADMIN"})
-    long update(
-            @Context SecurityContext sc,
-            @PathParam("id") long id,
-            @Multipart("category") Category category)
+    long update(@Context SecurityContext sc, @PathParam("id") long id, Category category)
             throws NotFoundWebEx;
 
     /**

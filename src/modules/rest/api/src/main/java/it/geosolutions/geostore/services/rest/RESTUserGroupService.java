@@ -29,7 +29,6 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
 import java.util.List;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /** @author DamianoG */
@@ -40,8 +39,7 @@ public interface RESTUserGroupService {
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN"})
-    long insert(@Context SecurityContext sc, @Multipart("userGroup") RESTUserGroup userGroup)
-            throws BadRequestWebEx;
+    long insert(@Context SecurityContext sc, RESTUserGroup userGroup) throws BadRequestWebEx;
 
     @DELETE
     @Path("/group/{id}")
@@ -119,7 +117,7 @@ public interface RESTUserGroupService {
     @Secured({"ROLE_ADMIN"})
     ShortResourceList updateSecurityRules(
             @Context SecurityContext sc,
-            @Multipart("resourcelist") ShortResourceList resourcesToSet,
+            ShortResourceList resourcesToSet,
             @PathParam("groupId") Long groupId,
             @PathParam("canRead") Boolean canRead,
             @PathParam("canWrite") Boolean canWrite)
@@ -130,10 +128,7 @@ public interface RESTUserGroupService {
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @Produces({MediaType.TEXT_PLAIN})
     @Secured({"ROLE_ADMIN"})
-    long update(
-            @Context SecurityContext sc,
-            @PathParam("id") long id,
-            @Multipart("userGroup") RESTUserGroup userGroup)
+    long update(@Context SecurityContext sc, @PathParam("id") long id, RESTUserGroup userGroup)
             throws NotFoundWebEx;
 
     @GET

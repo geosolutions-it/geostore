@@ -54,7 +54,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
@@ -79,8 +78,7 @@ public interface RESTResourceService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
-    long insert(@Context SecurityContext sc, @Multipart("resource") RESTResource resource)
-            throws InternalErrorWebEx;
+    long insert(@Context SecurityContext sc, RESTResource resource) throws InternalErrorWebEx;
 
     /**
      * @param id
@@ -95,10 +93,7 @@ public interface RESTResourceService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
-    long update(
-            @Context SecurityContext sc,
-            @PathParam("id") long id,
-            @Multipart("resource") RESTResource resource)
+    long update(@Context SecurityContext sc, @PathParam("id") long id, RESTResource resource)
             throws NotFoundWebEx, BadRequestWebEx;
 
     /**
@@ -120,7 +115,7 @@ public interface RESTResourceService {
     @Path("/")
     // @RolesAllowed({ "ADMIN" })
     @Secured({"ROLE_ADMIN"})
-    void deleteResources(@Context SecurityContext sc, @Multipart("filter") SearchFilter filter)
+    void deleteResources(@Context SecurityContext sc, SearchFilter filter)
             throws BadRequestWebEx, InternalErrorWebEx;
 
     /**
@@ -187,8 +182,7 @@ public interface RESTResourceService {
     // @RolesAllowed({ "ADMIN", "USER", "GUEST" })
     @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
     @Deprecated
-    ShortResourceList getResources(
-            @Context SecurityContext sc, @Multipart("filter") SearchFilter filter)
+    ShortResourceList getResources(@Context SecurityContext sc, SearchFilter filter)
             throws BadRequestWebEx, InternalErrorWebEx;
 
     /**
@@ -215,7 +209,7 @@ public interface RESTResourceService {
             @QueryParam("entries") Integer entries,
             @QueryParam("includeAttributes") @DefaultValue("false") boolean includeAttributes,
             @QueryParam("includeData") @DefaultValue("false") boolean includeData,
-            @Multipart("filter") SearchFilter filter)
+            SearchFilter filter)
             throws BadRequestWebEx, InternalErrorWebEx;
 
     /**
@@ -323,9 +317,7 @@ public interface RESTResourceService {
     @Consumes({MediaType.APPLICATION_XML, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
     void updateSecurityRules(
-            @Context SecurityContext sc,
-            @PathParam("id") long id,
-            @Multipart("rules") SecurityRuleList securityRules);
+            @Context SecurityContext sc, @PathParam("id") long id, SecurityRuleList securityRules);
 
     @GET
     @Path("/resource/{id}/permissions")

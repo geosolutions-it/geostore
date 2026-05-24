@@ -34,7 +34,6 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
@@ -62,8 +61,7 @@ public interface RESTStoredDataService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
-    long update(
-            @Context SecurityContext sc, @PathParam("id") long id, @Multipart("data") String data)
+    long update(@Context SecurityContext sc, @PathParam("id") long id, String data)
             throws NotFoundWebEx;
 
     /** @return StoredDataList */

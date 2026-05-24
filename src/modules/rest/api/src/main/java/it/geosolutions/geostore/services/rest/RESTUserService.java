@@ -46,7 +46,6 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
 /**
@@ -62,7 +61,7 @@ public interface RESTUserService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN" })
     @Secured({"ROLE_ADMIN"})
-    long insert(@Context SecurityContext sc, @Multipart("user") User user)
+    long insert(@Context SecurityContext sc, User user)
             throws BadRequestServiceEx, NotFoundServiceEx;
 
     @PUT
@@ -71,7 +70,7 @@ public interface RESTUserService {
     @Produces({MediaType.TEXT_PLAIN})
     // @RolesAllowed({ "ADMIN", "USER" })
     @Secured({"ROLE_USER", "ROLE_ADMIN"})
-    long update(@Context SecurityContext sc, @PathParam("id") long id, @Multipart("user") User user)
+    long update(@Context SecurityContext sc, @PathParam("id") long id, User user)
             throws NotFoundWebEx;
 
     @DELETE
