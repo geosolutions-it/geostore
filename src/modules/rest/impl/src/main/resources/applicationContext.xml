@@ -79,12 +79,7 @@
     <bean id="sessionServiceDelegate"
           class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
         <constructor-arg ref="restSessionService"/>
-    </bean>
-
-    <bean id="oidcSessionServiceDelegate"
-          class="it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSessionServiceDelegate">
-        <constructor-arg ref="restSessionService"/>
-        <constructor-arg ref="userService"/>
+<!--        <constructor-arg ref="userService"/>-->
     </bean>
 
     <bean id="idpLoginRest"
@@ -93,11 +88,6 @@
 
     <bean id="tokenStorage"
           class="it.geosolutions.geostore.services.rest.security.oauth2.InMemoryTokenStorage">
-    </bean>
-
-    <bean id="oidcLoginService"
-          class="it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectLoginService">
-        <constructor-arg ref="idpLoginRest"/>
     </bean>
 
     <bean id="restDiagnosticsService"
@@ -113,7 +103,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -133,7 +123,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -153,7 +143,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -173,7 +163,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -197,7 +187,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -216,7 +206,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -235,7 +225,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -254,7 +244,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -275,7 +265,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -297,7 +287,7 @@
             <ref bean="restDiagnosticsService"/>
         </jaxrs:serviceBeans>
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
         <jaxrs:providers>
             <bean class="it.geosolutions.geostore.services.rest.security.SecurityExceptionMapper"/>
@@ -313,7 +303,7 @@
         </jaxrs:serviceBeans>
 
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
 
         <jaxrs:providers>
@@ -338,7 +328,7 @@
             <ref bean="restExtJsService"/>
         </jaxrs:serviceBeans>
         <jaxrs:features>
-            <cxf:logging/>
+            <bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
         </jaxrs:features>
         <jaxrs:providers>
             <ref bean="jaxbXmlProvider"/>

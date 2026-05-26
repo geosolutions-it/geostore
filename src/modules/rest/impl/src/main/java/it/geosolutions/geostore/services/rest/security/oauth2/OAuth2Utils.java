@@ -27,14 +27,15 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import it.geosolutions.geostore.core.security.password.SecurityUtils;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Enumeration;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -102,10 +103,12 @@ public class OAuth2Utils {
      * @return the token if found null otherwise.
      */
     public static String getBearerToken(HttpServletRequest request) {
-        Authentication auth = new BearerTokenExtractor().extract(request);
-        if (auth != null) return SecurityUtils.getUsername(auth.getPrincipal());
-
-        return null;
+        BearerTokenResolver resolver = new DefaultBearerTokenResolver();
+        try {
+            return resolver.resolve(request);
+        } catch (OAuth2AuthenticationException e) {
+            return null;
+        }
     }
 
     /**
@@ -121,14 +124,14 @@ public class OAuth2Utils {
         return token;
     }
 
-    /**
-     * Get the id token from the request attributes.
-     *
-     * @return the id token value if found, null otherwise.
-     */
-    public static String getIdToken() {
-        return getRequestAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE);
-    }
+    //    /**
+    //     * Get the id token from the request attributes.
+    //     *
+    //     * @return the id token value if found, null otherwise.
+    //     */
+    //    public static String getIdToken() {
+    //        return getRequestAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE);
+    //    }
 
     /**
      * Get the Access Token from the request attributes if present.

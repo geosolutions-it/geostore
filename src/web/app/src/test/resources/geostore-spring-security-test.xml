@@ -18,13 +18,13 @@
 	<!-- ==================================================================== -->
 	<!-- === REST Security ================================================== -->
 	<!-- ==================================================================== -->
-	<security:global-method-security secured-annotations="enabled" jsr250-annotations="enabled" >
+	<security:method-security secured-enabled="true" jsr250-enabled="true" >
 
 <!-- 		<security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTCategoryService.update(*))" access="ROLE_USER, ROLE_ADMIN" /> -->
 <!-- 		<security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTCategoryService.delete(*))" access="ROLE_USER, ROLE_ADMIN" /> -->
 <!-- 		<security:protect-pointcut expression="execution(* it.geosolutions.geostore.services.rest.RESTCategoryService.get(*))" access="ROLE_USER, ROLE_ADMIN, ROLE_ANONYMOUS" /> -->
 
-	</security:global-method-security>
+	</security:method-security>
 
 	<security:http auto-config="true">
 		<security:http-basic />

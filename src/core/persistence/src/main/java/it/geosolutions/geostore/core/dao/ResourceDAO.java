@@ -30,8 +30,8 @@ package it.geosolutions.geostore.core.dao;
 import com.googlecode.genericdao.search.ISearch;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
+import jakarta.persistence.NonUniqueResultException;
 import java.util.List;
-import javax.persistence.NonUniqueResultException;
 
 /**
  * Interface ResourceDAO. Public interface to define operations on Resource

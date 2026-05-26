@@ -28,12 +28,12 @@
 
 package it.geosolutions.geostore.services.rest.model;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /** @author ETj (etj at geo-solutions.it) */
 @XmlRootElement(name = "Backup")

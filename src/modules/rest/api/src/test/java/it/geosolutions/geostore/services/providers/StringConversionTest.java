@@ -18,11 +18,11 @@
  */
 package it.geosolutions.geostore.services.providers;
 
+import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import javax.ws.rs.core.MediaType;
 import junit.framework.TestCase;
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

@@ -177,8 +177,7 @@
                 <version>${gson.version}</version>
             </dependency>
 
-
-            <!-- TEST PACKAGE DEPENDENCY RESOULTION -->
+            <!-- TEST PACKAGE DEPENDENCY RESOLUTION -->
 
             <dependency>
                 <groupId>it.geosolutions.geostore</groupId>
@@ -188,14 +187,6 @@
                 <scope>test</scope>
             </dependency>
 
-            <!-- =========================================================== -->
-            <!--     Quartz                                                  -->
-            <!-- =========================================================== -->
-            <dependency>
-                <groupId>quartz</groupId>
-                <artifactId>quartz</artifactId>
-                <version>${quartz.version}</version>
-            </dependency>
             <dependency>
                 <groupId>javassist</groupId>
                 <artifactId>javassist</artifactId>
@@ -244,8 +235,8 @@
             <!-- =========================================================== -->
 
             <dependency>
-                <groupId>jdom</groupId>
-                <artifactId>jdom</artifactId>
+                <groupId>org.jdom</groupId>
+                <artifactId>jdom2</artifactId>
                 <version>${jdom.version}</version>
             </dependency>
 
@@ -268,9 +259,15 @@
                 <version>${httpclient.version}</version>
             </dependency>
             <dependency>
-                <groupId>commons-dbcp</groupId>
-                <artifactId>commons-dbcp</artifactId>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-dbcp2</artifactId>
                 <version>${commons-dbcp-version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>jakarta.transaction</groupId>
+                        <artifactId>jakarta.transaction-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>commons-beanutils</groupId>
@@ -296,12 +293,6 @@
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-core</artifactId>
-                <version>${mockito-version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-inline</artifactId>
                 <version>${mockito-version}</version>
                 <scope>test</scope>
             </dependency>
@@ -333,37 +324,11 @@
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     JERSEY                                                  -->
-            <!-- =========================================================== -->
-            <dependency>
-                <groupId>org.glassfish.jersey.containers</groupId>
-                <artifactId>jersey-container-servlet</artifactId>
-                <version>${jersey-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.glassfish.jersey.ext</groupId>
-                <artifactId>jersey-spring3</artifactId>
-                <version>${jersey-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.sun.jersey.contribs</groupId>
-                <artifactId>jersey-apache-client</artifactId>
-                <version>${jersey-apache-client.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.sun.jersey</groupId>
-                <artifactId>jersey-client</artifactId>
-                <version>${jersey-apache-client.version}</version>
-            </dependency>
-            <!-- =========================================================== -->
             <!--     APACHE CXF                                              -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>javax.xml.ws</groupId>
-                <artifactId>jaxws-api</artifactId>
+                <groupId>jakarta.xml.ws</groupId>
+                <artifactId>jakarta.xml.ws-api</artifactId>
                 <version>${jaxws-version}</version>
                 <exclusions>
                     <exclusion>
@@ -388,13 +353,11 @@
                 <artifactId>cxf-rt-rs-extension-providers</artifactId>
                 <version>${cxf-version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-rs-json-basic</artifactId>
                 <version>${cxf-version}</version>
             </dependency>
-
             <dependency>
                 <groupId>org.apache.cxf</groupId>
                 <artifactId>cxf-rt-rs-client</artifactId>
@@ -456,6 +419,11 @@
                 <artifactId>cxf-spring-security</artifactId>
                 <version>${cxf-version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.cxf</groupId>
+                <artifactId>cxf-rt-features-logging</artifactId>
+                <version>${cxf-version}</version>
+            </dependency>
 
             <!-- =========================================================== -->
             <!--     Velocity                                                -->
@@ -476,13 +444,13 @@
             <!--     JAXB                                                    -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>javax.xml.bind</groupId>
-                <artifactId>jaxb-api</artifactId>
+                <groupId>jakarta.xml.bind</groupId>
+                <artifactId>jakarta.xml.bind-api</artifactId>
                 <version>${jaxb-api-version}</version>
             </dependency>
             <dependency>
-                <groupId>com.sun.xml.bind</groupId>
-                <artifactId>jaxb-impl</artifactId>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
                 <version>${jaxb-impl-version}</version>
             </dependency>
 
@@ -501,17 +469,6 @@
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-core</artifactId>
                 <version>${spring-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework</groupId>
-                <artifactId>spring-jmx</artifactId>
-                <version>${spring-support}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.springframework</groupId>
@@ -564,7 +521,6 @@
                 <version>${spring-version}</version>
             </dependency>
 
-            <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-core -->
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
@@ -574,13 +530,25 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>${jackson-version}</version>
+                <version>2.21</version>
             </dependency>
 
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
                 <version>${jackson-version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
+                <version>${jackson-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.parsson</groupId>
+                <artifactId>parsson</artifactId>
+                <version>1.1.7</version>
+                <scope>runtime</scope>
             </dependency>
 
             <!-- =========================================================== -->
@@ -613,35 +581,14 @@
                 <version>${spring-security-version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springframework.security.oauth</groupId>
-                <artifactId>spring-security-oauth2</artifactId>
-                <version>${spring-security-oauth2.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-context</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-webmvc</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-beans</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.codehaus.jackson</groupId>
-                        <artifactId>jackson-core-asl</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.codehaus.jackson</groupId>
-                        <artifactId>jackson-mapper-asl</artifactId>
-                    </exclusion>
-                </exclusions>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-client</artifactId>
+                <version>${spring-security-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-oauth2-resource-server</artifactId>
+                <version>${spring-security-version}</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.security</groupId>
@@ -672,12 +619,11 @@
                         <groupId>org.springframework</groupId>
                         <artifactId>spring-support</artifactId>
                     </exclusion>
+                    <exclusion>
+                        <groupId>org.springframework</groupId>
+                        <artifactId>spring-remoting</artifactId>
+                    </exclusion>
                 </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.security</groupId>
-                <artifactId>spring-security-jwt</artifactId>
-                <version>${spring-security-jwt.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.auth0</groupId>
@@ -696,29 +642,21 @@
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     JAVAX PERSISTENCE                                       -->
+            <!--     JAKARTA PERSISTENCE                                       -->
             <!-- =========================================================== -->
-            <!--dependency>
-                <groupId>javax.persistence</groupId>
-                <artifactId>persistence-api</artifactId>
-                <version>${persistence-version}</version>
-            </dependency-->
-
-            <!-- https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.0-api -->
-            <!-- https://mvnrepository.com/artifact/org.hibernate.javax.persistence/hibernate-jpa-2.1-api -->
             <dependency>
-                <groupId>org.hibernate.javax.persistence</groupId>
-                <artifactId>hibernate-jpa-2.1-api</artifactId>
-                <version>${hibernate-jpa-2.1-api.version}</version>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>3.2.0</version>
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     JAVAX SERVLET                                           -->
+            <!--     JAKARTA SERVLET                                           -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>javax.servlet</groupId>
-                <artifactId>javax.servlet-api</artifactId>
-                <version>${javax.servlet-api.version}</version>
+                <groupId>jakarta.servlet</groupId>
+                <artifactId>jakarta.servlet-api</artifactId>
+                <version>${jakarta.servlet-api.version}</version>
                 <scope>provided</scope>
             </dependency>
 
@@ -748,17 +686,6 @@
                 <groupId>org.codehaus.jettison</groupId>
                 <artifactId>jettison</artifactId>
                 <version>${jettison-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjrt</artifactId>
-                <version>${aspectj-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.aspectj</groupId>
-                <artifactId>aspectjweaver</artifactId>
-                <version>${aspectj-version}</version>
             </dependency>
 
             <!-- =========================================================== -->
@@ -791,15 +718,25 @@
             <!--     HIBERNATE                                               -->
             <!-- =========================================================== -->
             <dependency>
-                <groupId>org.hibernate</groupId>
+                <groupId>org.hibernate.orm</groupId>
                 <artifactId>hibernate-core</artifactId>
                 <version>${hibernate-version}</version>
             </dependency>
-            <!-- https://mvnrepository.com/artifact/org.hibernate/hibernate-ehcache -->
             <dependency>
-                <groupId>org.hibernate</groupId>
-                <artifactId>hibernate-ehcache</artifactId>
-                <version>${hibernate-version}</version>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>9.0.1.Final</version>
+            </dependency>
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>3.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.expressly</groupId>
+                <artifactId>expressly</artifactId>
+                <version>6.0.0</version>
+                <scope>runtime</scope>
             </dependency>
 
             <!-- =========================================================== -->
@@ -1005,6 +942,13 @@
                 <version>${jstl.version}</version>
                 <scope>test</scope>
             </dependency>
+
+            <!-- IP-based security checks -->
+            <dependency>
+                <groupId>com.github.seancfoley</groupId>
+                <artifactId>ipaddress</artifactId>
+                <version>5.6.2</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1033,33 +977,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-        <!-- JBoss -->
-        <!--repository>
-            <id>jboss-repo</id>
-            <name>JBoss Maven2 Repository</name>
-            <url>http://repository.jboss.com/maven2</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository-->
-
-        <!-- Spring -->
-        <!--repository>
-            <id>spring-release</id>
-            <name>Spring Portfolio Release Repository</name>
-            <url>https://maven.springframework.org/release</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>spring-external</id>
-            <name>Spring Portfolio External Repository</name>
-            <url>http://maven.springframework.org/external</url>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository-->
 
         <repository>
             <id>osgeo</id>
@@ -1157,43 +1074,6 @@
                 </plugins>
             </build>
         </profile>
-        <!-- profile>
-            <id>errorprone</id>
-            <activation>
-                <property>
-                    <name>qa</name>
-                    <value>!false</value>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>${maven-compiler-plugin.version}</version>
-                        <configuration>
-                            <fork>false</fork>
-                            <compilerArgs>
-                                <arg>-XDcompilePolicy=simple</arg>
-                                <arg>-Xplugin:ErrorProne
-                                    -XepExcludedPaths:${project.build.directory}/generated-sources/.* ${errorProneFlags}
-                                </arg>
-                                <arg>-Xlint:${lint}</arg>
-                                <arg>-Xmaxwarns</arg>
-                                <arg>1000</arg>
-                            </compilerArgs>
-                            <annotationProcessorPaths>
-                                <path>
-                                    <groupId>com.google.errorprone</groupId>
-                                    <artifactId>error_prone_core</artifactId>
-                                    <version>${errorProne.version}</version>
-                                </path>
-                            </annotationProcessorPaths>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile -->
         <profile>
             <id>spotbugs</id>
             <activation>
@@ -1207,7 +1087,7 @@
                     <plugin>
                         <groupId>com.github.spotbugs</groupId>
                         <artifactId>spotbugs-maven-plugin</artifactId>
-                        <version>${spotbugs-maven-pligin}</version>
+                        <version>${spotbugs-maven-plugin}</version>
                         <configuration>
                             <effort>More</effort>
                             <!--threshold>High</threshold-->

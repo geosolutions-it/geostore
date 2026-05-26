@@ -39,6 +39,8 @@ import java.security.SecureRandom;
  */
 public class RandomPasswordProvider {
 
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
     /** alphabet */
     public static final char[] PRINTABLE_ALPHABET = {
         '!', '\"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2',
@@ -73,9 +75,8 @@ public class RandomPasswordProvider {
 
     /** Creates a random password filling the specified character array. */
     public void getRandomPassword(char[] buff) {
-        SecureRandom random = new SecureRandom();
         for (int i = 0; i < buff.length; i++) {
-            int index = random.nextInt() % PRINTABLE_ALPHABET.length;
+            int index = SECURE_RANDOM.nextInt() % PRINTABLE_ALPHABET.length;
             if (index < 0) index += PRINTABLE_ALPHABET.length;
             buff[i] = PRINTABLE_ALPHABET[index];
         }
@@ -83,9 +84,8 @@ public class RandomPasswordProvider {
 
     /** Creates a random password filling the specified byte array. */
     public void getRandomPassword(byte[] buff) {
-        SecureRandom random = new SecureRandom();
         for (int i = 0; i < buff.length; i++) {
-            int index = random.nextInt() % PRINTABLE_ALPHABET.length;
+            int index = SECURE_RANDOM.nextInt() % PRINTABLE_ALPHABET.length;
             if (index < 0) index += PRINTABLE_ALPHABET.length;
             buff[i] = (byte) PRINTABLE_ALPHABET[index];
         }

@@ -31,11 +31,11 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * Class RESTUser.

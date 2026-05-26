@@ -69,7 +69,7 @@
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>
-			<cxf:logging />
+			<bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
 		</jaxrs:features>
 
 		<jaxrs:providers>
@@ -92,7 +92,7 @@
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>
-			<cxf:logging />
+			<bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
 		</jaxrs:features>
 
 		<jaxrs:providers>
@@ -117,7 +117,7 @@
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>
-			<cxf:logging />
+			<bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
 		</jaxrs:features>
 
 		<jaxrs:providers>
@@ -141,7 +141,7 @@
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>
-			<cxf:logging />
+			<bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
 		</jaxrs:features>
 
 		<jaxrs:providers>
@@ -167,7 +167,7 @@
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>
-			<cxf:logging />
+			<bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
 		</jaxrs:features>
 
 		<jaxrs:providers>
@@ -191,7 +191,7 @@
 		</jaxrs:serviceBeans>
 
 		<jaxrs:features>
-			<cxf:logging />
+			<bean class="org.apache.cxf.ext.logging.LoggingFeature"/>
 		</jaxrs:features>
 
 		<jaxrs:providers>
@@ -209,26 +209,6 @@
 			</bean -->
 		</jaxrs:inInterceptors>
 	</jaxrs:server>
-
-
-	<!-- <jaxrs:server id="geoStoreRESTExtJs" address="http://localhost:9000/rest/extjs">
-		<jaxrs:serviceBeans> 
-			<ref bean="restExtJsService"/>
-		</jaxrs:serviceBeans>
-		<jaxrs:features>
-			<cxf:logging/> 
-		</jaxrs:features>
-		<jaxrs:providers>
-			<ref bean="jaxbXmlProvider"/>
-			<ref bean="jsonProvider"/> 
-		</jaxrs:providers>
-		<jaxrs:inInterceptors>
-			<ref bean="geostoreAuthInterceptor"/> 
-			<bean class="org.apache.cxf.interceptor.security.SecureAnnotationsInterceptor"> 
-				<property name="securedObject" ref="restExtJsService"/>
-			</bean>
-		</jaxrs:inInterceptors> 
-	</jaxrs:server> -->
 
 	<!-- ==================================================================== -->
 	<!-- === CXF Providers ================================================== -->

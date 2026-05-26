@@ -19,7 +19,7 @@
  */
 package it.geosolutions.geostore.services.dto.search;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /** Filter by tag name */
 @XmlRootElement(name = "Tag")

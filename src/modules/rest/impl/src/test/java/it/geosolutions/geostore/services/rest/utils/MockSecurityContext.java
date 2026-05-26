@@ -1,9 +1,9 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.User;
+import jakarta.ws.rs.core.SecurityContext;
 import java.security.Principal;
 import java.util.Collection;
-import javax.ws.rs.core.SecurityContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 

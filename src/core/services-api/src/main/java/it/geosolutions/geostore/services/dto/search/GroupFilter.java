@@ -21,7 +21,7 @@ package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /** Filter by group name */
 @XmlRootElement(name = "Group")

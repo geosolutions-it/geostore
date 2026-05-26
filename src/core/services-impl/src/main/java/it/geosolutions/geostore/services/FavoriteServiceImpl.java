@@ -28,10 +28,10 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserFavorite;
 import it.geosolutions.geostore.services.exception.DuplicatedFavoriteServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import jakarta.ws.rs.ForbiddenException;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.LongFunction;
-import javax.ws.rs.ForbiddenException;
 import org.springframework.transaction.annotation.Transactional;
 
 public class FavoriteServiceImpl implements FavoriteService {

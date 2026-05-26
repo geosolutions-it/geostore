@@ -19,6 +19,7 @@
  */
 package it.geosolutions.geostore.services.rest.utils;
 
+import jakarta.xml.bind.JAXBContext;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -28,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
-import javax.xml.bind.JAXBContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

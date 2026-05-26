@@ -27,16 +27,17 @@
  */
 package it.geosolutions.geostore.core.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ForeignKey;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * Class StoredData.
@@ -54,7 +55,8 @@ public class StoredData implements Serializable {
 
     @Id private Long id;
 
-    @Column(name = "stored_data", nullable = false, updatable = true, length = 10000000)
+    @Column(name = "stored_data", nullable = false, updatable = true, length = 10_000_000)
+    @Size(max = 10_000_000, message = "Data exceeds maximum length")
     private String data;
 
     @OneToOne(optional = false)

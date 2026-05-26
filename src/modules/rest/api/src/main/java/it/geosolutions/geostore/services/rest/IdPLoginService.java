@@ -1,9 +1,9 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.rest.model.SessionToken;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.core.Response;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.core.Response;
 
 /**
  * Extension point to customize the login and redirect after login performed from the {@link

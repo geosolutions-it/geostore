@@ -37,6 +37,7 @@ import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import jakarta.ws.rs.core.SecurityContext;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -46,13 +47,9 @@ import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
 import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService {
     static final String BEARER_TYPE = "bearer";
@@ -230,10 +227,12 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
     @Override
     public void removeSession() {
-        HttpServletRequest request =
-                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-                        .getRequest();
-        Authentication authentication = new BearerTokenExtractor().extract(request);
+        //        HttpServletRequest request =
+        //                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
+        //                        .getRequest();
+        // TODO: extract token without extractor
+        //        Authentication authentication = new BearerTokenExtractor().extract(request);
+        Authentication authentication = null;
         if (authentication != null && authentication.getPrincipal() != null)
             removeSession(authentication.getPrincipal().toString());
     }

@@ -478,7 +478,7 @@ public class OAuth2Configuration extends IdPConfiguration {
      * @return the URL with appended parameters.
      */
     protected String appendParameters(MultiValueMap<String, String> params, String url) {
-        return UriComponentsBuilder.fromHttpUrl(url).queryParams(params).build().toUriString();
+        return UriComponentsBuilder.fromUriString(url).queryParams(params).build().toUriString();
     }
 
     protected static void getLogoutRequestParams(

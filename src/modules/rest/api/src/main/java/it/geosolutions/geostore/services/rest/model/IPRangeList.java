@@ -28,9 +28,9 @@
 
 package it.geosolutions.geostore.services.rest.model;
 
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name = "IPRangeList")
 public class IPRangeList {

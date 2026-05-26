@@ -35,8 +35,8 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
 
     protected String name;
 
-    private boolean availableWithoutStrongCryptogaphy;
-    private boolean reversible = true;
+    private volatile boolean availableWithoutStrongCryptogaphy;
+    private volatile boolean reversible = true;
     private String prefix;
 
     public String getName() {
