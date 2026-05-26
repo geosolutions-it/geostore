@@ -65,10 +65,14 @@ jobs:
       - name: Start GeoStore (jetty:run on :9191)
         run: |
           set -euo pipefail
-          nohup mvn -B -ntp -pl src/web/app -f src/web/app/pom.xml jetty:run \
-            > jetty.log 2>&1 &
+          # Run jetty:run from inside the webapp module so the reactor is rooted there.
+          # NB: combining `-pl src/web/app -f src/web/app/pom.xml` from the workspace root
+          # fails because -pl is re-interpreted relative to the pom directory and the
+          # project is "not found in the reactor".
+          cd src/web/app
+          nohup mvn -B -ntp jetty:run > "$GITHUB_WORKSPACE/jetty.log" 2>&1 &
           echo "JETTY_PID=$!" >> "$GITHUB_ENV"
-          echo "Started jetty PID $!"
+          echo "Started jetty PID $! from $(pwd); log at $GITHUB_WORKSPACE/jetty.log"
 
       - name: Wait for backend to become ready
         timeout-minutes: 5
