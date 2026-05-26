@@ -1,0 +1,127 @@
+name: Integration tests
+
+# Runs the REST integration suite (.github/scripts/run-integration-tests.ps1)
+# against a standalone jetty:run backend on port 9191. OIDC/OAuth2 paths are
+# intentionally NOT exercised — that stack was removed in PR #529 and will be
+# reintroduced via Spring Security 7 oauth2-client in a follow-up.
+
+on:
+  push:
+    branches:
+      - master
+      - '[0-9]+.[0-9]+*'
+  pull_request:
+    branches:
+      - master
+      - '[0-9]+.[0-9]+*'
+  workflow_dispatch:
+
+concurrency:
+  group: integration-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration-tests:
+    name: REST integration tests (standalone jetty)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Seed admin / user via sample_users.xml
+        # The webapp's applicationContext.xml has userListInitFile=<null/> by default
+        # because production deployments (MapStore overlay) provide their own seeder.
+        # For the standalone jetty backend used in CI we flip it to
+        # classpath:sample_users.xml which seeds admin/admin and user/user — both
+        # required by the test script.
+        run: |
+          set -euo pipefail
+          ctx=src/web/app/src/main/resources/applicationContext.xml
+          sed -i 's|<property name="userListInitFile"><null/></property>|<property name="userListInitFile" value="classpath:sample_users.xml"/>|' "$ctx"
+          echo "After patch:"
+          grep -n 'userListInitFile' "$ctx"
+
+      - name: Build webapp + dependencies
+        run: |
+          set -euo pipefail
+          mvn -B -ntp -pl src/web/app -am -DskipTests install
+
+      - name: Start GeoStore (jetty:run on :9191)
+        run: |
+          set -euo pipefail
+          nohup mvn -B -ntp -pl src/web/app -f src/web/app/pom.xml jetty:run \
+            > jetty.log 2>&1 &
+          echo "JETTY_PID=$!" >> "$GITHUB_ENV"
+          echo "Started jetty PID $!"
+
+      - name: Wait for backend to become ready
+        timeout-minutes: 5
+        run: |
+          set +e
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9191/geostore/ || echo "000")
+            case "$code" in
+              200|301|302|401|403|404)
+                echo "Backend responded with HTTP $code after $((i*2))s"
+                exit 0
+                ;;
+            esac
+            sleep 2
+          done
+          echo "Backend did not become ready in time. Last 200 lines of jetty.log:"
+          tail -n 200 jetty.log || true
+          exit 1
+
+      - name: Run integration tests
+        shell: pwsh
+        run: |
+          ./.github/scripts/run-integration-tests.ps1 `
+            -BaseUrl    'http://localhost:9191/geostore/rest' `
+            -LandingUrl 'http://localhost:9191/geostore/' `
+            -FrontEnd   'http://localhost:9191/geostore' `
+            -Category   'cat1' `
+            -ResultsCsv 'integration-test-results.csv'
+
+      - name: Stop jetty
+        if: always()
+        run: |
+          set +e
+          if [ -n "${JETTY_PID:-}" ]; then
+            kill "$JETTY_PID" 2>/dev/null || true
+            sleep 2
+            kill -9 "$JETTY_PID" 2>/dev/null || true
+          fi
+          # Belt-and-braces: kill anything still listening on 9191
+          fuser -k 9191/tcp 2>/dev/null || true
+
+      - name: Upload jetty log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jetty-log
+          path: jetty.log
+          if-no-files-found: warn
+
+      - name: Upload test results CSV
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: integration-test-results.csv
+          if-no-files-found: warn
