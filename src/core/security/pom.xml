@@ -94,13 +94,14 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-crypto</artifactId>
         </dependency>
+        <!-- acegi-security-tiger 1.0.7 (2006) and jasypt-acegisecurity removed in favour of
+             wrapping Jasypt's StandardPBEStringEncryptor / StrongPasswordEncryptor directly
+             via the package-local InternalPasswordEncoder adapter — see
+             AbstractGeoStorePasswordEncoder. Password wire format is preserved.
+             Jasypt core is now an explicit dependency (was previously transitive). -->
         <dependency>
             <groupId>org.jasypt</groupId>
-            <artifactId>jasypt-acegisecurity</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.acegisecurity</groupId>
-            <artifactId>acegi-security-tiger</artifactId>
+            <artifactId>jasypt</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.security</groupId>

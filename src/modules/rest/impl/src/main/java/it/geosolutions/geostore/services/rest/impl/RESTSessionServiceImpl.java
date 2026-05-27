@@ -37,6 +37,8 @@ import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.SecurityContext;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -48,8 +50,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService {
     static final String BEARER_TYPE = "bearer";
@@ -227,14 +229,14 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
 
     @Override
     public void removeSession() {
-        //        HttpServletRequest request =
-        //                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-        //                        .getRequest();
-        // TODO: extract token without extractor
-        //        Authentication authentication = new BearerTokenExtractor().extract(request);
-        Authentication authentication = null;
-        if (authentication != null && authentication.getPrincipal() != null)
-            removeSession(authentication.getPrincipal().toString());
+        ServletRequestAttributes attrs =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attrs == null) return;
+        HttpServletRequest request = attrs.getRequest();
+        String token = OAuth2Utils.getBearerToken(request);
+        if (token != null && !token.isEmpty()) {
+            removeSession(token);
+        }
     }
 
     /**
