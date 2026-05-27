@@ -69,7 +69,7 @@
     <properties>
         <!-- GeoStore core -->
         <main-prefix>geostore</main-prefix>
-        <cxf-version>4.2.0</cxf-version>
+        <cxf-version>4.2.1</cxf-version>
 
         <!-- Spring Framework & Security (aligned) -->
         <spring-version>7.0.7</spring-version>
