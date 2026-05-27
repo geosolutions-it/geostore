@@ -57,7 +57,10 @@ import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -69,6 +72,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class ResourceServiceImpl.
@@ -76,7 +80,26 @@ import org.springframework.dao.DataIntegrityViolationException;
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  * @author ETj (etj at geo-solutions.it)
  */
+@Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class ResourceServiceImpl implements ResourceService {
+
+    /** Shared formatter for attribute DATE values (thread-safe). */
+    private static final DateTimeFormatter ATTR_DATE_FORMAT =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+    /** Parses an attribute string value into a {@link Date} using {@link #ATTR_DATE_FORMAT}. */
+    private static Date parseAttributeDate(String value) throws ParseException {
+        try {
+            return Date.from(
+                    LocalDateTime.parse(value, ATTR_DATE_FORMAT)
+                            .atZone(ZoneId.systemDefault())
+                            .toInstant());
+        } catch (DateTimeParseException e) {
+            ParseException pe = new ParseException(e.getMessage(), e.getErrorIndex());
+            pe.initCause(e);
+            throw pe;
+        }
+    }
 
     private static final Logger LOGGER = LogManager.getLogger(ResourceServiceImpl.class);
 
@@ -140,6 +163,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#insert(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long insert(Resource resource)
             throws BadRequestServiceEx, NotFoundServiceEx, DuplicatedResourceNameServiceEx {
         if (LOGGER.isDebugEnabled()) {
@@ -261,6 +285,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#update(it.geosolutions.geostore.core.model.Resource)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long update(Resource resource)
             throws NotFoundServiceEx, DuplicatedResourceNameServiceEx {
         Resource orig = resourceDAO.find(resource.getId());
@@ -285,6 +310,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#updateAttributes(long, java.util.List)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void updateAttributes(long id, List<Attribute> attributes) throws NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
         if (resource == null) {
@@ -392,6 +418,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#delete(long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean delete(long id) {
         //
         // data on ancillary tables should be deleted by cascading
@@ -405,6 +432,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#delete(long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void deleteResources(SearchFilter filter)
             throws BadRequestServiceEx, InternalErrorServiceEx {
         Search searchCriteria = SearchConverter.convert(filter);
@@ -506,6 +534,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @see it.geosolutions.geostore.services.ResourceService#updateAttribute(long, java.lang.String, java.lang.String)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long updateAttribute(long id, String name, String value) throws InternalErrorServiceEx {
         Search searchCriteria = new Search(Attribute.class);
         searchCriteria.addFilterEqual("resource.id", id);
@@ -517,9 +546,8 @@ public class ResourceServiceImpl implements ResourceService {
 
         switch (attribute.getType()) {
             case DATE:
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
                 try {
-                    attribute.setDateValue(sdf.parse(value));
+                    attribute.setDateValue(parseAttributeDate(value));
                 } catch (ParseException e) {
                     throw new InternalErrorServiceEx("Error parsing attribute date value");
                 }
@@ -540,6 +568,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long insertAttribute(long id, String name, String value, DataType type)
             throws InternalErrorServiceEx {
         Search searchCriteria = new Search(Attribute.class);
@@ -552,9 +581,8 @@ public class ResourceServiceImpl implements ResourceService {
             Attribute attribute = attributes.get(0);
             switch (attribute.getType()) {
                 case DATE:
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
                     try {
-                        attribute.setDateValue(sdf.parse(value));
+                        attribute.setDateValue(parseAttributeDate(value));
                     } catch (ParseException e) {
                         throw new InternalErrorServiceEx("Error parsing attribute date value");
                     }
@@ -581,9 +609,8 @@ public class ResourceServiceImpl implements ResourceService {
 
             switch (type) {
                 case DATE:
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
                     try {
-                        attribute.setDateValue(sdf.parse(value));
+                        attribute.setDateValue(parseAttributeDate(value));
                     } catch (ParseException e) {
                         throw new InternalErrorServiceEx("Error parsing attribute date value");
                     }
@@ -794,6 +821,7 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void updateSecurityRules(long id, List<SecurityRule> rules)
             throws InternalErrorServiceEx, NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
