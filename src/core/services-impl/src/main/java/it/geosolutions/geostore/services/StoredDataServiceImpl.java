@@ -31,6 +31,7 @@ import java.util.Date;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class StoredDataServiceImpl.
@@ -38,6 +39,7 @@ import org.apache.logging.log4j.Logger;
  * @author ETj (etj at geo-solutions.it)
  * @author Tobia di Pisa (tobia.dipisa at geo-solutions.it)
  */
+@Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class StoredDataServiceImpl implements StoredDataService {
 
     private static final Logger LOGGER = LogManager.getLogger(StoredDataServiceImpl.class);
@@ -63,6 +65,7 @@ public class StoredDataServiceImpl implements StoredDataService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long update(long id, String data) throws NotFoundServiceEx {
         Resource resource = resourceDAO.find(id);
 
@@ -112,6 +115,7 @@ public class StoredDataServiceImpl implements StoredDataService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean delete(long id) {
         //
         // data on ancillary tables should be deleted by cascading

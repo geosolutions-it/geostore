@@ -30,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class TagServiceImplTest extends ServiceTestBase {
 
@@ -46,7 +45,7 @@ public class TagServiceImplTest extends ServiceTestBase {
 
         List<Tag> foundTags = tagDAO.findAll();
         assertEquals(2, foundTags.size());
-        List<Long> foundTagsIds = foundTags.stream().map(Tag::getId).collect(Collectors.toList());
+        List<Long> foundTagsIds = foundTags.stream().map(Tag::getId).toList();
         assertTrue(foundTagsIds.stream().noneMatch(Objects::isNull));
     }
 

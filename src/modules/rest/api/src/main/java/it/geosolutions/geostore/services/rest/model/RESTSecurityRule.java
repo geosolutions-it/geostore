@@ -36,7 +36,6 @@ import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class RESTSecurityRule.
@@ -74,8 +73,7 @@ public class RESTSecurityRule {
         canRead = rule.isCanRead();
         canWrite = rule.isCanWrite();
         if (rule.getIpRanges() != null) {
-            ipRanges =
-                    rule.getIpRanges().stream().map(RESTIPRange::new).collect(Collectors.toList());
+            ipRanges = rule.getIpRanges().stream().map(RESTIPRange::new).toList();
         }
     }
 

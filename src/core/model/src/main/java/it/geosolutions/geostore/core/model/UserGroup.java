@@ -44,7 +44,6 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class Group.
@@ -190,8 +189,7 @@ public class UserGroup implements Serializable {
 
         if (users != null) {
             builder.append(", ");
-            builder.append("users=")
-                    .append(users.stream().map(User::getId).collect(Collectors.toList()));
+            builder.append("users=").append(users.stream().map(User::getId).toList());
         }
 
         builder.append(']');

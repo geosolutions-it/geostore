@@ -28,7 +28,6 @@ import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.core.model.enums.Role;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.Hibernate;
@@ -109,8 +108,7 @@ public class UserGroupDAOImpl extends BaseDAO<UserGroup, Long> implements UserGr
     public List<UserGroup> searchByUser(User user, Search search) {
 
         if (user.getRole() == Role.USER) {
-            List<Long> userGroupsIds =
-                    user.getGroups().stream().map(UserGroup::getId).collect(Collectors.toList());
+            List<Long> userGroupsIds = user.getGroups().stream().map(UserGroup::getId).toList();
 
             search.addFilterIn("id", userGroupsIds);
         }

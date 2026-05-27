@@ -7,7 +7,6 @@ import it.geosolutions.geostore.core.ldap.IterableNamingEnumeration;
 import it.geosolutions.geostore.core.ldap.MockContextSource;
 import it.geosolutions.geostore.core.security.SimpleGrantedAuthoritiesMapper;
 import java.util.*;
-import java.util.stream.Collectors;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.BasicAttributes;
@@ -137,8 +136,7 @@ public class GeoStoreLdapAuthoritiesPopulatorTest {
         Set<GrantedAuthority> authorities =
                 authoritiesPopulator.getGroupMembershipRoles("uid=bill,ou=people", "bill");
         List<String> expected = Arrays.asList("ROLE_ADMIN", "GROUP1", "GROUP2");
-        List<String> stringAuthorities =
-                authorities.stream().map(a -> a.getAuthority()).collect(Collectors.toList());
+        List<String> stringAuthorities = authorities.stream().map(a -> a.getAuthority()).toList();
         assertEquals(expected.size(), stringAuthorities.size());
         assertTrue(stringAuthorities.containsAll(expected));
     }

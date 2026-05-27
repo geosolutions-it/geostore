@@ -34,8 +34,10 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 /** @author DamianoG */
+@Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class UserGroupServiceImpl implements UserGroupService {
 
     private static final Logger LOGGER = LogManager.getLogger(UserGroupServiceImpl.class);
@@ -78,6 +80,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @see it.geosolutions.geostore.services.UserGroupService#insert(it.geosolutions.geostore.core.model.UserGroup)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long insert(UserGroup userGroup) throws BadRequestServiceEx {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting UserGroup... ");
@@ -117,6 +120,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @see it.geosolutions.geostore.services.UserGroupService#delete(long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
         UserGroup group = userGroupDAO.find(id);
         if (group == null) {
@@ -149,6 +153,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @see it.geosolutions.geostore.services.UserGroupService#assignUserGroup(long, long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void assignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
         UserGroup groupToAssign = userGroupDAO.find(groupId);
 
@@ -175,6 +180,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @see it.geosolutions.geostore.services.UserGroupService#deassignUserGroup(long, long)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void deassignUserGroup(long userId, long groupId) throws NotFoundServiceEx {
         UserGroup groupToAssign = userGroupDAO.find(groupId);
         // Check if the group user want to remove is an allowed one
@@ -248,6 +254,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @see it.geosolutions.geostore.services.UserGroupService#updateSecurityRules(java.lang.Long, java.util.List, boolean, boolean)
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public List<ShortResource> updateSecurityRules(
             Long groupId, List<Long> resourcesIds, boolean canRead, boolean canWrite)
             throws NotFoundServiceEx, BadRequestServiceEx {
@@ -331,6 +338,7 @@ public class UserGroupServiceImpl implements UserGroupService {
         return null;
     }
 
+    @Transactional(value = "geostoreTransactionManager")
     public boolean insertSpecialUsersGroups() {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting Reserved UsersGroup... ");
@@ -345,6 +353,7 @@ public class UserGroupServiceImpl implements UserGroupService {
         return true;
     }
 
+    @Transactional(value = "geostoreTransactionManager")
     public boolean removeSpecialUsersGroups() {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Removing Reserved UsersGroup... ");
@@ -415,6 +424,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void updateAttributes(long id, List<UserGroupAttribute> attributes)
             throws NotFoundServiceEx {
         UserGroup group = userGroupDAO.find(id);
@@ -447,6 +457,7 @@ public class UserGroupServiceImpl implements UserGroupService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long update(UserGroup group) throws NotFoundServiceEx, BadRequestServiceEx {
         UserGroup old = get(group.getId());
         if (old == null) old = get(group.getGroupName());

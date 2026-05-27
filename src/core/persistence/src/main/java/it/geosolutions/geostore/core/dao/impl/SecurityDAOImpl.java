@@ -33,7 +33,6 @@ import it.geosolutions.geostore.core.model.enums.Role;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
@@ -203,13 +202,10 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
         Filter ownershipFilter = userFilter;
 
         if (user.getGroups() != null && !user.getGroups().isEmpty()) {
-            List<Long> groupIds =
-                    user.getGroups().stream().map(UserGroup::getId).collect(Collectors.toList());
+            List<Long> groupIds = user.getGroups().stream().map(UserGroup::getId).toList();
 
             List<String> groupNames =
-                    user.getGroups().stream()
-                            .map(UserGroup::getGroupName)
-                            .collect(Collectors.toList());
+                    user.getGroups().stream().map(UserGroup::getGroupName).toList();
 
             ownershipFilter =
                     Filter.or(

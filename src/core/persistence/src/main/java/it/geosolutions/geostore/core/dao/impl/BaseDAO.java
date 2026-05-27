@@ -28,7 +28,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.io.Serializable;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -110,7 +109,7 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
                                     }
                                     return f;
                                 })
-                        .collect(Collectors.toList());
+                        .toList();
 
         sqlSearch.setFilters(sqlFilters);
         return sqlSearch;
