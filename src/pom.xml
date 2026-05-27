@@ -601,29 +601,11 @@
                 <artifactId>spring-security-crypto</artifactId>
                 <version>${spring-security-version}</version>
             </dependency>
+            <!-- jasypt-acegisecurity + acegi-security-tiger removed: see core/security pom comment. -->
             <dependency>
                 <groupId>org.jasypt</groupId>
-                <artifactId>jasypt-acegisecurity</artifactId>
+                <artifactId>jasypt</artifactId>
                 <version>${jasypt.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.acegisecurity</groupId>
-                <artifactId>acegi-security-tiger</artifactId>
-                <version>${acegi-security-tiger.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>log4j</groupId>
-                        <artifactId>log4j</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-support</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.springframework</groupId>
-                        <artifactId>spring-remoting</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.auth0</groupId>
