@@ -124,14 +124,16 @@ public class OAuth2Utils {
         return token;
     }
 
-    //    /**
-    //     * Get the id token from the request attributes.
-    //     *
-    //     * @return the id token value if found, null otherwise.
-    //     */
-    //    public static String getIdToken() {
-    //        return getRequestAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE);
-    //    }
+    public static final String ID_TOKEN_VALUE = "OpenIdConnect-IdTokenValue";
+
+    /**
+     * Get the id token from the request attributes.
+     *
+     * @return the id token value if found, null otherwise.
+     */
+    public static String getIdToken() {
+        return getRequestAttribute(ID_TOKEN_VALUE);
+    }
 
     /**
      * Get the Access Token from the request attributes if present.
@@ -146,7 +148,7 @@ public class OAuth2Utils {
     }
 
     /**
-     * Get the Refresh Toke from request attributes if present.
+     * Get the Refresh Token from request attributes if present.
      *
      * @return the refresh token if found, null otherwise.
      */

@@ -30,7 +30,21 @@
 		<security:intercept-url pattern="/**" access="permitAll" />
 	</security:http>
 
+	<bean id="userAttributeTokenAuthenticationFilter"
+		  class="it.geosolutions.geostore.services.rest.security.UserAttributeTokenAuthenticationFilter"/>
 
+	<bean id="oauth2GeoStoreAuthenticationFilter"
+		  class="it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter"/>
+
+	<bean id="authenticationTokenProcessingFilter"
+		  class="org.springframework.web.filter.CompositeFilter">
+		<property name="filters">
+			<list>
+				<ref bean="userAttributeTokenAuthenticationFilter"/>
+				<ref bean="oauth2GeoStoreAuthenticationFilter"/>
+			</list>
+		</property>
+	</bean>
 
 	<!-- Entry point -->
 	<bean id="restAuthenticationEntryPoint" class="it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint" >

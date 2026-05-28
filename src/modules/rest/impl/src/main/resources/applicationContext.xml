@@ -79,7 +79,7 @@
     <bean id="sessionServiceDelegate"
           class="it.geosolutions.geostore.services.rest.impl.SessionServiceDelegateImpl">
         <constructor-arg ref="restSessionService"/>
-<!--        <constructor-arg ref="userService"/>-->
+        <!--        <constructor-arg ref="userService"/>-->
     </bean>
 
     <bean id="idpLoginRest"
@@ -374,5 +374,33 @@
     <!-- 		<property name="newUsersPasswordHeader" value="" /> -->
     <!-- 		<property name="userService" ref="userService" /> -->
     <!-- 	</bean> -->
+
+    <!-- OAuth2 beans-->
+
+    <bean id="httpRequestFactory" class="org.springframework.http.client.HttpComponentsClientHttpRequestFactory">
+        <property name="connectTimeout" value="5000"/>
+        <property name="readTimeout" value="10000"/>
+    </bean>
+
+    <bean id="restClientBuilder" class="it.geosolutions.geostore.services.rest.security.oauth2.RestClientBuilderFactory"
+          factory-method="createBuilder">
+        <constructor-arg ref="httpRequestFactory"/>
+    </bean>
+
+    <bean id="oAuth2RestClient" class="org.springframework.web.client.RestClient"
+          factory-bean="restClientBuilder"
+          factory-method="build">
+        <property name="baseUrl" value="https://your-auth-server-oauth2"/>
+    </bean>
+
+    <bean id="oAuth2AuthenticationService" class="it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationService">
+        <constructor-arg ref="oAuth2RestClient"/>
+    </bean>
+
+    <bean id="geoStoreOAuth2SuccessHandler"
+          class="it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuth2SuccessHandler">
+        <property name="authenticationService" ref="oAuth2AuthenticationService"/>
+        <property name="configuration" ref="configuration"/>
+    </bean>
 
 </beans>

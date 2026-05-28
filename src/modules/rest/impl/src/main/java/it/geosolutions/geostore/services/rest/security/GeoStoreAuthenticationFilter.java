@@ -137,7 +137,7 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
 
         Role role = Role.USER;
         user.setRole(role);
-        user.setGroups(Collections.EMPTY_SET);
+        user.setGroups(Collections.emptySet());
         if (userMapper != null) {
             userMapper.mapUser(rawUser, user);
         }
@@ -158,7 +158,7 @@ public abstract class GeoStoreAuthenticationFilter extends GenericFilterBean {
         if (user != null) {
             String role = user.getRole().toString();
 
-            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            List<GrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
             return new UsernamePasswordAuthenticationToken(user, user.getPassword(), authorities);
         } else {

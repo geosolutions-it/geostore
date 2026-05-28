@@ -32,6 +32,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import java.io.Serializable;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 
 /**
  * Holds the token details. Instances of this class are meant to be stored into the SecurityContext
@@ -41,15 +42,17 @@ public class TokenDetails implements Serializable {
     private final String idToken;
     private final String provider;
     private OAuth2AccessToken accessToken;
+    private OAuth2RefreshToken refreshToken;
     private DecodedJWT decodedJWT;
 
     /**
      * @param accessToken the accessToken instance.
      * @param idToken the JWT idToken
      */
-    public TokenDetails(OAuth2AccessToken accessToken, String idToken, String provider) {
+    public TokenDetails(OAuth2AccessToken accessToken, String idToken, String provider, OAuth2RefreshToken refreshToken) {
         this.idToken = idToken;
         this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
         if (idToken != null) {
             decodedJWT = JWT.decode(idToken);
         }
@@ -90,6 +93,10 @@ public class TokenDetails implements Serializable {
      */
     public void setAccessToken(OAuth2AccessToken accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public OAuth2RefreshToken getRefreshToken() {
+        return refreshToken;
     }
 
     public String getProvider() {
