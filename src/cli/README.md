@@ -1,6 +1,6 @@
 # GeoStore Command Line utilities
 
-The GeoStore CLI module includes command line utilites to interact with GeoStore and its internal database.
+The GeoStore CLI module includes command line utilities to interact with GeoStore and its internal database.
 
 It currently includes the following utilities:
 
@@ -36,7 +36,7 @@ src/cli/target/H2ToPgSQLExport.jar
 
 This tool can be used to migrate data from a GeoStore H2 database file, to a PostgreSQL database.
 
-We always advice using a full fledged database (like PosgreSQL or Oracle) in production, while an H2 embedded database can be useful during development or testing.
+We always advise using a full-fledged database (like PosgreSQL or Oracle) in production, while an H2 embedded database can be useful during development or testing.
 
 Sometimes migrating a development database into production is therefore needed.
 

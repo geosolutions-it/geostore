@@ -115,23 +115,23 @@ public class H2ToPgSQLExporter implements Runnable {
 
     List<String> orderedTables =
             Arrays.asList(
-                    new String[] {
-                        "GS_CATEGORY",
-                        "GS_RESOURCE",
-                        "GS_ATTRIBUTE",
-                        "GS_USER",
-                        "GS_USER_ATTRIBUTE",
-                        "GS_USERGROUP",
-                        "GS_USERGROUP_MEMBERS",
-                        "GS_SECURITY",
-                        "GS_STORED_DATA"
-                    });
+                    "GS_CATEGORY",
+                    "GS_RESOURCE",
+                    "GS_ATTRIBUTE",
+                    "GS_USER",
+                    "GS_USER_ATTRIBUTE",
+                    "GS_USER_FAVORITES",
+                    "GS_USERGROUP",
+                    "GS_USERGROUP_MEMBERS",
+                    "GS_SECURITY",
+                    "GS_STORED_DATA");
 
     Pattern searchInserts =
             Pattern.compile(
                     "INSERT INTO PUBLIC\\.([A-Z_]+)\\([^)]+\\) VALUES\\s*(.*?);(\n|\r\n)",
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
-    Pattern searchDecode = Pattern.compile("STRINGDECODE\\(('.*')\\)", Pattern.CASE_INSENSITIVE);
+    Pattern searchDecode =
+            Pattern.compile("STRINGDECODE\\(('(?>[^']|'')*')\\)", Pattern.CASE_INSENSITIVE);
 
     @Override
     public void run() {
