@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,7 +51,7 @@ public class H2ToPgSQLExporterProcessTest extends H2ToPgSQLExporterTest {
     }
 
     @Test
-    public void emptyListIfNoInsertsInScript() throws IOException {
+    public void emptyListIfNoInsertsInScript() {
         String script = getInvalidScript();
 
         List<String> sql = exporter.filterInserts(script);
@@ -95,30 +96,48 @@ public class H2ToPgSQLExporterProcessTest extends H2ToPgSQLExporterTest {
     }
 
     @Test
-    public void quotesInJsonAreCorrectlyEncoded() throws IOException {
+    public void quotesInJsonAreCorrectlyEncoded() {
         String sql =
                 "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n"
-                        + "(74, STRINGDECODE('{\\\"html\\\":\\\"<h1 style=\\\\\\\"text-align:center;\\\\\\\">TEXT</h1>\\\"}'), 74);\r\n";
+                + "(74, STRINGDECODE('{\\\"html\\\":\\\"<h1 style=\\\\\\\"text-align:center;\\\\\\\">TEXT</h1>\\\"}'), 74);\r\n";
 
         String normalized = exporter.normalizeInsert(sql);
 
         String expected =
                 "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n"
-                        + "(74, '{\"html\":\"<h1 style=\\\"text-align:center;\\\">TEXT</h1>\"}', 74);\r\n";
+                + "(74, '{\"html\":\"<h1 style=\\\"text-align:center;\\\">TEXT</h1>\"}', 74);\r\n";
         assertEquals(expected, normalized);
     }
 
     @Test
-    public void stringDecodeIsNotNeededForPgSQL() throws IOException {
+    public void unicodeCharactersAreCorrectlyDecoded() {
+
+        List<String> unicodes = List.of("\\u0041", "\\u00E8", "\\u0022", "\\u005C", "\\u20AC", "\\u4F60\\u597D");
+        List<String> decodeds = List.of("A", "è", "\"", "\\", "€", "你好");
+
         String sql =
                 "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n"
-                        + "(36, STRINGDECODE('{\\\"widgets\\\":[]}'), 36);\r\n";
+                + "(74, STRINGDECODE('" + String.join("|", unicodes) + "'), 74);\r\n";
 
         String normalized = exporter.normalizeInsert(sql);
 
         String expected =
                 "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n"
-                        + "(36, '{\"widgets\":[]}', 36);\r\n";
+                + "(74, '" + String.join("|", decodeds) + "', 74);\r\n";
+        assertEquals(expected, normalized);
+    }
+
+    @Test
+    public void stringDecodeIsNotNeededForPgSQL() {
+        String sql =
+                "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n"
+                + "(36, STRINGDECODE('{\\\"widgets\\\":[]}'), 36);\r\n";
+
+        String normalized = exporter.normalizeInsert(sql);
+
+        String expected =
+                "INSERT INTO GEOSTORE.GS_STORED_DATA(ID, STORED_DATA, RESOURCE_ID) VALUES\r\n"
+                + "(36, '{\"widgets\":[]}', 36);\r\n";
         assertEquals(expected, normalized);
     }
 
@@ -133,7 +152,7 @@ public class H2ToPgSQLExporterProcessTest extends H2ToPgSQLExporterTest {
     }
 
     @Test
-    public void hibernateSequenceIsSetToZeroForInvalidScript() throws IOException {
+    public void hibernateSequenceIsSetToZeroForInvalidScript() {
         String script = getInvalidScript();
 
         List<String> sql = exporter.filterInserts(script);
@@ -162,7 +181,7 @@ public class H2ToPgSQLExporterProcessTest extends H2ToPgSQLExporterTest {
     private void assertValidSql(String sql) {
         assertTrue(
                 sql.toUpperCase().startsWith("INSERT INTO GEOSTORE.")
-                        || sql.toUpperCase().startsWith("ALTER SEQUENCE "));
+                || sql.toUpperCase().startsWith("ALTER SEQUENCE "));
     }
 
     private void assertContains(String sql, String tableName) {
@@ -174,7 +193,7 @@ public class H2ToPgSQLExporterProcessTest extends H2ToPgSQLExporterTest {
         return exporter.exportH2AsScript().get();
     }
 
-    private String getInvalidScript() throws IOException {
+    private String getInvalidScript() {
         return "CREATE TABLE TEST\nALTER TABLE TEST\n";
     }
 }

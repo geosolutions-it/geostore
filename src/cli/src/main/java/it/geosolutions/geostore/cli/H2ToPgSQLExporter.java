@@ -45,6 +45,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.h2.tools.Script;
 import picocli.CommandLine.Option;
@@ -132,6 +133,8 @@ public class H2ToPgSQLExporter implements Runnable {
                     Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     Pattern searchDecode =
             Pattern.compile("STRINGDECODE\\(('(?>[^']|'')*')\\)", Pattern.CASE_INSENSITIVE);
+    Pattern unicode =
+            Pattern.compile("\\\\u([0-9a-fA-F]{4})");
 
     @Override
     public void run() {
@@ -240,7 +243,7 @@ public class H2ToPgSQLExporter implements Runnable {
         String result = insert.replace("INSERT INTO PUBLIC.", "INSERT INTO GEOSTORE.");
         Matcher m = searchDecode.matcher(result);
         while (m.find()) {
-            String value = m.group(1);
+            String value = decodeUnicode(m.group(1));
             result =
                     result.replace(
                             m.group(0),
@@ -248,6 +251,21 @@ public class H2ToPgSQLExporter implements Runnable {
                                     .replaceAll("\\\\\"", Matcher.quoteReplacement("\"")));
         }
         return result;
+    }
+
+    String decodeUnicode(String s) {
+        Matcher m = unicode.matcher(s);
+        StringBuilder sb = new StringBuilder();
+
+        while (m.find()) {
+            int codePoint = Integer.parseInt(m.group(1), 16);
+            m.appendReplacement(sb,
+                    Matcher.quoteReplacement(new String(Character.toChars(codePoint)))
+            );
+        }
+
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     Optional<String> validateInputFile() {
