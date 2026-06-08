@@ -82,8 +82,15 @@ public class OAuth2GeoStoreAuthenticationService {
         Authentication authentication = cache.get(token);
 
         if (authentication == null) {
-            // Bearer path: no refresh token is available with an incoming bearer token.
-            return authenticateAndUpdateCache(request, response, token, null, null);
+            // Bearer path: wrap the incoming bearer token as an OAuth2AccessToken so its claims
+            // (roles/groups) are available to authority synchronization in createPreAuthentication.
+            // The 2.6.x filter always authenticated bearer tokens with the access token in hand,
+            // and
+            // no refresh token accompanies an incoming bearer token.
+            OAuth2AccessToken bearerAccessToken =
+                    new OAuth2AccessToken(
+                            OAuth2AccessToken.TokenType.BEARER, token, Instant.now(), null);
+            return authenticateAndUpdateCache(request, response, token, bearerAccessToken, null);
         }
 
         TokenDetails tokenDetails = extractTokenDetails(authentication);
