@@ -61,8 +61,8 @@ public class OAuth2GeoStoreAuthenticationService {
     // protected so the OpenIdConnect subclass can reuse them when overriding principal/authority
     // resolution.
     protected final TokenAuthenticationCache cache;
-    protected final UserService userService;
-    protected final UserGroupService userGroupService;
+    protected UserService userService;
+    protected UserGroupService userGroupService;
     protected final OAuth2Configuration configuration;
 
     public OAuth2GeoStoreAuthenticationService(
@@ -74,6 +74,16 @@ public class OAuth2GeoStoreAuthenticationService {
         this.userService = userService;
         this.userGroupService = userGroupService;
         this.configuration = configuration;
+    }
+
+    /** Allows the owning filter (or tests) to wire the user service after construction. */
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
+    /** Allows the owning filter (or tests) to wire the user-group service after construction. */
+    public void setUserGroupService(UserGroupService userGroupService) {
+        this.userGroupService = userGroupService;
     }
 
     public Authentication authenticate(
