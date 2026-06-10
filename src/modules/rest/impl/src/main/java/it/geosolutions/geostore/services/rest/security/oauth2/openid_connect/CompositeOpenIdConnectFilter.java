@@ -156,19 +156,22 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                     new OpenIdConnectFilter(
                             tokenServices, restTemplate, config, cache, validator, jwksKeyProvider);
 
-            // Log configuration state after discovery has run (inside the filter constructor)
-            LOGGER.debug(
-                    "Provider '{}' config after discovery: authorizationUri={}, accessTokenUri={}, "
-                            + "discoveryUrl={}, clientId={}, redirectUri={}, scopes={}, "
-                            + "isInvalid={}",
-                    providerName,
-                    config.getAuthorizationUri(),
-                    config.getAccessTokenUri(),
-                    config.getDiscoveryUrl(),
-                    config.getClientId(),
-                    config.getRedirectUri(),
-                    config.getScopes(),
-                    config.isInvalid());
+            // Log configuration state after discovery has run (inside the filter constructor).
+            // Contains the clientId: printed only when the provider opts into sensitive logging.
+            if (config.isLogSensitiveInfo()) {
+                LOGGER.debug(
+                        "Provider '{}' config after discovery: authorizationUri={}, accessTokenUri={}, "
+                                + "discoveryUrl={}, clientId={}, redirectUri={}, scopes={}, "
+                                + "isInvalid={}",
+                        providerName,
+                        config.getAuthorizationUri(),
+                        config.getAccessTokenUri(),
+                        config.getDiscoveryUrl(),
+                        config.getClientId(),
+                        config.getRedirectUri(),
+                        config.getScopes(),
+                        config.isInvalid());
+            }
 
             if (config.isInvalid()) {
                 LOGGER.error(

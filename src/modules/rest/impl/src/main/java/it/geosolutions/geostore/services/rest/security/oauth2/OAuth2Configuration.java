@@ -244,7 +244,9 @@ public class OAuth2Configuration extends IdPConfiguration {
             loginUri.append("&access_type=").append(accessType);
         }
 
-        LOGGER.debug("Authorization endpoint URI built: {}", loginUri);
+        if (isLogSensitiveInfo()) {
+            LOGGER.debug("Authorization endpoint URI built: {}", loginUri);
+        }
         return loginUri.toString();
     }
 

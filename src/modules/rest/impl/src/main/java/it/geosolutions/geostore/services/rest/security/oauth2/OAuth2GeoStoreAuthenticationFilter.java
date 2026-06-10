@@ -414,7 +414,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             HttpServletResponse response,
             OAuth2AccessToken accessToken) {
         LOGGER.info("About to perform remote authentication.");
-        LOGGER.debug("Access Token: {}", accessToken);
+        debugSensitive("Access Token: {}", accessToken);
         String principal = null;
         PreAuthenticatedAuthenticationToken result = null;
         try {
@@ -688,6 +688,18 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         }
     }
 
+    /**
+     * Logs potentially sensitive details (token values, claim contents, resolved roles/groups) only
+     * when the provider explicitly enables {@code logSensitiveInfo}. Raising the logger level alone
+     * is not enough: this prevents tokens and claims from leaking into DEBUG logs enabled for
+     * ordinary troubleshooting.
+     */
+    private void debugSensitive(String message, Object... args) {
+        if (configuration != null && configuration.isLogSensitiveInfo()) {
+            LOGGER.debug(message, args);
+        }
+    }
+
     protected List<String> parseScopes(String commaSeparatedScopes) {
         List<String> scopes = newArrayList();
         if (StringUtils.isBlank(commaSeparatedScopes)) return scopes;
@@ -835,7 +847,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 1) Try primary token (usually ID token)
             if (primaryHelper != null) {
                 rawRoles = primaryHelper.getClaim(rolesClaimName, Object.class);
-                LOGGER.debug(
+                debugSensitive(
                         "Roles claim '{}' from primary token: {} (type={})",
                         rolesClaimName,
                         rawRoles,
@@ -844,7 +856,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 2) Fallback: access token (Keycloak puts realm_access here)
             if (rawRoles == null && accessHelper != null) {
                 rawRoles = accessHelper.getClaim(rolesClaimName, Object.class);
-                LOGGER.debug(
+                debugSensitive(
                         "Roles claim '{}' from access token (fallback): {} (type={})",
                         rolesClaimName,
                         rawRoles,
@@ -853,7 +865,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 3) Fallback: userinfo map
             if (rawRoles == null && userinfoMap != null) {
                 rawRoles = ClaimPathResolver.resolveIgnoreCase(userinfoMap, rolesClaimName);
-                LOGGER.debug(
+                debugSensitive(
                         "Roles claim '{}' from userinfo: {} (type={})",
                         rolesClaimName,
                         rawRoles,
@@ -866,7 +878,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (rawRoles != null) {
             List<String> oidcRoles = ClaimPathResolver.toStringList(rawRoles);
             if (oidcRoles == null) oidcRoles = Collections.emptyList();
-            LOGGER.debug(
+            debugSensitive(
                     "Resolved role strings from token: {} (roleMappings={})",
                     oidcRoles,
                     configuration.getRoleMappings());
@@ -902,12 +914,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 1) Try primary token
             if (primaryHelper != null) {
                 fromJwt = primaryHelper.getClaimAsList(groupsClaimName, String.class);
-                LOGGER.debug("Groups from primary token claim '{}': {}", groupsClaimName, fromJwt);
+                debugSensitive(
+                        "Groups from primary token claim '{}': {}", groupsClaimName, fromJwt);
             }
             // 2) Fallback: access token
             if ((fromJwt == null || fromJwt.isEmpty()) && accessHelper != null) {
                 fromJwt = accessHelper.getClaimAsList(groupsClaimName, String.class);
-                LOGGER.debug(
+                debugSensitive(
                         "Groups from access token claim '{}' (fallback): {}",
                         groupsClaimName,
                         fromJwt);
@@ -918,12 +931,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 // 3) Fallback: userinfo map
                 List<String> fromUserinfo =
                         ClaimPathResolver.resolveAsListIgnoreCase(userinfoMap, groupsClaimName);
-                LOGGER.debug("Groups from userinfo claim '{}': {}", groupsClaimName, fromUserinfo);
+                debugSensitive(
+                        "Groups from userinfo claim '{}': {}", groupsClaimName, fromUserinfo);
                 if (fromUserinfo != null) {
                     oidcGroups = fromUserinfo;
                 }
             }
-            LOGGER.debug("Groups resolved from token/userinfo: {}", oidcGroups);
+            debugSensitive("Groups resolved from token/userinfo: {}", oidcGroups);
         } else {
             LOGGER.info("No groupsClaim configured -> skipping group sync.");
         }
@@ -947,7 +961,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             oidcGroups = mapped;
         }
 
-        LOGGER.debug(
+        debugSensitive(
                 "Final groups to reconcile: {} (user.role={}, user.id={})",
                 oidcGroups,
                 user.getRole(),
@@ -957,7 +971,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // ----- Persist user after role & group sync -----
         try {
             if (userService != null) {
-                LOGGER.debug(
+                debugSensitive(
                         "Persisting user '{}' (id={}, role={}, groups={})",
                         user.getName(),
                         user.getId(),
@@ -982,7 +996,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                     e.getMessage(),
                     e);
         } finally {
-            LOGGER.debug(
+            debugSensitive(
                     "User '{}' after sync: role={}, groups={}",
                     user.getName(),
                     user.getRole(),
@@ -995,7 +1009,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     // ---------------------------------------------------------------------
 
     private Role computeRole(List<String> rolesFromToken, Role defaultRole) {
-        LOGGER.debug(
+        debugSensitive(
                 "computeRole: rolesFromToken={}, defaultRole={}, roleMappings={}, dropUnmapped={}",
                 rolesFromToken,
                 defaultRole,
@@ -1003,7 +1017,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 configuration.isDropUnmapped());
         if (rolesFromToken == null || rolesFromToken.isEmpty()) {
             Role result = (defaultRole != null) ? defaultRole : Role.USER;
-            LOGGER.debug("computeRole: no roles in token -> returning {}", result);
+            debugSensitive("computeRole: no roles in token -> returning {}", result);
             return result;
         }
         Map<String, String> roleMappings = configuration.getRoleMappings();
@@ -1016,15 +1030,15 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             if (roleMappings != null) {
                 String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
                 if (mapped != null) {
-                    LOGGER.debug("computeRole: '{}' mapped to '{}' via roleMappings", rr, mapped);
+                    debugSensitive("computeRole: '{}' mapped to '{}' via roleMappings", rr, mapped);
                     rr = mapped;
                     wasMapped = true;
                 } else if (dropUnmapped) {
-                    LOGGER.debug(
+                    debugSensitive(
                             "computeRole: '{}' not in roleMappings, dropping (dropUnmapped)", rr);
                     continue;
                 } else {
-                    LOGGER.debug(
+                    debugSensitive(
                             "computeRole: '{}' not in roleMappings, keeping (dropUnmapped=false)",
                             rr);
                 }
@@ -1034,21 +1048,21 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // (e.g. "guest", "admin") should not accidentally match GeoStore roles.
             if (wasMapped || roleMappings == null || roleMappings.isEmpty()) {
                 if (rr.equalsIgnoreCase(Role.ADMIN.name())) {
-                    LOGGER.debug("computeRole: '{}' matches ADMIN -> returning ADMIN", rr);
+                    debugSensitive("computeRole: '{}' matches ADMIN -> returning ADMIN", rr);
                     return Role.ADMIN;
                 }
                 if (rr.equalsIgnoreCase(Role.USER.name())) {
-                    LOGGER.debug("computeRole: '{}' matches USER", rr);
+                    debugSensitive("computeRole: '{}' matches USER", rr);
                     resolved = Role.USER;
                     continue;
                 }
                 if (rr.equalsIgnoreCase(Role.GUEST.name())) {
-                    LOGGER.debug("computeRole: '{}' matches GUEST", rr);
+                    debugSensitive("computeRole: '{}' matches GUEST", rr);
                     resolved = Role.GUEST;
                 }
             }
         }
-        LOGGER.debug("computeRole: final resolved role = {}", resolved);
+        debugSensitive("computeRole: final resolved role = {}", resolved);
         return resolved;
     }
 
@@ -1088,7 +1102,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             return;
         }
 
-        LOGGER.debug(
+        debugSensitive(
                 "reconcileRemoteGroups: user='{}' (id={}, role={}), "
                         + "provider='{}', newGroupNames={}, "
                         + "currentGroups={} (type={})",

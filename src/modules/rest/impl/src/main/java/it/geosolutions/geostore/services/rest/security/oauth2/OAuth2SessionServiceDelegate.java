@@ -519,7 +519,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (refreshToken != null) {
                 accessToken.setRefreshToken(refreshToken);
             }
-            LOGGER.debug("Creating new details. AccessToken: {} IdToken: {}", accessToken, idToken);
+            if (conf != null && conf.isLogSensitiveInfo()) {
+                LOGGER.debug(
+                        "Creating new details. AccessToken: {} IdToken: {}", accessToken, idToken);
+            }
             updated.setDetails(new TokenDetails(accessToken, idToken, conf.getBeanName()));
             cache().putCacheEntry(newToken.getValue(), updated);
             SecurityContextHolder.getContext().setAuthentication(updated);
