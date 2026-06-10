@@ -40,7 +40,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                     provider + CONFIG_NAME_SUFFIX);
             throw new RuntimeException("No OAuth2Configuration found for provider: " + provider);
         }
-        LOGGER.info(
+        LOGGER.debug(
                 "Provider '{}' config: enabled={}, clientId={}, authorizationUri={}, "
                         + "accessTokenUri={}, discoveryUrl={}, redirectUri={}, scopes={}",
                 provider,
@@ -59,7 +59,8 @@ public abstract class Oauth2LoginService implements IdPLoginService {
         }
         String login = configuration.buildLoginUri();
         try {
-            LOGGER.info("Redirecting to login URI for provider '{}': {}", provider, login);
+            LOGGER.info("Redirecting to login URI for provider '{}'", provider);
+            LOGGER.debug("Login URI: {}", login);
             resp.sendRedirect(login);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -89,7 +90,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             throw new RuntimeException(
                     "No IdPConfiguration found for callback provider: " + provider);
         }
-        LOGGER.info("Token: {}", token);
+        LOGGER.debug("Token: {}", token);
         LOGGER.info("Redirect uri: {}", configuration.getRedirectUri());
         LOGGER.info("Internal redirect uri: {}", configuration.getInternalRedirectUri());
         if (token != null) {
@@ -99,11 +100,11 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 result =
                         result.status(302)
                                 .location(new URI(configuration.getInternalRedirectUri()));
-                LOGGER.info("AccessToken: {}", token);
+                LOGGER.debug("AccessToken: {}", token);
                 sessionToken.setAccessToken(token);
                 sessionToken.setTokenType(BEARER_TYPE);
                 if (refreshToken != null) {
-                    LOGGER.info("RefreshToken: {}", refreshToken);
+                    LOGGER.debug("RefreshToken: {}", refreshToken);
                     result.header("Set-Cookie", refreshTokenCookie(refreshToken).toString());
                 }
                 TokenStorage tokenStorage = tokenStorage();

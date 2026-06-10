@@ -157,7 +157,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                             tokenServices, restTemplate, config, cache, validator, jwksKeyProvider);
 
             // Log configuration state after discovery has run (inside the filter constructor)
-            LOGGER.info(
+            LOGGER.debug(
                     "Provider '{}' config after discovery: authorizationUri={}, accessTokenUri={}, "
                             + "discoveryUrl={}, clientId={}, redirectUri={}, scopes={}, "
                             + "isInvalid={}",
