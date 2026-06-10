@@ -95,6 +95,11 @@ public class KeycloakLifecycleTest {
 
     @BeforeEach
     void setUp() {
+        // Defensive: a previous test class on this thread may have left an authentication
+        // in the ThreadLocal SecurityContext; the filter would then skip authentication.
+        SecurityContextHolder.clearContext();
+        RequestContextHolder.resetRequestAttributes();
+
         String authServerUrl = keycloak.getAuthServerUrl();
         if (!authServerUrl.endsWith("/")) {
             authServerUrl += "/";

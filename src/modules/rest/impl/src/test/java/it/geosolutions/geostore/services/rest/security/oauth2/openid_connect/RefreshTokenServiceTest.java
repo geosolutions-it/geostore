@@ -110,6 +110,12 @@ class RefreshTokenServiceTest {
         // Clear the RequestContextHolder after each test
         RequestContextHolder.resetRequestAttributes();
 
+        // The mocked SecurityContext set in setUp() lives in a ThreadLocal: without this,
+        // it leaks into whatever test class runs next on the same surefire thread (it made
+        // KeycloakLifecycleTest.testRefreshTokenFlow fail intermittently in CI: the filter
+        // saw a non-null mock Authentication and skipped authentication entirely).
+        SecurityContextHolder.clearContext();
+
         // Close static mocks if any
         // For Mockito 3.4.0 and above
         Mockito.framework().clearInlineMocks();
