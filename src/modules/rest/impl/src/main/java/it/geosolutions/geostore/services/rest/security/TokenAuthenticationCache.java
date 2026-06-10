@@ -113,7 +113,15 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
             if (exp != null) {
                 long remainingMs = exp.getTime() - System.currentTimeMillis();
                 if (remainingMs > 0) {
-                    return TimeUnit.MILLISECONDS.toNanos(remainingMs);
+                    // Keep the entry at least for the configured cache lifetime: the
+                    // authentication filter re-validates expired access tokens anyway, and
+                    // the logout flow needs the cached TokenDetails (ID token) to terminate
+                    // the IdP session even when the user logs out after the access token
+                    // expired. Evicting exactly at token expiry made RP-initiated logout
+                    // silently ineffective for idle sessions and was sensitive to IdP
+                    // clock skew.
+                    return Math.max(
+                            TimeUnit.MILLISECONDS.toNanos(remainingMs), defaultExpirationNanos);
                 }
             }
         }
