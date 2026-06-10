@@ -613,6 +613,16 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                                 RequestContextHolder.getRequestAttributes()
                                         .getAttribute(REFRESH_TOKEN_PARAM, 0);
             }
+            if (token == null && RequestContextHolder.getRequestAttributes() != null) {
+                // Last resort: the ID token published by the authentication filter from the
+                // cached token details. Reached when the access token is expired (cache entry
+                // already consumed by the failed re-authentication) — the ID token is exactly
+                // what the OIDC logout endpoint needs as id_token_hint.
+                token =
+                        (String)
+                                RequestContextHolder.getRequestAttributes()
+                                        .getAttribute(OAuth2Utils.ID_TOKEN_PARAM, 0);
+            }
         }
 
         if (accessToken == null) {

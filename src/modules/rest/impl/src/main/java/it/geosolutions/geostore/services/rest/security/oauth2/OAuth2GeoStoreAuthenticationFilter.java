@@ -208,6 +208,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             } else {
                 TokenDetails details = tokenDetails(authentication);
                 if (details != null) {
+                    // Expose the cached tokens and provider to downstream handlers (the
+                    // logout endpoint above all) BEFORE any re-authentication: once the
+                    // access token has expired, the cached details are the only reliable
+                    // source for the ID token and the provider selection.
+                    exposeTokenDetails(request, token, details);
                     OAuth2AccessToken accessToken = details.getAccessToken();
                     if (accessToken.isExpired()) {
                         authentication =
@@ -259,6 +264,26 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     private TokenDetails tokenDetails(Authentication authentication) {
         Object details = authentication != null ? authentication.getDetails() : null;
         return (details instanceof TokenDetails) ? (TokenDetails) details : null;
+    }
+
+    /**
+     * Publishes the cached token details as request attributes so that downstream handlers (the
+     * session/logout endpoint in particular) can resolve the provider, the ID token and the refresh
+     * token even when the access token is expired and re-authentication fails.
+     */
+    private void exposeTokenDetails(
+            HttpServletRequest request, String token, TokenDetails details) {
+        request.setAttribute(PROVIDER_KEY, details.getProvider());
+        request.setAttribute(ACCESS_TOKEN_PARAM, token);
+        if (details.getIdToken() != null) {
+            request.setAttribute(ID_TOKEN_PARAM, details.getIdToken());
+        }
+        OAuth2AccessToken cached = details.getAccessToken();
+        if (cached != null
+                && cached.getRefreshToken() != null
+                && cached.getRefreshToken().getValue() != null) {
+            request.setAttribute(REFRESH_TOKEN_PARAM, cached.getRefreshToken().getValue());
+        }
     }
 
     /**
