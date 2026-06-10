@@ -29,8 +29,10 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -242,7 +244,7 @@ public class OAuth2Configuration extends IdPConfiguration {
             loginUri.append("&access_type=").append(accessType);
         }
 
-        LOGGER.info("Authorization endpoint URI built: {}", loginUri);
+        LOGGER.debug("Authorization endpoint URI built: {}", loginUri);
         return loginUri.toString();
     }
 
@@ -694,17 +696,73 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.logSensitiveInfo = logSensitiveInfo;
     }
 
+    /**
+     * Parses comma-separated {@code key:value} mappings. Literal colons or commas inside a key or
+     * value can be escaped with a backslash, e.g. {@code landscape\:read:mapped-name} maps the IdP
+     * role {@code landscape:read}. Note that in .properties files the backslash itself must be
+     * doubled ({@code landscape\\:read}) because the properties format consumes one level of
+     * escaping.
+     */
     static Map<String, String> parseMappings(String mappings) {
         if (mappings == null || mappings.trim().isEmpty()) return null;
-        String[] pairs = mappings.split(",");
-        Map<String, String> map = new HashMap<>(pairs.length);
-        for (String pair : pairs) {
-            String[] parts = pair.split(":", 2);
-            if (parts.length == 2) {
-                map.put(parts[0].trim().toUpperCase(Locale.ROOT), parts[1].trim());
+        Map<String, String> map = new HashMap<>();
+        for (String pair : splitUnescaped(mappings, ',', 0)) {
+            List<String> parts = splitUnescaped(pair, ':', 2);
+            if (parts.size() == 2) {
+                String key = unescape(parts.get(0).trim());
+                String value = unescape(parts.get(1).trim());
+                if (!key.isEmpty()) {
+                    map.put(key.toUpperCase(Locale.ROOT), value);
+                }
             }
         }
         return map.isEmpty() ? null : map;
+    }
+
+    /**
+     * Splits on the separator character, honoring backslash escaping: an escaped separator does not
+     * split and is kept (still escaped) in the resulting part. With {@code limit > 0} at most
+     * {@code limit} parts are produced (the remainder is left unsplit, like {@code
+     * String.split(regex, limit)}).
+     */
+    private static List<String> splitUnescaped(String input, char separator, int limit) {
+        List<String> result = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean escaped = false;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (escaped) {
+                current.append('\\').append(c);
+                escaped = false;
+            } else if (c == '\\') {
+                escaped = true;
+            } else if (c == separator && (limit <= 0 || result.size() < limit - 1)) {
+                result.add(current.toString());
+                current.setLength(0);
+            } else {
+                current.append(c);
+            }
+        }
+        if (escaped) current.append('\\');
+        result.add(current.toString());
+        return result;
+    }
+
+    /** Removes one level of backslash escaping ({@code \x} becomes {@code x}). */
+    private static String unescape(String input) {
+        StringBuilder sb = new StringBuilder(input.length());
+        boolean escaped = false;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (!escaped && c == '\\') {
+                escaped = true;
+                continue;
+            }
+            sb.append(c);
+            escaped = false;
+        }
+        if (escaped) sb.append('\\');
+        return sb.toString();
     }
 
     @Override
@@ -782,7 +840,7 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + clientId
                 + '\''
                 + ", clientSecret='"
-                + clientSecret
+                + (clientSecret != null && !clientSecret.isEmpty() ? "***" : null)
                 + '\''
                 + ", accessTokenUri='"
                 + accessTokenUri
