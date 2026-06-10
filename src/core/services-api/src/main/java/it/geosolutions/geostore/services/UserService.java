@@ -66,6 +66,23 @@ public interface UserService {
     boolean delete(long id);
 
     /**
+     * Deletes a user and, in cascade, the resources of the given categories that the user solely
+     * owns (e.g. the MapStore {@code USERSESSION} resources). Category names that do not exist are
+     * ignored: the user deletion proceeds anyway.
+     *
+     * <p>The default implementation ignores the categories and performs a plain {@link
+     * #delete(long)}: implementations that support the resource cascade must override it.
+     *
+     * @param id the user id
+     * @param cascadeResourceCategories names of the resource categories whose solely-owned
+     *     resources must be deleted along with the user; may be null or empty for no cascade
+     * @return boolean true if the user has been deleted
+     */
+    default boolean delete(long id, List<String> cascadeResourceCategories) {
+        return delete(id);
+    }
+
+    /**
      * @param id
      * @return User
      */

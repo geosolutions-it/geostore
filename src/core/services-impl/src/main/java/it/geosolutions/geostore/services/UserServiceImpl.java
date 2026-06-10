@@ -25,16 +25,23 @@ import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserFavoriteDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
+import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.model.enums.UserReservedNames;
+import it.geosolutions.geostore.services.dto.ResourceSearchParameters;
+import it.geosolutions.geostore.services.dto.search.CategoryFilter;
+import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -60,8 +67,22 @@ public class UserServiceImpl implements UserService {
 
     private UserFavoriteDAO userFavoriteDAO;
 
+    // Autowired byName from the services applicationContext; used by the cascade-on-delete of the
+    // user's solely-owned resources (see delete(long, List)).
+    private ResourceService resourceService;
+
+    private CategoryService categoryService;
+
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
+    }
+
+    public void setResourceService(ResourceService resourceService) {
+        this.resourceService = resourceService;
+    }
+
+    public void setCategoryService(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     public void setUserAttributeDAO(UserAttributeDAO userAttributeDAO) {
@@ -302,7 +323,104 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public boolean delete(long id) {
+        return delete(id, Collections.emptyList());
+    }
+
+    /*
+     * (non-Javadoc)
+     *
+     * @see it.geosolutions.geostore.services.UserService#delete(long, java.util.List)
+     */
+    @Override
+    public boolean delete(long id, List<String> cascadeResourceCategories) {
+        if (cascadeResourceCategories != null && !cascadeResourceCategories.isEmpty()) {
+            User user = userDAO.find(id);
+            if (user != null) {
+                deleteSolelyOwnedResources(user, cascadeResourceCategories);
+            }
+        }
         return userDAO.removeById(id);
+    }
+
+    /**
+     * Deletes the resources of the given categories that are solely owned by the user. Resources
+     * shared with other users or groups are preserved. The cascade is a best-effort cleanup: an
+     * unknown category, or any error while collecting or deleting the resources, never prevents the
+     * user deletion.
+     */
+    private void deleteSolelyOwnedResources(User user, List<String> categoryNames) {
+        for (String categoryName : categoryNames) {
+            if (categoryName == null || categoryName.trim().isEmpty()) {
+                continue;
+            }
+            String name = categoryName.trim();
+            try {
+                Category category = categoryService.get(name);
+                if (category == null) {
+                    LOGGER.info(
+                            "Cascade resource delete: category '{}' does not exist, skipping.",
+                            name);
+                    continue;
+                }
+                List<Resource> resources =
+                        resourceService.getResources(
+                                ResourceSearchParameters.builder()
+                                        .filter(new CategoryFilter(name, SearchOperator.EQUAL_TO))
+                                        .authUser(user)
+                                        .build());
+                int deleted = 0;
+                for (Resource resource : resources) {
+                    if (isSolelyOwnedBy(resource, user)
+                            && resourceService.delete(resource.getId())) {
+                        deleted++;
+                    }
+                }
+                LOGGER.info(
+                        "Cascade resource delete: removed {} resource(s) of category '{}' solely owned by user '{}' (id={}).",
+                        deleted,
+                        name,
+                        user.getName(),
+                        user.getId());
+            } catch (Exception e) {
+                LOGGER.error(
+                        "Cascade resource delete: error handling category '{}' for user '{}'; the user deletion proceeds anyway.",
+                        name,
+                        user.getName(),
+                        e);
+            }
+        }
+    }
+
+    /**
+     * A resource is solely owned by the user when every security rule on it belongs to the user —
+     * matched by user id or by username, the latter covering externally-authenticated (LDAP/SSO)
+     * users — and at least one of those rules grants write permission.
+     */
+    private boolean isSolelyOwnedBy(Resource resource, User user) {
+        List<SecurityRule> rules = resourceService.getSecurityRules(resource.getId());
+        if (rules == null || rules.isEmpty()) {
+            return false;
+        }
+        boolean canWrite = false;
+        for (SecurityRule rule : rules) {
+            if (!belongsTo(rule, user)) {
+                return false;
+            }
+            if (rule.isCanWrite()) {
+                canWrite = true;
+            }
+        }
+        return canWrite;
+    }
+
+    private boolean belongsTo(SecurityRule rule, User user) {
+        if (rule.getGroup() != null || rule.getGroupname() != null) {
+            return false;
+        }
+        if (rule.getUser() != null && rule.getUser().getId() != null) {
+            return rule.getUser().getId().equals(user.getId());
+        }
+        return rule.getUsername() != null && rule.getUsername().equals(user.getName());
     }
 
     /*
