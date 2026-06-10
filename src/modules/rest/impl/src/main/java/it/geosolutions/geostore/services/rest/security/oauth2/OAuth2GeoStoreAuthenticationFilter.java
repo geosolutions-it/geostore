@@ -333,6 +333,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             HttpServletResponse response,
             String token,
             OAuth2AccessToken accessToken) {
+        final String requestToken = token;
         Authentication authentication = performOAuthAuthentication(request, response, accessToken);
         if (authentication != null) {
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -361,6 +362,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 cache.putCacheEntry(token, authentication);
             } else {
                 LOGGER.info("Skipping cache insert: no access token available yet.");
+            }
+            // Also cache under the token the client actually presented when it differs from
+            // the one resolved from the rest template context: bearer requests always look up
+            // the cache with the token they hold, so a key mismatch would force a remote
+            // re-authentication on every request and break logout (no cached TokenDetails).
+            if (requestToken != null && !requestToken.equals(token)) {
+                cache.putCacheEntry(requestToken, authentication);
             }
         }
         Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
