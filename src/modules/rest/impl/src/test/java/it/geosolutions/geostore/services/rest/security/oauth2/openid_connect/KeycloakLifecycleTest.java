@@ -271,7 +271,25 @@ public class KeycloakLifecycleTest {
         assertEquals(200, response.getStatus());
         Authentication originalAuth = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(originalAuth, "Initial authentication should succeed");
-        assertNotNull(cache.get(tokens.accessToken), "Token should be in cache after auth");
+        assertNotNull(
+                cache.get(tokens.accessToken),
+                () ->
+                        "Token should be in cache after auth. Diagnostic: size="
+                                + cache.getCache().estimatedSize()
+                                + ", stats="
+                                + cache.getCache().stats()
+                                + ", keyPrefixes="
+                                + cache.getCache().asMap().keySet().stream()
+                                        .map(k -> k.substring(0, Math.min(16, k.length())))
+                                        .collect(java.util.stream.Collectors.toList())
+                                + ", bearerPrefix="
+                                + tokens.accessToken.substring(0, 16)
+                                + ", authClass="
+                                + originalAuth.getClass().getSimpleName()
+                                + ", detailsClass="
+                                + (originalAuth.getDetails() != null
+                                        ? originalAuth.getDetails().getClass().getSimpleName()
+                                        : "null"));
 
         // Perform a real token refresh against Keycloak
         RestTemplate refreshTemplate = new RestTemplate();
