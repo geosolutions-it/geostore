@@ -88,10 +88,10 @@ public class IdPLoginRestImpl implements IdPLoginRest {
             LOGGER.error("No login service registered for callback provider '{}'", provider);
             throw new NotFoundWebEx("No login service for provider: " + provider);
         }
-        Response response =
+        return surfaceAuthError(
                 service.doInternalRedirect(
-                        OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider);
-        return surfaceAuthError(response, provider);
+                        OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider),
+                provider);
     }
 
     /**
