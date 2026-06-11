@@ -31,6 +31,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -278,10 +279,10 @@ public class OpenIdIntegrationTest {
 
     @Test
     public void testDefaultGroupAssignedWhenNoGroupsResolved() throws Exception {
-        // The token of CODE carries no groups claim at all: the configured fallback group is
-        // assigned, created on the fly and tagged with the provider as sourceService.
+        // The token of CODE carries no groups claim at all: the configured default group is
+        // still assigned, created on the fly and tagged with the provider as sourceService.
         configuration.setGroupsClaim("groups");
-        configuration.setAuthenticatedDefaultGroup("infragri");
+        configuration.setDefaultGroups("infragri");
         MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -306,10 +307,32 @@ public class OpenIdIntegrationTest {
     }
 
     @Test
-    public void testDefaultGroupNotAssignedWhenGroupsResolved() throws Exception {
-        // Groups resolved from the claims win: the fallback group must not be added.
+    public void testDefaultGroupsMultipleAssigned() throws Exception {
+        // The property is a comma-separated list: every entry is assigned.
         configuration.setGroupsClaim("groups");
-        configuration.setAuthenticatedDefaultGroup("infragri");
+        configuration.setDefaultGroups("infragri, base-users");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(
+                names.contains("infragri"), "All configured defaultGroups are assigned: " + names);
+        assertTrue(
+                names.contains("base-users"),
+                "All configured defaultGroups are assigned: " + names);
+    }
+
+    @Test
+    public void testDefaultGroupsAssignedAlongsideMappedGroups() throws Exception {
+        // defaultGroups are ALWAYS added, alongside the claim-derived groups.
+        configuration.setGroupsClaim("groups");
+        configuration.setDefaultGroups("infragri");
         MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -322,19 +345,19 @@ public class OpenIdIntegrationTest {
                 user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
         assertTrue(names.contains("A"));
         assertTrue(names.contains("B"));
-        assertFalse(
+        assertTrue(
                 names.contains("infragri"),
-                "Fallback group must not be assigned when claims resolve groups");
+                "defaultGroups must be assigned in addition to the claim-derived groups");
     }
 
     @Test
     public void testDefaultGroupAssignedWhenAllGroupsDropped() throws Exception {
         // Every claim value is dropped by groupMappings+dropUnmapped (the typical Keycloak
-        // permission-roles setup): the fallback group keeps the user from ending up groupless.
+        // permission-roles setup): the default groups keep the user from ending up groupless.
         configuration.setGroupsClaim("groups");
         configuration.setGroupMappings("not-a-real-group:whatever");
         configuration.setDropUnmapped(true);
-        configuration.setAuthenticatedDefaultGroup("infragri");
+        configuration.setDefaultGroups("infragri");
         MockHttpServletRequest request = createRequest("oidc/login");
         request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -348,6 +371,57 @@ public class OpenIdIntegrationTest {
         assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
         assertFalse(names.contains("A"), "Dropped claim groups must not be assigned");
         assertFalse(names.contains("B"), "Dropped claim groups must not be assigned");
+    }
+
+    @Test
+    public void testDefaultGroupAssignedWhenGroupCreationFails() throws Exception {
+        // Claim groups resolve but their creation is rejected (e.g. reserved or invalid
+        // names): the default groups are assigned independently of the claim-derived ones.
+        configuration.setGroupsClaim("groups");
+        configuration.setDefaultGroups("infragri");
+        DummyUserGroupService rejectingSvc =
+                new DummyUserGroupService() {
+                    @Override
+                    public long insert(UserGroup g) throws BadRequestServiceEx {
+                        if (!"infragri".equals(g.getGroupName())) {
+                            throw new BadRequestServiceEx(
+                                    "group name not allowed: " + g.getGroupName());
+                        }
+                        return super.insert(g);
+                    }
+                };
+        OpenIdConnectAuthenticationService rejectingService =
+                new OpenIdConnectAuthenticationService(
+                        new TokenAuthenticationCache(
+                                configuration.getCacheSize(),
+                                configuration.getCacheExpirationMinutes()),
+                        null,
+                        rejectingSvc,
+                        configuration,
+                        null,
+                        null);
+        OpenIdConnectFilter rejectingFilter =
+                new OpenIdConnectFilter(
+                        configuration,
+                        rejectingService,
+                        new OpenIdConnectRestClient(configuration));
+        rejectingFilter.setUserGroupService(rejectingSvc);
+
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        rejectingFilter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
+        assertNotNull(
+                rejectingSvc.get("infragri"), "Fallback group should be created when missing");
+        assertNull(rejectingSvc.get("A"), "Rejected claim group must not be created");
+        assertNull(rejectingSvc.get("B"), "Rejected claim group must not be created");
     }
 
     @Test
@@ -706,7 +780,7 @@ public class OpenIdIntegrationTest {
         private long nextId = 1;
 
         @Override
-        public long insert(UserGroup g) {
+        public long insert(UserGroup g) throws BadRequestServiceEx {
             if (g.getId() == null) g.setId(nextId++);
             if (g.getAttributes() == null) g.setAttributes(new ArrayList<>());
             byId.put(g.getId(), g);
