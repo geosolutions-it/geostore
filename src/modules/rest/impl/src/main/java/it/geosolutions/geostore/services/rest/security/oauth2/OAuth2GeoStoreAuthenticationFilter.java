@@ -208,6 +208,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             } else {
                 TokenDetails details = tokenDetails(authentication);
                 if (details != null) {
+                    // Expose the cached tokens and provider to downstream handlers (the
+                    // logout endpoint above all) BEFORE any re-authentication: once the
+                    // access token has expired, the cached details are the only reliable
+                    // source for the ID token and the provider selection.
+                    exposeTokenDetails(request, token, details);
                     OAuth2AccessToken accessToken = details.getAccessToken();
                     if (accessToken.isExpired()) {
                         authentication =
@@ -262,6 +267,26 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     }
 
     /**
+     * Publishes the cached token details as request attributes so that downstream handlers (the
+     * session/logout endpoint in particular) can resolve the provider, the ID token and the refresh
+     * token even when the access token is expired and re-authentication fails.
+     */
+    private void exposeTokenDetails(
+            HttpServletRequest request, String token, TokenDetails details) {
+        request.setAttribute(PROVIDER_KEY, details.getProvider());
+        request.setAttribute(ACCESS_TOKEN_PARAM, token);
+        if (details.getIdToken() != null) {
+            request.setAttribute(ID_TOKEN_PARAM, details.getIdToken());
+        }
+        OAuth2AccessToken cached = details.getAccessToken();
+        if (cached != null
+                && cached.getRefreshToken() != null
+                && cached.getRefreshToken().getValue() != null) {
+            request.setAttribute(REFRESH_TOKEN_PARAM, cached.getRefreshToken().getValue());
+        }
+    }
+
+    /**
      * Re-reads the user's current role from the database and, if it has changed since the
      * authentication was cached, rebuilds the authentication with the updated authority. This
      * ensures that role changes (promotions/demotions via admin UI or DB) take effect immediately
@@ -308,6 +333,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             HttpServletResponse response,
             String token,
             OAuth2AccessToken accessToken) {
+        final String requestToken = token;
         Authentication authentication = performOAuthAuthentication(request, response, accessToken);
         if (authentication != null) {
             SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -337,6 +363,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             } else {
                 LOGGER.info("Skipping cache insert: no access token available yet.");
             }
+            // Also cache under the token the client actually presented when it differs from
+            // the one resolved from the rest template context: bearer requests always look up
+            // the cache with the token they hold, so a key mismatch would force a remote
+            // re-authentication on every request and break logout (no cached TokenDetails).
+            if (requestToken != null && !requestToken.equals(token)) {
+                cache.putCacheEntry(requestToken, authentication);
+            }
         }
         Objects.requireNonNull(RequestContextHolder.getRequestAttributes())
                 .setAttribute(PROVIDER_KEY, configuration.getProvider(), 0);
@@ -363,6 +396,11 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             accessTokenRequest.setStateKey(null);
             accessTokenRequest.setPreservedState(null);
             accessTokenRequest.setAuthorizationCode(code);
+            // Drop any token left in the shared client context by a previous session:
+            // OAuth2RestTemplate would return it instead of exchanging the fresh code
+            // (or, once expired, attempt a refresh with a dead refresh token, failing
+            // every login until restart).
+            clientContext.setAccessToken(null);
             // Set currentUri to the configured redirect URI (not the actual request URL)
             // so the token exchange sends the correct redirect_uri to the IdP.
             // The actual request URL may differ due to reverse proxy or path rewriting.
@@ -378,6 +416,9 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
 
     private void clearState() {
         OAuth2ClientContext clientContext = restTemplate.getOAuth2ClientContext();
+        // The client context is shared across requests: a token left behind by a previous
+        // session must not be reused for a new unauthenticated login attempt.
+        clientContext.setAccessToken(null);
         final AccessTokenRequest accessTokenRequest = clientContext.getAccessTokenRequest();
         if (accessTokenRequest != null && accessTokenRequest.getStateKey() != null) {
             clientContext.removePreservedState(accessTokenRequest.getStateKey());
@@ -406,7 +447,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             HttpServletResponse response,
             OAuth2AccessToken accessToken) {
         LOGGER.info("About to perform remote authentication.");
-        LOGGER.info("Access Token: {}", accessToken);
+        debugSensitive("Access Token: {}", accessToken);
         String principal = null;
         PreAuthenticatedAuthenticationToken result = null;
         try {
@@ -680,6 +721,18 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         }
     }
 
+    /**
+     * Logs potentially sensitive details (token values, claim contents, resolved roles/groups) only
+     * when the provider explicitly enables {@code logSensitiveInfo}. Raising the logger level alone
+     * is not enough: this prevents tokens and claims from leaking into DEBUG logs enabled for
+     * ordinary troubleshooting.
+     */
+    private void debugSensitive(String message, Object... args) {
+        if (configuration != null && configuration.isLogSensitiveInfo()) {
+            LOGGER.debug(message, args);
+        }
+    }
+
     protected List<String> parseScopes(String commaSeparatedScopes) {
         List<String> scopes = newArrayList();
         if (StringUtils.isBlank(commaSeparatedScopes)) return scopes;
@@ -827,7 +880,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 1) Try primary token (usually ID token)
             if (primaryHelper != null) {
                 rawRoles = primaryHelper.getClaim(rolesClaimName, Object.class);
-                LOGGER.info(
+                debugSensitive(
                         "Roles claim '{}' from primary token: {} (type={})",
                         rolesClaimName,
                         rawRoles,
@@ -836,7 +889,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 2) Fallback: access token (Keycloak puts realm_access here)
             if (rawRoles == null && accessHelper != null) {
                 rawRoles = accessHelper.getClaim(rolesClaimName, Object.class);
-                LOGGER.info(
+                debugSensitive(
                         "Roles claim '{}' from access token (fallback): {} (type={})",
                         rolesClaimName,
                         rawRoles,
@@ -845,7 +898,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 3) Fallback: userinfo map
             if (rawRoles == null && userinfoMap != null) {
                 rawRoles = ClaimPathResolver.resolveIgnoreCase(userinfoMap, rolesClaimName);
-                LOGGER.info(
+                debugSensitive(
                         "Roles claim '{}' from userinfo: {} (type={})",
                         rolesClaimName,
                         rawRoles,
@@ -858,7 +911,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         if (rawRoles != null) {
             List<String> oidcRoles = ClaimPathResolver.toStringList(rawRoles);
             if (oidcRoles == null) oidcRoles = Collections.emptyList();
-            LOGGER.info(
+            debugSensitive(
                     "Resolved role strings from token: {} (roleMappings={})",
                     oidcRoles,
                     configuration.getRoleMappings());
@@ -894,12 +947,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // 1) Try primary token
             if (primaryHelper != null) {
                 fromJwt = primaryHelper.getClaimAsList(groupsClaimName, String.class);
-                LOGGER.info("Groups from primary token claim '{}': {}", groupsClaimName, fromJwt);
+                debugSensitive(
+                        "Groups from primary token claim '{}': {}", groupsClaimName, fromJwt);
             }
             // 2) Fallback: access token
             if ((fromJwt == null || fromJwt.isEmpty()) && accessHelper != null) {
                 fromJwt = accessHelper.getClaimAsList(groupsClaimName, String.class);
-                LOGGER.info(
+                debugSensitive(
                         "Groups from access token claim '{}' (fallback): {}",
                         groupsClaimName,
                         fromJwt);
@@ -910,12 +964,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 // 3) Fallback: userinfo map
                 List<String> fromUserinfo =
                         ClaimPathResolver.resolveAsListIgnoreCase(userinfoMap, groupsClaimName);
-                LOGGER.info("Groups from userinfo claim '{}': {}", groupsClaimName, fromUserinfo);
+                debugSensitive(
+                        "Groups from userinfo claim '{}': {}", groupsClaimName, fromUserinfo);
                 if (fromUserinfo != null) {
                     oidcGroups = fromUserinfo;
                 }
             }
-            LOGGER.info("Groups resolved from token/userinfo: {}", oidcGroups);
+            debugSensitive("Groups resolved from token/userinfo: {}", oidcGroups);
         } else {
             LOGGER.info("No groupsClaim configured -> skipping group sync.");
         }
@@ -939,7 +994,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             oidcGroups = mapped;
         }
 
-        LOGGER.info(
+        debugSensitive(
                 "Final groups to reconcile: {} (user.role={}, user.id={})",
                 oidcGroups,
                 user.getRole(),
@@ -949,7 +1004,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // ----- Persist user after role & group sync -----
         try {
             if (userService != null) {
-                LOGGER.info(
+                debugSensitive(
                         "Persisting user '{}' (id={}, role={}, groups={})",
                         user.getName(),
                         user.getId(),
@@ -974,7 +1029,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                     e.getMessage(),
                     e);
         } finally {
-            LOGGER.info(
+            debugSensitive(
                     "User '{}' after sync: role={}, groups={}",
                     user.getName(),
                     user.getRole(),
@@ -987,7 +1042,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
     // ---------------------------------------------------------------------
 
     private Role computeRole(List<String> rolesFromToken, Role defaultRole) {
-        LOGGER.info(
+        debugSensitive(
                 "computeRole: rolesFromToken={}, defaultRole={}, roleMappings={}, dropUnmapped={}",
                 rolesFromToken,
                 defaultRole,
@@ -995,7 +1050,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 configuration.isDropUnmapped());
         if (rolesFromToken == null || rolesFromToken.isEmpty()) {
             Role result = (defaultRole != null) ? defaultRole : Role.USER;
-            LOGGER.info("computeRole: no roles in token -> returning {}", result);
+            debugSensitive("computeRole: no roles in token -> returning {}", result);
             return result;
         }
         Map<String, String> roleMappings = configuration.getRoleMappings();
@@ -1008,15 +1063,15 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             if (roleMappings != null) {
                 String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
                 if (mapped != null) {
-                    LOGGER.info("computeRole: '{}' mapped to '{}' via roleMappings", rr, mapped);
+                    debugSensitive("computeRole: '{}' mapped to '{}' via roleMappings", rr, mapped);
                     rr = mapped;
                     wasMapped = true;
                 } else if (dropUnmapped) {
-                    LOGGER.info(
+                    debugSensitive(
                             "computeRole: '{}' not in roleMappings, dropping (dropUnmapped)", rr);
                     continue;
                 } else {
-                    LOGGER.info(
+                    debugSensitive(
                             "computeRole: '{}' not in roleMappings, keeping (dropUnmapped=false)",
                             rr);
                 }
@@ -1026,21 +1081,21 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             // (e.g. "guest", "admin") should not accidentally match GeoStore roles.
             if (wasMapped || roleMappings == null || roleMappings.isEmpty()) {
                 if (rr.equalsIgnoreCase(Role.ADMIN.name())) {
-                    LOGGER.info("computeRole: '{}' matches ADMIN -> returning ADMIN", rr);
+                    debugSensitive("computeRole: '{}' matches ADMIN -> returning ADMIN", rr);
                     return Role.ADMIN;
                 }
                 if (rr.equalsIgnoreCase(Role.USER.name())) {
-                    LOGGER.info("computeRole: '{}' matches USER", rr);
+                    debugSensitive("computeRole: '{}' matches USER", rr);
                     resolved = Role.USER;
                     continue;
                 }
                 if (rr.equalsIgnoreCase(Role.GUEST.name())) {
-                    LOGGER.info("computeRole: '{}' matches GUEST", rr);
+                    debugSensitive("computeRole: '{}' matches GUEST", rr);
                     resolved = Role.GUEST;
                 }
             }
         }
-        LOGGER.info("computeRole: final resolved role = {}", resolved);
+        debugSensitive("computeRole: final resolved role = {}", resolved);
         return resolved;
     }
 
@@ -1080,7 +1135,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             return;
         }
 
-        LOGGER.info(
+        debugSensitive(
                 "reconcileRemoteGroups: user='{}' (id={}, role={}), "
                         + "provider='{}', newGroupNames={}, "
                         + "currentGroups={} (type={})",

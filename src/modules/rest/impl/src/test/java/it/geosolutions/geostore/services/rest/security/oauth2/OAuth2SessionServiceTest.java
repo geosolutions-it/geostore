@@ -248,9 +248,11 @@ public class OAuth2SessionServiceTest {
             sessionService.removeSession();
 
             assertEquals(HttpStatus.OK_200, response.getStatus());
-            // Note: without a revokeEndpoint, clearSession() is not called so
-            // SecurityContextHolder is not cleared. The cache entry for the
-            // sessionId passed to doLogout IS removed, though.
+            // Local state is cleared even without a revokeEndpoint: the shared client
+            // context must not retain tokens across sessions.
+            assertNull(
+                    SecurityContextHolder.getContext().getAuthentication(),
+                    "SecurityContext should be cleared");
             assertNull(cache.get(ACCESS_TOKEN), "cache entry should still be removed locally");
         }
     }

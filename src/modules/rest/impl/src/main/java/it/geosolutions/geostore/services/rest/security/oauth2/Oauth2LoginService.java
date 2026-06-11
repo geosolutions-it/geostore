@@ -40,7 +40,8 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                     provider + CONFIG_NAME_SUFFIX);
             throw new RuntimeException("No OAuth2Configuration found for provider: " + provider);
         }
-        LOGGER.info(
+        debugSensitive(
+                configuration,
                 "Provider '{}' config: enabled={}, clientId={}, authorizationUri={}, "
                         + "accessTokenUri={}, discoveryUrl={}, redirectUri={}, scopes={}",
                 provider,
@@ -59,7 +60,8 @@ public abstract class Oauth2LoginService implements IdPLoginService {
         }
         String login = configuration.buildLoginUri();
         try {
-            LOGGER.info("Redirecting to login URI for provider '{}': {}", provider, login);
+            LOGGER.info("Redirecting to login URI for provider '{}'", provider);
+            debugSensitive(configuration, "Login URI: {}", login);
             resp.sendRedirect(login);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -89,7 +91,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             throw new RuntimeException(
                     "No IdPConfiguration found for callback provider: " + provider);
         }
-        LOGGER.info("Token: {}", token);
+        debugSensitive(configuration, "Token: {}", token);
         LOGGER.info("Redirect uri: {}", configuration.getRedirectUri());
         LOGGER.info("Internal redirect uri: {}", configuration.getInternalRedirectUri());
         if (token != null) {
@@ -99,11 +101,11 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 result =
                         result.status(302)
                                 .location(new URI(configuration.getInternalRedirectUri()));
-                LOGGER.info("AccessToken: {}", token);
+                debugSensitive(configuration, "AccessToken: {}", token);
                 sessionToken.setAccessToken(token);
                 sessionToken.setTokenType(BEARER_TYPE);
                 if (refreshToken != null) {
-                    LOGGER.info("RefreshToken: {}", refreshToken);
+                    debugSensitive(configuration, "RefreshToken: {}", refreshToken);
                     result.header("Set-Cookie", refreshTokenCookie(refreshToken).toString());
                 }
                 TokenStorage tokenStorage = tokenStorage();
@@ -140,6 +142,19 @@ public abstract class Oauth2LoginService implements IdPLoginService {
 
     protected TokenStorage tokenStorage() {
         return GeoStoreContext.bean(TokenStorage.class);
+    }
+
+    /**
+     * Logs potentially sensitive details (token values, provider configuration) only when the
+     * provider explicitly enables {@code logSensitiveInfo}. Raising the logger level alone is not
+     * enough to print them.
+     */
+    private static void debugSensitive(
+            IdPConfiguration configuration, String message, Object... args) {
+        if (configuration instanceof OAuth2Configuration
+                && ((OAuth2Configuration) configuration).isLogSensitiveInfo()) {
+            LOGGER.debug(message, args);
+        }
     }
 
     protected Response buildCallbackResponse(

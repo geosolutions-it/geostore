@@ -519,7 +519,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (refreshToken != null) {
                 accessToken.setRefreshToken(refreshToken);
             }
-            LOGGER.info("Creating new details. AccessToken: {} IdToken: {}", accessToken, idToken);
+            if (conf != null && conf.isLogSensitiveInfo()) {
+                LOGGER.debug(
+                        "Creating new details. AccessToken: {} IdToken: {}", accessToken, idToken);
+            }
             updated.setDetails(new TokenDetails(accessToken, idToken, conf.getBeanName()));
             cache().putCacheEntry(newToken.getValue(), updated);
             SecurityContextHolder.getContext().setAuthentication(updated);
@@ -610,6 +613,16 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                                 RequestContextHolder.getRequestAttributes()
                                         .getAttribute(REFRESH_TOKEN_PARAM, 0);
             }
+            if (token == null && RequestContextHolder.getRequestAttributes() != null) {
+                // Last resort: the ID token published by the authentication filter from the
+                // cached token details. Reached when the access token is expired (cache entry
+                // already consumed by the failed re-authentication) — the ID token is exactly
+                // what the OIDC logout endpoint needs as id_token_hint.
+                token =
+                        (String)
+                                RequestContextHolder.getRequestAttributes()
+                                        .getAttribute(OAuth2Utils.ID_TOKEN_PARAM, 0);
+            }
         }
 
         if (accessToken == null) {
@@ -636,22 +649,26 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     && !accessToken.isEmpty()) {
                 if (configuration.isGlobalLogoutEnabled())
                     doLogoutInternal(token, configuration, accessToken);
-                if (configuration.getRevokeEndpoint() != null) clearSession(restTemplate, request);
             } else {
-                LOGGER.debug("Unable to retrieve access token. Remote logout was not executed.");
+                LOGGER.warn(
+                        "Unable to retrieve the tokens for the current session. Remote logout was not executed.");
             }
+            // Always clear the local Spring OAuth2 state: the rest template's client context
+            // is shared across requests, and a leftover token would shadow the next
+            // authorization-code exchange once it expires.
+            if (restTemplate != null) clearSession(restTemplate, request);
             if (response != null) clearCookies(request, response);
         }
     }
 
     // clears any state a Spring OAuth2 object might preserve.
     private void clearSession(OAuth2RestTemplate restTemplate, HttpServletRequest request) {
-        final AccessTokenRequest accessTokenRequest =
-                restTemplate.getOAuth2ClientContext().getAccessTokenRequest();
+        final OAuth2ClientContext clientContext = restTemplate.getOAuth2ClientContext();
+        if (clientContext == null) return;
+        clientContext.setAccessToken(null);
+        final AccessTokenRequest accessTokenRequest = clientContext.getAccessTokenRequest();
         if (accessTokenRequest != null && accessTokenRequest.getStateKey() != null) {
-            restTemplate
-                    .getOAuth2ClientContext()
-                    .removePreservedState(accessTokenRequest.getStateKey());
+            clientContext.removePreservedState(accessTokenRequest.getStateKey());
         }
         try {
             if (accessTokenRequest != null) {
