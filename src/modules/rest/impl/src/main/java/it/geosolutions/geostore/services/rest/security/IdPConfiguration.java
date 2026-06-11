@@ -1,6 +1,9 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.enums.Role;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
@@ -21,7 +24,7 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected Role authenticatedDefaultRole;
 
-    protected String authenticatedDefaultGroup;
+    protected List<String> defaultGroups = Collections.emptyList();
 
     /**
      * @return true if the filter to which this configuration object refers is enabled. False
@@ -117,17 +120,29 @@ public abstract class IdPConfiguration implements BeanNameAware {
     }
 
     /**
-     * Optional group assigned when no group could be derived from the IdP claims (the groups claim
-     * is missing, or every value was dropped by groupMappings/dropUnmapped). Created on the fly
-     * when it does not exist. Blank or unset disables the fallback.
+     * Optional groups always assigned to the authenticated user, in addition to the ones derived
+     * from the IdP claims. They are not subject to groupMappings/dropUnmapped and are created on
+     * the fly when they do not exist.
      *
-     * @return the fallback group name, or null when not configured.
+     * @return the configured default group names; never null, empty when not configured.
      */
-    public String getAuthenticatedDefaultGroup() {
-        return authenticatedDefaultGroup;
+    public List<String> getDefaultGroups() {
+        return defaultGroups;
     }
 
-    public void setAuthenticatedDefaultGroup(String authenticatedDefaultGroup) {
-        this.authenticatedDefaultGroup = authenticatedDefaultGroup;
+    /** @param defaultGroups comma-separated list of group names; blank entries are discarded. */
+    public void setDefaultGroups(String defaultGroups) {
+        if (StringUtils.isBlank(defaultGroups)) {
+            this.defaultGroups = Collections.emptyList();
+            return;
+        }
+        List<String> parsed = new ArrayList<>();
+        for (String name : defaultGroups.split(",")) {
+            String trimmed = name.trim();
+            if (!trimmed.isEmpty()) {
+                parsed.add(trimmed);
+            }
+        }
+        this.defaultGroups = parsed;
     }
 }
