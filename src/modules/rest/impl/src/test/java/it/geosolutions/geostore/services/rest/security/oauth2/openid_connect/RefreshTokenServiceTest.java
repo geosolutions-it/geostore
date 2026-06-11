@@ -15,6 +15,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.*;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -27,6 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.resource.UserRedirectRequiredException;
 import org.springframework.security.oauth2.common.*;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -211,7 +213,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("invalidRefreshToken", refreshCookie.getValue());
         assertTrue(refreshCookie.isHttpOnly(), "Cookie should be HttpOnly");
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
@@ -248,7 +250,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("providedRefreshToken", refreshCookie.getValue());
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -291,7 +293,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("providedRefreshToken", refreshCookie.getValue());
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken.getWarning().contains("Using existing access token."),
@@ -322,7 +324,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("providedRefreshToken", refreshCookie.getValue());
         // Verify that no exchange was attempted
         verify(restTemplate, never())
                 .exchange(
@@ -378,7 +380,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("providedRefreshToken", refreshCookie.getValue());
     }
 
     @Test
@@ -410,7 +412,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("providedRefreshToken", refreshCookie.getValue());
     }
 
     @Test
@@ -526,7 +528,7 @@ class RefreshTokenServiceTest {
                 "Refresh token should not be in JSON response body");
         Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
         assertNotNull(refreshCookie, "Refresh token cookie should be set");
-        assertEquals("existingRefreshToken", refreshCookie.getValue());
+        assertEquals("providedRefreshToken", refreshCookie.getValue());
         assertNotNull(sessionToken.getWarning(), "Warning message should be set");
         assertTrue(
                 sessionToken
@@ -856,6 +858,138 @@ class RefreshTokenServiceTest {
                 + ".";
     }
 
+    @Test
+    void testRefreshFailureRespondsWith401InsteadOfRedirect() throws Exception {
+        // The access token is already expired and the IdP rejects the refresh: the XHR
+        // client must receive a clean 401 (observed live: the old 302 to the login page
+        // turned into a 302 -> 404 chain through the front-end proxy and wiped the session).
+        String refreshToken = "expiredRefreshToken";
+        String accessToken = "providedAccessToken";
+
+        mockOAuth2AccessToken.setExpiration(new Date(System.currentTimeMillis() - 600 * 1000));
+        when(configuration.getProvider()).thenReturn("oidc");
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        SessionToken sessionToken = serviceDelegate.refresh(refreshToken, accessToken);
+
+        assertNull(sessionToken, "A failed refresh of an expired session returns no token");
+        assertEquals(401, mockResponse.getStatus(), "The client must receive a 401");
+        assertNull(mockResponse.getRedirectedUrl(), "The refresh endpoint must never redirect");
+        String content = mockResponse.getContentAsString();
+        assertTrue(content.contains("session_expired"), "The error code is reported: " + content);
+        assertTrue(
+                content.contains("/openid/oidc/login"),
+                "The login URL is reported so the client can start a new flow: " + content);
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "The refresh token cookie is cleared");
+        assertEquals(0, refreshCookie.getMaxAge());
+    }
+
+    @Test
+    void testShouldSkipRefreshFalseWhenRefreshTokenNearExpiry() {
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        long nowSeconds = System.currentTimeMillis() / 1000;
+
+        // Access token still fresh for one hour: the legacy logic alone would skip.
+        DefaultOAuth2AccessToken freshToken = new DefaultOAuth2AccessToken("opaque-at");
+        freshToken.setExpiration(new Date((nowSeconds + 3600) * 1000));
+
+        // Refresh token (JWT, as Keycloak's) expiring within the safety window: refresh
+        // tokens only slide when actually used, so the skip must be bypassed.
+        String nearExpiryRt = urlSafeJwt("{\"exp\":" + (nowSeconds + 60) + "}");
+        assertFalse(
+                serviceDelegate.callShouldSkipRefresh(freshToken, nearExpiryRt, configuration),
+                "A refresh token close to its own expiry must force a real IdP refresh");
+
+        // A long-lived refresh token keeps the legacy skip behavior.
+        String longLivedRt = urlSafeJwt("{\"exp\":" + (nowSeconds + 1800) + "}");
+        assertTrue(
+                serviceDelegate.callShouldSkipRefresh(freshToken, longLivedRt, configuration),
+                "A healthy refresh token keeps the skip in place");
+
+        // An opaque (non-JWT) refresh token carries no expiry info: legacy behavior.
+        assertTrue(
+                serviceDelegate.callShouldSkipRefresh(
+                        freshToken, "opaque-refresh-token", configuration),
+                "Opaque refresh tokens keep the legacy skip behavior");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testRefreshUsesCachedRefreshTokenNotStaleInjectedOne() {
+        // The cache entry for the presented access token carries the CURRENT refresh token:
+        // it must win over any other server-side leftover (the stale singleton client
+        // context used to be preferred, pinning a dead token until the session collapsed).
+        String accessToken = "providedAccessToken";
+
+        DefaultOAuth2AccessToken cachedToken = new DefaultOAuth2AccessToken(accessToken);
+        cachedToken.setRefreshToken(new DefaultOAuth2RefreshToken("cachedRt"));
+        cachedToken.setExpiration(new Date(System.currentTimeMillis() - 1000)); // force refresh
+        TokenDetails cachedDetails = new TokenDetails(cachedToken, null, "oidcOAuth2Config");
+        Authentication cachedAuth = mock(Authentication.class);
+        when(cachedAuth.getDetails()).thenReturn(cachedDetails);
+        when(authenticationCache.get(accessToken)).thenReturn(cachedAuth);
+        serviceDelegate.currentAccessToken = cachedToken;
+
+        DefaultOAuth2AccessToken newAccessToken = new DefaultOAuth2AccessToken("newAccessToken");
+        newAccessToken.setRefreshToken(new DefaultOAuth2RefreshToken("rotatedRt"));
+        newAccessToken.setExpiration(new Date(System.currentTimeMillis() + 7200 * 1000));
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessToken.class)))
+                .thenReturn(new ResponseEntity<>(newAccessToken, HttpStatus.OK));
+
+        SessionToken sessionToken = serviceDelegate.refresh("staleClientProvidedRt", accessToken);
+
+        assertNotNull(sessionToken);
+        ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        verify(restTemplate)
+                .exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        entityCaptor.capture(),
+                        eq(OAuth2AccessToken.class));
+        MultiValueMap<String, String> body =
+                (MultiValueMap<String, String>) entityCaptor.getValue().getBody();
+        assertEquals(
+                "cachedRt",
+                body.getFirst("refresh_token"),
+                "The refresh grant must use the cached (freshest) refresh token");
+    }
+
+    @Test
+    void testClearCookiesExpiresRefreshTokenCookie() {
+        // Max-Age 0 actually deletes the cookie: the previous -1 ("session cookie")
+        // RE-INSTATED the refresh token on the logout response (observed live as a logout
+        // carrying both the clearing Set-Cookie and a full refresh_token one).
+        mockRequest.setCookies(
+                new Cookie("refresh_token", "leftoverRt"), new Cookie("JSESSIONID", "xyz"));
+
+        serviceDelegate.callClearCookies(mockRequest, mockResponse);
+
+        Cookie cleared = getRefreshTokenCookie(mockResponse);
+        assertNotNull(cleared, "The refresh token cookie must be re-emitted for deletion");
+        assertEquals(0, cleared.getMaxAge(), "Max-Age must be 0 (deletion), not -1 (session)");
+        assertEquals("", cleared.getValue(), "The cookie value must be blanked");
+    }
+
+    private String urlSafeJwt(String payloadJson) {
+        Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
+        return encoder.encodeToString(
+                        "{\"alg\":\"HS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8))
+                + "."
+                + encoder.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8))
+                + "."
+                + encoder.encodeToString("sig".getBytes(StandardCharsets.UTF_8));
+    }
+
     private Cookie getRefreshTokenCookie(MockHttpServletResponse response) {
         Cookie[] cookies = response.getCookies();
         Cookie result = null;
@@ -883,6 +1017,16 @@ class RefreshTokenServiceTest {
 
         public void setRefreshRestTemplate(RestTemplate refreshRestTemplate) {
             this.refreshRestTemplate = refreshRestTemplate;
+        }
+
+        // Bridges for protected superclass members living in a different package.
+        boolean callShouldSkipRefresh(
+                OAuth2AccessToken token, String refreshToken, OAuth2Configuration config) {
+            return shouldSkipRefresh(token, refreshToken, config);
+        }
+
+        void callClearCookies(HttpServletRequest request, HttpServletResponse response) {
+            clearCookies(request, response);
         }
 
         public void setConfiguration(OAuth2Configuration configuration) {
