@@ -1,6 +1,9 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.enums.Role;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.BeanNameAware;
 
@@ -20,6 +23,8 @@ public abstract class IdPConfiguration implements BeanNameAware {
     protected String redirectUri;
 
     protected Role authenticatedDefaultRole;
+
+    protected List<String> defaultGroups = Collections.emptyList();
 
     /**
      * @return true if the filter to which this configuration object refers is enabled. False
@@ -112,5 +117,32 @@ public abstract class IdPConfiguration implements BeanNameAware {
     public void setAuthenticatedDefaultRole(String authenticatedDefaultRole) {
         if (StringUtils.isNotBlank(authenticatedDefaultRole))
             this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
+    }
+
+    /**
+     * Optional groups always assigned to the authenticated user, in addition to the ones derived
+     * from the IdP claims. They are not subject to groupMappings/dropUnmapped and are created on
+     * the fly when they do not exist.
+     *
+     * @return the configured default group names; never null, empty when not configured.
+     */
+    public List<String> getDefaultGroups() {
+        return defaultGroups;
+    }
+
+    /** @param defaultGroups comma-separated list of group names; blank entries are discarded. */
+    public void setDefaultGroups(String defaultGroups) {
+        if (StringUtils.isBlank(defaultGroups)) {
+            this.defaultGroups = Collections.emptyList();
+            return;
+        }
+        List<String> parsed = new ArrayList<>();
+        for (String name : defaultGroups.split(",")) {
+            String trimmed = name.trim();
+            if (!trimmed.isEmpty()) {
+                parsed.add(trimmed);
+            }
+        }
+        this.defaultGroups = parsed;
     }
 }

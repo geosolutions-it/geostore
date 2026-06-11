@@ -31,6 +31,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
@@ -279,6 +280,172 @@ public class OpenIdIntegrationTest {
         User user = (User) authentication.getPrincipal();
         UserGroup group = user.getGroups().stream().findAny().orElseThrow();
         assertEquals("geosolutionsgroup.com", group.getGroupName());
+    }
+
+    @Test
+    public void testDefaultGroupAssignedWhenNoGroupsResolved() throws Exception {
+        // The token of CODE carries no groups claim at all: the configured default group is
+        // still assigned, created on the fly and tagged with the provider as sourceService.
+        configuration.setGroupsClaim("groups");
+        configuration.setDefaultGroups("infragri");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
+
+        UserGroup created = ((DummyUserGroupService) filter.getUserGroupService()).get("infragri");
+        assertNotNull(created, "Fallback group should be created when missing");
+        String src =
+                created.getAttributes().stream()
+                        .filter(a -> "sourceService".equals(a.getName()))
+                        .findFirst()
+                        .orElseThrow()
+                        .getValue();
+        assertEquals(configuration.getProvider(), src);
+    }
+
+    @Test
+    public void testDefaultGroupsMultipleAssigned() throws Exception {
+        // The property is a comma-separated list: every entry is assigned.
+        configuration.setGroupsClaim("groups");
+        configuration.setDefaultGroups("infragri, base-users");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(
+                names.contains("infragri"), "All configured defaultGroups are assigned: " + names);
+        assertTrue(
+                names.contains("base-users"),
+                "All configured defaultGroups are assigned: " + names);
+
+        // Creation-if-missing applies to EVERY entry of the list, with the provider tag.
+        DummyUserGroupService svc = (DummyUserGroupService) filter.getUserGroupService();
+        for (String name : Arrays.asList("infragri", "base-users")) {
+            UserGroup created = svc.get(name);
+            assertNotNull(created, "Each default group must be created when missing: " + name);
+            String src =
+                    created.getAttributes().stream()
+                            .filter(a -> "sourceService".equals(a.getName()))
+                            .findFirst()
+                            .orElseThrow()
+                            .getValue();
+            assertEquals(configuration.getProvider(), src, "Provider tag on created group " + name);
+        }
+    }
+
+    @Test
+    public void testDefaultGroupsAssignedAlongsideMappedGroups() throws Exception {
+        // defaultGroups are ALWAYS added, alongside the claim-derived groups.
+        configuration.setGroupsClaim("groups");
+        configuration.setDefaultGroups("infragri");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_GROUPS_RECON);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("A"));
+        assertTrue(names.contains("B"));
+        assertTrue(
+                names.contains("infragri"),
+                "defaultGroups must be assigned in addition to the claim-derived groups");
+    }
+
+    @Test
+    public void testDefaultGroupAssignedWhenAllGroupsDropped() throws Exception {
+        // Every claim value is dropped by groupMappings+dropUnmapped (the typical Keycloak
+        // permission-roles setup): the default groups keep the user from ending up groupless.
+        configuration.setGroupsClaim("groups");
+        configuration.setGroupMappings("not-a-real-group:whatever");
+        configuration.setDropUnmapped(true);
+        configuration.setDefaultGroups("infragri");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_GROUPS_RECON);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
+        assertFalse(names.contains("A"), "Dropped claim groups must not be assigned");
+        assertFalse(names.contains("B"), "Dropped claim groups must not be assigned");
+    }
+
+    @Test
+    public void testDefaultGroupAssignedWhenGroupCreationFails() throws Exception {
+        // Claim groups resolve but their creation is rejected (e.g. reserved or invalid
+        // names): the default groups are assigned independently of the claim-derived ones.
+        configuration.setGroupsClaim("groups");
+        configuration.setDefaultGroups("infragri");
+        DummyUserGroupService rejectingSvc =
+                new DummyUserGroupService() {
+                    @Override
+                    public long insert(UserGroup g) throws BadRequestServiceEx {
+                        if (!"infragri".equals(g.getGroupName())) {
+                            throw new BadRequestServiceEx(
+                                    "group name not allowed: " + g.getGroupName());
+                        }
+                        return super.insert(g);
+                    }
+                };
+        filter.setUserGroupService(rejectingSvc);
+
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.restTemplate
+                .getOAuth2ClientContext()
+                .getAccessTokenRequest()
+                .setAuthorizationCode(CODE_GROUPS_RECON);
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
+        assertNotNull(
+                rejectingSvc.get("infragri"), "Fallback group should be created when missing");
+        assertNull(rejectingSvc.get("A"), "Rejected claim group must not be created");
+        assertNull(rejectingSvc.get("B"), "Rejected claim group must not be created");
     }
 
     @Test
@@ -673,7 +840,7 @@ public class OpenIdIntegrationTest {
         private long nextId = 1;
 
         @Override
-        public long insert(UserGroup g) {
+        public long insert(UserGroup g) throws BadRequestServiceEx {
             if (g.getId() == null) g.setId(nextId++);
             if (g.getAttributes() == null) g.setAttributes(new ArrayList<>());
             byId.put(g.getId(), g);

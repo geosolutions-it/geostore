@@ -1042,6 +1042,23 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
             oidcGroups = mapped;
         }
 
+        // Always-assigned default groups: appended to the claim-derived ones, not subject to
+        // groupMappings/dropUnmapped. They flow through the normal reconciliation, so they are
+        // created on the fly when missing, tagged with this provider as sourceService, and
+        // assigned through the user-group service like any claim-derived group.
+        List<String> defaultGroups = configuration.getDefaultGroups();
+        if (defaultGroups != null && !defaultGroups.isEmpty()) {
+            List<String> withDefaults = new java.util.ArrayList<>(oidcGroups);
+            for (String defaultGroup : defaultGroups) {
+                if (!withDefaults.contains(defaultGroup)) {
+                    withDefaults.add(defaultGroup);
+                }
+            }
+            oidcGroups = withDefaults;
+            LOGGER.info(
+                    "Adding configured defaultGroups {} to the groups to assign.", defaultGroups);
+        }
+
         debugSensitive(
                 "Final groups to reconcile: {} (user.role={}, user.id={})",
                 oidcGroups,
