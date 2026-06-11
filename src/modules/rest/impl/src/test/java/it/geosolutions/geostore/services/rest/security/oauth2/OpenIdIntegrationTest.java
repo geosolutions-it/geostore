@@ -339,6 +339,20 @@ public class OpenIdIntegrationTest {
         assertTrue(
                 names.contains("base-users"),
                 "All configured defaultGroups are assigned: " + names);
+
+        // Creation-if-missing applies to EVERY entry of the list, with the provider tag.
+        DummyUserGroupService svc = (DummyUserGroupService) filter.getUserGroupService();
+        for (String name : Arrays.asList("infragri", "base-users")) {
+            UserGroup created = svc.get(name);
+            assertNotNull(created, "Each default group must be created when missing: " + name);
+            String src =
+                    created.getAttributes().stream()
+                            .filter(a -> "sourceService".equals(a.getName()))
+                            .findFirst()
+                            .orElseThrow()
+                            .getValue();
+            assertEquals(configuration.getProvider(), src, "Provider tag on created group " + name);
+        }
     }
 
     @Test
