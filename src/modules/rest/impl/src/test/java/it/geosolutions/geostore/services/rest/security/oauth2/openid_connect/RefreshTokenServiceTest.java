@@ -653,6 +653,79 @@ class RefreshTokenServiceTest {
                         eq(OAuth2AccessTokenResponse.class));
     }
 
+    @Test
+    void testRefreshFailureRespondsWith401InsteadOfRedirect() throws Exception {
+        // The access token is already expired and the IdP rejects the refresh: the XHR
+        // client must receive a clean 401 (a 302 to the login page cannot be followed by the
+        // client and was observed live as a 302 -> 404 chain that wiped the session).
+        serviceDelegate.currentAccessToken = accessToken("providedAccessToken", -10 * 60 * 1000);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessTokenResponse.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        SessionToken sessionToken =
+                serviceDelegate.refresh("expiredRefreshToken", "providedAccessToken");
+
+        assertNull(sessionToken, "A failed refresh of an expired session returns no token");
+        assertEquals(401, mockResponse.getStatus(), "The client must receive a 401");
+        assertNull(mockResponse.getRedirectedUrl(), "The refresh endpoint must never redirect");
+        String content = mockResponse.getContentAsString();
+        assertTrue(content.contains("session_expired"), "The error code is reported: " + content);
+        assertTrue(
+                content.contains("/openid/oidc/login"),
+                "The login URL is reported so the client can start a new flow: " + content);
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertNotNull(refreshCookie, "The refresh token cookie is cleared");
+        assertEquals(0, refreshCookie.getMaxAge());
+    }
+
+    @Test
+    void testShouldSkipRefreshFalseWhenRefreshTokenNearExpiry() {
+        when(configuration.isSkipRefreshIfTokenValid()).thenReturn(true);
+        long nowSeconds = System.currentTimeMillis() / 1000;
+
+        // Access token still fresh for one hour: the legacy logic alone would skip.
+        OAuth2AccessToken freshToken = accessToken("opaque-at", 3600 * 1000);
+
+        // Refresh token (JWT, as Keycloak's) expiring within the safety window: refresh
+        // tokens only slide when actually used, so the skip must be bypassed.
+        String nearExpiryRt = buildFakeJwtExpOnly(nowSeconds + 60);
+        assertFalse(
+                serviceDelegate.callShouldSkipRefresh(freshToken, nearExpiryRt, configuration),
+                "A refresh token close to its own expiry must force a real IdP refresh");
+
+        // A long-lived refresh token keeps the legacy skip behavior.
+        String longLivedRt = buildFakeJwtExpOnly(nowSeconds + 1800);
+        assertTrue(
+                serviceDelegate.callShouldSkipRefresh(freshToken, longLivedRt, configuration),
+                "A healthy refresh token keeps the skip in place");
+
+        // An opaque (non-JWT) refresh token carries no expiry info: legacy behavior.
+        assertTrue(
+                serviceDelegate.callShouldSkipRefresh(
+                        freshToken, "opaque-refresh-token", configuration),
+                "Opaque refresh tokens keep the legacy skip behavior");
+    }
+
+    @Test
+    void testClearCookiesExpiresRefreshTokenCookie() {
+        // Max-Age 0 actually deletes the cookie: the previous -1 ("session cookie")
+        // RE-INSTATED the refresh token on the logout response (observed live as a logout
+        // carrying both the clearing Set-Cookie and a full refresh_token one).
+        mockRequest.setCookies(
+                new Cookie("refresh_token", "leftoverRt"), new Cookie("JSESSIONID", "xyz"));
+
+        serviceDelegate.callClearCookies(mockRequest, mockResponse);
+
+        Cookie cleared = getRefreshTokenCookie(mockResponse);
+        assertNotNull(cleared, "The refresh token cookie must be re-emitted for deletion");
+        assertEquals(0, cleared.getMaxAge(), "Max-Age must be 0 (deletion), not -1 (session)");
+        assertEquals("", cleared.getValue(), "The cookie value must be blanked");
+    }
+
     /** Builds a fake unsigned JWT with iat and exp claims (decodable by JWTHelper). */
     private String buildFakeJwt(long iatEpochSeconds, long expEpochSeconds) {
         String header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";
@@ -718,6 +791,16 @@ class RefreshTokenServiceTest {
 
         public void setConfiguration(OAuth2Configuration configuration) {
             this.configuration = configuration;
+        }
+
+        // Bridges for protected superclass members living in a different package.
+        boolean callShouldSkipRefresh(
+                OAuth2AccessToken token, String refreshToken, OAuth2Configuration config) {
+            return shouldSkipRefresh(token, refreshToken, config);
+        }
+
+        void callClearCookies(HttpServletRequest request, HttpServletResponse response) {
+            clearCookies(request, response);
         }
 
         @Override

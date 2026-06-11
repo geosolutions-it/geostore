@@ -66,6 +66,7 @@ import org.springframework.security.oauth2.core.http.converter.OAuth2AccessToken
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -76,6 +77,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     private static final Logger LOGGER = LogManager.getLogger(OAuth2SessionServiceDelegate.class);
 
     private static final long CLOCK_SKEW_ALLOWANCE_MILLIS = 5 * 60 * 1000; // 5 minutes
+
+    // Force a real IdP refresh when the refresh token itself is this close to its own
+    // (fixed) expiry: IdP refresh tokens only slide when a refresh grant is performed.
+    private static final long REFRESH_TOKEN_EXPIRY_SAFETY_WINDOW_MILLIS = 2 * 60 * 1000;
 
     protected UserService userService;
     protected final String delegateName;
@@ -130,7 +135,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         SessionToken sessionToken = null;
         OAuth2Configuration configuration = configuration();
 
-        if (configuration != null && shouldSkipRefresh(currentToken, configuration)) {
+        if (configuration != null
+                && shouldSkipRefresh(currentToken, refreshTokenToUse, configuration)) {
             LOGGER.debug("Token still has sufficient validity; skipping IDP refresh.");
             warningMessage = "Token still valid; refresh skipped.";
         } else if (refreshTokenToUse == null || refreshTokenToUse.isEmpty()) {
@@ -234,6 +240,40 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
     }
 
+    /**
+     * Whether the refresh token (when it is a JWT carrying an {@code exp} claim, as Keycloak's are)
+     * is within the safety window of its own expiry. Opaque refresh tokens carry no expiry
+     * information and keep the legacy behavior.
+     */
+    private boolean isRefreshTokenNearExpiry(String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            return false;
+        }
+        Date expiration = getExpirationDateQuietly(refreshToken);
+        if (expiration == null) {
+            return false;
+        }
+        long remaining = expiration.getTime() - System.currentTimeMillis();
+        return remaining <= REFRESH_TOKEN_EXPIRY_SAFETY_WINDOW_MILLIS;
+    }
+
+    /**
+     * Like {@link #getExpirationDateFromToken(String)} but silent: meant for tokens that may
+     * legitimately be opaque (non-JWT), where a parse failure is expected and must not log.
+     */
+    private Date getExpirationDateQuietly(String token) {
+        try {
+            Map<String, Object> claims = new JWTHelper(token).getPayloadAsMap();
+            Object exp = claims.get("exp");
+            if (exp == null) {
+                return null;
+            }
+            return new Date(toEpochSeconds(exp) * 1000);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     private Date getIssuedAtFromToken(String token) {
         try {
             Map<String, Object> claims = new JWTHelper(token).getPayloadAsMap();
@@ -261,8 +301,21 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         throw new IllegalArgumentException("Cannot parse epoch-seconds claim from token");
     }
 
-    boolean shouldSkipRefresh(OAuth2AccessToken token, OAuth2Configuration config) {
+    protected boolean shouldSkipRefresh(
+            OAuth2AccessToken token, String refreshToken, OAuth2Configuration config) {
         if (!config.isSkipRefreshIfTokenValid()) {
+            return false;
+        }
+
+        // Never skip when the refresh token itself is close to its own expiry: IdP refresh
+        // tokens (e.g. Keycloak refresh_expires_in / session idle, 30 minutes by default)
+        // only slide when a refresh grant is actually performed. Skipping past that window
+        // leaves an unrefreshable session even though the access token still looks healthy,
+        // and the session dies at the first real refresh attempt.
+        if (isRefreshTokenNearExpiry(refreshToken)) {
+            LOGGER.info(
+                    "Refresh token close to its expiry; performing a real IdP refresh "
+                            + "even though the access token is still valid.");
             return false;
         }
 
@@ -375,6 +428,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                 }
             } catch (RestClientException ex) {
                 LOGGER.error("Attempt {}: Error refreshing token: {}", attempt, ex.getMessage());
+                if (ex instanceof HttpStatusCodeException) {
+                    // Surface the IdP error payload (e.g. invalid_grant vs invalid_client):
+                    // it pinpoints whether the refresh token expired or the client
+                    // credentials are wrong, which is otherwise invisible at this level.
+                    LOGGER.warn(
+                            "Token refresh rejected by the identity provider: {}",
+                            ((HttpStatusCodeException) ex).getResponseBodyAsString());
+                }
                 if (attempt == maxRetries) {
                     errorMessage = "Max retries reached. Unable to refresh token.";
                     LOGGER.error(errorMessage);
@@ -419,28 +480,43 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     public void handleRefreshFailure(
             String accessToken, String refreshToken, OAuth2Configuration configuration) {
         LOGGER.info(
-                "Unable to refresh token after max retries. Clearing session and redirecting to login.");
+                "Unable to refresh token after max retries. Clearing the session and reporting "
+                        + "the failure to the client.");
         HttpServletResponse response = getResponse();
         if (response != null) {
             clearRefreshTokenCookie(response);
         }
         doLogout(null);
 
-        try {
-            HttpServletResponse redirectResponse = getResponse();
-            // Only redirect once: handleRefreshFailure may be reached both from doRefresh and from
-            // the expired-token path, and a response can be redirected only before it is committed.
-            if (configuration != null
-                    && configuration.getProvider() != null
-                    && redirectResponse != null
-                    && !redirectResponse.isCommitted()) {
-                String redirectUrl =
-                        "../../openid/" + configuration.getProvider().toLowerCase() + "/login";
-                redirectResponse.sendRedirect(redirectUrl);
+        // This endpoint is invoked via XHR: never redirect. The 302 to the login page cannot
+        // be followed by the client (observed live as a 302 -> 404 chain through the
+        // front-end proxy that wiped the session). Report a clean 401 with the login URL so
+        // the client can start a new authorization flow itself. The committed check keeps the
+        // body from being written twice: handleRefreshFailure may be reached both from
+        // doRefresh and from the expired-token path.
+        HttpServletResponse failureResponse = getResponse();
+        if (failureResponse != null && !failureResponse.isCommitted()) {
+            try {
+                String loginUrl = null;
+                if (configuration != null && configuration.getProvider() != null) {
+                    loginUrl =
+                            "../../openid/" + configuration.getProvider().toLowerCase() + "/login";
+                }
+                failureResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                failureResponse.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                StringBuilder body =
+                        new StringBuilder(
+                                "{\"error\":\"session_expired\","
+                                        + "\"message\":\"Token refresh failed; a new login is required.\"");
+                if (loginUrl != null) {
+                    body.append(",\"loginUrl\":\"").append(loginUrl).append("\"");
+                }
+                body.append("}");
+                failureResponse.getWriter().write(body.toString());
+                failureResponse.getWriter().flush();
+            } catch (IOException e) {
+                LOGGER.error("Error while writing the refresh-failure response: ", e);
             }
-        } catch (IOException e) {
-            LOGGER.error("Error while sending redirect to login service: ", e);
-            throw new RuntimeException("Failed to redirect to login", e);
         }
     }
 
@@ -681,7 +757,11 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (allCookies != null)
             for (Cookie toDelete : allCookies) {
                 if (deleteCookie(toDelete)) {
-                    toDelete.setMaxAge(-1);
+                    // Max-Age must be 0 (-1 means "session cookie" and would RE-INSTATE the
+                    // cookie with its current value: observed live as a logout response
+                    // carrying both the clearing Set-Cookie and a full refresh_token one).
+                    toDelete.setValue("");
+                    toDelete.setMaxAge(0);
                     toDelete.setPath("/");
                     toDelete.setComment("EXPIRING COOKIE at " + System.currentTimeMillis());
                     if (toDelete.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM)) {
