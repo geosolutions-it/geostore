@@ -847,6 +847,18 @@ public class OAuth2GeoStoreAuthenticationService {
 
         oidcGroups = applyGroupMappings(oidcGroups);
 
+        // Optional fallback: when nothing could be derived from the claims (claim missing, or
+        // every value dropped by the mappings), assign the configured default group. It flows
+        // through the normal reconciliation, so it is created on the fly, tagged with this
+        // provider as sourceService, and removed again on a later login carrying real groups.
+        String defaultGroup = configuration.getAuthenticatedDefaultGroup();
+        if (oidcGroups.isEmpty() && StringUtils.isNotBlank(defaultGroup)) {
+            oidcGroups = Collections.singletonList(defaultGroup.trim());
+            LOGGER.info(
+                    "No groups resolved from claims; assigning authenticatedDefaultGroup '{}'",
+                    defaultGroup.trim());
+        }
+
         LOGGER.info(
                 "Final groups to reconcile: {} (user.role={}, user.id={})",
                 oidcGroups,

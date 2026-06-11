@@ -21,6 +21,8 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected Role authenticatedDefaultRole;
 
+    protected String authenticatedDefaultGroup;
+
     /**
      * @return true if the filter to which this configuration object refers is enabled. False
      *     otherwise.
@@ -112,5 +114,20 @@ public abstract class IdPConfiguration implements BeanNameAware {
     public void setAuthenticatedDefaultRole(String authenticatedDefaultRole) {
         if (StringUtils.isNotBlank(authenticatedDefaultRole))
             this.authenticatedDefaultRole = Role.valueOf(authenticatedDefaultRole);
+    }
+
+    /**
+     * Optional group assigned when no group could be derived from the IdP claims (the groups claim
+     * is missing, or every value was dropped by groupMappings/dropUnmapped). Created on the fly
+     * when it does not exist. Blank or unset disables the fallback.
+     *
+     * @return the fallback group name, or null when not configured.
+     */
+    public String getAuthenticatedDefaultGroup() {
+        return authenticatedDefaultGroup;
+    }
+
+    public void setAuthenticatedDefaultGroup(String authenticatedDefaultGroup) {
+        this.authenticatedDefaultGroup = authenticatedDefaultGroup;
     }
 }

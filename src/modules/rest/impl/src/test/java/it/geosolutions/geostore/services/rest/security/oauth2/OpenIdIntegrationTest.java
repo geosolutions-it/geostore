@@ -277,6 +277,80 @@ public class OpenIdIntegrationTest {
     }
 
     @Test
+    public void testDefaultGroupAssignedWhenNoGroupsResolved() throws Exception {
+        // The token of CODE carries no groups claim at all: the configured fallback group is
+        // assigned, created on the fly and tagged with the provider as sourceService.
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultGroup("infragri");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("code", CODE);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
+
+        UserGroup created = ((DummyUserGroupService) filter.getUserGroupService()).get("infragri");
+        assertNotNull(created, "Fallback group should be created when missing");
+        String src =
+                created.getAttributes().stream()
+                        .filter(a -> "sourceService".equals(a.getName()))
+                        .findFirst()
+                        .orElseThrow()
+                        .getValue();
+        assertEquals(configuration.getProvider(), src);
+    }
+
+    @Test
+    public void testDefaultGroupNotAssignedWhenGroupsResolved() throws Exception {
+        // Groups resolved from the claims win: the fallback group must not be added.
+        configuration.setGroupsClaim("groups");
+        configuration.setAuthenticatedDefaultGroup("infragri");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("A"));
+        assertTrue(names.contains("B"));
+        assertFalse(
+                names.contains("infragri"),
+                "Fallback group must not be assigned when claims resolve groups");
+    }
+
+    @Test
+    public void testDefaultGroupAssignedWhenAllGroupsDropped() throws Exception {
+        // Every claim value is dropped by groupMappings+dropUnmapped (the typical Keycloak
+        // permission-roles setup): the fallback group keeps the user from ending up groupless.
+        configuration.setGroupsClaim("groups");
+        configuration.setGroupMappings("not-a-real-group:whatever");
+        configuration.setDropUnmapped(true);
+        configuration.setAuthenticatedDefaultGroup("infragri");
+        MockHttpServletRequest request = createRequest("oidc/login");
+        request.setParameter("code", CODE_GROUPS_RECON);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+        filter.doFilter(request, response, chain);
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+        Set<String> names =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        assertTrue(names.contains("infragri"), "Fallback group should be assigned, got " + names);
+        assertFalse(names.contains("A"), "Dropped claim groups must not be assigned");
+        assertFalse(names.contains("B"), "Dropped claim groups must not be assigned");
+    }
+
+    @Test
     public void testRoleFromToken_adminPromotion() throws Exception {
         configuration.setRolesClaim("roles");
         MockHttpServletRequest request = createRequest("oidc/login");
