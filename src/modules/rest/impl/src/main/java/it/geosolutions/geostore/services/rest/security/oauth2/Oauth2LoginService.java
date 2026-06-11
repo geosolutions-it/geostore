@@ -7,6 +7,7 @@ import static org.springframework.security.oauth2.common.OAuth2AccessToken.BEARE
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
+import it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
 import java.net.URI;
@@ -124,12 +125,30 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                                                 + e.getMessage());
             }
         } else {
-            LOGGER.error("No access token found on callback request: {}", response.getStatus());
-            result =
-                    Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                            .entity("No access token found.");
+            String errorDetail = authenticationErrorDetail();
+            String message =
+                    "Authentication with provider '"
+                            + provider
+                            + "' failed: "
+                            + (errorDetail != null
+                                    ? errorDetail
+                                    : "no access token was returned by the identity provider.");
+            LOGGER.error("{} (callback response status: {})", message, response.getStatus());
+            result = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(message);
         }
         return result;
+    }
+
+    /**
+     * Returns the authentication failure reason recorded by the OAuth2 filter on the current
+     * request (see {@link RestAuthenticationEntryPoint#OAUTH2_AUTH_ERROR_KEY}), or null if the
+     * filter did not record one.
+     */
+    protected String authenticationErrorDetail() {
+        HttpServletRequest request = OAuth2Utils.getRequest();
+        if (request == null) return null;
+        Object detail = request.getAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY);
+        return detail instanceof String ? (String) detail : null;
     }
 
     @Override

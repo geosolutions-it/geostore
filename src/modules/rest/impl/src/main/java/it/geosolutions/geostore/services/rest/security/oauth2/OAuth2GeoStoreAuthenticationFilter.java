@@ -88,6 +88,7 @@ import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.token.RemoteTokenServices;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -599,6 +600,12 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         // 6) Nothing worked
         LOGGER.warn(
                 "Principal could not be resolved from security principal, introspection, or JWT claims.");
+        setAuthErrorIfAbsent(
+                req,
+                "Could not resolve the user identity from the identity provider response: "
+                        + "no username found in the security principal, the userinfo/introspection "
+                        + "response, or the token claims. Check the principalKey/uniqueUsername "
+                        + "configuration for the provider.");
         return null;
     }
 
@@ -648,24 +655,58 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         String errorDetail;
         if (e instanceof BadCredentialsException) {
             if (e.getCause() instanceof OAuth2AccessDeniedException) {
-                errorDetail = "OAuth2 access denied: " + e.getCause().getMessage();
+                errorDetail =
+                        "The identity provider denied the token exchange: "
+                                + deepestMessage(e.getCause());
                 LOGGER.warn(
                         "OAuth2 access denied by provider: {}",
                         e.getCause().getMessage(),
                         e.getCause());
             } else {
-                errorDetail = "Bad credentials: " + e.getMessage();
+                errorDetail = "Bad credentials: " + deepestMessage(e);
                 LOGGER.warn("OAuth2 bad credentials: {}", e.getMessage(), e);
             }
         } else if (e instanceof ResourceAccessException) {
-            errorDetail = "OAuth2 provider unreachable: " + e.getMessage();
+            errorDetail = "The identity provider is unreachable: " + e.getMessage();
             LOGGER.error("Could not reach OAuth2 provider: {}", e.getMessage(), e);
+        } else if (e instanceof HttpStatusCodeException) {
+            errorDetail =
+                    "The identity provider rejected the token validation request with status "
+                            + ((HttpStatusCodeException) e).getRawStatusCode()
+                            + ": the access token may be expired or revoked, or the "
+                            + "userinfo/introspection endpoint may be misconfigured.";
+            LOGGER.warn("OAuth2 token validation rejected by provider: {}", e.getMessage(), e);
         } else {
-            errorDetail = "Authentication error: " + e.getMessage();
+            errorDetail = "Authentication error: " + deepestMessage(e);
             LOGGER.warn("OAuth2 authentication error: {}", e.getMessage(), e);
         }
 
         req.setAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY, errorDetail);
+    }
+
+    /** Walks the cause chain and returns the most specific (deepest) non-null message. */
+    private static String deepestMessage(Throwable t) {
+        String message = t.getMessage();
+        Throwable current = t;
+        while (current.getCause() != null && current.getCause() != current) {
+            current = current.getCause();
+            if (current.getMessage() != null) message = current.getMessage();
+        }
+        return message != null ? message : t.getClass().getSimpleName();
+    }
+
+    /**
+     * Records the reason of an authentication failure so that downstream handlers (the login
+     * callback, the REST entry point) can report the actual cause to the client instead of a
+     * generic failure. The first recorded reason wins: later, more generic ones do not overwrite
+     * it.
+     */
+    private void setAuthErrorIfAbsent(HttpServletRequest request, String message) {
+        if (request != null
+                && request.getAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY)
+                        == null) {
+            request.setAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY, message);
+        }
     }
 
     private void handleUserRedirection(HttpServletRequest req, HttpServletResponse resp)
@@ -756,6 +797,13 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         User user = retrieveUserWithAuthorities(username, request, response);
         if (user == null) {
             LOGGER.error("User retrieval failed for username: {}", username);
+            setAuthErrorIfAbsent(
+                    request,
+                    "User '"
+                            + username
+                            + "' was authenticated by the identity provider but could not be "
+                            + "found or created in GeoStore (check autoCreateUser and the "
+                            + "server logs).");
             return null;
         }
         // Mark the user as trusted (externally authenticated via OAuth2/OIDC).
