@@ -121,12 +121,12 @@ public class IdPLoginRestImpl implements IdPLoginRest {
 
     @Override
     public void registerService(String providerName, IdPLoginService service) {
+        this.services.put(providerName, service);
         LOGGER.info(
                 "Registering login service for provider '{}' (class: {}). "
                         + "Providers after registration: {}",
                 providerName,
                 service.getClass().getSimpleName(),
                 services.keySet());
-        this.services.put(providerName, service);
     }
 }
