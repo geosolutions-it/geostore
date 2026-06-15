@@ -165,7 +165,7 @@
         <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
         <fmt-maven-plugin.version>2.9.1</fmt-maven-plugin.version>
         <directory-maven-plugin.version>0.3.1</directory-maven-plugin.version>
-        <wagon-ssh.version>3.5.3</wagon-ssh.version>
+        <wagon-ssh-external.version>3.5.3</wagon-ssh-external.version>
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
         <coveralls-maven-plugin.version>4.1.0</coveralls-maven-plugin.version>
         <cobertura-maven-plugin.version>2.7</cobertura-maven-plugin.version>
@@ -187,13 +187,13 @@
         <repository>
             <uniqueVersion>false</uniqueVersion>
             <id>geosolutions</id>
-            <url>sftp://maven.geo-solutions.it/</url>
+            <url>scpexe://maven.geo-solutions.it/</url>
         </repository>
         <!-- use the following if you ARE using a snapshot version. -->
         <snapshotRepository>
             <uniqueVersion>false</uniqueVersion>
             <id>geosolutions</id>
-            <url>sftp://maven.geo-solutions.it/</url>
+            <url>scpexe://maven.geo-solutions.it/</url>
         </snapshotRepository>
     </distributionManagement>
 
@@ -355,8 +355,8 @@
         <extensions>
             <extension>
                 <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-ssh</artifactId>
-                <version>${wagon-ssh.version}</version>
+                <artifactId>wagon-ssh-external</artifactId>
+                <version>${wagon-ssh-external.version}</version>
             </extension>
         </extensions>
 
