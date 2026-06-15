@@ -152,7 +152,7 @@ public class OAuth2GeoStoreAuthenticationService {
             OAuth2RefreshToken refreshToken) {
 
         LOGGER.info("About to perform remote authentication.");
-        LOGGER.info("Access Token: {}", accessToken);
+        LOGGER.debug("Access token received (type={}, scopes={})", accessToken.getTokenType().getValue(), accessToken.getScopes());
 
         String principal = null;
 
@@ -424,22 +424,21 @@ public class OAuth2GeoStoreAuthenticationService {
             OAuth2AccessToken accessToken, HttpServletRequest req) {
         try {
             String idToken = OAuth2Utils.getIdToken();
-            String jwtForClaims = idToken;
 
-            if (jwtForClaims == null && accessToken != null) {
-                jwtForClaims = accessToken.getTokenValue();
+            if (idToken == null && accessToken != null) {
+                idToken = accessToken.getTokenValue();
             }
 
-            if (jwtForClaims == null) {
-                jwtForClaims = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, req);
+            if (idToken == null) {
+                idToken = OAuth2Utils.tokenFromParamsOrBearer(ACCESS_TOKEN_PARAM, req);
             }
 
-            if (StringUtils.isBlank(jwtForClaims)) {
+            if (StringUtils.isBlank(idToken)) {
                 LOGGER.debug("No JWT available for fallback principal extraction");
                 return null;
             }
 
-            JWTHelper helper = decodeAndValidateJwt(jwtForClaims);
+            JWTHelper helper = decodeAndValidateJwt(idToken);
             if (helper == null) {
                 LOGGER.debug("Unable to decode or validate JWT for fallback principal extraction");
                 return null;
