@@ -61,6 +61,10 @@ public class PKCERequestEnhancer {
         }
         if (config.isUsePKCE()) {
             String codeVerifier = retrieveVerifierFromSession(request);
+            LOGGER.debug(
+                    "PKCE: code_verifier {} in session, {} to token request",
+                    StringUtils.hasText(codeVerifier) ? "found" : "NOT FOUND",
+                    StringUtils.hasText(codeVerifier) ? "adding" : "NOT adding");
             if (StringUtils.hasText(codeVerifier)) {
                 form.put(PkceParameterNames.CODE_VERIFIER, Collections.singletonList(codeVerifier));
             }
