@@ -89,15 +89,8 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                     "No IdPConfiguration found for callback provider: " + provider);
         }
         LOGGER.info("Token: {}", token);
-        
-        String redirectUri = configuration.getRedirectUri();
-        String internalRedirectUri = configuration.getInternalRedirectUri();
 
-        if (redirectUri == null || redirectUri.isBlank()) {
-            throw new RuntimeException(
-                    "Redirect uri is missing. Check the configuration property value.");
-        }
-        LOGGER.info("Redirect uri: {}", redirectUri);
+        String internalRedirectUri = configuration.getInternalRedirectUri();
 
         if (internalRedirectUri == null || internalRedirectUri.isBlank()) {
             throw new RuntimeException(
