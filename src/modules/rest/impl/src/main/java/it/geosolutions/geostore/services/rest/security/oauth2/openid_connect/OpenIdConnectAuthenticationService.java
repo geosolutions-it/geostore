@@ -110,22 +110,37 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
     }
 
     /**
-     * For OIDC the "introspection" endpoint is the OpenID Connect userinfo endpoint, queried with a
-     * GET and a Bearer header (see {@link OpenIdConnectTokenServices}); override the generic POST
-     * {@code check_token} behavior accordingly.
+     * For OIDC, user attributes are fetched from the userinfo endpoint (GET + Bearer), not from the
+     * RFC 7662 introspection endpoint (POST). The introspection endpoint is used only for opaque
+     * bearer token validation via {@code bearerTokenStrategy=introspection}.
+     */
+    @Override
+    protected Map<String, Object> doIntrospectionOrUserInfoRequest(OAuth2AccessToken accessToken) {
+        String userInfoUri = configuration.getCheckTokenEndpointUrl();
+        if (!StringUtils.hasText(userInfoUri)) {
+            LOGGER.debug("OIDC: no userinfo endpoint configured, skipping userinfo lookup");
+            return null;
+        }
+        return doIntrospectionRequest(accessToken, userInfoUri);
+    }
+
+    /**
+     * Fetches user attributes from the given URI using GET and a Bearer token header, via {@link
+     * OpenIdConnectTokenServices}. In the OIDC context this is always the userinfo endpoint, passed
+     * by {@link #doIntrospectionOrUserInfoRequest}.
      */
     @Override
     protected Map<String, Object> doIntrospectionRequest(
-            OAuth2AccessToken accessToken, String introspectionUri) {
+            OAuth2AccessToken accessToken, String userInfoUri) {
         if (accessToken == null
                 || !StringUtils.hasText(accessToken.getTokenValue())
-                || !StringUtils.hasText(introspectionUri)) {
+                || !StringUtils.hasText(userInfoUri)) {
             return null;
         }
         try {
             OpenIdConnectTokenServices tokenServices =
                     new OpenIdConnectTokenServices(configuration.getPrincipalKey());
-            tokenServices.setCheckTokenEndpointUrl(introspectionUri);
+            tokenServices.setCheckTokenEndpointUrl(userInfoUri);
             tokenServices.setClientId(configuration.getClientId());
             tokenServices.setClientSecret(configuration.getClientSecret());
             Map<String, Object> result =

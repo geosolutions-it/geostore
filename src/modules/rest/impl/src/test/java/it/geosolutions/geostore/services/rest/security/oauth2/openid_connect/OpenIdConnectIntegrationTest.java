@@ -167,7 +167,7 @@ public class OpenIdConnectIntegrationTest {
                                                 "Content-Type", MediaType.APPLICATION_JSON_VALUE)
                                         .withBody(tokenResponseJson)));
         openIdConnectService.stubFor(
-                any(urlPathEqualTo("/userinfo"))
+                WireMock.get(urlPathEqualTo("/userinfo"))
                         .willReturn(
                                 aResponse()
                                         .withStatus(200)
