@@ -57,6 +57,15 @@ public class OAuth2Utils {
     public static final String AUTH_PROVIDER = "authProvider";
 
     /**
+     * Request-attribute key holding the raw access/ID token value for downstream readers (replaces
+     * the legacy {@code OAuth2AuthenticationDetails.ACCESS_TOKEN_VALUE}).
+     */
+    public static final String ACCESS_TOKEN_VALUE = "OAuth2-AccessTokenValue";
+
+    /** Request-attribute key holding the access token type (replaces the legacy constant). */
+    public static final String ACCESS_TOKEN_TYPE = "OAuth2-AccessTokenType";
+
+    /**
      * Retrieve a token either from a request param or from the Bearer.
      *
      * @param paramName the name of the request param.
@@ -124,14 +133,16 @@ public class OAuth2Utils {
         return token;
     }
 
-    //    /**
-    //     * Get the id token from the request attributes.
-    //     *
-    //     * @return the id token value if found, null otherwise.
-    //     */
-    //    public static String getIdToken() {
-    //        return getRequestAttribute(GeoStoreOAuthRestTemplate.ID_TOKEN_VALUE);
-    //    }
+    public static final String ID_TOKEN_VALUE = "OpenIdConnect-IdTokenValue";
+
+    /**
+     * Get the id token from the request attributes.
+     *
+     * @return the id token value if found, null otherwise.
+     */
+    public static String getIdToken() {
+        return getRequestAttribute(ID_TOKEN_VALUE);
+    }
 
     /**
      * Get the Access Token from the request attributes if present.
@@ -146,7 +157,7 @@ public class OAuth2Utils {
     }
 
     /**
-     * Get the Refresh Toke from request attributes if present.
+     * Get the Refresh Token from request attributes if present.
      *
      * @return the refresh token if found, null otherwise.
      */

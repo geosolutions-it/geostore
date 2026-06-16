@@ -1,9 +1,10 @@
 name: Integration tests
 
 # Runs the REST integration suite (.github/scripts/run-integration-tests.ps1)
-# against a standalone jetty:run backend on port 9191. OIDC/OAuth2 paths are
-# intentionally NOT exercised — that stack was removed in PR #529 and will be
-# reintroduced via Spring Security 7 oauth2-client in a follow-up.
+# against a standalone jetty:run backend on port 9191. This suite covers the
+# non-OIDC REST API surface. The OIDC/OAuth2 stack (restored on Spring Security 7)
+# is exercised end-to-end against a real Keycloak by KeycloakLifecycleTest
+# (Testcontainers) in the main CI build (CI.yml).
 
 on:
   push:
