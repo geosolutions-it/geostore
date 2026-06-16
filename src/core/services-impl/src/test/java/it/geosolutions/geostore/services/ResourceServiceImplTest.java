@@ -43,7 +43,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Class ResourceServiceImplTest.
@@ -553,7 +552,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
                         .filter(SecurityRule::isCanRead)
                         .flatMap(rule -> rule.getIpRanges().stream())
                         .map(IPRange::getDescription)
-                        .collect(Collectors.toList())
+                        .toList()
                         .containsAll(List.of("rangeA", "rangeB")));
 
         /* check ruleD ranges */
@@ -562,7 +561,7 @@ public class ResourceServiceImplTest extends ServiceTestBase {
                         .filter(Predicate.not(SecurityRule::isCanRead))
                         .flatMap(rule -> rule.getIpRanges().stream())
                         .map(IPRange::getDescription)
-                        .collect(Collectors.toList())
+                        .toList()
                         .contains("rangeA"));
     }
 

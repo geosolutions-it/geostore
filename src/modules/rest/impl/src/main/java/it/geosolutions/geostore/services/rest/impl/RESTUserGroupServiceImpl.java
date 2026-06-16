@@ -41,7 +41,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -177,7 +176,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
             List<RESTUserGroup> restUserGroups =
                     userGroupService.getAll(page, entries, nameLike, all).stream()
                             .map(ug -> createRestUserGroup(ug, includeUsers))
-                            .collect(Collectors.toList());
+                            .toList();
 
             long count = 0;
             if (!restUserGroups.isEmpty()) {
@@ -279,7 +278,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
                                         user.setId(u.getId());
                                         return user;
                                     })
-                            .collect(Collectors.toList()));
+                            .toList());
         }
         return old;
     }
@@ -336,9 +335,7 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
         if (groups != null && !groups.isEmpty()) {
             Stream<UserGroup> groupStream = groups.stream();
             List<RESTUserGroup> restGroups =
-                    groupStream
-                            .map(g -> new RESTUserGroup(g, Collections.emptySet()))
-                            .collect(Collectors.toList());
+                    groupStream.map(g -> new RESTUserGroup(g, Collections.emptySet())).toList();
             groupList = new UserGroupList(restGroups, restGroups.size());
         } else {
             groupList = new UserGroupList();

@@ -31,7 +31,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class IPRangeServiceImpl implements IPRangeService {
 
     private static final Logger LOGGER = LogManager.getLogger(IPRangeServiceImpl.class);
@@ -43,6 +45,7 @@ public class IPRangeServiceImpl implements IPRangeService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public long insert(IPRange ipRange) throws BadRequestServiceEx {
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Persisting IP range...");
@@ -101,6 +104,7 @@ public class IPRangeServiceImpl implements IPRangeService {
         return ipRangeDAO.find(id);
     }
 
+    @Transactional(value = "geostoreTransactionManager")
     public long update(long id, IPRange ipRange) throws BadRequestServiceEx, NotFoundServiceEx {
 
         IPRange original = get(id);
@@ -129,6 +133,7 @@ public class IPRangeServiceImpl implements IPRangeService {
         ipRange.setIpHigh(cidr.getUpper().getValue());
     }
 
+    @Transactional(value = "geostoreTransactionManager")
     public void delete(long id) throws NotFoundServiceEx {
         if (get(id) == null || !ipRangeDAO.removeById(id)) {
             throw new NotFoundServiceEx("IPRange not found");

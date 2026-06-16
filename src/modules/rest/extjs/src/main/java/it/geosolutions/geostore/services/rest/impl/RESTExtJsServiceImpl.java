@@ -68,7 +68,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -389,9 +388,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @return
      */
     private List<ExtResource> convertToExtResources(List<Resource> foundResources, User user) {
-        return foundResources.stream()
-                .map(r -> convertToExtResource(r, user))
-                .collect(Collectors.toList());
+        return foundResources.stream().map(r -> convertToExtResource(r, user)).toList();
     }
 
     private ExtResource convertToExtResource(Resource resource, User user) {
@@ -730,8 +727,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         if (attributes == null) {
             return new ShortAttributeList();
         }
-        return new ShortAttributeList(
-                attributes.stream().map(ShortAttribute::new).collect(Collectors.toList()));
+        return new ShortAttributeList(attributes.stream().map(ShortAttribute::new).toList());
     }
 
     private TagList createTagList(Set<Tag> tags) {

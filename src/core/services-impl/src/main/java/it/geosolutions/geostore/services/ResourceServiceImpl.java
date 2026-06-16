@@ -477,7 +477,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @return List<ShortAttribute>
      */
     private List<ShortAttribute> convertToShortAttributeList(List<Attribute> list) {
-        return list.stream().map(ShortAttribute::new).collect(Collectors.toList());
+        return list.stream().map(ShortAttribute::new).toList();
     }
 
     /*
@@ -624,7 +624,7 @@ public class ResourceServiceImpl implements ResourceService {
             boolean includeTags) {
         return resources.stream()
                 .map(r -> configResource(r, includeAttributes, includeData, false, includeTags))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private Resource configResource(
@@ -719,9 +719,7 @@ public class ResourceServiceImpl implements ResourceService {
      * @return List<ShortResource>
      */
     private List<ShortResource> convertToShortResourceList(List<Resource> resources, User user) {
-        return resources.stream()
-                .map(r -> createShortResource(user, r))
-                .collect(Collectors.toList());
+        return resources.stream().map(r -> createShortResource(user, r)).toList();
     }
 
     private ShortResource createShortResource(User user, Resource resource) {

@@ -64,7 +64,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import net.sf.json.JSON;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
@@ -481,7 +480,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             List<ExtResource> resources = response.getList();
             assertEquals(3, resources.size());
             List<String> resourcesDescriptions =
-                    resources.stream().map(Resource::getDescription).collect(Collectors.toList());
+                    resources.stream().map(Resource::getDescription).toList();
             assertEquals(
                     List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C),
                     resourcesDescriptions);
@@ -503,7 +502,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             List<ExtResource> resources = response.getList();
             assertEquals(3, resources.size());
             List<Date> resourcesCreationDates =
-                    resources.stream().map(Resource::getCreation).collect(Collectors.toList());
+                    resources.stream().map(Resource::getCreation).toList();
             assertTrue(resourcesCreationDates.get(0).after(resourcesCreationDates.get(1)));
             assertTrue(resourcesCreationDates.get(1).after(resourcesCreationDates.get(2)));
         }
@@ -523,8 +522,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
             List<ExtResource> resources = response.getList();
             assertEquals(3, resources.size());
-            List<String> resourcesNames =
-                    resources.stream().map(Resource::getName).collect(Collectors.toList());
+            List<String> resourcesNames = resources.stream().map(Resource::getName).toList();
             assertEquals(
                     List.of(RES_ATTRIBUTE_A, RES_ATTRIBUTE_B, RES_ATTRIBUTE_C), resourcesNames);
         }

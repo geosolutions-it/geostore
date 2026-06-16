@@ -37,7 +37,6 @@ import it.geosolutions.geostore.services.rest.model.IPRangeList;
 import it.geosolutions.geostore.services.rest.model.RESTIPRange;
 import jakarta.ws.rs.core.SecurityContext;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -74,8 +73,7 @@ public class RESTIPRangeServiceImpl implements RESTIPRangeService {
                 count = ipRangeService.count();
             }
 
-            return new IPRangeList(
-                    ipRanges.stream().map(RESTIPRange::new).collect(Collectors.toList()), count);
+            return new IPRangeList(ipRanges.stream().map(RESTIPRange::new).toList(), count);
 
         } catch (BadRequestServiceEx e) {
             LOGGER.error(e.getMessage(), e);
