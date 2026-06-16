@@ -123,7 +123,7 @@
         <commons-io.version>2.14.0</commons-io.version>
         <json-lib.version>2.4.2-geoserver</json-lib.version>
         <hibernate-jpa-2.1-api.version>1.0.2.Final</hibernate-jpa-2.1-api.version>
-        <jakarta.servlet-api.version>6.1.0</jakarta.servlet-api.version>
+        <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
         <junit.version>4.13.2</junit.version>
 
         <!-- GeoStore-specific persistence bits -->
