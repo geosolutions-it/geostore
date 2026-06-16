@@ -2,9 +2,12 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
+import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,6 +39,27 @@ public class OAuth2LoginTest {
         assertEquals(
                 "http://localhost:8080/authorization?response_type=code&client_id=mockClientId&scope=openid&redirect_uri=null",
                 response.getRedirectedUrl());
+    }
+
+    @Test
+    public void testLoginWithPKCE() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
+        RequestContextHolder.setRequestAttributes(attributes);
+        OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
+        configuration.setScopes("openid");
+        configuration.setClientId("mockClientId");
+        configuration.setAuthorizationUri("http://localhost:8080/authorization");
+        configuration.setUsePKCE(true);
+        SetConfOAuthLoginService setConfiguration = new SetConfOAuthLoginService(idPLoginRest);
+        setConfiguration.setConfiguration(configuration);
+        idPLoginRest.login("mock");
+        assertEquals(302, response.getStatus());
+        String redirectUrl = response.getRedirectedUrl();
+        assertNotNull(redirectUrl);
+        assertTrue(redirectUrl.contains("code_challenge_method=S256"));
+        assertTrue(redirectUrl.contains("code_challenge="));
     }
 
     @Test

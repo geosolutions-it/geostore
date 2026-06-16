@@ -12,7 +12,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
@@ -56,11 +55,9 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                             + "authorizationUri, or accessTokenUri). Discovery may have failed.",
                     provider);
         }
-        String login = configuration.buildLoginUri();
         try {
-            LOGGER.info("Redirecting to login URI for provider '{}': {}", provider, login);
-            resp.sendRedirect(login);
-        } catch (IOException e) {
+            configuration.getAuthenticationEntryPoint().commence(request, resp, null);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
