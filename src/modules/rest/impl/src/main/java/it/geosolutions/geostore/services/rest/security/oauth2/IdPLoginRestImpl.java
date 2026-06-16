@@ -32,6 +32,7 @@ import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -87,8 +88,36 @@ public class IdPLoginRestImpl implements IdPLoginRest {
             LOGGER.error("No login service registered for callback provider '{}'", provider);
             throw new NotFoundWebEx("No login service for provider: " + provider);
         }
-        return service.doInternalRedirect(
-                OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider);
+        return surfaceAuthError(
+                service.doInternalRedirect(
+                        OAuth2Utils.getRequest(), OAuth2Utils.getResponse(), provider),
+                provider);
+    }
+
+    /**
+     * If the callback failed and the security layer recorded the actual failure reason in the
+     * {@link RestAuthenticationEntryPoint#OAUTH2_AUTH_ERROR_KEY} request attribute, return a
+     * response carrying that reason instead of a generic message, so the client sees the real cause
+     * (e.g. token exchange rejected, userinfo 401, unresolvable principal) instead of "No access
+     * token found.".
+     */
+    private Response surfaceAuthError(Response response, String provider) {
+        if (response == null || response.getStatus() < 400) return response;
+        HttpServletRequest request = OAuth2Utils.getRequest();
+        if (request == null) return response;
+        Object detail = request.getAttribute(RestAuthenticationEntryPoint.OAUTH2_AUTH_ERROR_KEY);
+        if (!(detail instanceof String)) return response;
+
+        Object entity = response.getEntity();
+        boolean genericEntity =
+                entity == null
+                        || String.valueOf(entity).trim().isEmpty()
+                        || "No access token found.".equals(String.valueOf(entity).trim());
+        if (!genericEntity) return response;
+
+        String message = "Authentication with provider '" + provider + "' failed: " + detail;
+        LOGGER.error("{} (callback response status: {})", message, response.getStatus());
+        return Response.status(response.getStatus()).entity(message).build();
     }
 
     @Override
