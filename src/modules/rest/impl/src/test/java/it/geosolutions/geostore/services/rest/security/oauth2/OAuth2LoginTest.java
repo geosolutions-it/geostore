@@ -12,6 +12,7 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -21,13 +22,20 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 public class OAuth2LoginTest {
 
     private final IdPLoginRest idPLoginRest = new IdPLoginRestImpl();
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
+    private ServletRequestAttributes attributes;
+
+    @Before
+    public void setUp() {
+        request = new MockHttpServletRequest();
+        response = new MockHttpServletResponse();
+        attributes = new ServletRequestAttributes(request, response);
+        RequestContextHolder.setRequestAttributes(attributes);
+    }
 
     @Test
     public void testLogin() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
-        RequestContextHolder.setRequestAttributes(attributes);
         OAuth2Configuration configuration = new OAuth2Configuration();
         configuration.setScopes("openid");
         configuration.setClientId("mockClientId");
@@ -43,10 +51,6 @@ public class OAuth2LoginTest {
 
     @Test
     public void testLoginWithPKCE() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
-        RequestContextHolder.setRequestAttributes(attributes);
         OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
         configuration.setScopes("openid");
         configuration.setClientId("mockClientId");
@@ -64,10 +68,6 @@ public class OAuth2LoginTest {
 
     @Test
     public void testCallback() {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
-        RequestContextHolder.setRequestAttributes(attributes);
         attributes.setAttribute(REFRESH_TOKEN_PARAM, "mockRefreshToken", 0);
         attributes.setAttribute(ACCESS_TOKEN_PARAM, "mockAccessToken", 0);
         OAuth2Configuration configuration = new OAuth2Configuration();

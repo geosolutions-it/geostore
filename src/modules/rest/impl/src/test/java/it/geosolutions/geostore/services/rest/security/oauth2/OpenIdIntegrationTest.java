@@ -764,10 +764,7 @@ public class OpenIdIntegrationTest {
                         null,
                         null) {
                     @Override
-                    protected User retrieveUserWithAuthorities(
-                            String username,
-                            jakarta.servlet.http.HttpServletRequest request,
-                            jakarta.servlet.http.HttpServletResponse response) {
+                    protected User retrieveUserWithAuthorities(String username) {
                         return seeded;
                     }
                 };

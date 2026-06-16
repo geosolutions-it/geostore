@@ -167,7 +167,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends GenericFilterBe
     private void addRequestAttributes(HttpServletRequest request, Authentication authentication) {
         if (authentication != null) {
 
-            TokenDetails tokenDetails = tokenDetails(authentication);
+            TokenDetails tokenDetails = OAuth2Utils.getTokenDetails(authentication);
 
             if (tokenDetails != null && tokenDetails.getAccessToken() != null) {
 
@@ -187,10 +187,5 @@ public abstract class OAuth2GeoStoreAuthenticationFilter extends GenericFilterBe
                 request.setAttribute(PROVIDER_KEY, configuration.getProvider());
             }
         }
-    }
-
-    private TokenDetails tokenDetails(Authentication authentication) {
-        Object details = authentication != null ? authentication.getDetails() : null;
-        return (details instanceof TokenDetails) ? (TokenDetails) details : null;
     }
 }

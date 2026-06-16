@@ -557,7 +557,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
         LOGGER.info("Updating the cache and the SecurityContext with new Auth details");
         if (authentication != null && !(authentication instanceof AnonymousAuthenticationToken)) {
-            TokenDetails details = getTokenDetails(authentication);
+            TokenDetails details = OAuth2Utils.getTokenDetails(authentication);
             String idToken = details != null ? details.getIdToken() : null;
             cache().removeEntry(oldToken);
             PreAuthenticatedAuthenticationToken updated =
@@ -574,10 +574,6 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             cache().putCacheEntry(newToken.getTokenValue(), updated);
             SecurityContextHolder.getContext().setAuthentication(updated);
         }
-    }
-
-    protected TokenDetails getTokenDetails(Authentication authentication) {
-        return OAuth2Utils.getTokenDetails(authentication);
     }
 
     protected OAuth2AccessToken retrieveAccessToken(String accessToken, Long expires) {
@@ -625,7 +621,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         if (sessionId != null) {
             TokenAuthenticationCache cache = cache();
             Authentication authentication = cache.get(sessionId);
-            TokenDetails tokenDetails = getTokenDetails(authentication);
+            TokenDetails tokenDetails = OAuth2Utils.getTokenDetails(authentication);
             if (tokenDetails != null) {
                 token = tokenDetails.getIdToken();
                 if (tokenDetails.getAccessToken() != null) {

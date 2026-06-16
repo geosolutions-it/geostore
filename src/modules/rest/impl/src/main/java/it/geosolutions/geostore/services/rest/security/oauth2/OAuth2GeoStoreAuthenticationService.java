@@ -1,6 +1,5 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import static it.geosolutions.geostore.core.security.password.SecurityUtils.getUsername;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 
 import it.geosolutions.geostore.core.model.User;
@@ -35,7 +34,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
 import org.springframework.security.oauth2.server.resource.introspection.BadOpaqueTokenException;
@@ -103,7 +101,7 @@ public class OAuth2GeoStoreAuthenticationService {
             return authenticateAndUpdateCache(request, response, token, bearerAccessToken, null);
         }
 
-        TokenDetails tokenDetails = extractTokenDetails(authentication);
+        TokenDetails tokenDetails = OAuth2Utils.getTokenDetails(authentication);
         if (tokenDetails != null) {
             OAuth2AccessToken accessToken = tokenDetails.getAccessToken();
             if (accessToken != null
@@ -129,7 +127,7 @@ public class OAuth2GeoStoreAuthenticationService {
 
         if (authentication != null) {
 
-            TokenDetails tokenDetails = extractTokenDetails(authentication);
+            TokenDetails tokenDetails = OAuth2Utils.getTokenDetails(authentication);
             if (tokenDetails != null) {
                 OAuth2AccessToken accessTokenDetails = tokenDetails.getAccessToken();
                 if (accessTokenDetails != null) {
@@ -152,7 +150,10 @@ public class OAuth2GeoStoreAuthenticationService {
             OAuth2RefreshToken refreshToken) {
 
         LOGGER.info("About to perform remote authentication.");
-        LOGGER.debug("Access token received (type={}, scopes={})", accessToken.getTokenType().getValue(), accessToken.getScopes());
+        LOGGER.debug(
+                "Access token received (type={}, scopes={})",
+                accessToken.getTokenType().getValue(),
+                accessToken.getScopes());
 
         String principal = null;
 
@@ -328,33 +329,6 @@ public class OAuth2GeoStoreAuthenticationService {
         }
     }
 
-    protected String extractPrincipalFromSecurityContext() {
-        try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null) {
-                LOGGER.debug("No Authentication found in Spring Security context");
-                return null;
-            }
-
-            String username = getUsername(authentication.getPrincipal());
-            if (StringUtils.isNotBlank(username)) {
-                LOGGER.debug("Resolved username from Spring Security principal");
-                return username;
-            }
-
-            if (StringUtils.isNotBlank(authentication.getName())) {
-                LOGGER.debug("Resolved username from Spring Security authentication name");
-                return authentication.getName();
-            }
-
-            LOGGER.debug("Spring Security context did not provide a usable principal");
-            return null;
-        } catch (Exception e) {
-            LOGGER.warn("Unable to resolve principal from Spring Security context", e);
-            return null;
-        }
-    }
-
     protected String extractPrincipalFromAttributes(Map<String, Object> attributes) {
         try {
             if (attributes == null || attributes.isEmpty()) {
@@ -512,7 +486,7 @@ public class OAuth2GeoStoreAuthenticationService {
         }
 
         LOGGER.info("Retrieving user with authorities for username: {}", username);
-        User user = retrieveUserWithAuthorities(username, request, response);
+        User user = retrieveUserWithAuthorities(username);
         if (user == null) {
             LOGGER.error("User retrieval failed for username: {}", username);
             return null;
@@ -555,8 +529,7 @@ public class OAuth2GeoStoreAuthenticationService {
         return authenticationToken;
     }
 
-    protected User retrieveUserWithAuthorities(
-            String username, HttpServletRequest request, HttpServletResponse response) {
+    protected User retrieveUserWithAuthorities(String username) {
         User user = null;
         if (StringUtils.isNotBlank(username) && userService != null) {
             try {
@@ -572,7 +545,7 @@ public class OAuth2GeoStoreAuthenticationService {
         }
         if (user == null) {
             try {
-                user = createUser(username, "", "");
+                user = createUser(username, "");
             } catch (BadRequestServiceEx | NotFoundServiceEx e) {
                 LOGGER.error("Error while auto-creating the user: '{}'", username, e);
             }
@@ -580,7 +553,7 @@ public class OAuth2GeoStoreAuthenticationService {
         return user;
     }
 
-    protected User createUser(String userName, String credentials, Object rawUser)
+    protected User createUser(String userName, String credentials)
             throws BadRequestServiceEx, NotFoundServiceEx {
         User user = new User();
         user.setName(userName);
@@ -1155,11 +1128,6 @@ public class OAuth2GeoStoreAuthenticationService {
                     user.getRole(),
                     user.getGroups());
         }
-    }
-
-    private TokenDetails extractTokenDetails(Authentication authentication) {
-        Object details = authentication != null ? authentication.getDetails() : null;
-        return (details instanceof TokenDetails) ? (TokenDetails) details : null;
     }
 
     /**

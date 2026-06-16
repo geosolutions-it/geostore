@@ -199,10 +199,6 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     }
 
     protected NewCookie cookie(String name, String value) {
-        return cookie(name, value, DateUtils.addMinutes(new Date(), 2));
-    }
-
-    protected NewCookie cookie(String name, String value, Date expires) {
         Cookie cookie = new Cookie(name, value, "/", null);
         return new AccessCookie(
                 cookie, "", 120, DateUtils.addMinutes(new Date(), 2), false, false, "lax");

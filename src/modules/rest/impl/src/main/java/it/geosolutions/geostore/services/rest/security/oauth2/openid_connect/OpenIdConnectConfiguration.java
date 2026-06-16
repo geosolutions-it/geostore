@@ -53,6 +53,7 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public static final String PKCE_CODE_VERIFIER_SESSION_ATTR = "oidc.pkce.code_verifier";
+    private static final String PKCE_CODE_CHALLENGE_METHOD = "S256";
 
     String jwkURI;
     String postLogoutRedirectUri;
@@ -282,7 +283,8 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
                         buildLoginUri()
                                 + "&code_challenge="
                                 + codeChallenge
-                                + "&code_challenge_method=S256";
+                                + "&code_challenge_method="
+                                + PKCE_CODE_CHALLENGE_METHOD;
                 response.sendRedirect(loginUri);
             } catch (Exception e) {
                 LOGGER.error("Failed to generate PKCE parameters", e);
