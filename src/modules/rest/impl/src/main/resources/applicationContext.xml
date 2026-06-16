@@ -185,8 +185,9 @@
         <jaxrs:outInterceptors>
             <ref bean="noCacheInterceptor"/>
         </jaxrs:outInterceptors>
-        <!-- Is the following interceptor still needed to allow autocreation of auth users???
-             anyway the autocreation of auth users must be modified to work with spring security -->
+        <!-- Auto-creation interceptor for direct REST API calls (e.g. /users requests).
+             Uncomment to enable, and set autoCreateUsersInterceptor.autoCreateUsers=true
+             in geostore-ovr.properties. -->
         <!-- 		<jaxrs:inInterceptors> -->
         <!-- 			<ref bean="autoCreateUsersInterceptor"/> -->
         <!-- 		</jaxrs:inInterceptors> -->
