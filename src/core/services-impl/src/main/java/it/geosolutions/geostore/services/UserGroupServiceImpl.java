@@ -543,6 +543,7 @@ public class UserGroupServiceImpl implements UserGroupService {
      * @since 2025
      */
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public void upsertAttribute(long groupId, String name, String value)
             throws NotFoundServiceEx, BadRequestServiceEx {
         if (name == null) throw new BadRequestServiceEx("Attribute name must not be null");
