@@ -321,6 +321,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(value = "geostoreTransactionManager")
     public boolean delete(long id, String cascadeResourceCategories) {
 
         cascadeDeleteResources(id, cascadeResourceCategories);
