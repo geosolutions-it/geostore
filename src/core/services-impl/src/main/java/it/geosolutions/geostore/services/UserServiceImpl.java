@@ -47,6 +47,7 @@ import java.util.Set;
 import org.apache.cxf.common.util.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Class UserServiceImpl.
