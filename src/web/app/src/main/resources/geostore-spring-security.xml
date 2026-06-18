@@ -170,6 +170,9 @@
 
 	<import resource="classpath*:security-integration-${security.integration:default}.xml"/>
 
+	<!-- CVE-2026-22732: write HTTP security headers before the response is committed -->
+	<bean class="it.geosolutions.geostore.services.rest.security.HeaderWriterFilterEagerConfig"/>
+
 
 	<!-- Enable LDAP readonly User and UserGroup fetching -->
 	<!--
