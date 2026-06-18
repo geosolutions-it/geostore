@@ -29,6 +29,8 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
@@ -56,7 +58,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
@@ -85,6 +86,8 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
 
     private static final Logger LOGGER =
             LogManager.getLogger(OpenIdConnectAuthenticationService.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final OpenIdTokenValidator bearerTokenValidator;
     private final JwksRsaKeyProvider jwksKeyProvider;
@@ -407,8 +410,8 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
             String headerJson =
                     new String(
                             Base64.getUrlDecoder().decode(headerSegment), StandardCharsets.UTF_8);
-            JSONObject header = JSONObject.fromObject(headerJson);
-            return header.optString("kid", "");
+            JsonNode header = OBJECT_MAPPER.readTree(headerJson);
+            return header.path("kid").asText();
         } catch (Exception e) {
             LOGGER.debug("Could not extract kid from JWT header", e);
             return "";
@@ -527,7 +530,6 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
     }
 
     /** Whether the JWT payload indicates an Azure AD groups overage condition. */
-    @SuppressWarnings("unchecked")
     boolean isGroupsOverage(String tokenString, String groupsClaim) {
         if (!StringUtils.hasText(tokenString)) return false;
         try {
@@ -535,24 +537,19 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
             if (parts.length < 2) return false;
             String payloadJson =
                     new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
-            JSONObject payload = JSONObject.fromObject(payloadJson);
+            JsonNode payload = OBJECT_MAPPER.readTree(payloadJson);
 
-            Object hasgroups = payload.get("hasgroups");
-            if (Boolean.TRUE.equals(hasgroups)
-                    || "true".equalsIgnoreCase(String.valueOf(hasgroups))) {
+            if (payload.path("hasgroups").asBoolean()) {
                 LOGGER.info("MS Graph: groups overage detected (hasgroups=true)");
                 return true;
             }
 
-            Object claimNames = payload.get("_claim_names");
-            if (claimNames instanceof Map) {
-                Map<String, Object> names = (Map<String, Object>) claimNames;
-                if (names.containsKey(groupsClaim)) {
-                    LOGGER.info(
-                            "MS Graph: groups overage detected (_claim_names contains '{}')",
-                            groupsClaim);
-                    return true;
-                }
+            JsonNode claimNames = payload.path("_claim_names");
+            if (claimNames.isObject() && claimNames.has(groupsClaim)) {
+                LOGGER.info(
+                        "MS Graph: groups overage detected (_claim_names contains '{}')",
+                        groupsClaim);
+                return true;
             }
             return false;
         } catch (Exception e) {

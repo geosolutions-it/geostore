@@ -27,9 +27,11 @@
  */
 package it.geosolutions.geostore.core.security;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
-import net.sf.json.JSONObject;
-import org.springframework.expression.AccessException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
@@ -41,42 +43,38 @@ import org.springframework.expression.TypedValue;
  */
 public class JSONExpressionUserMapper extends ExpressionUserMapper {
 
+    private static final Logger LOGGER = LogManager.getLogger(JSONExpressionUserMapper.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     public JSONExpressionUserMapper(Map<String, String> attributeMappings) {
         super(attributeMappings);
-        // property accessor for JSONObject attributes (read-only)
+        // property accessor for Map attributes (read-only)
         evaluationContext.addPropertyAccessor(
                 new PropertyAccessor() {
 
                     @Override
                     public void write(
-                            EvaluationContext ctx, Object target, String name, Object value)
-                            throws AccessException {}
+                            EvaluationContext ctx, Object target, String name, Object value) {}
 
                     @Override
-                    public TypedValue read(EvaluationContext ctx, Object target, String name)
-                            throws AccessException {
-                        if (target instanceof JSONObject) {
-                            JSONObject details = (JSONObject) target;
-                            return new TypedValue(details.get(name));
-                        }
-                        return null;
+                    public TypedValue read(EvaluationContext ctx, Object target, String name) {
+                        return new TypedValue(((Map<?, ?>) target).get(name));
                     }
 
                     @Override
                     public Class[] getSpecificTargetClasses() {
-                        return new Class[] {JSONObject.class};
+                        return new Class[] {Map.class};
                     }
 
                     @Override
-                    public boolean canWrite(EvaluationContext ctx, Object target, String name)
-                            throws AccessException {
+                    public boolean canWrite(EvaluationContext ctx, Object target, String name) {
                         return false;
                     }
 
                     @Override
-                    public boolean canRead(EvaluationContext ctx, Object target, String name)
-                            throws AccessException {
-                        return target instanceof JSONObject;
+                    public boolean canRead(EvaluationContext ctx, Object target, String name) {
+                        return target instanceof Map;
                     }
                 });
     }
@@ -84,7 +82,11 @@ public class JSONExpressionUserMapper extends ExpressionUserMapper {
     @Override
     protected Object preProcessDetails(Object details) {
         if (details instanceof String) {
-            details = JSONObject.fromObject(details);
+            try {
+                details = OBJECT_MAPPER.readValue((String) details, Map.class);
+            } catch (JsonProcessingException e) {
+                LOGGER.warn("Could not parse JSON details", e);
+            }
         }
         return super.preProcessDetails(details);
     }

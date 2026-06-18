@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
@@ -34,8 +36,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.client.RestTemplate;
@@ -47,6 +47,8 @@ import org.springframework.web.client.RestTemplate;
 public class JwksRsaKeyProvider {
 
     private static final Logger LOGGER = LogManager.getLogger(JwksRsaKeyProvider.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final String jwksUri;
     private final RestTemplate restTemplate;
@@ -95,9 +97,9 @@ public class JwksRsaKeyProvider {
                 return;
             }
 
-            JSONObject jwks = JSONObject.fromObject(jwksJson);
-            JSONArray keys = jwks.getJSONArray("keys");
-            if (keys == null) {
+            JsonNode jwks = OBJECT_MAPPER.readTree(jwksJson);
+            JsonNode keys = jwks.path("keys");
+            if (!keys.isArray()) {
                 LOGGER.warn("No 'keys' array in JWKS response from {}", jwksUri);
                 return;
             }
@@ -105,18 +107,17 @@ public class JwksRsaKeyProvider {
             Map<String, RSAPublicKey> newKeys = new ConcurrentHashMap<>();
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
 
-            for (int i = 0; i < keys.size(); i++) {
-                JSONObject jwk = keys.getJSONObject(i);
-                String kty = jwk.optString("kty", "");
-                String use = jwk.optString("use", "sig");
+            for (JsonNode jwk : keys) {
+                String kty = jwk.path("kty").asText();
+                String use = jwk.path("use").asText("sig");
                 if (!"RSA".equals(kty) || !"sig".equals(use)) {
                     continue;
                 }
 
-                String kid = jwk.optString("kid", "");
-                String n = jwk.optString("n", null);
-                String e = jwk.optString("e", null);
-                if (n == null || e == null) {
+                String kid = jwk.path("kid").asText();
+                String n = jwk.path("n").asText();
+                String e = jwk.path("e").asText();
+                if (n.isBlank() || e.isBlank()) {
                     LOGGER.warn("JWKS key missing 'n' or 'e' field, kid={}", kid);
                     continue;
                 }

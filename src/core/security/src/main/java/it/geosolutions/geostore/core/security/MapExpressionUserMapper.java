@@ -28,32 +28,25 @@
 package it.geosolutions.geostore.core.security;
 
 import java.util.Map;
-import org.springframework.expression.AccessException;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
 
-/**
- * Maps user attributes for a JSON object.
- *
- * @author Geo
- */
+/** Maps user attributes for a JSON object. */
 public class MapExpressionUserMapper extends ExpressionUserMapper {
 
     public MapExpressionUserMapper(Map<String, String> attributeMappings) {
         super(attributeMappings);
-        // property accessor for JSONObject attributes (read only)
+        // property accessor for Map attributes (read only)
         evaluationContext.addPropertyAccessor(
                 new PropertyAccessor() {
 
                     @Override
                     public void write(
-                            EvaluationContext ctx, Object target, String name, Object value)
-                            throws AccessException {}
+                            EvaluationContext ctx, Object target, String name, Object value) {}
 
                     @Override
-                    public TypedValue read(EvaluationContext ctx, Object target, String name)
-                            throws AccessException {
+                    public TypedValue read(EvaluationContext ctx, Object target, String name) {
                         if (target instanceof Map) {
                             Map map = (Map) target;
                             return new TypedValue(map.get(name));
@@ -67,14 +60,12 @@ public class MapExpressionUserMapper extends ExpressionUserMapper {
                     }
 
                     @Override
-                    public boolean canWrite(EvaluationContext ctx, Object target, String name)
-                            throws AccessException {
+                    public boolean canWrite(EvaluationContext ctx, Object target, String name) {
                         return false;
                     }
 
                     @Override
-                    public boolean canRead(EvaluationContext ctx, Object target, String name)
-                            throws AccessException {
+                    public boolean canRead(EvaluationContext ctx, Object target, String name) {
                         return target instanceof Map;
                     }
                 });
