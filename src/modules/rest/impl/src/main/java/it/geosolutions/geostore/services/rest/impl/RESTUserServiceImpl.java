@@ -42,7 +42,6 @@ import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
 import jakarta.ws.rs.core.SecurityContext;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -193,29 +192,10 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
     @Override
     public void delete(SecurityContext sc, long id, String cascadeResourceDelete)
             throws NotFoundWebEx {
-        boolean ret = userService.delete(id, parseCascadeCategories(cascadeResourceDelete));
+        boolean ret = userService.delete(id, cascadeResourceDelete);
         if (!ret) {
             throw new NotFoundWebEx("User not found");
         }
-    }
-
-    /**
-     * Parses the {@code cascadeResourceDelete} query parameter into a list of category names. The
-     * parameter is a comma-separated list (e.g. {@code USERSESSION} or {@code USERSESSION,TEMP});
-     * blank entries are discarded.
-     */
-    private static List<String> parseCascadeCategories(String cascadeResourceDelete) {
-        if (cascadeResourceDelete == null || cascadeResourceDelete.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
-        List<String> categories = new ArrayList<>();
-        for (String name : cascadeResourceDelete.split(",")) {
-            String trimmed = name.trim();
-            if (!trimmed.isEmpty()) {
-                categories.add(trimmed);
-            }
-        }
-        return categories;
     }
 
     /*

@@ -25,7 +25,6 @@ import it.geosolutions.geostore.core.dao.UserAttributeDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserFavoriteDAO;
 import it.geosolutions.geostore.core.dao.UserGroupDAO;
-import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
@@ -40,8 +39,8 @@ import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -316,30 +315,37 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.UserService#delete(long)
-     */
     @Override
     public boolean delete(long id) {
-        return delete(id, Collections.emptyList());
+        return delete(id, "");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.UserService#delete(long, java.util.List)
-     */
     @Override
-    public boolean delete(long id, List<String> cascadeResourceCategories) {
-        if (cascadeResourceCategories != null && !cascadeResourceCategories.isEmpty()) {
-            User user = userDAO.find(id);
+    public boolean delete(long id, String cascadeResourceCategories) {
+
+        cascadeDeleteResources(id, cascadeResourceCategories);
+
+        return userDAO.removeById(id);
+    }
+
+    private void cascadeDeleteResources(long userId, String cascadeResourceCategories) {
+        List<String> categories = parseCategoryNames(cascadeResourceCategories);
+        if (!categories.isEmpty()) {
+            User user = userDAO.find(userId);
             if (user != null) {
-                deleteSolelyOwnedResources(user, cascadeResourceCategories);
+                deleteSolelyOwnedResources(user, categories);
             }
         }
-        return userDAO.removeById(id);
+    }
+
+    private List<String> parseCategoryNames(String commaSeparatedCategoryNames) {
+        if (commaSeparatedCategoryNames == null || commaSeparatedCategoryNames.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(commaSeparatedCategoryNames.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 
     /**
@@ -350,70 +356,64 @@ public class UserServiceImpl implements UserService {
      */
     private void deleteSolelyOwnedResources(User user, List<String> categoryNames) {
         for (String categoryName : categoryNames) {
-            if (categoryName == null || categoryName.trim().isEmpty()) {
-                continue;
-            }
-            String name = categoryName.trim();
             try {
-                Category category = categoryService.get(name);
-                if (category == null) {
+                if (categoryService.get(categoryName) == null) {
                     LOGGER.info(
                             "Cascade resource delete: category '{}' does not exist, skipping.",
-                            name);
+                            categoryName);
                     continue;
                 }
-                List<Resource> resources =
-                        resourceService.getResources(
-                                ResourceSearchParameters.builder()
-                                        .filter(new CategoryFilter(name, SearchOperator.EQUAL_TO))
-                                        .authUser(user)
-                                        .build());
-                int deleted = 0;
-                for (Resource resource : resources) {
-                    if (isSolelyOwnedBy(resource, user)
-                            && resourceService.delete(resource.getId())) {
-                        deleted++;
-                    }
-                }
+
+                int deletedResourceCount =
+                        (int)
+                                retrieveUserResourcesByCategoryName(user, categoryName).stream()
+                                        .filter(
+                                                resource ->
+                                                        isResourceSolelyOwnedByUser(resource, user)
+                                                                && resourceService.delete(
+                                                                        resource.getId()))
+                                        .count();
+
                 LOGGER.info(
                         "Cascade resource delete: removed {} resource(s) of category '{}' solely owned by user '{}' (id={}).",
-                        deleted,
-                        name,
+                        deletedResourceCount,
+                        categoryName,
                         user.getName(),
                         user.getId());
+
             } catch (Exception e) {
                 LOGGER.error(
                         "Cascade resource delete: error handling category '{}' for user '{}'; the user deletion proceeds anyway.",
-                        name,
+                        categoryName,
                         user.getName(),
                         e);
             }
         }
     }
 
-    /**
-     * A resource is solely owned by the user when every security rule on it belongs to the user —
-     * matched by user id or by username, the latter covering externally-authenticated (LDAP/SSO)
-     * users — and at least one of those rules grants write permission.
-     */
-    private boolean isSolelyOwnedBy(Resource resource, User user) {
-        List<SecurityRule> rules = resourceService.getSecurityRules(resource.getId());
-        if (rules == null || rules.isEmpty()) {
-            return false;
-        }
-        boolean canWrite = false;
-        for (SecurityRule rule : rules) {
-            if (!belongsTo(rule, user)) {
-                return false;
-            }
-            if (rule.isCanWrite()) {
-                canWrite = true;
-            }
-        }
-        return canWrite;
+    private List<Resource> retrieveUserResourcesByCategoryName(User user, String categoryName)
+            throws Exception {
+        return resourceService.getResources(
+                ResourceSearchParameters.builder()
+                        .filter(new CategoryFilter(categoryName, SearchOperator.EQUAL_TO))
+                        .authUser(user)
+                        .build());
     }
 
-    private boolean belongsTo(SecurityRule rule, User user) {
+    /**
+     * A resource is solely owned by the user when every security rule on it belongs to the user,
+     * matched by user id or by username, the latter covering externally-authenticated (LDAP/SSO)
+     * users, and at least one of those rules grants write permission.
+     */
+    private boolean isResourceSolelyOwnedByUser(Resource resource, User user) {
+        List<SecurityRule> rules = resourceService.getSecurityRules(resource.getId());
+
+        return rules != null
+                && rules.stream().allMatch(r -> securityRuleBelongsToUser(r, user))
+                && rules.stream().anyMatch(SecurityRule::isCanWrite);
+    }
+
+    private boolean securityRuleBelongsToUser(SecurityRule rule, User user) {
         if (rule.getGroup() != null || rule.getGroupname() != null) {
             return false;
         }

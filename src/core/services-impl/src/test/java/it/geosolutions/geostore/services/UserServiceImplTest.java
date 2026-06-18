@@ -247,7 +247,7 @@ public class UserServiceImplTest extends ServiceTestBase {
 
         assertEquals(1, resourceService.getCount(null));
 
-        assertTrue(userService.delete(userId, Arrays.asList("USERSESSION")));
+        assertTrue(userService.delete(userId, "USERSESSION"));
 
         assertEquals(0, userService.getCount(null));
         assertNull(
@@ -260,7 +260,7 @@ public class UserServiceImplTest extends ServiceTestBase {
         long userId = createUser("congchen", Role.USER, "userPW");
 
         // No category exists at all: the cascade must be a no-op and the user deleted anyway.
-        assertTrue(userService.delete(userId, Arrays.asList("USERSESSION", "NOT_A_CATEGORY")));
+        assertTrue(userService.delete(userId, "USERSESSION,NOT_A_CATEGORY"));
         assertEquals(0, userService.getCount(null));
     }
 
@@ -276,7 +276,7 @@ public class UserServiceImplTest extends ServiceTestBase {
                 createResourceWithRules(
                         "shared.session", sessions, ownerRule(owner), readOnlyRule(other));
 
-        assertTrue(userService.delete(ownerId, Arrays.asList("USERSESSION")));
+        assertTrue(userService.delete(ownerId, "USERSESSION"));
 
         assertNotNull(
                 "Resource shared with another user must be preserved",
@@ -297,7 +297,7 @@ public class UserServiceImplTest extends ServiceTestBase {
         long sessionId = createResourceWithRules("session", sessions, ownerRule(user));
         long mapId = createResourceWithRules("map", maps, ownerRule(user));
 
-        assertTrue(userService.delete(userId, Arrays.asList("USERSESSION")));
+        assertTrue(userService.delete(userId, "USERSESSION"));
 
         assertNull("USERSESSION resource should be deleted", resourceService.get(sessionId));
         assertNotNull(
@@ -315,7 +315,7 @@ public class UserServiceImplTest extends ServiceTestBase {
         long sessionId =
                 createResourceWithRules("ldap.session", sessions, usernameOwnerRule("ldapuser"));
 
-        assertTrue(userService.delete(userId, Arrays.asList("USERSESSION")));
+        assertTrue(userService.delete(userId, "USERSESSION"));
 
         assertNull(
                 "Resource owned via username rule should be cascade-deleted",

@@ -74,11 +74,12 @@ public interface UserService {
      * #delete(long)}: implementations that support the resource cascade must override it.
      *
      * @param id the user id
-     * @param cascadeResourceCategories names of the resource categories whose solely-owned
-     *     resources must be deleted along with the user; may be null or empty for no cascade
+     * @param cascadeResourceCategories comma-separated names of the resource categories whose
+     *     solely-owned resources must be deleted along with the user; may be null or blank for no
+     *     cascade
      * @return boolean true if the user has been deleted
      */
-    default boolean delete(long id, List<String> cascadeResourceCategories) {
+    default boolean delete(long id, String cascadeResourceCategories) {
         return delete(id);
     }
 

@@ -77,9 +77,9 @@ public interface RESTUserService {
     /**
      * Deletes the user.
      *
-     * @param cascadeResourceDelete optional comma-separated list of resource category names (e.g.
-     *     {@code USERSESSION}): the resources of those categories solely owned by the user are
-     *     deleted along with the user; unknown categories are ignored.
+     * @param cascadeResourceDelete optional comma-separated list of resource category names e.g.
+     *     {@code USERSESSION,MAP,CATEGORY_A}: the resources of those categories solely owned by the
+     *     user are deleted along with the user; unknown categories are ignored.
      */
     @DELETE
     @Path("/user/{id}")

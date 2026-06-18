@@ -34,15 +34,13 @@ import static org.mockito.Mockito.when;
 
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
-import java.util.Arrays;
-import java.util.Collections;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
  * Verifies the {@code cascadeResourceDelete} query parameter of {@code DELETE /users/user/{id}}
- * (support #5817): the comma-separated category names are parsed and handed to {@link
- * UserService#delete(long, java.util.List)}.
+ * (support #5817): the raw comma-separated string is forwarded as-is to {@link
+ * UserService#delete(long, String)}.
  */
 public class RESTUserServiceImplCascadeDeleteTest {
 
@@ -58,43 +56,43 @@ public class RESTUserServiceImplCascadeDeleteTest {
 
     @Test
     public void testDeleteWithoutCascadeParameter() {
-        when(userService.delete(7L, Collections.emptyList())).thenReturn(true);
+        when(userService.delete(7L, (String) null)).thenReturn(true);
 
         restService.delete(null, 7L, null);
 
-        verify(userService).delete(7L, Collections.emptyList());
+        verify(userService).delete(7L, (String) null);
     }
 
     @Test
     public void testDeleteWithBlankCascadeParameter() {
-        when(userService.delete(7L, Collections.emptyList())).thenReturn(true);
+        when(userService.delete(7L, "   ")).thenReturn(true);
 
         restService.delete(null, 7L, "   ");
 
-        verify(userService).delete(7L, Collections.emptyList());
+        verify(userService).delete(7L, "   ");
     }
 
     @Test
     public void testDeleteWithSingleCategory() {
-        when(userService.delete(7L, Arrays.asList("USERSESSION"))).thenReturn(true);
+        when(userService.delete(7L, "USERSESSION")).thenReturn(true);
 
         restService.delete(null, 7L, "USERSESSION");
 
-        verify(userService).delete(7L, Arrays.asList("USERSESSION"));
+        verify(userService).delete(7L, "USERSESSION");
     }
 
     @Test
     public void testDeleteWithMultipleCategoriesAndBlankEntries() {
-        when(userService.delete(7L, Arrays.asList("USERSESSION", "TEMP"))).thenReturn(true);
+        when(userService.delete(7L, " USERSESSION , TEMP ,, ")).thenReturn(true);
 
         restService.delete(null, 7L, " USERSESSION , TEMP ,, ");
 
-        verify(userService).delete(7L, Arrays.asList("USERSESSION", "TEMP"));
+        verify(userService).delete(7L, " USERSESSION , TEMP ,, ");
     }
 
     @Test
     public void testDeleteUserNotFound() {
-        when(userService.delete(99L, Collections.emptyList())).thenReturn(false);
+        when(userService.delete(99L, (String) null)).thenReturn(false);
 
         assertThrows(NotFoundWebEx.class, () -> restService.delete(null, 99L, null));
     }
