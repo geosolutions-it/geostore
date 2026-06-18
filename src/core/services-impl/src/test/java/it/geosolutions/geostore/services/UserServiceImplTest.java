@@ -19,6 +19,9 @@
  */
 package it.geosolutions.geostore.services;
 
+import it.geosolutions.geostore.core.model.Category;
+import it.geosolutions.geostore.core.model.Resource;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -226,5 +229,148 @@ public class UserServiceImplTest extends ServiceTestBase {
         loaded = userService.get(userId);
         assertNotNull(loaded);
         assertTrue(PwEncoder.isPasswordValid(loaded.getPassword(), "testPW2"));
+    }
+
+    // ---------------------------------------------------------------------
+    // delete(id, cascadeResourceCategories) — support #5817: deleting a user
+    // must be able to cascade-delete the resources (e.g. USERSESSION) the
+    // user solely owns, since resources have no FK to the owning user.
+    // ---------------------------------------------------------------------
+
+    @Test
+    public void testDeleteUserCascadesSolelyOwnedCategoryResources() throws Exception {
+        long userId = createUser("congchen", Role.USER, "userPW");
+        User user = userService.get(userId);
+
+        Category sessions = categoryService.get(createCategory("USERSESSION"));
+        long sessionId = createResourceWithRules("default.congchen", sessions, ownerRule(user));
+
+        assertEquals(1, resourceService.getCount(null));
+
+        assertTrue(userService.delete(userId, "USERSESSION"));
+
+        assertEquals(0, userService.getCount(null));
+        assertNull(
+                "UserSession resource should be cascade-deleted", resourceService.get(sessionId));
+        assertEquals(0, resourceService.getCount(null));
+    }
+
+    @Test
+    public void testDeleteUserCascadeSkipsMissingCategory() throws Exception {
+        long userId = createUser("congchen", Role.USER, "userPW");
+
+        // No category exists at all: the cascade must be a no-op and the user deleted anyway.
+        assertTrue(userService.delete(userId, "USERSESSION,NOT_A_CATEGORY"));
+        assertEquals(0, userService.getCount(null));
+    }
+
+    @Test
+    public void testDeleteUserCascadePreservesSharedResources() throws Exception {
+        long ownerId = createUser("owner", Role.USER, "ownerPW");
+        long otherId = createUser("other", Role.USER, "otherPW");
+        User owner = userService.get(ownerId);
+        User other = userService.get(otherId);
+
+        Category sessions = categoryService.get(createCategory("USERSESSION"));
+        long sharedId =
+                createResourceWithRules(
+                        "shared.session", sessions, ownerRule(owner), readOnlyRule(other));
+
+        assertTrue(userService.delete(ownerId, "USERSESSION"));
+
+        assertNotNull(
+                "Resource shared with another user must be preserved",
+                resourceService.get(sharedId));
+        // The deleted owner's rule is removed by the User-entity cascade; the other user's
+        // read rule must survive.
+        assertEquals(1, resourceService.getSecurityRules(sharedId).size());
+        assertEquals(1, userService.getCount(null));
+    }
+
+    @Test
+    public void testDeleteUserCascadeIgnoresOtherCategories() throws Exception {
+        long userId = createUser("congchen", Role.USER, "userPW");
+        User user = userService.get(userId);
+
+        Category sessions = categoryService.get(createCategory("USERSESSION"));
+        Category maps = categoryService.get(createCategory("MAP"));
+        long sessionId = createResourceWithRules("session", sessions, ownerRule(user));
+        long mapId = createResourceWithRules("map", maps, ownerRule(user));
+
+        assertTrue(userService.delete(userId, "USERSESSION"));
+
+        assertNull("USERSESSION resource should be deleted", resourceService.get(sessionId));
+        assertNotNull(
+                "Resources of categories not listed in the cascade must be untouched",
+                resourceService.get(mapId));
+    }
+
+    @Test
+    public void testDeleteUserCascadeMatchesUsernameRule() throws Exception {
+        // Externally-authenticated (LDAP/SSO) users own resources via a username string rule
+        // (user FK is null): the cascade must match those too.
+        long userId = createUser("ldapuser", Role.USER, "userPW");
+
+        Category sessions = categoryService.get(createCategory("USERSESSION"));
+        long sessionId =
+                createResourceWithRules("ldap.session", sessions, usernameOwnerRule("ldapuser"));
+
+        assertTrue(userService.delete(userId, "USERSESSION"));
+
+        assertNull(
+                "Resource owned via username rule should be cascade-deleted",
+                resourceService.get(sessionId));
+        assertEquals(0, userService.getCount(null));
+    }
+
+    @Test
+    public void testDeleteUserWithoutCascadeLeavesResources() throws Exception {
+        // The single-argument delete keeps the pre-existing behavior: the user's resources are
+        // left in place (orphaned) — the cascade only happens when explicitly requested.
+        long userId = createUser("congchen", Role.USER, "userPW");
+        User user = userService.get(userId);
+
+        Category sessions = categoryService.get(createCategory("USERSESSION"));
+        long sessionId = createResourceWithRules("session", sessions, ownerRule(user));
+
+        assertTrue(userService.delete(userId));
+
+        assertNotNull(
+                "Without the cascade parameter the resource must be left untouched",
+                resourceService.get(sessionId));
+    }
+
+    private long createResourceWithRules(String name, Category category, SecurityRule... rules)
+            throws Exception {
+        Resource resource = new Resource();
+        resource.setName(name);
+        resource.setDescription(name);
+        resource.setCategory(category);
+        resource.setSecurity(Arrays.asList(rules));
+        return resourceService.insert(resource);
+    }
+
+    private SecurityRule ownerRule(User user) {
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(user);
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        return rule;
+    }
+
+    private SecurityRule readOnlyRule(User user) {
+        SecurityRule rule = new SecurityRule();
+        rule.setUser(user);
+        rule.setCanRead(true);
+        rule.setCanWrite(false);
+        return rule;
+    }
+
+    private SecurityRule usernameOwnerRule(String username) {
+        SecurityRule rule = new SecurityRule();
+        rule.setUsername(username);
+        rule.setCanRead(true);
+        rule.setCanWrite(true);
+        return rule;
     }
 }
