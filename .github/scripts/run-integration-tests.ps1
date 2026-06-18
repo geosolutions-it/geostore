@@ -557,6 +557,181 @@ Step "GET resource as NEW USER (with rule) -> 200" {
     "USER can now read via SecurityRule, id=$($r.Resource.id)"
 }
 
+# ========== Phase 12b — user-delete cascade of session resources (support #5817) ==========
+# DELETE /users/user/{id}?cascadeResourceDelete=<cat1,cat2,...> must delete the resources of the
+# listed categories that the user solely owns (e.g. MapStore USERSESSION resources), preserve
+# shared resources and resources of unlisted categories, and never fail on unknown categories.
+
+$script:CascCatName   = 'USERSESSION'
+$script:CascCatId     = $null
+$script:CascUserId    = $null
+$script:CascUserName  = "inttest-casc-$(Get-Date -Format 'HHmmss')"
+$script:CascUserPwd   = 'CascPwd-1!'
+$script:CascUserB     = $null
+$script:CascSessResId = $null
+$script:CascOtherResId = $null
+$script:CascSharedResId = $null
+$script:SeededUserId  = $null
+
+Step "ensure USERSESSION category exists (reuse or create)" {
+    $r = Invoke-RestMethod -Uri "$Base/categories" -Headers @{Authorization=$AdminB; Accept='application/json'} -TimeoutSec 5
+    $cats = @($r.CategoryList.Category)
+    $existing = $cats | Where-Object { $_.name -eq $script:CascCatName }
+    if ($existing) {
+        $script:CascCatId = [int]@($existing)[0].id
+        "reused category id=$($script:CascCatId)"
+    } else {
+        $id = Invoke-RestMethod -Uri "$Base/categories/" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body "<Category><name>$($script:CascCatName)</name></Category>" -TimeoutSec 5
+        if (-not ($id -as [int])) { throw "expected numeric id, got '$id'" }
+        $script:CascCatId = [int]$id
+        "created category id=$($script:CascCatId)"
+    }
+}
+
+Step "POST /users create cascade-test user -> new id" {
+    $body = @"
+<User><name>$($script:CascUserName)</name><newPassword>$($script:CascUserPwd)</newPassword><role>USER</role><enabled>true</enabled></User>
+"@
+    $id = Invoke-RestMethod -Uri "$Base/users/" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body $body -TimeoutSec 5
+    if (-not ($id -as [int])) { throw "expected numeric id, got '$id'" }
+    $script:CascUserId = [int]$id
+    $script:CascUserB = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("$($script:CascUserName):$($script:CascUserPwd)"))
+    "user id=$($script:CascUserId) name=$($script:CascUserName)"
+}
+
+Step "cascade user creates USERSESSION resource (solely owned)" {
+    # Created with the user's own credentials so the owner SecurityRule is the user's — same as
+    # MapStore persisting a user session.
+    $body = @"
+<Resource>
+  <description>user session of $($script:CascUserName)</description><metadata></metadata>
+  <name>default.$($script:CascUserName)</name>
+  <category><name>$($script:CascCatName)</name></category>
+  <store><data><![CDATA[{"session":true}]]></data></store>
+</Resource>
+"@
+    $id = Invoke-RestMethod -Uri "$Base/resources/" -Method POST -Headers @{Authorization=$script:CascUserB} -ContentType 'application/xml' -Body $body -TimeoutSec 5
+    $script:CascSessResId = [int]$id
+    "session resource id=$($script:CascSessResId)"
+}
+
+Step "cascade user creates resource in OTHER category ($Category)" {
+    $body = @"
+<Resource>
+  <description>non-session resource of $($script:CascUserName)</description><metadata></metadata>
+  <name>casc-other-$(Get-Date -Format 'HHmmss')</name>
+  <category><name>$Category</name></category>
+  <store><data>{}</data></store>
+</Resource>
+"@
+    $id = Invoke-RestMethod -Uri "$Base/resources/" -Method POST -Headers @{Authorization=$script:CascUserB} -ContentType 'application/xml' -Body $body -TimeoutSec 5
+    $script:CascOtherResId = [int]$id
+    "other-category resource id=$($script:CascOtherResId)"
+}
+
+Step "cascade user creates SHARED USERSESSION resource (+read rule for seeded user)" {
+    $r = Invoke-RestMethod -Uri "$Base/users/user/details" -Headers @{Authorization=$UserB; Accept='application/json'} -TimeoutSec 5
+    $script:SeededUserId = [int]$r.User.id
+    $body = @"
+<Resource>
+  <description>shared session</description><metadata></metadata>
+  <name>shared.$($script:CascUserName)</name>
+  <category><name>$($script:CascCatName)</name></category>
+  <store><data>{}</data></store>
+</Resource>
+"@
+    $id = Invoke-RestMethod -Uri "$Base/resources/" -Method POST -Headers @{Authorization=$script:CascUserB} -ContentType 'application/xml' -Body $body -TimeoutSec 5
+    $script:CascSharedResId = [int]$id
+    # Replace the rule list with owner rule + a read rule for the seeded 'user': now 2 rules, so
+    # the resource is NOT solely owned and the cascade must preserve it.
+    $rules = @"
+<SecurityRuleList>
+  <SecurityRule>
+    <canRead>true</canRead><canWrite>true</canWrite>
+    <user><id>$($script:CascUserId)</id><name>$($script:CascUserName)</name></user>
+  </SecurityRule>
+  <SecurityRule>
+    <canRead>true</canRead><canWrite>false</canWrite>
+    <user><id>$($script:SeededUserId)</id><name>user</name></user>
+  </SecurityRule>
+</SecurityRuleList>
+"@
+    $resp = Invoke-WebRequest -Uri "$Base/resources/resource/$($script:CascSharedResId)/permissions" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body $rules -UseBasicParsing -TimeoutSec 5
+    if (200, 204 -notcontains $resp.StatusCode) { throw "permissions got HTTP $($resp.StatusCode)" }
+    "shared resource id=$($script:CascSharedResId), 2 rules"
+}
+
+Step "DELETE user ?cascadeResourceDelete=USERSESSION,NOT_A_CATEGORY -> 200/204" {
+    # Comma-separated list; the unknown category must be ignored without failing the request.
+    $r = Invoke-WebRequest -Uri "$Base/users/user/$($script:CascUserId)?cascadeResourceDelete=$($script:CascCatName),NOT_A_CATEGORY" -Method DELETE -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 10
+    if (200, 204 -notcontains $r.StatusCode) { throw "got HTTP $($r.StatusCode)" }
+    "user delete HTTP $($r.StatusCode)"
+}
+
+Step "deleted user -> 404" {
+    Expect-Status 404 { Invoke-WebRequest -Uri "$Base/users/user/$($script:CascUserId)" -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop }
+}
+
+Step "solely-owned USERSESSION resource -> 404 (cascade-deleted)" {
+    Expect-Status 404 { Invoke-WebRequest -Uri "$Base/resources/resource/$($script:CascSessResId)" -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop }
+}
+
+Step "other-category resource survives the cascade -> 200" {
+    $r = Invoke-RestMethod -Uri "$Base/resources/resource/$($script:CascOtherResId)" -Headers @{Authorization=$AdminB; Accept='application/json'} -TimeoutSec 5
+    if ([int]$r.Resource.id -ne $script:CascOtherResId) { throw "got id=$($r.Resource.id)" }
+    "resource $($script:CascOtherResId) preserved"
+}
+
+Step "shared USERSESSION resource survives -> 200, seeded user still reads it" {
+    $r = Invoke-RestMethod -Uri "$Base/resources/resource/$($script:CascSharedResId)" -Headers @{Authorization=$UserB; Accept='application/json'} -TimeoutSec 5
+    if ([int]$r.Resource.id -ne $script:CascSharedResId) { throw "got id=$($r.Resource.id)" }
+    "resource $($script:CascSharedResId) preserved and readable by seeded user"
+}
+
+Step "plain DELETE (no cascade param) keeps default behavior -> user gone, resource left" {
+    # Backward compatibility: without the parameter the user's resources are left untouched.
+    $name = "inttest-casc2-$(Get-Date -Format 'HHmmss')"
+    $id = Invoke-RestMethod -Uri "$Base/users/" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body "<User><name>$name</name><newPassword>$($script:CascUserPwd)</newPassword><role>USER</role><enabled>true</enabled></User>" -TimeoutSec 5
+    $uid = [int]$id
+    $b = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("${name}:$($script:CascUserPwd)"))
+    $body = @"
+<Resource>
+  <description>session kept by plain delete</description><metadata></metadata>
+  <name>plain.$name</name>
+  <category><name>$($script:CascCatName)</name></category>
+  <store><data>{}</data></store>
+</Resource>
+"@
+    $rid = [int](Invoke-RestMethod -Uri "$Base/resources/" -Method POST -Headers @{Authorization=$b} -ContentType 'application/xml' -Body $body -TimeoutSec 5)
+    $r = Invoke-WebRequest -Uri "$Base/users/user/$uid" -Method DELETE -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 10
+    if (200, 204 -notcontains $r.StatusCode) { throw "user delete got HTTP $($r.StatusCode)" }
+    $check = Invoke-RestMethod -Uri "$Base/resources/resource/$rid" -Headers @{Authorization=$AdminB; Accept='application/json'} -TimeoutSec 5
+    if ([int]$check.Resource.id -ne $rid) { throw "resource unexpectedly gone" }
+    $script:CascPlainResId = $rid
+    "user $uid deleted, resource $rid left untouched (no cascade requested)"
+}
+
+Step "DELETE user with cascade of category having NO resources -> 200/204" {
+    # Robustness: the request succeeds even when the listed category exists but holds nothing
+    # owned by the user.
+    $name = "inttest-casc3-$(Get-Date -Format 'HHmmss')"
+    $id = Invoke-RestMethod -Uri "$Base/users/" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body "<User><name>$name</name><newPassword>$($script:CascUserPwd)</newPassword><role>USER</role><enabled>true</enabled></User>" -TimeoutSec 5
+    $uid = [int]$id
+    $r = Invoke-WebRequest -Uri "$Base/users/user/$uid`?cascadeResourceDelete=$($script:CascCatName)" -Method DELETE -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 10
+    if (200, 204 -notcontains $r.StatusCode) { throw "got HTTP $($r.StatusCode)" }
+    Expect-Status 404 { Invoke-WebRequest -Uri "$Base/users/user/$uid" -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop } | Out-Null
+    "user $uid deleted with empty cascade"
+}
+
+Step "cascade phase cleanup (surviving resources)" {
+    foreach ($rid in @($script:CascOtherResId, $script:CascSharedResId, $script:CascPlainResId)) {
+        if ($rid) {
+            $null = Invoke-WebRequest -Uri "$Base/resources/resource/$rid" -Method DELETE -Headers @{Authorization=$AdminB} -UseBasicParsing -TimeoutSec 5
+        }
+    }
+    "cleaned up surviving cascade-test resources"
+}
+
 # ========== Phase 13 — extra cleanup ==========
 
 Step "DELETE attr-test resource" {

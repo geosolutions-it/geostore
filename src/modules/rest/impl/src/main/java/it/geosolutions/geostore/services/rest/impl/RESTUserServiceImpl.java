@@ -190,8 +190,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
      * (non-Javadoc) @see it.geosolutions.geostore.services.rest.RESTUserInterface#delete(long)
      */
     @Override
-    public void delete(SecurityContext sc, long id) throws NotFoundWebEx {
-        boolean ret = userService.delete(id);
+    public void delete(SecurityContext sc, long id, String cascadeResourceDelete)
+            throws NotFoundWebEx {
+        boolean ret = userService.delete(id, cascadeResourceDelete);
         if (!ret) {
             throw new NotFoundWebEx("User not found");
         }
