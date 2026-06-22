@@ -1,6 +1,6 @@
 # GeoStore Command Line utilities
 
-The GeoStore CLI module includes command line utilites to interact with GeoStore and its internal database.
+The GeoStore CLI module includes command line utilities to interact with GeoStore and its internal database.
 
 It currently includes the following utilities:
 
@@ -36,7 +36,7 @@ src/cli/target/H2ToPgSQLExport.jar
 
 This tool can be used to migrate data from a GeoStore H2 database file, to a PostgreSQL database.
 
-We always advice using a full fledged database (like PosgreSQL or Oracle) in production, while an H2 embedded database can be useful during development or testing.
+We always advise using a full-fledged database (like PosgreSQL or Oracle) in production, while an H2 embedded database can be useful during development or testing.
 
 Sometimes migrating a development database into production is therefore needed.
 
@@ -52,13 +52,15 @@ The destination database must be:
 To get a migration script, run the utility with the following parameters:
 
 ```bash
-java -jar H2ToPgSQLExport.jar [-o[=<outputPath>]] [-p=<password>] [-u=<username>] H2FILE
+java -Duser.timezone=UTC -jar H2ToPgSQLExport.jar [-o[=<outputPath>]] [-p=<password>] [-u=<username>] H2FILE
 ```
 
 - **H2FILE**: path to the H2 database file to migrate
 - **outputPath**: path to output SQL file, if missing the output is written to the standard output
 - **password**: H2 database password, if missing, the default password (geostore) is used
 - **username**: H2 database username, if missing, the default username (geostore) is used
+
+> The JVM parameter `-Duser.timezone=UTC` is needed to avoid Java set the host timezone on the dates in the H2 database.
 
 To import the data into an empty PostgreSQL database, using the generated script, you can use the PostgreSQL psql tool as follows:
 
