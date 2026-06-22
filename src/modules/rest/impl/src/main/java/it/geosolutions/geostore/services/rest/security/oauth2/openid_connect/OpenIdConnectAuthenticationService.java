@@ -93,6 +93,9 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
     private volatile MicrosoftGraphClient graphClient;
     private volatile boolean graphClientInitialized = false;
 
+    /** userinfo-map key under which MS Graph-resolved group names are stashed for this request. */
+    private static final String MSGRAPH_RESOLVED_GROUPS_KEY = "__geostore_msgraph_groups__";
+
     public OpenIdConnectAuthenticationService(
             TokenAuthenticationCache cache,
             UserService userService,
@@ -501,10 +504,16 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
 
                 if (oidcConfig.isMsGraphGroupsEnabled()
                         && configuration.getGroupsClaim() != null
-                        && isGroupsOverage(tokenString, configuration.getGroupsClaim())) {
+                        && (oidcConfig.isMsGraphAlwaysResolveGroups()
+                                || isGroupsOverage(tokenString, configuration.getGroupsClaim()))) {
+                    // Either always-resolve is on, or the token signalled a groups overage.
+                    // Resolve display names via Graph and stash them under a dedicated key so
+                    // syncGroupsFromClaims (overridden below) treats them as the authoritative
+                    // source — overriding even an inline (GUID-valued) groups claim. On Graph
+                    // failure nothing is stashed and the normal claim resolution applies.
                     List<String> graphGroups = client.fetchMemberOfGroups(accessToken);
                     if (!graphGroups.isEmpty()) {
-                        enriched.put(configuration.getGroupsClaim(), graphGroups);
+                        enriched.put(MSGRAPH_RESOLVED_GROUPS_KEY, graphGroups);
                     }
                 }
 
@@ -524,6 +533,29 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
             }
         }
         super.addAuthoritiesFromToken(user, tokenString, accessTokenString, userinfoMap);
+    }
+
+    /**
+     * When MS Graph has resolved the authoritative group names (always-resolve or overage), they
+     * are stashed under {@link #MSGRAPH_RESOLVED_GROUPS_KEY} and take precedence over any inline
+     * groups claim in the token. Otherwise the standard claim-based resolution applies.
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    protected void syncGroupsFromClaims(
+            User user,
+            JWTHelper primaryHelper,
+            JWTHelper accessHelper,
+            Map<String, Object> userinfoMap) {
+        if (userinfoMap != null && userinfoMap.get(MSGRAPH_RESOLVED_GROUPS_KEY) instanceof List) {
+            List<String> graphGroups = (List<String>) userinfoMap.get(MSGRAPH_RESOLVED_GROUPS_KEY);
+            LOGGER.info(
+                    "Using {} MS Graph-resolved group(s) as the authoritative group source.",
+                    graphGroups.size());
+            finalizeGroupSync(user, graphGroups);
+        } else {
+            super.syncGroupsFromClaims(user, primaryHelper, accessHelper, userinfoMap);
+        }
     }
 
     /** Whether the JWT payload indicates an Azure AD groups overage condition. */

@@ -1432,6 +1432,53 @@ public class OpenIdConnectIntegrationTest {
     }
 
     @Test
+    public void testBearerTokenAlwaysResolveGroupsViaGraph() throws IOException, ServletException {
+        configuration.setAllowBearerTokens(true);
+        configuration.setGroupsClaim("groups");
+        configuration.setMsGraphEnabled(true);
+        configuration.setMsGraphEndpoint(authService + "/graph");
+        // The new flag: resolve names via Graph on every login, not only on overage.
+        configuration.setMsGraphAlwaysResolveGroups(true);
+        recreateFilter();
+
+        // JWT with inline groups and NO overage indicator: Graph must still be queried and
+        // its display names must REPLACE the inline (GUID-style) claim values.
+        long now = System.currentTimeMillis() / 1000;
+        String jwt =
+                JWT.create()
+                        .withKeyId(TEST_KID)
+                        .withIssuer("https://test.issuer/")
+                        .withAudience(CLIENT_ID)
+                        .withSubject("test-sub-always-graph")
+                        .withClaim("email", "always-graph@example.com")
+                        .withArrayClaim("groups", new String[] {"guid-aaa", "guid-bbb"})
+                        .withIssuedAt(new Date(now * 1000))
+                        .withExpiresAt(new Date((now + 3600) * 1000))
+                        .sign(rsaAlgorithm);
+
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain chain = new MockFilterChain();
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(200, response.getStatus());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication, "Bearer token should authenticate");
+        User user = (User) authentication.getPrincipal();
+
+        Set<String> groupNames =
+                user.getGroups().stream().map(UserGroup::getGroupName).collect(Collectors.toSet());
+        // Graph display names are used...
+        assertTrue(groupNames.contains("GIS Analysts"), "Graph group 'GIS Analysts' expected");
+        assertTrue(groupNames.contains("Map Editors"), "Graph group 'Map Editors' expected");
+        // ...replacing the inline GUID-style claim values.
+        assertFalse(groupNames.contains("guid-aaa"), "Inline GUID groups must be replaced");
+        assertFalse(groupNames.contains("guid-bbb"), "Inline GUID groups must be replaced");
+    }
+
+    @Test
     public void testBearerTokenMsGraphRoles() throws IOException, ServletException {
         configuration.setAllowBearerTokens(true);
         configuration.setRolesClaim("roles");

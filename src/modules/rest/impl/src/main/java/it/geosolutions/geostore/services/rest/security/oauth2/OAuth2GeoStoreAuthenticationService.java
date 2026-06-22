@@ -817,9 +817,18 @@ public class OAuth2GeoStoreAuthenticationService {
             LOGGER.info("No groupsClaim configured -> skipping group sync.");
         }
 
+        finalizeGroupSync(user, oidcGroups);
+    }
+
+    /**
+     * Applies group mappings and the always-assigned {@code defaultGroups}, then reconciles the
+     * resulting remote groups onto the user. Shared by the claim-based group sync and by subclasses
+     * that resolve the authoritative group list from another source (e.g. MS Graph).
+     */
+    protected void finalizeGroupSync(User user, List<String> oidcGroups) {
         oidcGroups = applyGroupMappings(oidcGroups);
 
-        // Always-assigned default groups: appended to the claim-derived ones, not subject to
+        // Always-assigned default groups: appended to the resolved ones, not subject to
         // groupMappings/dropUnmapped. They flow through the normal reconciliation, so they are
         // created on the fly when missing, tagged with this provider as sourceService, and
         // assigned through the user-group service like any claim-derived group.
