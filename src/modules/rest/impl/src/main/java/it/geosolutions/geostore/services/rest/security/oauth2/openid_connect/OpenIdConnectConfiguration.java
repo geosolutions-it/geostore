@@ -80,7 +80,6 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     // resolved even for the common case where the token carries inline group object-IDs.
     boolean msGraphAlwaysResolveGroups = false;
     boolean msGraphRolesEnabled = false;
-    String msGraphAppId;
 
     public String getJwkURI() {
         return jwkURI;
@@ -248,14 +247,6 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setMsGraphRolesEnabled(boolean msGraphRolesEnabled) {
         this.msGraphRolesEnabled = msGraphRolesEnabled;
-    }
-
-    public String getMsGraphAppId() {
-        return msGraphAppId;
-    }
-
-    public void setMsGraphAppId(String msGraphAppId) {
-        this.msGraphAppId = msGraphAppId;
     }
 
     @Override
