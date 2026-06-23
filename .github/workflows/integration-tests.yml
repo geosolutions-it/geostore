@@ -45,17 +45,21 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      - name: Seed admin / user via sample_users.xml
-        # The webapp's applicationContext.xml has userListInitFile=<null/> by default
-        # because production deployments (MapStore overlay) provide their own seeder.
-        # For the standalone jetty backend used in CI we flip it to
-        # classpath:sample_users.xml which seeds admin/admin and user/user — both
-        # required by the test script.
+      - name: Verify admin / user seeding is enabled
+        # Since #549 the webapp's applicationContext.xml ships
+        # userListInitFile=classpath:sample_users.xml, so a fresh standalone jetty seeds
+        # admin/admin and user/user (both required by the test script). The previous step
+        # sed-patched a <null/> default that no longer exists; verify the seeding is in
+        # place instead, and fail fast if that default is ever changed.
         run: |
           set -euo pipefail
           ctx=src/web/app/src/main/resources/applicationContext.xml
-          sed -i 's|<property name="userListInitFile"><null/></property>|<property name="userListInitFile" value="classpath:sample_users.xml"/>|' "$ctx"
-          echo "After patch:"
+          if ! grep -q '<property name="userListInitFile" value="classpath:sample_users.xml"/>' "$ctx"; then
+            echo "ERROR: admin/user seeding (sample_users.xml) is not enabled in $ctx"
+            grep -n 'userListInitFile' "$ctx" || true
+            exit 1
+          fi
+          echo "OK: sample_users.xml seeding is enabled"
           grep -n 'userListInitFile' "$ctx"
 
       - name: Build webapp + dependencies
