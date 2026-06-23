@@ -75,8 +75,11 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     boolean msGraphEnabled = false;
     String msGraphEndpoint = "https://graph.microsoft.com/v1.0";
     boolean msGraphGroupsEnabled = true;
+    // When false (default) the Graph /me/memberOf lookup runs only on the Azure "groups
+    // overage" (>200 groups). When true it runs on every login, so group display names are
+    // resolved even for the common case where the token carries inline group object-IDs.
+    boolean msGraphAlwaysResolveGroups = false;
     boolean msGraphRolesEnabled = false;
-    String msGraphAppId;
 
     public String getJwkURI() {
         return jwkURI;
@@ -230,20 +233,20 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
         this.msGraphGroupsEnabled = msGraphGroupsEnabled;
     }
 
+    public boolean isMsGraphAlwaysResolveGroups() {
+        return msGraphAlwaysResolveGroups;
+    }
+
+    public void setMsGraphAlwaysResolveGroups(boolean msGraphAlwaysResolveGroups) {
+        this.msGraphAlwaysResolveGroups = msGraphAlwaysResolveGroups;
+    }
+
     public boolean isMsGraphRolesEnabled() {
         return msGraphRolesEnabled;
     }
 
     public void setMsGraphRolesEnabled(boolean msGraphRolesEnabled) {
         this.msGraphRolesEnabled = msGraphRolesEnabled;
-    }
-
-    public String getMsGraphAppId() {
-        return msGraphAppId;
-    }
-
-    public void setMsGraphAppId(String msGraphAppId) {
-        this.msGraphAppId = msGraphAppId;
     }
 
     @Override
