@@ -898,12 +898,6 @@
                 <version>${json-lib.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>info.picocli</groupId>
-                <artifactId>picocli</artifactId>
-                <version>${picocli.version}</version>
-            </dependency>
-
             <!-- FREEMARKER -->
             <dependency>
                 <groupId>org.freemarker</groupId>
@@ -1003,12 +997,7 @@
         <module>web</module>
     </modules>
     <profiles>
-        <profile>
-            <id>cli</id>
-            <modules>
-                <module>cli</module>
-            </modules>
-        </profile>
+
         <profile>
             <id>pmd</id>
             <activation>
