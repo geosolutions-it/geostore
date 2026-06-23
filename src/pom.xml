@@ -540,15 +540,9 @@
             </dependency>
 
             <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
+                <groupId>com.fasterxml.jackson.dataformat</groupId>
+                <artifactId>jackson-dataformat-xml</artifactId>
                 <version>${jackson-version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.eclipse.parsson</groupId>
-                <artifactId>parsson</artifactId>
-                <version>1.1.7</version>
-                <scope>runtime</scope>
             </dependency>
 
             <dependency>
@@ -556,6 +550,7 @@
                 <artifactId>jackson-datatype-jakarta-jsonp</artifactId>
                 <version>${jackson-version}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.parsson</groupId>
                 <artifactId>parsson</artifactId>
@@ -889,13 +884,6 @@
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc6</artifactId>
                 <version>${ojdbc6.version}</version>
-            </dependency>
-
-            <!-- JSON -->
-            <dependency>
-                <groupId>net.sf.json-lib</groupId>
-                <artifactId>json-lib</artifactId>
-                <version>${json-lib.version}</version>
             </dependency>
 
             <!-- FREEMARKER -->

@@ -19,6 +19,10 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.StoredDataService;
@@ -38,11 +42,6 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import net.sf.json.JSON;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-import net.sf.json.xml.XMLSerializer;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -60,6 +59,10 @@ import org.jdom2.output.XMLOutputter;
 public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTStoredDataService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTStoredDataServiceImpl.class);
+
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper();
+    private static final XmlMapper XML_MAPPER = new XmlMapper();
+
     private static final Collection<MediaType> GET_XML_MEDIA_TYPES =
             Arrays.asList(MediaType.TEXT_XML_TYPE, MediaType.APPLICATION_XML_TYPE);
     private static final Collection<MediaType> GET_JSON_MEDIA_TYPES =
@@ -67,14 +70,6 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     private static final Collection<MediaType> GET_TEXT_MEDIA_TYPES =
             Collections.singletonList(MediaType.TEXT_PLAIN_TYPE);
     private StoredDataService storedDataService;
-
-    // /* (non-Javadoc)
-    // * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#getAll()
-    // */
-    // @Override
-    // public StoredDataList getAll(SecurityContext sc) {
-    // return new StoredDataList(storedDataService.getAll());
-    // }
 
     /** @param storedDataService */
     public void setStoredDataService(StoredDataService storedDataService) {
@@ -94,7 +89,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             //
             // Authorization check.
             //
-            boolean canUpdate = false;
+            boolean canUpdate;
             User authUser = extractAuthUser(sc);
             canUpdate = resourceAccessWrite(authUser, id); // The ID is also the resource ID
 
@@ -179,12 +174,11 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             // ////////////////////////
             // XML to JSON
             // ////////////////////////
-            XMLSerializer xmlSerializer = new XMLSerializer();
-            JSON json = xmlSerializer.read(data);
-            String ret = json.toString();
+            JsonNode json = XML_MAPPER.readTree(data.getBytes());
+            String ret = JSON_MAPPER.writeValueAsString(json);
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed XML -> JSON");
             return ret;
-        } catch (JSONException exc) {
+        } catch (Exception exc) {
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native XML format.");
         }
 
@@ -192,15 +186,15 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             // ///////////////////////
             // data To JSON conversion
             // ///////////////////////
-            JSONSerializer.toJSON(data);
+            JSON_MAPPER.readTree(data);
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is in native JSON format.");
             return data;
 
-        } catch (JSONException e) {
+        } catch (Exception e) {
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native JSON format.");
         }
 
-        JSONObject jsonObj = new JSONObject();
+        ObjectNode jsonObj = JSON_MAPPER.createObjectNode();
         jsonObj.put("data", data);
         String ret = jsonObj.toString();
         if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed plaintext -> JSON");
@@ -226,13 +220,15 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             // ///////////////////////
             // JSON To XML conversion
             // ///////////////////////
-            JSON json = JSONSerializer.toJSON(data);
-            XMLSerializer xmlSerializer = new XMLSerializer();
-            String ret = xmlSerializer.write(json);
+            JsonNode json = JSON_MAPPER.readTree(data.getBytes());
+            // Serializing a JsonNode with XmlMapper without an explicit root name emits the
+            // node's class name (e.g. <ObjectNode>) as the root element; pin a stable "data"
+            // root, consistent with the plaintext branch below.
+            String xml = XML_MAPPER.writer().withRootName("data").writeValueAsString(json);
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed JSON -> XML");
-            return ret;
+            return xml;
 
-        } catch (JSONException exc) {
+        } catch (Exception exc) {
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is not in native JSON format.", exc);
         }
 

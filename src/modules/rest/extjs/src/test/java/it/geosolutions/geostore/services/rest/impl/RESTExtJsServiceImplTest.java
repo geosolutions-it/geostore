@@ -25,6 +25,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.googlecode.genericdao.search.Search;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
@@ -64,10 +68,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +75,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 /** @author ETj (etj at geo-solutions.it) */
 public class RESTExtJsServiceImplTest extends ServiceTestBase {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final RESTExtJsServiceImpl restExtJsService;
 
@@ -2760,27 +2762,22 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         }
     }
 
-    private JSONResult parse(String jsonString) {
+    private JSONResult parse(String jsonString) throws JsonProcessingException {
         JSONResult ret = new JSONResult();
 
-        JSON json = JSONSerializer.toJSON(jsonString);
-        JSONObject jo = (JSONObject) json;
-        ret.total = jo.getInt("totalCount");
+        ObjectNode jo = (ObjectNode) OBJECT_MAPPER.readTree(jsonString);
+        ret.total = jo.get("totalCount").asInt();
 
         Set<String> names;
 
-        JSONArray arrResults = jo.optJSONArray("results");
-        if (arrResults != null) {
+        JsonNode arrResults = jo.get("results");
+        if (arrResults != null && arrResults.isArray()) {
             names = getArray(arrResults);
+        } else if (arrResults != null && arrResults.isObject()) {
+            names = Collections.singleton(getSingle((ObjectNode) arrResults));
         } else {
-            JSONObject results = jo.optJSONObject("results");
-
-            if (results != null) {
-                names = Collections.singleton(getSingle(results));
-            } else {
-                LOGGER.warn("No results found");
-                names = Collections.emptySet();
-            }
+            LOGGER.warn("No results found");
+            names = Collections.emptySet();
         }
 
         ret.names = names;
@@ -2789,18 +2786,18 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         return ret;
     }
 
-    Set<String> getArray(JSONArray arr) {
+    Set<String> getArray(JsonNode jsonArray) {
         Set<String> ret = new HashSet<>();
 
-        for (Object object : arr) {
-            ret.add(getSingle((JSONObject) object));
+        for (JsonNode jsonNode : jsonArray) {
+            ret.add(getSingle((ObjectNode) jsonNode));
         }
 
         return ret;
     }
 
-    String getSingle(JSONObject jo) {
-        return jo.getString("name");
+    String getSingle(ObjectNode jsonNode) {
+        return jsonNode.get("name").asText();
     }
 
     static class JSONResult {

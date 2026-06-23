@@ -27,6 +27,10 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
@@ -68,9 +72,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -83,6 +84,8 @@ import org.apache.logging.log4j.Logger;
 public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTExtJsServiceImpl.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private ResourceService resourceService;
 
@@ -150,13 +153,13 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 count = resourceService.count(sqlNameLike, authUser);
             }
 
-            JSONObject result = makeJSONResult(true, count, resources, authUser);
+            ObjectNode result = makeJSONResult(true, count, resources, authUser);
             return result.toString();
 
         } catch (BadRequestServiceEx | InternalErrorServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
-            JSONObject obj = makeJSONResult(false, 0, null, authUser);
+            ObjectNode obj = makeJSONResult(false, 0, null, authUser);
             return obj.toString();
         }
     }
@@ -288,7 +291,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 count = resourceService.count(filter, authUser);
             }
 
-            JSONObject result =
+            ObjectNode result =
                     makeExtendedJSONResult(
                             true,
                             count,
@@ -301,7 +304,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
         } catch (InternalErrorServiceEx | BadRequestServiceEx e) {
             LOGGER.warn(e.getMessage(), e);
 
-            JSONObject obj = makeJSONResult(false, 0, null, authUser);
+            ObjectNode obj = makeJSONResult(false, 0, null, authUser);
             return obj.toString();
         }
     }
@@ -439,9 +442,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @param count
      * @param resources
      * @param extraAttributes
-     * @return JSONObject
+     * @return ObjectNode
      */
-    private JSONObject makeExtendedJSONResult(
+    private ObjectNode makeExtendedJSONResult(
             boolean success,
             long count,
             List<Resource> resources,
@@ -463,9 +466,9 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @param success
      * @param count
      * @param resources
-     * @return JSONObject
+     * @return ObjectNode
      */
-    private JSONObject makeJSONResult(
+    private ObjectNode makeJSONResult(
             boolean success, long count, List<ShortResource> resources, User authUser) {
         return makeGeneralizedJSONResult(success, count, resources, authUser, null, false, false);
     }
@@ -566,7 +569,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
      * @param extraAttributes
      * @return
      */
-    private JSONObject makeGeneralizedJSONResult(
+    private ObjectNode makeGeneralizedJSONResult(
             boolean success,
             long count,
             List<?> resources,
@@ -574,22 +577,22 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             List<String> extraAttributes,
             boolean includeAttributes,
             boolean includeData) {
-        JSONObject jsonObj = new JSONObject();
+        ObjectNode jsonObj = OBJECT_MAPPER.createObjectNode();
         jsonObj.put("success", success);
         jsonObj.put("totalCount", count);
 
         if (resources != null) {
             Iterator<?> iterator = resources.iterator();
 
-            JSON result;
+            JsonNode result;
 
             int size = resources.size();
             if (size == 0) {
                 result = null;
             } else if (size > 1) {
-                result = new JSONArray();
+                result = OBJECT_MAPPER.createArrayNode();
             } else {
-                result = new JSONObject();
+                result = OBJECT_MAPPER.createObjectNode();
             }
 
             while (iterator.hasNext()) {
@@ -602,29 +605,29 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                 }
 
                 if (sr != null) {
-                    JSONObject jobj = new JSONObject();
+                    ObjectNode jobj = OBJECT_MAPPER.createObjectNode();
 
-                    jobj.element("canDelete", sr.isCanDelete());
-                    jobj.element("canEdit", sr.isCanEdit());
-                    jobj.element("canCopy", sr.isCanCopy());
+                    jobj.put("canDelete", sr.isCanDelete());
+                    jobj.put("canEdit", sr.isCanEdit());
+                    jobj.put("canCopy", sr.isCanCopy());
 
                     Date date = sr.getCreation();
                     if (date != null) {
-                        jobj.element("creation", date.toString());
+                        jobj.put("creation", date.toString());
                     }
 
                     date = sr.getLastUpdate();
                     if (date != null) {
-                        jobj.element("lastUpdate", date.toString());
+                        jobj.put("lastUpdate", date.toString());
                     }
 
                     String description = sr.getDescription();
                     if (description != null) {
-                        jobj.element("description", description);
+                        jobj.put("description", description);
                     }
 
-                    jobj.element("id", sr.getId());
-                    jobj.element("name", sr.getName());
+                    jobj.put("id", sr.getId());
+                    jobj.put("name", sr.getName());
                     String owner = sr.getOwner();
                     // Append extra attributes
                     if (sr.getAttribute() != null) {
@@ -632,7 +635,7 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                             if (includeAttributes
                                     || (extraAttributes != null
                                             && extraAttributes.contains(at.getName()))) {
-                                jobj.element(at.getName(), at.getValue());
+                                jobj.put(at.getName(), at.getValue());
                             }
                             if ("owner".equals(at.getName())) {
                                 owner = at.getValue();
@@ -641,32 +644,36 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
                     }
                     if (includeData) {
                         assert obj instanceof Resource;
-                        jobj.element("data", ((Resource) obj).getData().getData());
+                        jobj.put("data", ((Resource) obj).getData().getData());
                     }
                     // get owner
                     if (owner != null) {
-                        jobj.element("owner", owner);
+                        jobj.put("owner", owner);
                     }
                     if (sr.getCreator() != null) {
-                        jobj.element("creator", sr.getCreator());
+                        jobj.put("creator", sr.getCreator());
                     } else if (owner != null) {
-                        jobj.element("creator", owner);
+                        jobj.put("creator", owner);
                     }
                     if (sr.getEditor() != null) {
-                        jobj.element("editor", sr.getEditor());
+                        jobj.put("editor", sr.getEditor());
                     } else if (owner != null) {
-                        jobj.element("editor", owner);
+                        jobj.put("editor", owner);
                     }
 
-                    if (result instanceof JSONArray) {
-                        ((JSONArray) result).add(jobj);
+                    if (result instanceof ArrayNode) {
+                        ((ArrayNode) result).add(jobj);
                     } else {
                         result = jobj;
                     }
                 }
             }
 
-            jsonObj.put("results", result != null ? result.toString() : "");
+            if (result != null) {
+                jsonObj.set("results", result);
+            } else {
+                jsonObj.put("results", "");
+            }
         } else {
             jsonObj.put("results", "");
         }
