@@ -6,11 +6,11 @@
         xmlns:context="http://www.springframework.org/schema/context"
         xmlns:util="http://www.springframework.org/schema/util"
         xsi:schemaLocation="
-            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
-            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.0.xsd
-            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd
-            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-2.5.xsd
-            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-2.5.xsd"
+            http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+            http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+            http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"
     >
 
     <!-- ====================================================================-->
@@ -48,6 +48,18 @@
         <property name="url" value="jdbc:h2:mem:geostore" />
         <property name="username" value="geostore" />
         <property name="password" value="geostore" />
+        <!-- DBCP2 defaults are maxTotal=8 and maxWaitMillis=-1 (block forever on
+             pool exhaustion). Set sensible defaults so a misconfigured deployment
+             surfaces pool-exhaustion as a fast HTTP 500 instead of hanging
+             indefinitely. Operators can override these in
+             geostore-datasource-ovr.properties: geostoreDataSource.maxTotal=...,
+             geostoreDataSource.maxWaitMillis=..., etc. -->
+        <property name="maxTotal" value="50" />
+        <property name="maxIdle" value="10" />
+        <property name="minIdle" value="2" />
+        <property name="maxWaitMillis" value="30000" />
+        <property name="testOnBorrow" value="true" />
+        <property name="validationQuery" value="SELECT 1" />
     </bean>
 
     <bean id="geostoreEntityManagerFactory"
