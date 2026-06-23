@@ -221,7 +221,10 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             // JSON To XML conversion
             // ///////////////////////
             JsonNode json = JSON_MAPPER.readTree(data.getBytes());
-            String xml = XML_MAPPER.writeValueAsString(json);
+            // Serializing a JsonNode with XmlMapper without an explicit root name emits the
+            // node's class name (e.g. <ObjectNode>) as the root element; pin a stable "data"
+            // root, consistent with the plaintext branch below.
+            String xml = XML_MAPPER.writer().withRootName("data").writeValueAsString(json);
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Transformed JSON -> XML");
             return xml;
 
