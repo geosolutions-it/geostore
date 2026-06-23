@@ -41,6 +41,12 @@ jobs:
     concurrency: ci-${{ github.ref }}
     steps:
       - uses: actions/checkout@v3
+      - name: Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.GEOSTORE_MAVEN_SSH_KEY }}
+      - name: Trust Maven Host
+        run: ssh-keyscan -H maven.geo-solutions.it >> ~/.ssh/known_hosts
       - name: Set up Maven Central Repository
         uses: actions/setup-java@v3
         with:
@@ -48,14 +54,9 @@ jobs:
           distribution: 'adopt'
           server-id: geosolutions
           server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
+
       - name: Publish package
         run: |
-          # Setup SSH keys for SFTP
-          mkdir -p ~/.ssh
-          # add geo-solutions.it to known hosts to avoid prompts
-          ssh-keyscan -H maven.geo-solutions.it >> ~/.ssh/known_hosts
           mvn clean install deploy -Ppostgres # published version includes only the postgres drivers. Auditing module is not added to the published version.
         env:
-          MAVEN_USERNAME: ${{ secrets.GS_MAVEN_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.GS_MAVEN_PASSWORD }}
+          MAVEN_USERNAME: ${{ secrets.GEOSTORE_MAVEN_USERNAME }}
