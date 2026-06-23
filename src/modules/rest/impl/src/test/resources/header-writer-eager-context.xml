@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+               http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+               http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!-- Minimal <http> chain (the HeaderWriterFilter is added by default), as the real
+         geostore-spring-security.xml has, PLUS the HeaderWriterFilterEagerConfig post-processor. -->
+    <http>
+        <intercept-url pattern="/**" access="permitAll"/>
+        <http-basic/>
+    </http>
+
+    <authentication-manager>
+        <authentication-provider>
+            <user-service>
+                <user name="u" password="{noop}p" authorities="ROLE_USER"/>
+            </user-service>
+        </authentication-provider>
+    </authentication-manager>
+
+    <beans:bean class="it.geosolutions.geostore.services.rest.security.HeaderWriterFilterEagerConfig"/>
+</beans:beans>
