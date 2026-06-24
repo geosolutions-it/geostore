@@ -45,7 +45,7 @@ public class GeoStorePBEPasswordEncoder extends AbstractGeoStorePasswordEncoder 
     StandardPBEByteEncryptor byteEncrypter;
 
     private String providerName, algorithm;
-    private String keyAliasInKeyStore = KeyStoreProviderImpl.CONFIGPASSWORDKEY;
+    private String keyAliasInKeyStore = KeyStoreProviderImpl.CONFIG_ENCRYPTION_KEY_ALIAS;
 
     private KeyStoreProvider keystoreProvider;
 
