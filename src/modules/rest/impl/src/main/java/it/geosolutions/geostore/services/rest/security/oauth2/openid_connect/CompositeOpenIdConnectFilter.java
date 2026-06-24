@@ -83,8 +83,8 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
     private static final Logger LOGGER = LogManager.getLogger(CompositeOpenIdConnectFilter.class);
 
-    private static final Pattern CALLBACK_PATTERN = Pattern.compile(".*/openid/([^/]+)/callback.*");
-    private static final Pattern LOGIN_PATTERN = Pattern.compile(".*/openid/([^/]+)/login.*");
+    private static final Pattern CALLBACK_PATTERN = Pattern.compile("/openid/([^/]+)/callback");
+    private static final Pattern LOGIN_PATTERN = Pattern.compile("/openid/([^/]+)/login");
 
     private ApplicationContext applicationContext;
     private final Map<String, OpenIdConnectFilter> providerFilters = new LinkedHashMap<>();
@@ -291,7 +291,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
         // Callback URL: /openid/{provider}/callback
         Matcher callbackMatcher = CALLBACK_PATTERN.matcher(uri);
-        if (callbackMatcher.matches()) {
+        if (callbackMatcher.find()) {
             String provider = callbackMatcher.group(1);
             OpenIdConnectFilter filter = providerFilters.get(provider);
             if (filter != null) {
@@ -306,7 +306,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
         // Login URL: /openid/{provider}/login
         Matcher loginMatcher = LOGIN_PATTERN.matcher(uri);
-        if (loginMatcher.matches()) {
+        if (loginMatcher.find()) {
             String provider = loginMatcher.group(1);
             OpenIdConnectFilter filter = providerFilters.get(provider);
             if (filter != null) {
