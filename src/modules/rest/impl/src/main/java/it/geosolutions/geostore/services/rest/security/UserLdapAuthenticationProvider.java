@@ -1,4 +1,3 @@
-/** */
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.User;
@@ -23,7 +22,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
 import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
@@ -34,11 +32,13 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
     private static final Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
 
-    /** Message shown if the user it's not found. TODO: Localize it */
+    /** Message shown if the user it's not found. */
+    // TODO: Localize it
     private static final String USER_NOT_FOUND_MSG =
             "User not found. Please check your credentials";
 
-    /** Message shown if the user credentials are wrong. TODO: Localize it */
+    /** Message shown if the user credentials are wrong. */
+    // TODO: Localize it
     private static final String UNAUTHORIZED_MSG = "Bad credentials";
 
     @Autowired UserService userService;
@@ -98,7 +98,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             }
         } catch (BadRequestServiceEx | NotFoundServiceEx e) {
             LOGGER.log(Level.ERROR, e.getMessage(), e);
-            throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+            throw new BadCredentialsException(USER_NOT_FOUND_MSG);
         }
     }
 
@@ -247,11 +247,12 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
         Role role = (userRole != null ? userRole : Role.USER);
         for (GrantedAuthority a : ldapAuthorities) {
-            if (a.getAuthority().startsWith("ROLE_")) {
-                if (a.getAuthority().toUpperCase().endsWith("ADMIN")
+            String authority = a.getAuthority();
+            if (authority != null && authority.startsWith("ROLE_")) {
+                if (authority.toUpperCase().endsWith("ADMIN")
                         && (role == Role.GUEST || role == Role.USER)) {
                     role = Role.ADMIN;
-                } else if (a.getAuthority().toUpperCase().endsWith("USER") && role == Role.GUEST) {
+                } else if (authority.toUpperCase().endsWith("USER") && role == Role.GUEST) {
                     role = Role.USER;
                 }
             } else {
@@ -284,7 +285,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
             UserGroup userGroup = userGroupService.get(group.getGroupName());
 
             if (userGroup == null) {
-                LOGGER.log(Level.INFO, "Creating new group from LDAP: " + group.getGroupName());
+                LOGGER.log(Level.INFO, "Creating new group from LDAP: {}", group.getGroupName());
                 long groupId = userGroupService.insert(group);
                 userGroup = userGroupService.get(groupId);
             }
