@@ -34,6 +34,7 @@ import static org.mockito.Mockito.when;
 
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

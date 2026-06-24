@@ -38,8 +38,14 @@ import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.SecurityContext;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -49,9 +55,6 @@ import java.util.GregorianCalendar;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessionService {
     static final String BEARER_TYPE = "bearer";

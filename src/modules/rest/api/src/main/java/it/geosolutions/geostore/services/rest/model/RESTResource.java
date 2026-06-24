@@ -28,9 +28,11 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.services.dto.ShortAttribute;
+
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -72,83 +74,115 @@ public class RESTResource implements Serializable {
 
     private boolean advertised = true;
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the description */
+    /**
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
-    /** @param description the description to set */
+    /**
+     * @param description the description to set
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /** @return the creation */
+    /**
+     * @return the creation
+     */
     public Date getCreation() {
         return creation;
     }
 
-    /** @param creation the creation to set */
+    /**
+     * @param creation the creation to set
+     */
     public void setCreation(Date creation) {
         this.creation = creation;
     }
 
-    /** @return the lastUpdate */
+    /**
+     * @return the lastUpdate
+     */
     public Date getLastUpdate() {
         return lastUpdate;
     }
 
-    /** @param lastUpdate the lastUpdate to set */
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
-    /** @return the metadata */
+    /**
+     * @return the metadata
+     */
     public String getMetadata() {
         return metadata;
     }
 
-    /** @param metadata the metadata to set */
+    /**
+     * @param metadata the metadata to set
+     */
     public void setMetadata(String metadata) {
         this.metadata = metadata;
     }
 
-    /** @return the attribute */
+    /**
+     * @return the attribute
+     */
     @XmlElementWrapper(name = "Attributes")
     public List<ShortAttribute> getAttribute() {
         return attribute;
     }
 
-    /** @param attribute the attribute to set */
+    /**
+     * @param attribute the attribute to set
+     */
     public void setAttribute(List<ShortAttribute> attribute) {
         this.attribute = attribute;
     }
 
-    /** @return the store */
+    /**
+     * @return the store
+     */
     public RESTStoredData getStore() {
         return store;
     }
 
-    /** @param store the store to set */
+    /**
+     * @param store the store to set
+     */
     public void setStore(RESTStoredData store) {
         this.store = store;
     }
@@ -164,42 +198,58 @@ public class RESTResource implements Serializable {
         this.store = data == null ? null : new RESTStoredData(data);
     }
 
-    /** @return the category */
+    /**
+     * @return the category
+     */
     public RESTCategory getCategory() {
         return category;
     }
 
-    /** @param category the category to set */
+    /**
+     * @param category the category to set
+     */
     public void setCategory(RESTCategory category) {
         this.category = category;
     }
 
-    /** @return the creator username */
+    /**
+     * @return the creator username
+     */
     public String getCreator() {
         return creator;
     }
 
-    /** @param creator the creator username */
+    /**
+     * @param creator the creator username
+     */
     public void setCreator(String creator) {
         this.creator = creator;
     }
 
-    /** @return the editor username */
+    /**
+     * @return the editor username
+     */
     public String getEditor() {
         return editor;
     }
 
-    /** @param editor the creator username */
+    /**
+     * @param editor the creator username
+     */
     public void setEditor(String editor) {
         this.editor = editor;
     }
 
-    /** @param advertised weather the resource is advertised or not */
+    /**
+     * @param advertised weather the resource is advertised or not
+     */
     public void setAdvertised(boolean advertised) {
         this.advertised = advertised;
     }
 
-    /** @return advertised weather the resource is advertised or not */
+    /**
+     * @return advertised weather the resource is advertised or not
+     */
     public boolean isAdvertised() {
         return this.advertised;
     }

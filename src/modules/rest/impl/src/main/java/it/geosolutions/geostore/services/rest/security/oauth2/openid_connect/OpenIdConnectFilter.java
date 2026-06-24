@@ -30,14 +30,14 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
@@ -48,6 +48,9 @@ import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenRespon
 import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * OpenID Connect filter. Bearer-token authentication is delegated to the base filter (and the

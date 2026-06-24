@@ -29,8 +29,9 @@ package it.geosolutions.geostore.services.rest.auditing;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
 import org.junit.Test;
+
+import java.io.File;
 
 public final class AuditingFilesManagerTest extends AuditingTestsBase {
 

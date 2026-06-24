@@ -35,7 +35,9 @@ import static org.mockito.Mockito.when;
 
 import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.security.RestAuthenticationEntryPoint;
+
 import jakarta.ws.rs.core.Response;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

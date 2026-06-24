@@ -2,17 +2,20 @@ package it.geosolutions.geostore.services;
 
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
+
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ResourcePermissionServiceImpl implements ResourcePermissionService {
 

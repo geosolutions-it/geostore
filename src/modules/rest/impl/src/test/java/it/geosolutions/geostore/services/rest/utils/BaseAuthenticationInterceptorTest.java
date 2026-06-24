@@ -20,10 +20,7 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.services.UserService;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
@@ -31,6 +28,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Before;
 import org.junit.Ignore;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Test for AuthenticationInterceptors. It use a mocked user service and a mocked message

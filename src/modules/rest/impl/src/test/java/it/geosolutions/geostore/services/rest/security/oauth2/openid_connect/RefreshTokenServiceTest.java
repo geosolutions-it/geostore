@@ -35,12 +35,11 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
+
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.*;
+
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -58,6 +57,10 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.*;
 
 /** Test class for OAuth2SessionServiceDelegate token refresh. */
 class RefreshTokenServiceTest {

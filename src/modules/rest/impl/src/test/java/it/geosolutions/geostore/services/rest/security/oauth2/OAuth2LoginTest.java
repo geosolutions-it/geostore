@@ -1,6 +1,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.*;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -8,9 +9,9 @@ import static org.junit.Assert.assertTrue;
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
+
 import jakarta.ws.rs.core.Response;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +19,9 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class OAuth2LoginTest {
 

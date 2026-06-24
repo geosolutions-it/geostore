@@ -37,12 +37,12 @@ import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +50,9 @@ import org.mockito.Mockito;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.io.IOException;
+import java.util.*;
 
 public class SessionTokenAuthenticationFilterTest {
     private static final String DEFAULT_PREFIX = "Bearer ";

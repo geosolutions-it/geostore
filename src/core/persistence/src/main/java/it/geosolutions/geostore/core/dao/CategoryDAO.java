@@ -21,6 +21,7 @@ package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
+
 import java.util.List;
 
 /**

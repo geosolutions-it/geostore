@@ -27,13 +27,14 @@
  */
 package it.geosolutions.geostore.core.security.ldap;
 
-import java.util.Collection;
-import java.util.Map;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsMapper;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Extends LdapUserDetailsMapper with the ability to map LDAP attributes to UserDetails attributes.

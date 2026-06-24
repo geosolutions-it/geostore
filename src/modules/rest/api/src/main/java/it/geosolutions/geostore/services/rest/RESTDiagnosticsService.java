@@ -36,6 +36,7 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+
 import org.springframework.security.access.annotation.Secured;
 
 /** Admin-only diagnostics REST service for runtime observability. */

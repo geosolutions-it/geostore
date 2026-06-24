@@ -18,9 +18,7 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.rest.impl.RESTCategoryServiceImpl;
-import java.io.IOException;
-import java.net.DatagramSocket;
-import java.net.ServerSocket;
+
 import org.apache.cxf.jaxrs.client.JAXRSClientFactory;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.junit.Test;
@@ -29,7 +27,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
 
-/** @author Alessio */
+import java.io.IOException;
+import java.net.DatagramSocket;
+import java.net.ServerSocket;
+
+/**
+ * @author Alessio
+ */
 public class SecurityTest extends BaseAuthenticationTest {
 
     private static final String ENDPOINT_ADDRESS = "http://localhost:9000/rest/categories";

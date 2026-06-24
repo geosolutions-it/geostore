@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.en
 import static org.junit.jupiter.api.Assertions.*;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;

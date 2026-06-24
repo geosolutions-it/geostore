@@ -29,9 +29,11 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.Resource;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.util.List;
 
 /**
@@ -46,18 +48,24 @@ public class ResourceList {
 
     public ResourceList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public ResourceList(List<Resource> list) {
         this.list = list;
     }
 
-    /** @return List<ShortResource> */
+    /**
+     * @return List<ShortResource>
+     */
     @XmlElement(name = "Resource")
     public List<Resource> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<Resource> list) {
         this.list = list;
     }

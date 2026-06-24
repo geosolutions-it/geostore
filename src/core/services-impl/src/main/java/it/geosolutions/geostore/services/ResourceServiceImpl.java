@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services;
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.Sort;
+
 import it.geosolutions.geostore.core.dao.AttributeDAO;
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
@@ -56,6 +57,11 @@ import it.geosolutions.geostore.services.exception.DuplicatedResourceNameService
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.util.SearchConverter;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -66,9 +72,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Class ResourceServiceImpl.

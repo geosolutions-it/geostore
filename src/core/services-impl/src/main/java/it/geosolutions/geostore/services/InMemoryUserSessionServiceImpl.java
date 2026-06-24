@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.dto.UserSession;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

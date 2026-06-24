@@ -1,10 +1,12 @@
 package it.geosolutions.geostore.services.rest.security;
 
+import org.springframework.ldap.core.DirContextOperations;
+
 import java.util.Hashtable;
 import java.util.SortedSet;
+
 import javax.naming.*;
 import javax.naming.directory.*;
-import org.springframework.ldap.core.DirContextOperations;
 
 public class MockDirContextOperations implements DirContextOperations {
 

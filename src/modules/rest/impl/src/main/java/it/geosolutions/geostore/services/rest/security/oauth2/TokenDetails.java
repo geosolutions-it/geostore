@@ -30,9 +30,11 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import java.io.Serializable;
+
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2RefreshToken;
+
+import java.io.Serializable;
 
 /**
  * Holds the token details. Instances of this class are meant to be stored into the SecurityContext
@@ -91,12 +93,16 @@ public class TokenDetails implements Serializable {
         return result;
     }
 
-    /** @return the JWT idToken. */
+    /**
+     * @return the JWT idToken.
+     */
     public String getIdToken() {
         return idToken;
     }
 
-    /** @return the OAuth2AccessToken instance. */
+    /**
+     * @return the OAuth2AccessToken instance.
+     */
     public OAuth2AccessToken getAccessToken() {
         return accessToken;
     }
@@ -110,7 +116,9 @@ public class TokenDetails implements Serializable {
         this.accessToken = accessToken;
     }
 
-    /** @return the OAuth2RefreshToken instance (may be null). */
+    /**
+     * @return the OAuth2RefreshToken instance (may be null).
+     */
     public OAuth2RefreshToken getRefreshToken() {
         return refreshToken;
     }

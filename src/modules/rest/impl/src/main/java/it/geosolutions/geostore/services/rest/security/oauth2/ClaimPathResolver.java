@@ -31,6 +31,7 @@ import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.Option;
 import com.jayway.jsonpath.PathNotFoundException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;

@@ -24,11 +24,14 @@ import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
 import com.googlecode.genericdao.search.Search;
 import com.googlecode.genericdao.search.jpa.JPASearchProcessor;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+
+import org.springframework.stereotype.Repository;
+
 import java.io.Serializable;
 import java.util.List;
-import org.springframework.stereotype.Repository;
 
 /**
  * Class BaseDAO.

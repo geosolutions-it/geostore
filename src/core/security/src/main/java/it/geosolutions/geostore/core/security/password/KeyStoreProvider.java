@@ -12,6 +12,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.Enumeration;
+
 import javax.crypto.SecretKey;
 
 /**
@@ -22,7 +23,9 @@ import javax.crypto.SecretKey;
  */
 public interface KeyStoreProvider {
 
-    /** @return the default key store {@link File} object */
+    /**
+     * @return the default key store {@link File} object
+     */
     File getFile();
 
     /**

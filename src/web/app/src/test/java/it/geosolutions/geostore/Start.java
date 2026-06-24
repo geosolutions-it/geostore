@@ -5,17 +5,18 @@
  */
 package it.geosolutions.geostore;
 
+import org.mortbay.jetty.Connector;
+import org.mortbay.jetty.Server;
+import org.mortbay.jetty.bio.SocketConnector;
+import org.mortbay.jetty.webapp.WebAppContext;
+import org.mortbay.xml.XmlConfiguration;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.mortbay.jetty.Connector;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.bio.SocketConnector;
-import org.mortbay.jetty.webapp.WebAppContext;
-import org.mortbay.xml.XmlConfiguration;
 
 /**
  * Jetty starter, will run geoserver inside the Jetty web container.<br>

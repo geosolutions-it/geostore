@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.User;
+
 import java.security.Principal;
 
 /**
@@ -34,7 +35,9 @@ public class GeoStorePrincipal implements Principal {
 
     public GeoStorePrincipal() {}
 
-    /** @param user */
+    /**
+     * @param user
+     */
     public GeoStorePrincipal(User user) {
         //
         // is using this ctor, caller may want to enforce user existance
@@ -44,7 +47,9 @@ public class GeoStorePrincipal implements Principal {
         this.user = user;
     }
 
-    /** @return GeoStorePrincipal */
+    /**
+     * @return GeoStorePrincipal
+     */
     public static GeoStorePrincipal createGuest() {
         return new GeoStorePrincipal() {
             @Override
@@ -54,12 +59,16 @@ public class GeoStorePrincipal implements Principal {
         };
     }
 
-    /** @return User */
+    /**
+     * @return User
+     */
     public User getUser() {
         return user;
     }
 
-    /** @param user */
+    /**
+     * @param user
+     */
     public void setUser(User user) {
         this.user = user;
     }

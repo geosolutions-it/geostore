@@ -1,6 +1,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
+
 import java.util.List;
 import java.util.Map;
 

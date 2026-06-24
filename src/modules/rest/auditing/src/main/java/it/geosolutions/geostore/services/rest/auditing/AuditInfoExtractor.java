@@ -29,7 +29,16 @@ package it.geosolutions.geostore.services.rest.auditing;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+
 import jakarta.servlet.http.HttpServletRequest;
+
+import org.apache.cxf.io.CachedOutputStream;
+import org.apache.cxf.message.Message;
+import org.apache.cxf.transport.http.AbstractHTTPDestination;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.security.core.Authentication;
+
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Principal;
@@ -38,12 +47,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.apache.cxf.io.CachedOutputStream;
-import org.apache.cxf.message.Message;
-import org.apache.cxf.transport.http.AbstractHTTPDestination;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.security.core.Authentication;
 
 final class AuditInfoExtractor {
 

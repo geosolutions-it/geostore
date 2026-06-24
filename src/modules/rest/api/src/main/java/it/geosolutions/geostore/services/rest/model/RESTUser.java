@@ -31,7 +31,9 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
+
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,12 +61,16 @@ public class RESTUser implements Serializable {
 
     public RESTUser() {}
 
-    /** @param id */
+    /**
+     * @param id
+     */
     public RESTUser(Long id) {
         this.id = id;
     }
 
-    /** @param name */
+    /**
+     * @param name
+     */
     public RESTUser(String name) {
         this.name = name;
     }
@@ -89,42 +95,58 @@ public class RESTUser implements Serializable {
         }
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the role */
+    /**
+     * @return the role
+     */
     public Role getRole() {
         return role;
     }
 
-    /** @param role the role to set */
+    /**
+     * @param role the role to set
+     */
     public void setRole(Role role) {
         this.role = role;
     }
 
-    /** @return the groupsNames */
+    /**
+     * @return the groupsNames
+     */
     public List<String> getGroupsNames() {
         return groupsNames;
     }
 
-    /** @param groupsNames the groupsNames to set */
+    /**
+     * @param groupsNames the groupsNames to set
+     */
     public void setGroupsNames(List<String> groupsNames) {
         this.groupsNames = groupsNames;
     }

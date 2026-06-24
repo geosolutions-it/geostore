@@ -19,7 +19,9 @@
  */
 package it.geosolutions.geostore.core.model.enums;
 
-/** @author DamianoG */
+/**
+ * @author DamianoG
+ */
 public enum UserReservedNames {
     GUEST("guest");
 

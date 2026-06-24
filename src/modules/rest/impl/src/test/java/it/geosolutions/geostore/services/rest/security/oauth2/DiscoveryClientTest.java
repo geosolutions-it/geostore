@@ -2,15 +2,18 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.common.ConsoleNotifier;
-import java.util.Arrays;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.http.MediaType;
+
+import java.util.Arrays;
 
 public class DiscoveryClientTest {
 

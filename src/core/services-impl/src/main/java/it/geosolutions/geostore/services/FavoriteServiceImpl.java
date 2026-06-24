@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.UserDAO;
 import it.geosolutions.geostore.core.dao.UserFavoriteDAO;
@@ -28,11 +29,14 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserFavorite;
 import it.geosolutions.geostore.services.exception.DuplicatedFavoriteServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
 import jakarta.ws.rs.ForbiddenException;
+
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.LongFunction;
-import org.springframework.transaction.annotation.Transactional;
 
 public class FavoriteServiceImpl implements FavoriteService {
 

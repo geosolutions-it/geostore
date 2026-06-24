@@ -28,14 +28,17 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-import java.util.Collections;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.oauth2.core.endpoint.PkceParameterNames;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+
+import java.util.Collections;
 
 /**
  * Enhances authorization-code token requests with the previously generated {@code code_verifier}

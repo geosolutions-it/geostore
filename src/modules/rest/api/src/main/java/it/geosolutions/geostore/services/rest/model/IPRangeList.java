@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.model;
 
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.util.Collection;
 
 @XmlRootElement(name = "IPRangeList")

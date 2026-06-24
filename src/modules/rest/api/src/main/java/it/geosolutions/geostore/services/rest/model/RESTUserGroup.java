@@ -22,13 +22,17 @@ package it.geosolutions.geostore.services.rest.model;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.UserGroupAttribute;
+
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/** @author DamianoG */
+/**
+ * @author DamianoG
+ */
 @XmlRootElement(name = "UserGroup")
 public class RESTUserGroup implements Serializable {
 
@@ -65,42 +69,58 @@ public class RESTUserGroup implements Serializable {
         this(group.getId(), group.getGroupName(), users, group.getDescription());
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the groupName */
+    /**
+     * @return the groupName
+     */
     public String getGroupName() {
         return groupName;
     }
 
-    /** @param groupName the groupName to set */
+    /**
+     * @param groupName the groupName to set
+     */
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
 
-    /** @return the restUsers */
+    /**
+     * @return the restUsers
+     */
     public UserList getRestUsers() {
         return restUsers;
     }
 
-    /** @param restUsers the restUsers to set */
+    /**
+     * @param restUsers the restUsers to set
+     */
     public void setRestUsers(UserList restUsers) {
         this.restUsers = restUsers;
     }
 
-    /** @return the description */
+    /**
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
-    /** @param description the description to set */
+    /**
+     * @param description the description to set
+     */
     public void setDescription(String description) {
         this.description = description;
     }
@@ -113,7 +133,9 @@ public class RESTUserGroup implements Serializable {
         this.attributes = attributes;
     }
 
-    /** @return the serialversionuid */
+    /**
+     * @return the serialversionuid
+     */
     public static long getSerialversionuid() {
         return serialVersionUID;
     }

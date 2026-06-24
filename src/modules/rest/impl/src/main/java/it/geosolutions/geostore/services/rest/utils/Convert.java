@@ -33,14 +33,18 @@ import it.geosolutions.geostore.services.rest.model.RESTIPRange;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.RESTStoredData;
+
+import org.apache.commons.collections.CollectionUtils;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.collections.CollectionUtils;
 
-/** @author ETj (etj at geo-solutions.it) */
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class Convert {
 
     public static Resource convertResource(RESTResource resource) {

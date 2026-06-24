@@ -29,8 +29,9 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
+
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.Arrays;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
@@ -46,6 +47,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
 
 /**
  * Per-provider OAuth2 HTTP client for OpenID Connect. Performs the authorization-code token

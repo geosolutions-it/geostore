@@ -29,7 +29,9 @@
 package it.geosolutions.geostore.services.dto;
 
 import it.geosolutions.geostore.core.model.Resource;
+
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -68,7 +70,9 @@ public class ShortResource implements Serializable {
 
     public ShortResource() {}
 
-    /** @param resource */
+    /**
+     * @param resource
+     */
     public ShortResource(Resource resource) {
         this.id = resource.getId();
         this.name = resource.getName();
@@ -80,72 +84,100 @@ public class ShortResource implements Serializable {
         this.advertised = resource.isAdvertised();
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(long id) {
         this.id = id;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the description */
+    /**
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
-    /** @param description the description to set */
+    /**
+     * @param description the description to set
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /** @return the creation */
+    /**
+     * @return the creation
+     */
     public Date getCreation() {
         return creation;
     }
 
-    /** @param creation the creation to set */
+    /**
+     * @param creation the creation to set
+     */
     public void setCreation(Date creation) {
         this.creation = creation;
     }
 
-    /** @return the lastUpdate */
+    /**
+     * @return the lastUpdate
+     */
     public Date getLastUpdate() {
         return lastUpdate;
     }
 
-    /** @param lastUpdate the lastUpdate to set */
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
-    /** @return the canEdit */
+    /**
+     * @return the canEdit
+     */
     public boolean isCanEdit() {
         return canEdit;
     }
 
-    /** @param canEdit the canEdit to set */
+    /**
+     * @param canEdit the canEdit to set
+     */
     public void setCanEdit(boolean canEdit) {
         this.canEdit = canEdit;
     }
 
-    /** @return the canDelete */
+    /**
+     * @return the canDelete
+     */
     public boolean isCanDelete() {
         return canDelete;
     }
 
-    /** @param canDelete the canDelete to set */
+    /**
+     * @param canDelete the canDelete to set
+     */
     public void setCanDelete(boolean canDelete) {
         this.canDelete = canDelete;
     }
@@ -158,32 +190,44 @@ public class ShortResource implements Serializable {
         this.canCopy = canCopy;
     }
 
-    /** @return */
+    /**
+     * @return
+     */
     public String getCreator() {
         return creator;
     }
 
-    /** @param creator */
+    /**
+     * @param creator
+     */
     public void setCreator(String creator) {
         this.creator = creator;
     }
 
-    /** @return */
+    /**
+     * @return
+     */
     public String getEditor() {
         return editor;
     }
 
-    /** @param editor */
+    /**
+     * @param editor
+     */
     public void setEditor(String editor) {
         this.editor = editor;
     }
 
-    /** @return the advertised */
+    /**
+     * @return the advertised
+     */
     public Boolean isAdvertised() {
         return advertised;
     }
 
-    /** @param advertised the advertised to set */
+    /**
+     * @param advertised the advertised to set
+     */
     public void setAdvertised(Boolean advertised) {
         this.advertised = advertised;
     }

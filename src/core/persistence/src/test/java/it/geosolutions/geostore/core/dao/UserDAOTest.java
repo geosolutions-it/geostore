@@ -26,12 +26,14 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Class UserDAOTest.
@@ -42,7 +44,9 @@ public class UserDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(UserDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistUser() throws Exception {
 

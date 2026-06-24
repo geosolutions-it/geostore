@@ -30,8 +30,10 @@ package it.geosolutions.geostore.services.rest.auditing;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateExceptionHandler;
-import java.io.File;
+
 import org.apache.commons.io.FileUtils;
+
+import java.io.File;
 
 final class AuditingTemplates {
 

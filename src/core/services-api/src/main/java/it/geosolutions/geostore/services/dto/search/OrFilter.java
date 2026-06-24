@@ -21,9 +21,11 @@ package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

@@ -22,10 +22,12 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.dto.UserSessionImpl;
-import java.util.GregorianCalendar;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.GregorianCalendar;
 
 /**
  * Class InMemoryUserSessionServiceImplTest.

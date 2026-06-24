@@ -23,16 +23,19 @@ import static org.junit.Assert.*;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.ldap.impl.UserDAOImpl;
 import it.geosolutions.geostore.core.dao.ldap.impl.UserGroupDAOImpl;
 import it.geosolutions.geostore.core.ldap.MockContextSource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+
+import org.junit.Test;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
 
 public class UserDAOTest extends BaseDAOTest {
 

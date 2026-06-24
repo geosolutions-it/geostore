@@ -11,6 +11,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 
 @Entity(name = "UserGroupAttribute")
@@ -36,44 +37,60 @@ public class UserGroupAttribute implements Serializable {
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_ugattrib_user_group"))
     private UserGroup userGroup;
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the value */
+    /**
+     * @return the value
+     */
     public String getValue() {
         return value;
     }
 
-    /** @param value the value to set */
+    /**
+     * @param value the value to set
+     */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /** @return the user */
+    /**
+     * @return the user
+     */
     @XmlTransient
     public UserGroup getUserGroup() {
         return userGroup;
     }
 
-    /** @param userGroup the userGroup to set */
+    /**
+     * @param userGroup the userGroup to set
+     */
     public void setUserGroup(UserGroup userGroup) {
         this.userGroup = userGroup;
     }

@@ -19,12 +19,15 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
-import java.io.File;
-import java.net.URL;
-import javax.crypto.SecretKey;
 import junit.framework.TestCase;
+
 import org.junit.Test;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.File;
+import java.net.URL;
+
+import javax.crypto.SecretKey;
 
 /**
  * This Test unit test the various functionalities of the encoders.

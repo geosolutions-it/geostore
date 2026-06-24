@@ -29,8 +29,9 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.Map;
 import org.junit.jupiter.api.Test;
+
+import java.util.Map;
 
 /**
  * Tests for {@link OAuth2Configuration#parseMappings(String)}, in particular the backslash escaping

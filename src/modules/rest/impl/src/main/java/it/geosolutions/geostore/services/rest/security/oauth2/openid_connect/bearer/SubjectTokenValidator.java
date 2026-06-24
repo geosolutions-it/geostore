@@ -1,9 +1,11 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
-import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
 
 /**
  * This verifies that the token is about our user (i.e. the access token and userinfo endpoint agree

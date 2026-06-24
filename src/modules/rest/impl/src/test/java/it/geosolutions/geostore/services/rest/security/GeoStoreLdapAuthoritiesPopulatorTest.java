@@ -6,16 +6,19 @@ import static org.junit.Assert.assertTrue;
 import it.geosolutions.geostore.core.ldap.IterableNamingEnumeration;
 import it.geosolutions.geostore.core.ldap.MockContextSource;
 import it.geosolutions.geostore.core.security.SimpleGrantedAuthoritiesMapper;
+
+import org.junit.Test;
+import org.springframework.ldap.core.DirContextAdapter;
+import org.springframework.security.core.GrantedAuthority;
+
 import java.util.*;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import org.junit.Test;
-import org.springframework.ldap.core.DirContextAdapter;
-import org.springframework.security.core.GrantedAuthority;
 
 public class GeoStoreLdapAuthoritiesPopulatorTest {
 

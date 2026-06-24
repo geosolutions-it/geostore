@@ -33,6 +33,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+
 import java.io.Serializable;
 import java.math.BigInteger;
 

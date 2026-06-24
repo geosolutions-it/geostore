@@ -29,7 +29,9 @@
 package it.geosolutions.geostore.core.model;
 
 import inet.ipaddr.IPAddress;
+
 import it.geosolutions.geostore.core.model.enums.Role;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
@@ -50,12 +52,14 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 /**
  * Class User.
@@ -136,30 +140,40 @@ public class User implements Serializable {
         this.enabled = user.enabled;
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     // @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the group */
+    /**
+     * @return the group
+     */
     @XmlElementWrapper
     @XmlElement(name = "group")
     public Set<UserGroup> getGroups() {
         return groups;
     }
 
-    /** @param groups the group to set */
+    /**
+     * @param groups the group to set
+     */
     public void setGroups(Set<UserGroup> groups) {
         this.groups = groups;
     }
 
-    /** @return true if the group with id groupId was associated with the user and was removed. */
+    /**
+     * @return true if the group with id groupId was associated with the user and was removed.
+     */
     public boolean removeGroup(long groupId) {
         if (groups != null) {
             for (UserGroup group : groups) {
@@ -172,28 +186,38 @@ public class User implements Serializable {
         return false;
     }
 
-    /** @return the security */
+    /**
+     * @return the security
+     */
     @XmlTransient
     public List<SecurityRule> getSecurity() {
         return security;
     }
 
-    /** @param security the security to set */
+    /**
+     * @param security the security to set
+     */
     public void setSecurity(List<SecurityRule> security) {
         this.security = security;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the password */
+    /**
+     * @return the password
+     */
     @XmlTransient
     public String getPassword() {
         return password;
@@ -210,7 +234,9 @@ public class User implements Serializable {
         this.password = password;
     }
 
-    /** @return the newPassword */
+    /**
+     * @return the newPassword
+     */
     public String getNewPassword() {
         return newPassword;
     }
@@ -228,12 +254,16 @@ public class User implements Serializable {
         this.newPassword = newPassword;
     }
 
-    /** @return the attribute */
+    /**
+     * @return the attribute
+     */
     public List<UserAttribute> getAttribute() {
         return attribute;
     }
 
-    /** @param attribute the attribute to set */
+    /**
+     * @param attribute the attribute to set
+     */
     public void setAttribute(List<UserAttribute> attribute) {
         this.attribute = attribute;
     }
@@ -247,7 +277,9 @@ public class User implements Serializable {
         this.ipAddress = ipAddress;
     }
 
-    /** @return the enabled flag */
+    /**
+     * @return the enabled flag
+     */
     public boolean isEnabled() {
         return enabled;
     }
@@ -261,12 +293,16 @@ public class User implements Serializable {
         this.enabled = enabled;
     }
 
-    /** @return the role */
+    /**
+     * @return the role
+     */
     public Role getRole() {
         return role;
     }
 
-    /** @param role the role to set */
+    /**
+     * @param role the role to set
+     */
     public void setRole(Role role) {
         this.role = role;
     }

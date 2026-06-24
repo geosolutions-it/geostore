@@ -29,10 +29,12 @@ package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
-import java.util.Collection;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.security.core.Authentication;
+
+import java.util.Collection;
 
 /**
  * Token based authentication filter that looks for the token in a user attribute.

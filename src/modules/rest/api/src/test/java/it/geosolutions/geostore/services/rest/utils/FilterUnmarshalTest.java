@@ -32,15 +32,12 @@ import it.geosolutions.geostore.services.rest.model.RESTQuickBackup;
 import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupCategory;
 import it.geosolutions.geostore.services.rest.model.RESTQuickBackup.RESTBackupResource;
 import it.geosolutions.geostore.services.rest.model.RESTResource;
+
 import jakarta.xml.bind.JAXB;
 import jakarta.xml.bind.JAXBException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+
 import junit.framework.TestCase;
+
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
@@ -49,7 +46,16 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/** @author ETj (etj at geo-solutions.it) */
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class FilterUnmarshalTest extends TestCase {
 
     public FilterUnmarshalTest() {}

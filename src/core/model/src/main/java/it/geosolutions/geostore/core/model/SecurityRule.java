@@ -44,6 +44,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -134,7 +135,9 @@ public class SecurityRule implements Serializable {
     @Column(nullable = true, updatable = true)
     private String groupname;
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @PreUpdate
     @PrePersist
     public void onPreUpdate() throws Exception {
@@ -144,24 +147,32 @@ public class SecurityRule implements Serializable {
         // }
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the resource */
+    /**
+     * @return the resource
+     */
     @XmlTransient
     public Resource getResource() {
         return resource;
     }
 
-    /** @param resource the resource to set */
+    /**
+     * @param resource the resource to set
+     */
     public void setResource(Resource resource) {
         this.resource = resource;
     }
@@ -181,66 +192,90 @@ public class SecurityRule implements Serializable {
     // this.category = category;
     // }
 
-    /** @return the user */
+    /**
+     * @return the user
+     */
     @XmlTransient
     public User getUser() {
         return user;
     }
 
-    /** @param user the user to set */
+    /**
+     * @param user the user to set
+     */
     public void setUser(User user) {
         this.user = user;
     }
 
-    /** @return the group */
+    /**
+     * @return the group
+     */
     @XmlTransient
     public UserGroup getGroup() {
         return group;
     }
 
-    /** @param group the group to set */
+    /**
+     * @param group the group to set
+     */
     public void setGroup(UserGroup group) {
         this.group = group;
     }
 
-    /** @return the username (from external authentication) */
+    /**
+     * @return the username (from external authentication)
+     */
     public String getUsername() {
         return username;
     }
 
-    /** @param username the username to set */
+    /**
+     * @param username the username to set
+     */
     public void setUsername(String username) {
         this.username = username;
     }
 
-    /** @return the group name (from external authentication) */
+    /**
+     * @return the group name (from external authentication)
+     */
     public String getGroupname() {
         return groupname;
     }
 
-    /** @param groupname the group name to set */
+    /**
+     * @param groupname the group name to set
+     */
     public void setGroupname(String groupname) {
         this.groupname = groupname;
     }
 
-    /** @return the canRead */
+    /**
+     * @return the canRead
+     */
     @XmlTransient
     public boolean isCanRead() {
         return canRead;
     }
 
-    /** @param canRead the canRead to set */
+    /**
+     * @param canRead the canRead to set
+     */
     public void setCanRead(boolean canRead) {
         this.canRead = canRead;
     }
 
-    /** @return the canWrite */
+    /**
+     * @return the canWrite
+     */
     @XmlTransient
     public boolean isCanWrite() {
         return canWrite;
     }
 
-    /** @param canWrite the canWrite to set */
+    /**
+     * @param canWrite the canWrite to set
+     */
     public void setCanWrite(boolean canWrite) {
         this.canWrite = canWrite;
     }

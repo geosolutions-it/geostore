@@ -21,10 +21,12 @@ package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
-import java.util.Date;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.Date;
 
 /**
  * Class CategoryDAOTest.
@@ -35,7 +37,9 @@ public class CategoryDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(CategoryDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistCategory() throws Exception {
 

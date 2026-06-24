@@ -23,6 +23,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import inet.ipaddr.IPAddressString;
+
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
@@ -30,11 +31,13 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import org.junit.Before;
-import org.junit.Test;
 
 public class ResourcePermissionServiceImplTest {
 

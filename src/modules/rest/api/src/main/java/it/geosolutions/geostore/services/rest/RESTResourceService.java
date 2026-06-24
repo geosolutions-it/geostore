@@ -41,6 +41,7 @@ import it.geosolutions.geostore.services.rest.model.ResourceList;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -54,6 +55,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
+
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
@@ -313,6 +315,7 @@ public interface RESTResourceService {
             @PathParam("name") String name,
             @PathParam("value") String value,
             @PathParam("type") DataType type);
+
     /**
      * @param sc
      * @param id

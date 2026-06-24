@@ -20,18 +20,22 @@
 package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Search;
+
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
+
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class IPRangeServiceImpl implements IPRangeService {

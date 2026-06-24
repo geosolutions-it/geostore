@@ -9,7 +9,7 @@ import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.*;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +27,11 @@ import org.springframework.security.ldap.authentication.LdapAuthenticator;
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
 import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
-/** @author alessio.fabiani */
+import java.util.*;
+
+/**
+ * @author alessio.fabiani
+ */
 public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
 
     private static final Logger LOGGER = LogManager.getLogger(UserLdapAuthenticationProvider.class);
@@ -269,8 +273,7 @@ public class UserLdapAuthenticationProvider extends LdapAuthenticationProvider {
     }
 
     public void synchronizeGroups() throws BadRequestServiceEx {
-        if (getAuthoritiesPopulator() instanceof GroupsRolesService) {
-            GroupsRolesService groupsService = (GroupsRolesService) getAuthoritiesPopulator();
+        if (getAuthoritiesPopulator() instanceof GroupsRolesService groupsService) {
             for (GrantedAuthority authority : groupsService.getAllGroups()) {
                 synchronizeGroup(authority);
             }

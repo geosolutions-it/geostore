@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.core.model;
 
 import jakarta.xml.bind.JAXB;
+
 import java.io.StringReader;
 import java.io.StringWriter;
 

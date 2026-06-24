@@ -1,6 +1,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

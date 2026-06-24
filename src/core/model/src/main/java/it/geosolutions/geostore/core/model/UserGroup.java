@@ -41,6 +41,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -101,7 +102,9 @@ public class UserGroup implements Serializable {
         this.users = users;
     }
 
-    /** @return the enabled flag */
+    /**
+     * @return the enabled flag
+     */
     public boolean isEnabled() {
         return enabled;
     }
@@ -115,55 +118,75 @@ public class UserGroup implements Serializable {
         this.enabled = enabled;
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     // @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the groupName */
+    /**
+     * @return the groupName
+     */
     public String getGroupName() {
         return groupName;
     }
 
-    /** @param groupName the groupName to set */
+    /**
+     * @param groupName the groupName to set
+     */
     public void setGroupName(String groupName) {
         this.groupName = groupName;
     }
 
-    /** @return the security */
+    /**
+     * @return the security
+     */
     @XmlTransient
     public List<SecurityRule> getSecurity() {
         return security;
     }
 
-    /** @param security the security to set */
+    /**
+     * @param security the security to set
+     */
     public void setSecurity(List<SecurityRule> security) {
         this.security = security;
     }
 
-    /** @return the description */
+    /**
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
-    /** @param description the description to set */
+    /**
+     * @param description the description to set
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /** @return the attribute */
+    /**
+     * @return the attribute
+     */
     @XmlTransient
     public List<UserGroupAttribute> getAttributes() {
         return attributes;
     }
 
-    /** @param attributes the attribute to set */
+    /**
+     * @param attributes the attribute to set
+     */
     public void setAttributes(List<UserGroupAttribute> attributes) {
         this.attributes = attributes;
     }

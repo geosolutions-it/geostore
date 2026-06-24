@@ -19,11 +19,15 @@
  */
 package it.geosolutions.geostore.util;
 
-import java.util.List;
 import junit.framework.TestCase;
+
 import org.junit.Test;
 
-/** @author ETj (etj at geo-solutions.it) */
+import java.util.List;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class CategorizedCircularBufferTest extends TestCase {
 
     @Test

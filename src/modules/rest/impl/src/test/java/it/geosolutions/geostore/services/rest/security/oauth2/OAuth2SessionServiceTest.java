@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -37,9 +38,7 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +51,12 @@ import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
 import wiremock.org.eclipse.jetty.http.HttpStatus;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class OAuth2SessionServiceTest {
 

@@ -16,6 +16,7 @@ package it.geosolutions.geostore.services.rest.security;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
+
 import org.springframework.security.access.AccessDeniedException;
 
 public class SecurityExceptionMapper implements ExceptionMapper<AccessDeniedException> {

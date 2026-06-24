@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.model;
 
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Iterator;
@@ -46,18 +47,24 @@ public class UserList implements Iterable<RESTUser>, Serializable {
 
     public UserList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public UserList(List<RESTUser> list) {
         this.list = list;
     }
 
-    /** @return List<Category> */
+    /**
+     * @return List<Category>
+     */
     @XmlElement(name = "User")
     public List<RESTUser> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<RESTUser> list) {
         this.list = list;
     }

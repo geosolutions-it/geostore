@@ -25,10 +25,13 @@ import it.geosolutions.geostore.core.model.UserGroupAttribute;
 import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
 import java.util.Collection;
 import java.util.List;
 
-/** @author DamianoG */
+/**
+ * @author DamianoG
+ */
 public interface UserGroupService {
 
     /**
