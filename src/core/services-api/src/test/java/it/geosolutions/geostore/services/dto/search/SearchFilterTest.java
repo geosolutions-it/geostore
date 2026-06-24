@@ -20,17 +20,21 @@
 package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.core.model.enums.DataType;
+
 import jakarta.xml.bind.JAXB;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
+
+import junit.framework.TestCase;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.Test;
+
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.List;
-import junit.framework.TestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.junit.Test;
 
 /**
  * Class SearchFilterTest.

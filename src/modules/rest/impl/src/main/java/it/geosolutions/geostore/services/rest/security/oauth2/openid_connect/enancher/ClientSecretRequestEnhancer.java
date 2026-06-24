@@ -27,9 +27,10 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher;
 
-import java.util.Collections;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+
+import java.util.Collections;
 
 /**
  * Adds the {@code client_secret} parameter to an authorization-code token request form. Replaces

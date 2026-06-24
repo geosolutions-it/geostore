@@ -24,11 +24,14 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.CategoryService;
 import it.geosolutions.geostore.services.UserService;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
-/** @author ETj (etj at geo-solutions.it) */
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class RESTTest implements InitializingBean {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTTest.class);

@@ -21,15 +21,18 @@ package it.geosolutions.geostore.core.dao.ldap;
 
 import it.geosolutions.geostore.core.ldap.IterableNamingEnumeration;
 import it.geosolutions.geostore.core.ldap.MockDirContextOperations;
+
+import org.springframework.ldap.core.DirContextAdapter;
+
 import java.util.Arrays;
 import java.util.Collections;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import org.springframework.ldap.core.DirContextAdapter;
 
 public abstract class BaseDAOTest {
     protected DirContext buildContextForUsers() {

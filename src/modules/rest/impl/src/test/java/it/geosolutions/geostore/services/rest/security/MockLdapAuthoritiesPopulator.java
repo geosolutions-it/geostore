@@ -1,11 +1,12 @@
 package it.geosolutions.geostore.services.rest.security;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
 import org.springframework.ldap.core.DirContextOperations;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.ldap.userdetails.LdapAuthoritiesPopulator;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 public class MockLdapAuthoritiesPopulator implements LdapAuthoritiesPopulator, GroupsRolesService {
 

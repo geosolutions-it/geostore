@@ -24,11 +24,13 @@ import static org.junit.Assert.fail;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.HashMap;
-import java.util.Map;
+
 import org.apache.cxf.interceptor.security.AccessDeniedException;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Test for AutoUserCreateGeostoreAuthenticationInterceptor. Test different configurations for the

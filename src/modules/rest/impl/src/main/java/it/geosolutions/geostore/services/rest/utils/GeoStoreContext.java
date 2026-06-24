@@ -1,15 +1,17 @@
 package it.geosolutions.geostore.services.rest.utils;
 
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
+import java.util.Map;
+
 public class GeoStoreContext implements ApplicationContextAware {
 
     private static final Logger LOGGER = LogManager.getLogger(GeoStoreContext.class);
+
     /**
      * Static application context provided to {@link #setApplicationContext(ApplicationContext)}
      * during initialization.

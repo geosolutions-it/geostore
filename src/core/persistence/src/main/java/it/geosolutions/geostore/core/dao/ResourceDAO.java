@@ -28,9 +28,12 @@
 package it.geosolutions.geostore.core.dao;
 
 import com.googlecode.genericdao.search.ISearch;
+
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
+
 import jakarta.persistence.NonUniqueResultException;
+
 import java.util.List;
 
 /**
@@ -46,10 +49,14 @@ public interface ResourceDAO extends RestrictedGenericDAO<Resource> {
      */
     List<Attribute> findAttributes(long resourceId);
 
-    /** @param search */
+    /**
+     * @param search
+     */
     void removeResources(ISearch search);
 
-    /** @param resourcesIds A list of resources Ids to search */
+    /**
+     * @param resourcesIds A list of resources Ids to search
+     */
     List<Resource> findResources(List<Long> resourcesIds);
 
     /**

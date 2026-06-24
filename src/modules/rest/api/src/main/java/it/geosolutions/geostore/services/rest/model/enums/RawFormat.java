@@ -27,7 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.model.enums;
 
-/** @author ETj <etj at geo-solutions dot it> */
+/**
+ * @author ETj <etj at geo-solutions dot it>
+ */
 public enum RawFormat {
     BASE64,
     DATAURI

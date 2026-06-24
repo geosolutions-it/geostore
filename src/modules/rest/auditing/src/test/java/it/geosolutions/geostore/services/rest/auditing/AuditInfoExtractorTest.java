@@ -33,11 +33,9 @@ import static org.junit.Assert.assertNotNull;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Map;
+
 import org.apache.cxf.io.CachedOutputStream;
 import org.apache.cxf.message.Exchange;
 import org.apache.cxf.message.Message;
@@ -45,6 +43,11 @@ import org.apache.cxf.transport.http.AbstractHTTPDestination;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.security.core.Authentication;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Map;
 
 public final class AuditInfoExtractorTest extends AuditingTestsBase {
 

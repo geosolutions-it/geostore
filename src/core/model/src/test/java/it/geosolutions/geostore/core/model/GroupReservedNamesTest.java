@@ -19,10 +19,12 @@ package it.geosolutions.geostore.core.model;
 import static org.junit.Assert.assertEquals;
 
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
+
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import org.junit.Test;
 
 public class GroupReservedNamesTest {
     @Test

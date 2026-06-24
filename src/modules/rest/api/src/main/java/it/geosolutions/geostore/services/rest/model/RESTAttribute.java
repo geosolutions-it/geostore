@@ -1,6 +1,7 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.services.dto.ShortAttribute;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlRootElement;

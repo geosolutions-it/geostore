@@ -21,7 +21,9 @@ package it.geosolutions.geostore.services.rest.exception;
 
 import jakarta.ws.rs.core.Response;
 
-/** @author ETj (etj at geo-solutions.it) */
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class NotFoundWebEx extends GeoStoreWebEx {
 
     /** The Constant serialVersionUID. */

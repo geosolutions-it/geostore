@@ -23,10 +23,12 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.List;
-import java.util.Map;
+
 import org.apache.cxf.interceptor.security.AccessDeniedException;
 import org.apache.cxf.message.Message;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Class AutoUserCreateGeostoreAuthenticationInterceptor. Geostore authentication interceptor that
@@ -56,7 +58,9 @@ public class AutoUserCreateGeostoreAuthenticationInterceptor
      */
     private String newUsersPasswordHeader = "";
 
-    /** @param userService the userService to set */
+    /**
+     * @param userService the userService to set
+     */
     public void setUserService(UserService userService) {
         this.userService = userService;
     }

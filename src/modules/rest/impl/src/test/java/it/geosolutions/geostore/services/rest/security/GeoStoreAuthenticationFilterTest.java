@@ -32,20 +32,23 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.context.request.RequestContextHolder;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Enhanced tests for GeoStore authentication filters covering: - username remapping -
@@ -153,6 +156,7 @@ public class GeoStoreAuthenticationFilterTest {
         assertEquals("Attribute name should be 'attr1'", "attr1", attr.getName());
         assertEquals("Attribute value should be 'value1'", "value1", attr.getValue());
     }
+
     //
     //    // ---------------------------------------------------------------------
     //    // OAuth2/OIDC related tests
@@ -814,6 +818,7 @@ public class GeoStoreAuthenticationFilterTest {
         assertEquals("User role should be USER", Role.USER, user.getRole());
         assertTrue("User groups should be empty", user.getGroups().isEmpty());
     }
+
     //
     //    private static UserGroupAttribute attr(String n, String v) {
     //        UserGroupAttribute a = new UserGroupAttribute();

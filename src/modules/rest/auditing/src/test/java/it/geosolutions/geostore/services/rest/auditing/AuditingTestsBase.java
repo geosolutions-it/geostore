@@ -27,11 +27,12 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
+import org.junit.After;
+import org.junit.Before;
+
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.UUID;
-import org.junit.After;
-import org.junit.Before;
 
 /**
  * Base class that defines the necessary tests directories and make everything is cleaned at the

@@ -33,8 +33,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import java.lang.reflect.Method;
+
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.Method;
 
 /**
  * Covers the {@code RESTStoredDataServiceImpl} XML/JSON/plaintext format conversion that was

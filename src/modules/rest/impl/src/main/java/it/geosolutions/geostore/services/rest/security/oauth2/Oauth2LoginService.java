@@ -7,20 +7,23 @@ import it.geosolutions.geostore.services.rest.IdPLoginService;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Date;
+
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.cxf.jaxrs.impl.ResponseBuilderImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Date;
 
 public abstract class Oauth2LoginService implements IdPLoginService {
 

@@ -1,14 +1,16 @@
 package it.geosolutions.geostore.core.security.password;
 
+import org.apache.commons.codec.binary.Base64;
+import org.springframework.dao.DataAccessException;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.commons.codec.binary.Base64;
-import org.springframework.dao.DataAccessException;
 
 /**
  * This class wraps the old password encoding and decoding system
@@ -16,9 +18,9 @@ import org.springframework.dao.DataAccessException;
  * @author Lorenzo Natali (lorenzo.natali at geo-solutions.it)
  */
 public class GeoStoreAESEncoder extends AbstractGeoStorePasswordEncoder {
-    private static final byte[] DEFALULT_KEY =
+    private static final byte[] DEFAULT_KEY =
             "installation dependant key needed".substring(0, 16).getBytes();
-    private byte[] key = GeoStoreAESEncoder.DEFALULT_KEY;
+    private byte[] key = GeoStoreAESEncoder.DEFAULT_KEY;
 
     public void setKey(String key) {
         this.key = key.substring(0, 16).getBytes();
@@ -50,34 +52,33 @@ public class GeoStoreAESEncoder extends AbstractGeoStorePasswordEncoder {
     }
 
     @Override
+    @SuppressWarnings("java:S5542")
+    // Legacy ECB mode: backwards-compatibility with passwords already in DB
     public String encodePassword(char[] rawPass, Object salt) throws DataAccessException {
         try {
             SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
             Cipher cipher = Cipher.getInstance("AES");
             cipher.init(Cipher.ENCRYPT_MODE, keySpec);
-            byte[] b = new byte[rawPass.length];
-            for (int i = 0; i < b.length; i++) {
-                b[i] = (byte) rawPass[i];
+            byte[] input = new byte[rawPass.length];
+            for (int i = 0; i < input.length; i++) {
+                input[i] = (byte) rawPass[i];
             }
 
-            byte[] input = b;
             byte[] encrypted = cipher.doFinal(input);
             byte[] output = Base64.encodeBase64(encrypted);
             return new String(output);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (NoSuchPaddingException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (IllegalBlockSizeException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (BadPaddingException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (InvalidKeyException ex) {
+        } catch (NoSuchAlgorithmException
+                | NoSuchPaddingException
+                | IllegalBlockSizeException
+                | BadPaddingException
+                | InvalidKeyException ex) {
             throw new RuntimeException("Error while encoding", ex);
         }
     }
 
     @Override
+    @SuppressWarnings("java:S5542")
+    // Legacy ECB mode: backwards-compatibility with passwords already in DB
     public String decode(String encPass) throws UnsupportedOperationException {
         try {
             SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
@@ -88,15 +89,11 @@ public class GeoStoreAESEncoder extends AbstractGeoStorePasswordEncoder {
             byte[] decrypted = cipher.doFinal(de64);
 
             return new String(decrypted);
-        } catch (NoSuchAlgorithmException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (NoSuchPaddingException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (IllegalBlockSizeException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (BadPaddingException ex) {
-            throw new RuntimeException("Error while encoding", ex);
-        } catch (InvalidKeyException ex) {
+        } catch (NoSuchAlgorithmException
+                | NoSuchPaddingException
+                | IllegalBlockSizeException
+                | BadPaddingException
+                | InvalidKeyException ex) {
             throw new RuntimeException("Error while encoding", ex);
         }
     }

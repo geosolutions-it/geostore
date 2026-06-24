@@ -67,18 +67,7 @@
             <artifactId>expressly</artifactId>
         </dependency>
 
-        <!-- HIBERNATE-SPATIAL -->
-        <dependency>
-            <groupId>org.hibernatespatial</groupId>
-            <artifactId>hibernate-spatial-postgis</artifactId>
-            <scope>provided</scope> <!-- the dao module should import them for runtime -->
-            <exclusions>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
+
 
         <!-- CGLIB -->
         <dependency>

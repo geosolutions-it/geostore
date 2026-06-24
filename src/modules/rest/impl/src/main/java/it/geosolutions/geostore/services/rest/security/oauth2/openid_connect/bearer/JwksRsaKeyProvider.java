@@ -29,6 +29,11 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.be
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.web.client.RestTemplate;
+
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
@@ -36,9 +41,6 @@ import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * Fetches and caches RSA public keys from a JWKS (JSON Web Key Set) endpoint. Used to verify JWT

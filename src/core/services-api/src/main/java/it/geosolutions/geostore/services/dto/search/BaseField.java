@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services.dto.search;
 
 import jakarta.xml.bind.annotation.XmlType;
+
 import java.util.Date;
 
 /**

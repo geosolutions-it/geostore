@@ -30,8 +30,9 @@ package it.geosolutions.geostore.services.rest.auditing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.util.Map;
 import org.junit.Test;
+
+import java.util.Map;
 
 public final class AuditingConfigurationTest extends AuditingTestsBase {
 

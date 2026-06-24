@@ -23,7 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-/** @author ETj (etj at geo-solutions.it) */
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class CategoryTest {
 
     private static final Marshaler<Category> MARSHALER = new Marshaler<Category>(Category.class);

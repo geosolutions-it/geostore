@@ -27,6 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,8 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 final class AuditingOutput {
 

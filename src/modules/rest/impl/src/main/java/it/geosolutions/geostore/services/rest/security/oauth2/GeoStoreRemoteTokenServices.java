@@ -27,9 +27,6 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.core.ParameterizedTypeReference;
@@ -46,6 +43,10 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.Map;
 
 /**
  * Provides an additional method to be able to deal with not fully standardized/check_token endpoint

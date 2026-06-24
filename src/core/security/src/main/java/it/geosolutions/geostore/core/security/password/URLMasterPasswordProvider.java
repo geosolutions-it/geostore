@@ -23,6 +23,10 @@ import static it.geosolutions.geostore.core.security.password.SecurityUtils.scra
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toChars;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
+import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,9 +36,6 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
-import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
 
 /**
  * Master password provider that retrieves and optionally stores the master password from a url.
@@ -204,7 +205,9 @@ public final class URLMasterPasswordProvider implements MasterPasswordProvider {
         }
     }
 
-    /** @return the config dir path */
+    /**
+     * @return the config dir path
+     */
     public String getConfigDirPath() {
         return configDirPath;
     }
@@ -237,6 +240,7 @@ public final class URLMasterPasswordProvider implements MasterPasswordProvider {
         // TODO Auto-generated method stub
         this.URL = url;
     }
+
     /**
      * is encrypting
      *

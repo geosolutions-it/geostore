@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.init;
 
 import it.geosolutions.geostore.services.rest.security.UserLdapAuthenticationProvider;
+
 import org.springframework.beans.factory.InitializingBean;
 
 public class LDAPInit implements InitializingBean {

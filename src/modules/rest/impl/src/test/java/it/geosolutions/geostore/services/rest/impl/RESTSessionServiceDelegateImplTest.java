@@ -6,13 +6,16 @@ import static org.junit.Assert.assertNull;
 import it.geosolutions.geostore.services.InMemoryUserSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+
 import jakarta.ws.rs.core.Response;
-import java.text.ParseException;
+
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.text.ParseException;
 
 public class RESTSessionServiceDelegateImplTest {
 

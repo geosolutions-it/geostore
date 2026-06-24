@@ -34,13 +34,14 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 
 import it.geosolutions.geostore.services.UserGroupService;
 import it.geosolutions.geostore.services.UserService;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,6 +51,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.web.filter.GenericFilterBean;
+
+import java.io.IOException;
 
 /** GeoStore OAuth2 authentication filter. */
 public abstract class OAuth2GeoStoreAuthenticationFilter extends GenericFilterBean {

@@ -2,6 +2,9 @@ package it.geosolutions.geostore.core.security.password;
 
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -11,14 +14,14 @@ import java.net.URL;
 import java.security.Key;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.cert.CertificateException;
 import java.util.Enumeration;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.BeanNameAware;
 
 /**
  * Class for GeoStore specific key management
@@ -30,59 +33,34 @@ import org.springframework.beans.factory.BeanNameAware;
  *
  * @author Lorenzo Natali
  */
-public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
+public class KeyStoreProviderImpl implements KeyStoreProvider {
     private static final Logger LOGGER = LogManager.getLogger(KeyStoreProviderImpl.class);
 
-    public static final String DEFAULT_BEAN_NAME = "DefaultKeyStoreProvider";
-    public static final String DEFAULT_FILE_NAME = "geostore.jceks";
-    public static final String PREPARED_FILE_NAME = "geostore.jceks.new";
+    public static final String CONFIG_ENCRYPTION_KEY_ALIAS = "ug:geostore:key";
 
-    public static final String CONFIGPASSWORDKEY = "ug:geostore:key";
+    private static final String DEFAULT_FILE_NAME = "geostore.jceks";
+    private static final String PREPARED_FILE_NAME = "geostore.jceks.new";
+    private static final String USERGROUP_PREFIX = "ug:";
+    private static final String USERGROUP_POSTFIX = ":key";
+    private static final String KEYSTORETYPE = "JCEKS";
 
-    public static final String USERGROUP_PREFIX = "ug:";
-    public static final String USERGROUP_POSTFIX = ":key";
-
-    private String keyStoreFilePath = null;
-    protected String name;
     protected File keyStoreFile;
     protected KeyStore ks;
-    private char[] masterPassword;
-    private String keyName;
 
+    private String keyStoreFilePath = null;
+    private char[] masterPassword;
     private MasterPasswordProvider masterPasswordProvider;
 
-    public MasterPasswordProvider getMasterPasswordProvider() {
-        return masterPasswordProvider;
+    public void setMasterPassword(char[] masterPassword) {
+        this.masterPassword = masterPassword;
     }
 
     public void setMasterPasswordProvider(MasterPasswordProvider masterPasswordProvider) {
         this.masterPasswordProvider = masterPasswordProvider;
     }
 
-    public String getKeyName() {
-        return keyName;
-    }
-
-    public void setKeyName(String keyName) {
-        this.keyName = keyName;
-    }
-
-    public void setMasterPassword(char[] masterPassword) {
-        this.masterPassword = masterPassword;
-    }
-
-    public static final String KEYSTORETYPE = "JCEKS";
-
     public KeyStoreProviderImpl() {}
 
-    @Override
-    public void setBeanName(String name) {
-        this.name = name;
-    }
-
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getKeyStoreProvderFile()
-     */
     @Override
     public File getFile() {
         // retrieve the file on first access
@@ -90,20 +68,18 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
             // if the keyStoreFilePath is configured create it
             if (getKeyStoreFilePath() != null) {
                 keyStoreFile = new File(getKeyStoreFilePath());
-                if (keyStoreFile != null) {
-                    if (!keyStoreFile.exists()) {
-                        if (keyStoreFile.isDirectory()) {
-                            keyStoreFile = new File(getKeyStoreFilePath() + "geostore.jceks");
-                        }
-                        LOGGER.warn("the keyStore file doesn't exist. confiure a new one");
+                if (!keyStoreFile.exists()) {
+                    if (keyStoreFile.isDirectory()) {
+                        keyStoreFile = new File(getKeyStoreFilePath() + DEFAULT_FILE_NAME);
                     }
+                    LOGGER.warn("the keyStore file doesn't exist. configure a new one");
                 }
                 // if the file doesn't exist create a new one
                 // TODO add a key
                 // otherwise get the default one
             } else {
                 URL defaultKeyStrore =
-                        KeyStoreProviderImpl.class.getClassLoader().getResource("geostore.jceks");
+                        KeyStoreProviderImpl.class.getClassLoader().getResource(DEFAULT_FILE_NAME);
                 try {
                     if (defaultKeyStrore != null) {
                         keyStoreFile = new File(defaultKeyStrore.toURI());
@@ -125,18 +101,12 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         this.keyStoreFilePath = keyStoreFilePath;
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#reloadKeyStore()
-     */
     @Override
     public void reloadKeyStore() throws IOException {
         ks = null;
         assertActivatedKeyStore();
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getKey(java.lang.String)
-     */
     @Override
     public Key getKey(String alias) throws IOException {
         assertActivatedKeyStore();
@@ -161,7 +131,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
                 try {
                     masterPassword = masterPasswordProvider.doGetMasterPassword();
                 } catch (Exception e) {
-                    LOGGER.error("unable to read the master password\n:" + e.getStackTrace());
+                    LOGGER.error("Unable to read the master password", e);
                 }
             }
         }
@@ -173,34 +143,24 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
             try {
                 return ks.aliases();
             } catch (KeyStoreException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                LOGGER.error("Failed to list keystore aliases", e);
                 return null;
             }
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getConfigPasswordKey()
-     */
     @Override
     public byte[] getConfigPasswordKey() throws IOException {
-        SecretKey key = getSecretKey(CONFIGPASSWORDKEY);
+        SecretKey key = getSecretKey(CONFIG_ENCRYPTION_KEY_ALIAS);
         if (key == null) return null;
         return key.getEncoded();
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#hasConfigPasswordKey()
-     */
     @Override
     public boolean hasConfigPasswordKey() throws IOException {
-        return containsAlias(CONFIGPASSWORDKEY);
+        return containsAlias(CONFIG_ENCRYPTION_KEY_ALIAS);
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#containsAlias(java.lang.String)
-     */
     @Override
     public boolean containsAlias(String alias) throws IOException {
         assertActivatedKeyStore();
@@ -210,9 +170,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
             throw new IOException(e);
         }
     }
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getUserGRoupKey(java.lang.String)
-     */
+
     @Override
     public byte[] getUserGroupKey(String serviceName) throws IOException {
         SecretKey key = getSecretKey(aliasForGroupService(serviceName));
@@ -220,59 +178,38 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         return key.getEncoded();
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#hasUserGRoupKey(java.lang.String)
-     */
     @Override
     public boolean hasUserGroupKey(String serviceName) throws IOException {
         return containsAlias(aliasForGroupService(serviceName));
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getSecretKey(java.lang.String)
-     */
     @Override
     public SecretKey getSecretKey(String name) throws IOException {
         Key key = getKey(name);
         if (key == null) return null;
-        if ((key instanceof SecretKey) == false)
-            throw new IOException("Invalid key type for: " + name);
+        if (!(key instanceof SecretKey)) throw new IOException("Invalid key type for: " + name);
         return (SecretKey) key;
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getPublicKey(java.lang.String)
-     */
     @Override
     public PublicKey getPublicKey(String name) throws IOException {
         Key key = getKey(name);
         if (key == null) return null;
-        if ((key instanceof PublicKey) == false)
-            throw new IOException("Invalid key type for: " + name);
+        if (!(key instanceof PublicKey)) throw new IOException("Invalid key type for: " + name);
         return (PublicKey) key;
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#getPrivateKey(java.lang.String)
-     */
     @Override
     public PrivateKey getPrivateKey(String name) throws IOException {
         Key key = getKey(name);
         if (key == null) return null;
-        if ((key instanceof PrivateKey) == false)
-            throw new IOException("Invalid key type for: " + name);
+        if (!(key instanceof PrivateKey)) throw new IOException("Invalid key type for: " + name);
         return (PrivateKey) key;
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#aliasForGroupService(java.lang.String)
-     */
     @Override
     public String aliasForGroupService(String serviceName) {
-        StringBuffer buff = new StringBuffer(USERGROUP_PREFIX);
-        buff.append(serviceName);
-        buff.append(USERGROUP_POSTFIX);
-        return buff.toString();
+        return USERGROUP_PREFIX + serviceName + USERGROUP_POSTFIX;
     }
 
     /**
@@ -288,7 +225,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         char[] passwd = getMasterPassword();
         try {
             ks = KeyStore.getInstance(KEYSTORETYPE);
-            if (getFile().exists() == false) { // create an empy one
+            if (!getFile().exists()) { // create an empty one
                 ks.load(null, passwd);
                 addInitialKeys();
                 try (FileOutputStream fos = new FileOutputStream(getFile())) {
@@ -299,9 +236,7 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
                     ks.load(fis, passwd);
                 }
             }
-        } catch (Exception ex) {
-            if (ex instanceof IOException) // avoid useless wrapping
-            throw (IOException) ex;
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateException ex) {
             throw new IOException(ex);
         } finally {
             disposePassword(passwd);
@@ -310,18 +245,14 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
 
     private void disposePassword(char[] passwd) {
         // TODO implement it when security improved.
-
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#isKeystorePassword(java.lang.String)
-     */
     @Override
     public boolean isKeyStorePassword(char[] password) throws IOException {
         if (password == null) return false;
         assertActivatedKeyStore();
 
-        KeyStore testStore = null;
+        KeyStore testStore;
         try {
             testStore = KeyStore.getInstance(KEYSTORETYPE);
         } catch (KeyStoreException e1) {
@@ -342,9 +273,6 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#setSecretKey(java.lang.String, java.lang.String)
-     */
     @Override
     public void setSecretKey(String alias, char[] key) throws IOException {
         assertActivatedKeyStore();
@@ -360,18 +288,12 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#setUserGroupKey(java.lang.String, java.lang.String)
-     */
     @Override
     public void setUserGroupKey(String serviceName, char[] password) throws IOException {
         String alias = aliasForGroupService(serviceName);
         setSecretKey(alias, password);
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#removeKey(java.lang.String)
-     */
     @Override
     public void removeKey(String alias) throws IOException {
         assertActivatedKeyStore();
@@ -382,9 +304,6 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#storeKeyStore()
-     */
     @Override
     public void storeKeyStore() throws IOException {
         // store away the keystore
@@ -402,25 +321,22 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
     }
 
     /**
-     * Creates initial key entries auto generated keys {@link #CONFIGPASSWORDKEY}
+     * Creates initial key entries auto generated keys {@link #CONFIG_ENCRYPTION_KEY_ALIAS}
      *
      * @throws IOException
      */
     protected void addInitialKeys() throws IOException {
 
-        RandomPasswordProvider randPasswdProvider = getRandomPassworddProvider();
+        RandomPasswordProvider randPasswdProvider = getRandomPasswordProvider();
 
         char[] configKey = randPasswdProvider.getRandomPasswordWithDefaultLength();
-        setSecretKey(CONFIGPASSWORDKEY, configKey);
+        setSecretKey(CONFIG_ENCRYPTION_KEY_ALIAS, configKey);
     }
 
-    private RandomPasswordProvider getRandomPassworddProvider() {
+    private RandomPasswordProvider getRandomPasswordProvider() {
         return new RandomPasswordProvider();
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#prepareForMasterPasswordChange(java.lang.String, java.lang.String)
-     */
     @Override
     public void prepareForMasterPasswordChange(char[] oldPassword, char[] newPassword)
             throws IOException {
@@ -454,10 +370,9 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
                     entry = new KeyStore.TrustedCertificateEntry(oldKS.getCertificate(alias));
                 if (entry == null)
                     LOGGER.warn(
-                            "Unknown key in store, alias: "
-                                    + alias
-                                    + " class: "
-                                    + key.getClass().getName());
+                            "Unknown key in store, alias: {} class: {}",
+                            alias,
+                            key.getClass().getName());
                 else newKS.setEntry(alias, entry, protectionparam);
             }
 
@@ -469,9 +384,6 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#abortMasterPasswordChange()
-     */
     @Override
     public void abortMasterPasswordChange() {
         File dir = getFile().getParentFile();
@@ -485,18 +397,15 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.geoserver.security.password.KeystoreProvider#commitMasterPasswordChange()
-     */
     @Override
     public void commitMasterPasswordChange() throws IOException {
         File dir = getFile().getParentFile();
         File newKSFile = new File(dir, PREPARED_FILE_NAME);
         File oldKSFile = new File(dir, DEFAULT_FILE_NAME);
 
-        if (newKSFile.exists() == false) return; // nothing to do
+        if (!newKSFile.exists()) return; // nothing to do
 
-        if (oldKSFile.exists() == false) return; // not initialized
+        if (!oldKSFile.exists()) return; // not initialized
 
         // Try to open with new password
         try (FileInputStream fin = new FileInputStream(newKSFile)) {
@@ -511,12 +420,12 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
                 while (enumeration.hasMoreElements()) {
                     newKS.getKey(enumeration.nextElement(), passwd);
                 }
-                if (oldKSFile.delete() == false) {
-                    LOGGER.error("cannot delete " + getFile().getCanonicalPath());
+                if (!oldKSFile.delete()) {
+                    LOGGER.error("cannot delete {}", getFile().getCanonicalPath());
                     return;
                 }
 
-                if (newKSFile.renameTo(oldKSFile) == false) {
+                if (!newKSFile.renameTo(oldKSFile)) {
                     String msg = "cannot rename " + newKSFile.getCanonicalPath();
                     msg += "to " + oldKSFile.getCanonicalPath();
                     msg += "Try to rename manually and restart";
@@ -533,12 +442,10 @@ public class KeyStoreProviderImpl implements BeanNameAware, KeyStoreProvider {
                 throw new RuntimeException(ex);
             } finally {
                 disposePassword(passwd);
-                if (fin != null) {
-                    try {
-                        fin.close();
-                    } catch (IOException ex) {
-                        // give up
-                    }
+                try {
+                    fin.close();
+                } catch (IOException ex) {
+                    // give up
                 }
             }
         }

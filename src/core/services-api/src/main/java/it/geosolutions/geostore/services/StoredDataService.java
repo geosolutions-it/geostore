@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
 import java.util.List;
 
 /**
@@ -52,9 +53,13 @@ public interface StoredDataService extends SecurityService {
      */
     StoredData get(long id) throws NotFoundServiceEx;
 
-    /** @return List<StoredData> */
+    /**
+     * @return List<StoredData>
+     */
     List<StoredData> getAll();
 
-    /** @return List<StoredData> */
+    /**
+     * @return List<StoredData>
+     */
     List<StoredData> getAllFull();
 }

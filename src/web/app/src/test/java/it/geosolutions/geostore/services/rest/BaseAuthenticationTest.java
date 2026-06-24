@@ -20,10 +20,11 @@
 package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.services.UserService;
+
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.InputStream;
+
 import junit.framework.TestCase;
+
 import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -36,6 +37,9 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+
+import java.io.File;
+import java.io.InputStream;
 
 /**
  * Test for AuthenticationManagers.

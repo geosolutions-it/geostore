@@ -29,8 +29,10 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.services.dto.ShortAttribute;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.util.List;
 
 /**
@@ -45,18 +47,24 @@ public class ShortAttributeList {
 
     public ShortAttributeList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public ShortAttributeList(List<ShortAttribute> list) {
         this.list = list;
     }
 
-    /** @return List<ShortResource> */
+    /**
+     * @return List<ShortResource>
+     */
     @XmlElement(name = "Attribute")
     public List<ShortAttribute> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<ShortAttribute> list) {
         this.list = list;
     }

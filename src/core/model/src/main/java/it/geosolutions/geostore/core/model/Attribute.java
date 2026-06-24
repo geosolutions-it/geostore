@@ -29,6 +29,7 @@
 package it.geosolutions.geostore.core.model;
 
 import it.geosolutions.geostore.core.model.enums.DataType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,6 +51,7 @@ import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -105,7 +107,9 @@ public class Attribute implements Serializable {
     /** Only used for XML un/marshaling */
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @PreUpdate
     @PrePersist
     public void onPreUpdate() throws Exception {
@@ -127,56 +131,76 @@ public class Attribute implements Serializable {
         }
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     @XmlTransient
     public long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(long id) {
         this.id = id;
     }
 
-    /** @return the attribute */
+    /**
+     * @return the attribute
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the attribute to set */
+    /**
+     * @param name the attribute to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the textValue */
+    /**
+     * @return the textValue
+     */
     @XmlTransient
     public String getTextValue() {
         return textValue;
     }
 
-    /** @param textValue the textValue to set */
+    /**
+     * @param textValue the textValue to set
+     */
     public void setTextValue(String textValue) {
         this.textValue = textValue;
     }
 
-    /** @return the numberValue */
+    /**
+     * @return the numberValue
+     */
     @XmlTransient
     public Double getNumberValue() {
         return numberValue;
     }
 
-    /** @param numberValue the numberValue to set */
+    /**
+     * @param numberValue the numberValue to set
+     */
     public void setNumberValue(Double numberValue) {
         this.numberValue = numberValue;
     }
 
-    /** @return the dateValue */
+    /**
+     * @return the dateValue
+     */
     @XmlTransient
     public Date getDateValue() {
         return dateValue;
     }
 
-    /** @param dateValue the dateValue to set */
+    /**
+     * @param dateValue the dateValue to set
+     */
     public void setDateValue(Date dateValue) {
         this.dateValue = dateValue;
     }
@@ -241,18 +265,24 @@ public class Attribute implements Serializable {
         return type;
     }
 
-    /** @param type the type to set */
+    /**
+     * @param type the type to set
+     */
     public void setType(DataType type) {
         this.type = type;
     }
 
-    /** @return the resource */
+    /**
+     * @return the resource
+     */
     @XmlTransient
     public Resource getResource() {
         return resource;
     }
 
-    /** @param resource the resource to set */
+    /**
+     * @param resource the resource to set
+     */
     public void setResource(Resource resource) {
         this.resource = resource;
     }

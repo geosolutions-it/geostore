@@ -21,6 +21,7 @@
 package it.geosolutions.geostore.core.dao;
 
 import com.googlecode.genericdao.search.ISearch;
+
 import java.util.List;
 
 /**

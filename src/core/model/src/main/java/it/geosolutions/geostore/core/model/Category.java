@@ -40,6 +40,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -77,23 +78,31 @@ public class Category implements Serializable {
     // @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     // private List<SecurityRule> security;
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the resource */
+    /**
+     * @return the resource
+     */
     @XmlTransient
     public List<Resource> getResource() {
         return resource;
     }
 
-    /** @param resource the resource to set */
+    /**
+     * @param resource the resource to set
+     */
     public void setResource(List<Resource> resource) {
         this.resource = resource;
     }
@@ -113,12 +122,16 @@ public class Category implements Serializable {
     // this.security = security;
     // }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }

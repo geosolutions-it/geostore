@@ -33,6 +33,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTFavoriteService;
 import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+
 import jakarta.ws.rs.core.SecurityContext;
 
 public class RESTFavoriteServiceImpl extends RESTServiceImpl implements RESTFavoriteService {

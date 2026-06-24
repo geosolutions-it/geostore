@@ -42,7 +42,9 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
+
 import jakarta.ws.rs.core.SecurityContext;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -57,7 +59,9 @@ public class RESTCategoryServiceImpl extends RESTServiceImpl implements RESTCate
 
     private CategoryService categoryService;
 
-    /** @param categoryService the categoryService to set */
+    /**
+     * @param categoryService the categoryService to set
+     */
     public void setCategoryService(CategoryService categoryService) {
         this.categoryService = categoryService;
     }

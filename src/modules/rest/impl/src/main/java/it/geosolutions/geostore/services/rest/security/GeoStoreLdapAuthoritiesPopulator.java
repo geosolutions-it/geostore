@@ -28,11 +28,7 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
-import java.text.MessageFormat;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import javax.naming.directory.SearchControls;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.ldap.core.ContextSource;
@@ -44,31 +40,46 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.security.ldap.userdetails.DefaultLdapAuthoritiesPopulator;
 import org.springframework.util.Assert;
 
-/** @author alessio.fabiani */
+import java.text.MessageFormat;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.naming.directory.SearchControls;
+
+/**
+ * @author alessio.fabiani
+ */
 @SuppressWarnings("PMD.UnusedPrivateField")
 public class GeoStoreLdapAuthoritiesPopulator extends DefaultLdapAuthoritiesPopulator
         implements GroupsRolesService {
 
     private static final Log logger = LogFactory.getLog(GeoStoreLdapAuthoritiesPopulator.class);
+
     /** Template that will be used for searching */
     private final SpringSecurityLdapTemplate ldapTemplate;
+
     /**
      * Controls used to determine whether group searches should be performed over the full sub-tree
      * from the base DN. Modified by searchSubTree property
      */
     private final SearchControls searchControls = new SearchControls();
+
     /** The base DN from which the search for group membership should be performed */
     private final String groupSearchBase;
 
     private final String roleSearchBase;
     private final String allGroupsSearchFilter = "(objectClass=group)";
     private final String allRolesSearchFilter = "(objectClass=group)";
+
     /** The ID of the attribute which contains the role name for a group */
     private String groupRoleAttribute = "cn";
+
     /** The pattern to be used for the user search. {0} is the user's DN */
     private String groupSearchFilter = "(member={0})";
 
     private String roleSearchFilter = "(member={0})";
+
     /** The role prefix that will be prepended to each role name */
     private String rolePrefix = "ROLE_";
 
@@ -76,6 +87,7 @@ public class GeoStoreLdapAuthoritiesPopulator extends DefaultLdapAuthoritiesPopu
     private boolean enableHierarchicalGroups = false;
     private String groupInGroupSearchFilter = "(member={0})";
     private int maxLevelGroupsSearch = Integer.MAX_VALUE;
+
     /** Should we convert the role name to uppercase */
     private boolean convertToUpperCase = true;
 

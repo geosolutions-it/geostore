@@ -30,10 +30,12 @@ package it.geosolutions.geostore.core.security;
 import static org.junit.Assert.assertEquals;
 
 import it.geosolutions.geostore.core.model.User;
-import java.util.HashMap;
-import java.util.Map;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class ExpressionUserMapperTest {
     ExpressionUserMapper mapper;

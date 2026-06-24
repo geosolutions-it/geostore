@@ -30,12 +30,15 @@ package it.geosolutions.geostore.services.rest.model;
 
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-/** @author ETj (etj at geo-solutions.it) */
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 @XmlRootElement(name = "Backup")
 public class RESTQuickBackup implements Serializable {
 

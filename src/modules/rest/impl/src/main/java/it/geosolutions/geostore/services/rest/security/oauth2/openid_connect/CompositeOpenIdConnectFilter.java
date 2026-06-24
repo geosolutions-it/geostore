@@ -40,17 +40,13 @@ import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bea
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
@@ -61,6 +57,13 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.GenericFilterBean;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Composite filter that routes requests to per-provider {@link OpenIdConnectFilter} instances.
@@ -83,8 +86,8 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
     private static final Logger LOGGER = LogManager.getLogger(CompositeOpenIdConnectFilter.class);
 
-    private static final Pattern CALLBACK_PATTERN = Pattern.compile(".*/openid/([^/]+)/callback.*");
-    private static final Pattern LOGIN_PATTERN = Pattern.compile(".*/openid/([^/]+)/login.*");
+    private static final Pattern CALLBACK_PATTERN = Pattern.compile("/openid/([^/]+)/callback");
+    private static final Pattern LOGIN_PATTERN = Pattern.compile("/openid/([^/]+)/login");
 
     private ApplicationContext applicationContext;
     private final Map<String, OpenIdConnectFilter> providerFilters = new LinkedHashMap<>();
@@ -291,7 +294,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
         // Callback URL: /openid/{provider}/callback
         Matcher callbackMatcher = CALLBACK_PATTERN.matcher(uri);
-        if (callbackMatcher.matches()) {
+        if (callbackMatcher.find()) {
             String provider = callbackMatcher.group(1);
             OpenIdConnectFilter filter = providerFilters.get(provider);
             if (filter != null) {
@@ -306,7 +309,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
         // Login URL: /openid/{provider}/login
         Matcher loginMatcher = LOGIN_PATTERN.matcher(uri);
-        if (loginMatcher.matches()) {
+        if (loginMatcher.find()) {
             String provider = loginMatcher.group(1);
             OpenIdConnectFilter filter = providerFilters.get(provider);
             if (filter != null) {

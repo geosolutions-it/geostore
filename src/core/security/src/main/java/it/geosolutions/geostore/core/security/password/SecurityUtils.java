@@ -5,12 +5,14 @@
 package it.geosolutions.geostore.core.security.password;
 
 import it.geosolutions.geostore.core.model.User;
+
+import org.springframework.security.core.userdetails.UserDetails;
+
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.security.Principal;
 import java.util.Arrays;
-import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Common security utility methods.
