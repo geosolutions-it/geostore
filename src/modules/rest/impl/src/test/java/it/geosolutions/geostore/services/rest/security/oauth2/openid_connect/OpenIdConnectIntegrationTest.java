@@ -291,10 +291,6 @@ public class OpenIdConnectIntegrationTest {
         request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -310,10 +306,6 @@ public class OpenIdConnectIntegrationTest {
         request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
