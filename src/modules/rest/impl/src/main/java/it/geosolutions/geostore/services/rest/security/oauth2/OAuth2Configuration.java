@@ -95,6 +95,10 @@ public class OAuth2Configuration extends IdPConfiguration {
     private int cacheSize = 1000;
     private int cacheExpirationMinutes = 480;
 
+    // HTTP timeouts (ms) for back-channel calls to the IdP token endpoint
+    private int connectTimeout = 10_000;
+    private int readTimeout = 15_000;
+
     // Smart refresh: skip IDP refresh when token is still valid
     private boolean skipRefreshIfTokenValid = true;
     private double refreshTokenLifetimeFraction = 0.8;
@@ -690,6 +694,22 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.cacheExpirationMinutes = cacheExpirationMinutes;
     }
 
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
     public boolean isLogSensitiveInfo() {
         return logSensitiveInfo;
     }
@@ -785,6 +805,8 @@ public class OAuth2Configuration extends IdPConfiguration {
                 && getMaxRetries() == that.getMaxRetries()
                 && getCacheSize() == that.getCacheSize()
                 && getCacheExpirationMinutes() == that.getCacheExpirationMinutes()
+                && getConnectTimeout() == that.getConnectTimeout()
+                && getReadTimeout() == that.getReadTimeout()
                 && Objects.equals(getClientId(), that.getClientId())
                 && Objects.equals(getClientSecret(), that.getClientSecret())
                 && Objects.equals(getAccessTokenUri(), that.getAccessTokenUri())
@@ -830,6 +852,8 @@ public class OAuth2Configuration extends IdPConfiguration {
                 getRefreshTokenLifetimeFraction(),
                 getCacheSize(),
                 getCacheExpirationMinutes(),
+                getConnectTimeout(),
+                getReadTimeout(),
                 getInitialBackoffDelay(),
                 getBackoffMultiplier(),
                 getMaxRetries());
@@ -900,6 +924,10 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + cacheSize
                 + ", cacheExpirationMinutes="
                 + cacheExpirationMinutes
+                + ", connectTimeout="
+                + connectTimeout
+                + ", readTimeout="
+                + readTimeout
                 + ", initialBackoffDelay="
                 + initialBackoffDelay
                 + ", backoffMultiplier="
