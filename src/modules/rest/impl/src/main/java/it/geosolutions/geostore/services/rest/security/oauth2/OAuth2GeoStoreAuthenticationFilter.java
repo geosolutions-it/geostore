@@ -667,9 +667,12 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
                 errorDetail = "Bad credentials: " + deepestMessage(e);
                 LOGGER.warn("OAuth2 bad credentials: {}", e.getMessage(), e);
             }
-        } else if (e instanceof ResourceAccessException) {
-            errorDetail = "The identity provider is unreachable: " + e.getMessage();
-            LOGGER.error("Could not reach OAuth2 provider: {}", e.getMessage(), e);
+        } else if (e instanceof ResourceAccessException
+                || (e instanceof OAuth2AccessDeniedException
+                        && e.getCause() instanceof ResourceAccessException)) {
+            errorDetail =
+                    "The identity provider token endpoint is unreachable: " + deepestMessage(e);
+            LOGGER.error("Could not reach OAuth2 token endpoint: {}", deepestMessage(e), e);
         } else if (e instanceof HttpStatusCodeException) {
             errorDetail =
                     "The identity provider rejected the token validation request with status "
