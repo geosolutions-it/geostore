@@ -288,7 +288,7 @@ public class OpenIdConnectIntegrationTest {
     @Test
     public void testAuthentication() throws IOException, ServletException {
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE);
+        request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
         filter.restTemplate
@@ -307,7 +307,7 @@ public class OpenIdConnectIntegrationTest {
     public void testGroupsAndRolesFromToken() throws IOException, ServletException {
         configuration.setGroupsClaim("hd");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE);
+        request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
         filter.restTemplate
