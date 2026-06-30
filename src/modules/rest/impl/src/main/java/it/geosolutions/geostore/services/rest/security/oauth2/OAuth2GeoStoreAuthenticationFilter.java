@@ -426,6 +426,7 @@ public abstract class OAuth2GeoStoreAuthenticationFilter
         }
         if (accessTokenRequest != null) {
             try {
+                accessTokenRequest.setAuthorizationCode(null);
                 accessTokenRequest.remove(ACCESS_TOKEN_PARAM);
             } finally {
                 SecurityContextHolder.clearContext();
