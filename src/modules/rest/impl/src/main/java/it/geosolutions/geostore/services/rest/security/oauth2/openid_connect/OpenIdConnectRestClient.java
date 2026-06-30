@@ -38,6 +38,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.FormHttpMessageConverter;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AccessTokenResponse;
 import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
@@ -68,13 +69,16 @@ public class OpenIdConnectRestClient {
 
     public OpenIdConnectRestClient(OpenIdConnectConfiguration config) {
         this.config = config;
-        this.restTemplate = buildRestTemplate();
+        this.restTemplate = buildRestTemplate(config);
         this.pkceEnhancer = new PKCERequestEnhancer(config);
         this.clientSecretEnhancer = new ClientSecretRequestEnhancer();
     }
 
-    private static RestTemplate buildRestTemplate() {
-        RestTemplate rt = new RestTemplate();
+    private static RestTemplate buildRestTemplate(OpenIdConnectConfiguration config) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(config.getConnectTimeout());
+        factory.setReadTimeout(config.getReadTimeout());
+        RestTemplate rt = new RestTemplate(factory);
         rt.setMessageConverters(
                 Arrays.asList(
                         new FormHttpMessageConverter(),
