@@ -71,6 +71,9 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     String jweKeyAlias;
     String jweKeyPassword;
 
+    int connectTimeout = 10_000;
+    int readTimeout = 15_000;
+
     // Microsoft Graph API integration
     boolean msGraphEnabled = false;
     String msGraphEndpoint = "https://graph.microsoft.com/v1.0";
@@ -247,6 +250,22 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
     public void setMsGraphRolesEnabled(boolean msGraphRolesEnabled) {
         this.msGraphRolesEnabled = msGraphRolesEnabled;
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
     }
 
     @Override
