@@ -246,13 +246,9 @@ public class OpenIdIntegrationTest {
     @Test
     public void testAuthentication_basic() throws IOException, ServletException {
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE);
+        request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -267,13 +263,9 @@ public class OpenIdIntegrationTest {
     public void testGroupsFromToken_hdDomain() throws Exception {
         configuration.setGroupsClaim("hd"); // Google hosted domain string claim
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_GROUPS_HD);
+        request.setParameter("code", CODE_GROUPS_HD);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_HD);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -289,13 +281,9 @@ public class OpenIdIntegrationTest {
         configuration.setGroupsClaim("groups");
         configuration.setDefaultGroups("infragri");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE);
+        request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -321,13 +309,9 @@ public class OpenIdIntegrationTest {
         configuration.setGroupsClaim("groups");
         configuration.setDefaultGroups("infragri, base-users");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE);
+        request.setParameter("code", CODE);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -361,13 +345,9 @@ public class OpenIdIntegrationTest {
         configuration.setGroupsClaim("groups");
         configuration.setDefaultGroups("infragri");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_RECON);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -390,13 +370,9 @@ public class OpenIdIntegrationTest {
         configuration.setDropUnmapped(true);
         configuration.setDefaultGroups("infragri");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_RECON);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -428,13 +404,9 @@ public class OpenIdIntegrationTest {
         filter.setUserGroupService(rejectingSvc);
 
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_RECON);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -452,13 +424,9 @@ public class OpenIdIntegrationTest {
     public void testRoleFromToken_adminPromotion() throws Exception {
         configuration.setRolesClaim("roles");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_ROLES_ADMIN);
+        request.setParameter("code", CODE_ROLES_ADMIN);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_ROLES_ADMIN);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -470,13 +438,9 @@ public class OpenIdIntegrationTest {
     public void testRoleFromToken_emptyListDemotesToDefault() throws Exception {
         configuration.setRolesClaim("roles");
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_ROLES_EMPTY);
+        request.setParameter("code", CODE_ROLES_EMPTY);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_ROLES_EMPTY);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -525,14 +489,9 @@ public class OpenIdIntegrationTest {
         OpenIdConnectFilter seededFilter = getOpenIdFilter(seeded, svc);
 
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        seededFilter
-                .restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_RECON);
         seededFilter.doFilter(request, response, chain);
 
         assertEquals(200, response.getStatus());
@@ -572,14 +531,10 @@ public class OpenIdIntegrationTest {
         configuration.setRolesClaim("roles");
 
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_ROLES_ADMIN);
+        request.setParameter("code", CODE_ROLES_ADMIN);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_ROLES_ADMIN);
 
         // No pre-existing user; filter will create it based on token.
         filter.doFilter(request, response, chain);
@@ -621,14 +576,9 @@ public class OpenIdIntegrationTest {
                 getOpenIdFilter(existing, (DummyUserGroupService) filter.getUserGroupService());
 
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_ROLES_GUEST);
+        request.setParameter("code", CODE_ROLES_GUEST);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        seededFilter
-                .restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_ROLES_GUEST);
 
         seededFilter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
@@ -678,14 +628,9 @@ public class OpenIdIntegrationTest {
 
         // First pass: token groups ["A","B"]
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_GROUPS_RECON);
+        request.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        seededFilter
-                .restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_RECON);
         seededFilter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
 
@@ -721,13 +666,8 @@ public class OpenIdIntegrationTest {
         // Idempotency: second pass with same token makes no changes
         int beforeCount = seeded.getGroups().size();
         MockHttpServletRequest request2 = createRequest("oidc/login");
-        request2.setParameter("authorization_code", CODE_GROUPS_RECON);
+        request2.setParameter("code", CODE_GROUPS_RECON);
         MockHttpServletResponse response2 = new MockHttpServletResponse();
-        seededFilter
-                .restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_GROUPS_RECON);
         seededFilter.doFilter(request2, response2, new MockFilterChain());
         assertEquals(200, response2.getStatus());
         int afterCount = seeded.getGroups().size();
@@ -759,13 +699,9 @@ public class OpenIdIntegrationTest {
         configuration.setRolesClaim("roles");
 
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_USERINFO_ROLES);
+        request.setParameter("code", CODE_USERINFO_ROLES);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_USERINFO_ROLES);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -783,13 +719,9 @@ public class OpenIdIntegrationTest {
         configuration.setGroupsClaim("groups");
 
         MockHttpServletRequest request = createRequest("oidc/login");
-        request.setParameter("authorization_code", CODE_USERINFO_GROUPS);
+        request.setParameter("code", CODE_USERINFO_GROUPS);
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
-        filter.restTemplate
-                .getOAuth2ClientContext()
-                .getAccessTokenRequest()
-                .setAuthorizationCode(CODE_USERINFO_GROUPS);
         filter.doFilter(request, response, chain);
         assertEquals(200, response.getStatus());
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
