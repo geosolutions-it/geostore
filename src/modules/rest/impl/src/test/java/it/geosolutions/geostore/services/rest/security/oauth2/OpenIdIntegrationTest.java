@@ -535,7 +535,6 @@ public class OpenIdIntegrationTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain chain = new MockFilterChain();
 
-
         // No pre-existing user; filter will create it based on token.
         filter.doFilter(request, response, chain);
 

@@ -33,7 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
@@ -69,10 +68,6 @@ public class GeoStoreOAuthRestTemplate extends OAuth2RestTemplate {
             OAuth2Configuration configuration,
             String idTokenParam) {
         super(resource, context);
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(configuration.getConnectTimeout());
-        factory.setReadTimeout(configuration.getReadTimeout());
-        setRequestFactory(factory);
         if (configuration.getIdTokenUri() != null)
             this.store = new JwkTokenStore(configuration.getIdTokenUri());
         this.idTokenParam = idTokenParam;
