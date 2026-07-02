@@ -40,6 +40,7 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -836,6 +837,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     configuration.buildRevokeEndpoint(token, accessToken, configuration);
             if (revokeEndpoint != null) {
                 RestTemplate template = new RestTemplate();
+                template.setInterceptors(
+                        Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
                 try {
                     ResponseEntity<String> responseEntity =
                             template.exchange(
@@ -860,6 +863,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     configuration.buildLogoutEndpoint(token, accessToken, configuration);
             if (logoutEndpoint != null) {
                 RestTemplate template = new RestTemplate();
+                template.setInterceptors(
+                        Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
                 ResponseEntity<String> responseEntity =
                         template.exchange(
                                 logoutEndpoint.getUrl(),
@@ -983,7 +988,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * current access token is expired.
      */
     protected RestTemplate createRefreshRestTemplate() {
-        return new RestTemplate();
+        RestTemplate template = new RestTemplate();
+        template.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+        return template;
     }
 
     @Override

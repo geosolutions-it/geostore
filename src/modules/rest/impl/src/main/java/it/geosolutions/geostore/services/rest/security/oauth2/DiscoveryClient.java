@@ -53,7 +53,9 @@ public class DiscoveryClient {
 
     public DiscoveryClient(String location) {
         setLocation(location);
-        this.restTemplate = new RestTemplate();
+        RestTemplate template = new RestTemplate();
+        template.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+        this.restTemplate = template;
     }
 
     public DiscoveryClient(String location, RestTemplate restTemplate) {

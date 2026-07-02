@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -56,7 +57,13 @@ public class MicrosoftGraphClient {
     private final RestTemplate restTemplate;
 
     public MicrosoftGraphClient(String graphEndpoint) {
-        this(graphEndpoint, new RestTemplate());
+        this(graphEndpoint, newRestTemplate());
+    }
+
+    private static RestTemplate newRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        template.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+        return template;
     }
 
     public MicrosoftGraphClient(String graphEndpoint, RestTemplate restTemplate) {

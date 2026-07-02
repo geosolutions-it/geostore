@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
 import java.nio.charset.StandardCharsets;
@@ -35,7 +36,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -84,11 +84,7 @@ public final class OpenIdConnectRestTemplateFactory {
         authProvider.setStateMandatory(false);
         authProvider.setRequestFactory(requestFactory);
         authProvider.setInterceptors(
-                Collections.singletonList(
-                        (request, body, execution) -> {
-                            request.getHeaders().set(HttpHeaders.CONNECTION, "close");
-                            return execution.execute(request, body);
-                        }));
+                Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
 
         if (config.isUsePKCE()) {
             LOGGER.info("Using PKCE for provider {}", config.getProvider());
