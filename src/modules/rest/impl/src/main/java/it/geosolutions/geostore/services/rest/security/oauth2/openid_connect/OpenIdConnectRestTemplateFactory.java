@@ -35,7 +35,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.oauth2.client.DefaultOAuth2ClientContext;
@@ -73,9 +75,20 @@ public final class OpenIdConnectRestTemplateFactory {
                         details, new DefaultOAuth2ClientContext(accessTokenRequest), config);
         setJacksonConverter(restTemplate);
 
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(config.getConnectTimeout());
+        requestFactory.setReadTimeout(config.getReadTimeout());
+
         AuthorizationCodeAccessTokenProvider authProvider =
                 new AuthorizationCodeAccessTokenProvider();
         authProvider.setStateMandatory(false);
+        authProvider.setRequestFactory(requestFactory);
+        authProvider.setInterceptors(
+                Collections.singletonList(
+                        (request, body, execution) -> {
+                            request.getHeaders().set(HttpHeaders.CONNECTION, "close");
+                            return execution.execute(request, body);
+                        }));
 
         if (config.isUsePKCE()) {
             LOGGER.info("Using PKCE for provider {}", config.getProvider());

@@ -32,14 +32,14 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.security.web.header.HeaderWriterFilter;
 
 /**
- * Ensures HTTP security headers are written before the response is
- * committed by enabling eager header writing on the {@link HeaderWriterFilter} created by Spring
- * Security.
+ * Ensures HTTP security headers are written before the response is committed by enabling eager
+ * header writing on the {@link HeaderWriterFilter} created by Spring Security.
  */
 public class HeaderWriterFilterEagerConfig implements BeanPostProcessor {
 
     @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    public Object postProcessAfterInitialization(Object bean, String beanName)
+            throws BeansException {
         if (bean instanceof HeaderWriterFilter) {
             ((HeaderWriterFilter) bean).setShouldWriteHeadersEagerly(true);
         }
