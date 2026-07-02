@@ -27,11 +27,13 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.sf.json.JSONArray;
@@ -53,7 +55,13 @@ public class JwksRsaKeyProvider {
     private final Map<String, RSAPublicKey> keyCache = new ConcurrentHashMap<>();
 
     public JwksRsaKeyProvider(String jwksUri) {
-        this(jwksUri, new RestTemplate());
+        this(jwksUri, newRestTemplate());
+    }
+
+    private static RestTemplate newRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        template.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+        return template;
     }
 
     JwksRsaKeyProvider(String jwksUri, RestTemplate restTemplate) {

@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,6 +75,8 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
     protected GeoStoreRemoteTokenServices(AccessTokenConverter tokenConverter) {
         this.tokenConverter = tokenConverter;
         this.restTemplate = new RestTemplate();
+        ((RestTemplate) restTemplate)
+                .setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
         ((RestTemplate) restTemplate)
                 .setErrorHandler(
                         new DefaultResponseErrorHandler() {

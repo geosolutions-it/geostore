@@ -33,6 +33,8 @@ import java.util.Date;
 import java.util.Enumeration;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -74,6 +76,19 @@ public class OAuth2Utils {
         Calendar currentTimeNow = Calendar.getInstance();
         currentTimeNow.add(Calendar.MINUTE, 5);
         return currentTimeNow.getTime();
+    }
+
+    /**
+     * Interceptor that forces "Connection: close" on the request, so the JVM never puts the
+     * underlying socket back in its shared keep-alive cache. IdP-facing calls are infrequent enough
+     * that connection reuse isn't worth the risk of the network path (LB/proxy/NAT) having already
+     * silently torn down an idle pooled connection.
+     */
+    public static ClientHttpRequestInterceptor noKeepAliveInterceptor() {
+        return (request, body, execution) -> {
+            request.getHeaders().set(HttpHeaders.CONNECTION, "close");
+            return execution.execute(request, body);
+        };
     }
 
     /**

@@ -35,6 +35,7 @@ import it.geosolutions.geostore.services.rest.security.oauth2.DiscoveryClient;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2GeoStoreAuthenticationFilter;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JweTokenDecryptor;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MicrosoftGraphClient;
@@ -48,6 +49,7 @@ import java.security.PrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -385,6 +387,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
 
         try {
             RestTemplate rt = new RestTemplate();
+            rt.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
             Map<String, Object> response = rt.postForObject(introspectionUrl, request, Map.class);
 
             if (response == null) {
