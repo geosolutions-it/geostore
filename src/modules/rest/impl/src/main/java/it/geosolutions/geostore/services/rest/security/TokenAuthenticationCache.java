@@ -34,7 +34,6 @@ import com.github.benmanes.caffeine.cache.RemovalCause;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
-import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
@@ -149,10 +148,8 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
                                 configuration.buildRevokeEndpoint(
                                         expiring.getValue(), accessToken.getValue(), configuration);
                         if (revokeEndpoint != null) {
-                            RestTemplate template = new RestTemplate();
-                            template.setInterceptors(
-                                    Collections.singletonList(
-                                            OAuth2Utils.noKeepAliveInterceptor()));
+                            RestTemplate template =
+                                    OAuth2Utils.protectedRestTemplate(configuration);
                             ResponseEntity<String> responseEntity =
                                     template.exchange(
                                             revokeEndpoint.getUrl(),

@@ -29,14 +29,17 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.core.security.password.SecurityUtils;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.provider.authentication.BearerTokenExtractor;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -89,6 +92,38 @@ public class OAuth2Utils {
             request.getHeaders().set(HttpHeaders.CONNECTION, "close");
             return execution.execute(request, body);
         };
+    }
+
+    /**
+     * A plain {@link RestTemplate} with {@link #noKeepAliveInterceptor()} but no configurable
+     * timeouts, for call sites where no {@link OAuth2Configuration} is available.
+     */
+    public static RestTemplate noKeepAliveRestTemplate() {
+        RestTemplate template = new RestTemplate();
+        template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
+        return template;
+    }
+
+    /**
+     * Builds a {@link SimpleClientHttpRequestFactory} using the connect/read timeouts configured
+     * for the given provider, so back-channel calls to the IdP never block indefinitely.
+     */
+    public static SimpleClientHttpRequestFactory protectedRequestFactory(
+            OAuth2Configuration configuration) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(configuration.getConnectTimeout());
+        factory.setReadTimeout(configuration.getReadTimeout());
+        return factory;
+    }
+
+    /**
+     * A {@link RestTemplate} for back-channel calls to the IdP, configured with the provider's
+     * connect/read timeouts and {@link #noKeepAliveInterceptor()}.
+     */
+    public static RestTemplate protectedRestTemplate(OAuth2Configuration configuration) {
+        RestTemplate template = new RestTemplate(protectedRequestFactory(configuration));
+        template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
+        return template;
     }
 
     /**

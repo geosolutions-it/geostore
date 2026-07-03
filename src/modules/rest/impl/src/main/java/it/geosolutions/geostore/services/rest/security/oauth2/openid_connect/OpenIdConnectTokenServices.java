@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import java.util.Collections;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
@@ -40,6 +41,13 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
     public OpenIdConnectTokenServices(String principalKey) {
         super(new OpenIdConnectAccessTokenConverter(principalKey));
+        LOGGER.info(
+                "Instantiating OpenIdConnectAccessTokenConverter with principalKey: {}",
+                principalKey);
+    }
+
+    public OpenIdConnectTokenServices(String principalKey, OAuth2Configuration configuration) {
+        super(new OpenIdConnectAccessTokenConverter(principalKey), configuration);
         LOGGER.info(
                 "Instantiating OpenIdConnectAccessTokenConverter with principalKey: {}",
                 principalKey);

@@ -249,7 +249,8 @@ public class OpenIdConnectIntegrationTest {
         GeoStoreOAuthRestTemplate restTemplate =
                 OpenIdConnectRestTemplateFactory.create(
                         configuration, new DefaultAccessTokenRequest());
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(authService + "/certs", configuration);
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(configuration.getPrincipalKey());
         this.cache =
@@ -3215,7 +3216,8 @@ public class OpenIdConnectIntegrationTest {
         GeoStoreOAuthRestTemplate restTemplate =
                 OpenIdConnectRestTemplateFactory.create(
                         configuration, new DefaultAccessTokenRequest());
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(authService + "/certs", configuration);
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(configuration.getPrincipalKey());
         this.cache =

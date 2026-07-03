@@ -75,9 +75,7 @@ public final class OpenIdConnectRestTemplateFactory {
                         details, new DefaultOAuth2ClientContext(accessTokenRequest), config);
         setJacksonConverter(restTemplate);
 
-        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
-        requestFactory.setConnectTimeout(config.getConnectTimeout());
-        requestFactory.setReadTimeout(config.getReadTimeout());
+        SimpleClientHttpRequestFactory requestFactory = OAuth2Utils.protectedRequestFactory(config);
 
         AuthorizationCodeAccessTokenProvider authProvider =
                 new AuthorizationCodeAccessTokenProvider();

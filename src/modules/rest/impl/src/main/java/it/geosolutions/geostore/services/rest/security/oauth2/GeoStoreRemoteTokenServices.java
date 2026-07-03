@@ -28,7 +28,6 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -73,22 +72,33 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
     }
 
     protected GeoStoreRemoteTokenServices(AccessTokenConverter tokenConverter) {
+        this(tokenConverter, OAuth2Utils.noKeepAliveRestTemplate());
+    }
+
+    protected GeoStoreRemoteTokenServices(
+            AccessTokenConverter tokenConverter, OAuth2Configuration configuration) {
+        this(tokenConverter, OAuth2Utils.protectedRestTemplate(configuration));
+    }
+
+    private GeoStoreRemoteTokenServices(
+            AccessTokenConverter tokenConverter, RestTemplate template) {
         this.tokenConverter = tokenConverter;
-        this.restTemplate = new RestTemplate();
-        ((RestTemplate) restTemplate)
-                .setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
-        ((RestTemplate) restTemplate)
-                .setErrorHandler(
-                        new DefaultResponseErrorHandler() {
-                            @Override
-                            // Ignore 400
-                            public void handleError(ClientHttpResponse response)
-                                    throws IOException {
-                                if (response.getRawStatusCode() != 400) {
-                                    super.handleError(response);
-                                }
-                            }
-                        });
+        configureErrorHandler(template);
+        this.restTemplate = template;
+    }
+
+    // Ignore 400: not standardized across IdPs, and callers already branch on the
+    // "error" field in the response body rather than the HTTP status.
+    private static void configureErrorHandler(RestTemplate template) {
+        template.setErrorHandler(
+                new DefaultResponseErrorHandler() {
+                    @Override
+                    public void handleError(ClientHttpResponse response) throws IOException {
+                        if (response.getRawStatusCode() != 400) {
+                            super.handleError(response);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -162,8 +172,7 @@ public class GeoStoreRemoteTokenServices extends RemoteTokenServices {
         if (headers.getContentType() == null) {
             headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         }
-        ParameterizedTypeReference<Map<String, Object>> map =
-                new ParameterizedTypeReference<Map<String, Object>>() {};
+        ParameterizedTypeReference<Map<String, Object>> map = new ParameterizedTypeReference<>() {};
         LOGGER.debug("Executing request {} form data are {}", path, formData);
         LOGGER.debug("Headers are {}", headers);
         return restTemplate

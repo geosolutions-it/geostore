@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.AfterAll;
@@ -52,7 +53,7 @@ public class MicrosoftGraphClientTest {
         graphService.start();
 
         String graphEndpoint = "http://localhost:" + graphService.port();
-        client = new MicrosoftGraphClient(graphEndpoint);
+        client = new MicrosoftGraphClient(graphEndpoint, new OAuth2Configuration());
     }
 
     @AfterAll

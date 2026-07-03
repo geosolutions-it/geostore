@@ -528,7 +528,7 @@ public class MultiProviderIntegrationTest {
     private OpenIdConnectFilter buildFilter(OpenIdConnectConfiguration config, String jwksUri) {
         GeoStoreOAuthRestTemplate restTemplate =
                 OpenIdConnectRestTemplateFactory.create(config, new DefaultAccessTokenRequest());
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(jwksUri);
+        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(jwksUri, config);
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(config.getPrincipalKey());
         TokenAuthenticationCache cache =
