@@ -28,12 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.core.security.password.SecurityUtils;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Enumeration;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -43,10 +38,17 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.Collections;
+import java.util.Enumeration;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * A class that groups some constants and utility methods used to handle OAuth2 related tasks.
- * Provides functionality like retrieving tokens from the request, or retrieving the {@link
- * TokenDetails} from an Authentication instance.
+ * Provides functionality like retrieving tokens from the request, retrieving the {@link
+ * TokenDetails} from an Authentication instance, and building the {@link RestTemplate} and {@link
+ * SimpleClientHttpRequestFactory} instances used for back-channel calls to the IdP.
  */
 public class OAuth2Utils {
 
@@ -75,31 +77,22 @@ public class OAuth2Utils {
         return token;
     }
 
-    public static Date fiveMinutesFromNow() {
-        Calendar currentTimeNow = Calendar.getInstance();
-        currentTimeNow.add(Calendar.MINUTE, 5);
-        return currentTimeNow.getTime();
-    }
-
-    /**
-     * Interceptor that forces "Connection: close" on the request, so the JVM never puts the
-     * underlying socket back in its shared keep-alive cache. IdP-facing calls are infrequent enough
-     * that connection reuse isn't worth the risk of the network path (LB/proxy/NAT) having already
-     * silently torn down an idle pooled connection.
-     */
-    public static ClientHttpRequestInterceptor noKeepAliveInterceptor() {
-        return (request, body, execution) -> {
-            request.getHeaders().set(HttpHeaders.CONNECTION, "close");
-            return execution.execute(request, body);
-        };
-    }
-
     /**
      * A plain {@link RestTemplate} with {@link #noKeepAliveInterceptor()} but no configurable
      * timeouts, for call sites where no {@link OAuth2Configuration} is available.
      */
     public static RestTemplate noKeepAliveRestTemplate() {
         RestTemplate template = new RestTemplate();
+        template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
+        return template;
+    }
+
+    /**
+     * A {@link RestTemplate} for back-channel calls to the IdP, configured with the provider's
+     * connect/read timeouts and {@link #noKeepAliveInterceptor()}.
+     */
+    public static RestTemplate protectedRestTemplate(OAuth2Configuration configuration) {
+        RestTemplate template = new RestTemplate(protectedRequestFactory(configuration));
         template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
         return template;
     }
@@ -117,13 +110,16 @@ public class OAuth2Utils {
     }
 
     /**
-     * A {@link RestTemplate} for back-channel calls to the IdP, configured with the provider's
-     * connect/read timeouts and {@link #noKeepAliveInterceptor()}.
+     * Interceptor that forces "Connection: close" on the request, so the JVM never puts the
+     * underlying socket back in its shared keep-alive cache. IdP-facing calls are infrequent enough
+     * that connection reuse isn't worth the risk of the network path (LB/proxy/NAT) having already
+     * silently torn down an idle pooled connection.
      */
-    public static RestTemplate protectedRestTemplate(OAuth2Configuration configuration) {
-        RestTemplate template = new RestTemplate(protectedRequestFactory(configuration));
-        template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
-        return template;
+    public static ClientHttpRequestInterceptor noKeepAliveInterceptor() {
+        return (request, body, execution) -> {
+            request.getHeaders().set(HttpHeaders.CONNECTION, "close");
+            return execution.execute(request, body);
+        };
     }
 
     /**
