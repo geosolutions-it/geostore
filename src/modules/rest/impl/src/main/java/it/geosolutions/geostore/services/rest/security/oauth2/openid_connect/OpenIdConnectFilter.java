@@ -49,7 +49,6 @@ import java.security.PrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +101,8 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
         super(tokenServices, oAuth2RestTemplate, configuration, tokenAuthenticationCache);
         if (configuration.getDiscoveryUrl() != null
                 && !"".equals(configuration.getDiscoveryUrl())) {
-            new DiscoveryClient(configuration.getDiscoveryUrl()).autofill(configuration);
+            new DiscoveryClient(configuration.getDiscoveryUrl(), configuration)
+                    .autofill(configuration);
         }
         this.bearerTokenValidator = bearerTokenValidator;
         this.jwksKeyProvider = jwksKeyProvider;
@@ -386,8 +386,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formParams, headers);
 
         try {
-            RestTemplate rt = new RestTemplate();
-            rt.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+            RestTemplate rt = OAuth2Utils.protectedRestTemplate(configuration);
             Map<String, Object> response = rt.postForObject(introspectionUrl, request, Map.class);
 
             if (response == null) {
@@ -623,7 +622,7 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
                     return null;
                 }
 
-                graphClient = new MicrosoftGraphClient(oidcConfig.getMsGraphEndpoint());
+                graphClient = new MicrosoftGraphClient(oidcConfig.getMsGraphEndpoint(), oidcConfig);
                 LOGGER.info(
                         "MS Graph client initialized with endpoint '{}'",
                         oidcConfig.getMsGraphEndpoint());

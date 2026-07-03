@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,20 +57,10 @@ public class MicrosoftGraphClient {
     private final String graphEndpoint;
     private final RestTemplate restTemplate;
 
-    public MicrosoftGraphClient(String graphEndpoint) {
-        this(graphEndpoint, newRestTemplate());
-    }
-
-    private static RestTemplate newRestTemplate() {
-        RestTemplate template = new RestTemplate();
-        template.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
-        return template;
-    }
-
-    public MicrosoftGraphClient(String graphEndpoint, RestTemplate restTemplate) {
+    public MicrosoftGraphClient(String graphEndpoint, OAuth2Configuration configuration) {
         this.graphEndpoint =
                 graphEndpoint != null ? graphEndpoint : "https://graph.microsoft.com/v1.0";
-        this.restTemplate = restTemplate;
+        this.restTemplate = OAuth2Utils.protectedRestTemplate(configuration);
     }
 
     /**

@@ -226,7 +226,8 @@ public class AzureAdWireMockLifecycleTest {
         GeoStoreOAuthRestTemplate restTemplate =
                 OpenIdConnectRestTemplateFactory.create(
                         configuration, new DefaultAccessTokenRequest());
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(configuration.getIdTokenUri());
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(configuration.getIdTokenUri(), configuration);
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(configuration.getPrincipalKey());
         cache =
@@ -513,7 +514,8 @@ public class AzureAdWireMockLifecycleTest {
         OpenIdConnectConfiguration discoveryConfig = new OpenIdConnectConfiguration();
         DiscoveryClient discoveryClient =
                 new DiscoveryClient(
-                        authService + "/tenant-id/v2.0/.well-known/openid-configuration");
+                        authService + "/tenant-id/v2.0/.well-known/openid-configuration",
+                        discoveryConfig);
         discoveryClient.autofill(discoveryConfig);
 
         assertEquals(

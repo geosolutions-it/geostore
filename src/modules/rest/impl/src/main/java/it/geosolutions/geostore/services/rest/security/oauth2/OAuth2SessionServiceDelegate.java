@@ -40,7 +40,6 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -836,9 +835,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             OAuth2Configuration.Endpoint revokeEndpoint =
                     configuration.buildRevokeEndpoint(token, accessToken, configuration);
             if (revokeEndpoint != null) {
-                RestTemplate template = new RestTemplate();
-                template.setInterceptors(
-                        Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+                RestTemplate template = OAuth2Utils.protectedRestTemplate(configuration);
                 try {
                     ResponseEntity<String> responseEntity =
                             template.exchange(
@@ -862,9 +859,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             OAuth2Configuration.Endpoint logoutEndpoint =
                     configuration.buildLogoutEndpoint(token, accessToken, configuration);
             if (logoutEndpoint != null) {
-                RestTemplate template = new RestTemplate();
-                template.setInterceptors(
-                        Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
+                RestTemplate template = OAuth2Utils.protectedRestTemplate(configuration);
                 ResponseEntity<String> responseEntity =
                         template.exchange(
                                 logoutEndpoint.getUrl(),
@@ -988,9 +983,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * current access token is expired.
      */
     protected RestTemplate createRefreshRestTemplate() {
-        RestTemplate template = new RestTemplate();
-        template.setInterceptors(Collections.singletonList(OAuth2Utils.noKeepAliveInterceptor()));
-        return template;
+        OAuth2Configuration configuration = configuration();
+        return configuration != null
+                ? OAuth2Utils.protectedRestTemplate(configuration)
+                : OAuth2Utils.noKeepAliveRestTemplate();
     }
 
     @Override

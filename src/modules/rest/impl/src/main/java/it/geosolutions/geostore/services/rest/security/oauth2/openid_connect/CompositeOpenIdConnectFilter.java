@@ -128,7 +128,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
             // Create per-provider components
             OpenIdConnectTokenServices tokenServices =
-                    new OpenIdConnectTokenServices(config.getPrincipalKey());
+                    new OpenIdConnectTokenServices(config.getPrincipalKey(), config);
             GeoStoreOAuthRestTemplate restTemplate =
                     OpenIdConnectRestTemplateFactory.create(
                             config, new DefaultAccessTokenRequest());
@@ -143,7 +143,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                 jwksUri = config.getJwkURI();
             }
             if (jwksUri != null && !jwksUri.isEmpty()) {
-                jwksKeyProvider = new JwksRsaKeyProvider(jwksUri);
+                jwksKeyProvider = new JwksRsaKeyProvider(jwksUri, config);
             }
 
             MultiTokenValidator validator =

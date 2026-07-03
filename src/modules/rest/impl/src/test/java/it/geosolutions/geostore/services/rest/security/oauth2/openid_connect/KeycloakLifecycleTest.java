@@ -135,7 +135,8 @@ public class KeycloakLifecycleTest {
         GeoStoreOAuthRestTemplate restTemplate =
                 OpenIdConnectRestTemplateFactory.create(
                         configuration, new DefaultAccessTokenRequest());
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(configuration.getIdTokenUri());
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(configuration.getIdTokenUri(), configuration);
         OpenIdConnectTokenServices tokenServices =
                 new OpenIdConnectTokenServices(configuration.getPrincipalKey());
         cache =
@@ -239,7 +240,8 @@ public class KeycloakLifecycleTest {
 
         OpenIdConnectConfiguration discoveryConfig = new OpenIdConnectConfiguration();
         DiscoveryClient discoveryClient =
-                new DiscoveryClient(realmUrl + "/.well-known/openid-configuration");
+                new DiscoveryClient(
+                        realmUrl + "/.well-known/openid-configuration", discoveryConfig);
         discoveryClient.autofill(discoveryConfig);
 
         assertEquals(
