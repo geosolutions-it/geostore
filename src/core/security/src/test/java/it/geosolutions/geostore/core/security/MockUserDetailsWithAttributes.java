@@ -1,9 +1,10 @@
 package it.geosolutions.geostore.core.security;
 
+import org.springframework.security.core.GrantedAuthority;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.security.core.GrantedAuthority;
 
 public class MockUserDetailsWithAttributes implements UserDetailsWithAttributes {
 

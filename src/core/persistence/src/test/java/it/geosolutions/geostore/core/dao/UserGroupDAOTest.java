@@ -21,18 +21,22 @@ package it.geosolutions.geostore.core.dao;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
+
 import jakarta.persistence.PersistenceException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Class UserGroupDAOTest.
@@ -44,7 +48,9 @@ public class UserGroupDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(UserGroupDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistUserGroup() throws Exception {
 

@@ -31,6 +31,7 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.UserSessionService;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;

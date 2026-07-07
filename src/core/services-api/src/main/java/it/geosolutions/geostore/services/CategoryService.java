@@ -31,6 +31,7 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+
 import java.util.List;
 
 /**

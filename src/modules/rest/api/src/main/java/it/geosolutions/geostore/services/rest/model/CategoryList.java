@@ -29,8 +29,10 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.Category;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -47,18 +49,24 @@ public class CategoryList implements Iterable<Category> {
 
     public CategoryList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public CategoryList(List<Category> list) {
         this.list = list;
     }
 
-    /** @return List<Category> */
+    /**
+     * @return List<Category>
+     */
     @XmlElement(name = "Category")
     public List<Category> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<Category> list) {
         this.list = list;
     }

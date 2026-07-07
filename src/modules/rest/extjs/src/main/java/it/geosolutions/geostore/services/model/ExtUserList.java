@@ -29,9 +29,11 @@
 package it.geosolutions.geostore.services.model;
 
 import it.geosolutions.geostore.core.model.User;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.util.List;
 
 /**
@@ -48,30 +50,40 @@ public class ExtUserList {
 
     public ExtUserList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public ExtUserList(long count, List<User> list) {
         this.count = count;
         this.list = list;
     }
 
-    /** @return the count */
+    /**
+     * @return the count
+     */
     @XmlElement(name = "UserCount")
     public long getCount() {
         return count;
     }
 
-    /** @param count the count to set */
+    /**
+     * @param count the count to set
+     */
     public void setCount(long count) {
         this.count = count;
     }
 
-    /** @return List<ShortResource> */
+    /**
+     * @return List<ShortResource>
+     */
     @XmlElement(name = "User")
     public List<User> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<User> list) {
         this.list = list;
     }

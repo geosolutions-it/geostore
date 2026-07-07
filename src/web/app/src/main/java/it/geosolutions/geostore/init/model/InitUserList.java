@@ -28,8 +28,10 @@
 package it.geosolutions.geostore.init.model;
 
 import it.geosolutions.geostore.core.model.User;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -46,18 +48,24 @@ public class InitUserList implements Iterable<User> {
 
     public InitUserList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public InitUserList(List<User> list) {
         this.list = list;
     }
 
-    /** @return List<Category> */
+    /**
+     * @return List<Category>
+     */
     @XmlElement(name = "User")
     public List<User> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<User> list) {
         this.list = list;
     }

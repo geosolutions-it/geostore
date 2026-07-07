@@ -18,14 +18,17 @@ package it.geosolutions.geostore.services.rest.utils;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import org.apache.cxf.jaxrs.impl.MetadataMap;
 import org.apache.cxf.message.Message;
 import org.apache.cxf.message.MessageImpl;
 import org.junit.Test;
 
-/** @author Emanuele Tajariol (etj at geo-solutions.it) */
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+
+/**
+ * @author Emanuele Tajariol (etj at geo-solutions.it)
+ */
 public class FixedCacheControlOutInterceptorTest {
 
     @Test

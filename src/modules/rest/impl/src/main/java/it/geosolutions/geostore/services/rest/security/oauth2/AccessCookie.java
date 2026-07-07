@@ -29,6 +29,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.NewCookie;
+
 import java.util.Date;
 
 /** Cookie class to allow an easy setting of the SameSite cookie part. */

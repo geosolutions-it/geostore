@@ -19,15 +19,20 @@
 package it.geosolutions.geostore.services.providers;
 
 import jakarta.ws.rs.core.MediaType;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+
 import junit.framework.TestCase;
+
 import org.jdom2.JDOMException;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-/** @author Lorenzo Natali, GeoSolutions S.a.s. */
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+/**
+ * @author Lorenzo Natali, GeoSolutions S.a.s.
+ */
 public class StringConversionTest extends TestCase {
     final String TEST_STRING = "àòèòù";
 

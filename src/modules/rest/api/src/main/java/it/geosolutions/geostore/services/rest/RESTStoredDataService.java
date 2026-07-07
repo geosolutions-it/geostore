@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services.rest;
 
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -34,6 +35,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+
 import org.apache.cxf.jaxrs.ext.multipart.Multipart;
 import org.springframework.security.access.annotation.Secured;
 
@@ -66,7 +68,9 @@ public interface RESTStoredDataService {
             @Context SecurityContext sc, @PathParam("id") long id, @Multipart("data") String data)
             throws NotFoundWebEx;
 
-    /** @return StoredDataList */
+    /**
+     * @return StoredDataList
+     */
     // @GET
     // @Path("/")
     // @Produces({MediaType.TEXT_PLAIN, MediaType.TEXT_XML, MediaType.APPLICATION_JSON})

@@ -35,17 +35,22 @@ import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.ShortResourceList;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.model.UserList;
+
 import jakarta.ws.rs.core.SecurityContext;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-/** @author DamianoG */
+/**
+ * @author DamianoG
+ */
 public class RESTUserGroupServiceImpl implements RESTUserGroupService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTUserGroupServiceImpl.class);
@@ -53,7 +58,9 @@ public class RESTUserGroupServiceImpl implements RESTUserGroupService {
     private UserGroupService userGroupService;
     private UserService userService;
 
-    /** @param userGroupService */
+    /**
+     * @param userGroupService
+     */
     public void setUserGroupService(UserGroupService userGroupService) {
         this.userGroupService = userGroupService;
     }

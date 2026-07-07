@@ -9,6 +9,7 @@ import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class SessionServiceDelegateImpl implements SessionServiceDelegate {

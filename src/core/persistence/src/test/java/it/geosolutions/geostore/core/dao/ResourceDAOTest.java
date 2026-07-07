@@ -24,8 +24,10 @@ import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
-import java.util.Date;
+
 import org.junit.Test;
+
+import java.util.Date;
 
 /**
  * Class ResourceDAOTest

@@ -79,7 +79,9 @@ public abstract class AbstractGeoStorePasswordEncoder implements GeoStorePasswor
     /** Creates the encoder instance used when source is a char array. */
     protected abstract CharArrayPasswordEncoder createCharEncoder();
 
-    /** @return the concrete {@link InternalPasswordEncoder} object */
+    /**
+     * @return the concrete {@link InternalPasswordEncoder} object
+     */
     protected final InternalPasswordEncoder getActualEncoder() {
         return null;
     }

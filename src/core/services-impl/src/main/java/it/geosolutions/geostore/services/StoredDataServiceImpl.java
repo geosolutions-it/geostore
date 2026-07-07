@@ -27,11 +27,13 @@ import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.Date;
-import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Class StoredDataServiceImpl.
@@ -50,12 +52,16 @@ public class StoredDataServiceImpl implements StoredDataService {
 
     private SecurityDAO securityDAO;
 
-    /** @param resourceDAO the resourceDAO to set */
+    /**
+     * @param resourceDAO the resourceDAO to set
+     */
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
-    /** @param storedDataDAO */
+    /**
+     * @param storedDataDAO
+     */
     public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
         this.storedDataDAO = storedDataDAO;
     }

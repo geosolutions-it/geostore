@@ -20,11 +20,14 @@
 package it.geosolutions.geostore.core.model.enums;
 
 import it.geosolutions.geostore.core.model.UserGroup;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-/** @author DamianoG */
+/**
+ * @author DamianoG
+ */
 public enum GroupReservedNames {
     EVERYONE("everyone");
 

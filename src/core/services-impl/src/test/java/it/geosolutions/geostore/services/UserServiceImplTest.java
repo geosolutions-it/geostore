@@ -27,12 +27,14 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.UUID;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.UUID;
 
 /**
  * Class UserServiceImplTest.

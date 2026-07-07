@@ -1,11 +1,13 @@
 package it.geosolutions.geostore.services.rest.security;
 
 import it.geosolutions.geostore.core.model.enums.Role;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.BeanNameAware;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.BeanNameAware;
 
 /**
  * Base configuration class for authentication mechanisms that rely on external Identity providers.
@@ -95,7 +97,9 @@ public abstract class IdPConfiguration implements BeanNameAware {
         this.internalRedirectUri = internalRedirectUri;
     }
 
-    /** @return the redirect URI. */
+    /**
+     * @return the redirect URI.
+     */
     public String getRedirectUri() {
         return redirectUri;
     }
@@ -130,7 +134,9 @@ public abstract class IdPConfiguration implements BeanNameAware {
         return defaultGroups;
     }
 
-    /** @param defaultGroups comma-separated list of group names; blank entries are discarded. */
+    /**
+     * @param defaultGroups comma-separated list of group names; blank entries are discarded.
+     */
     public void setDefaultGroups(String defaultGroups) {
         if (StringUtils.isBlank(defaultGroups)) {
             this.defaultGroups = Collections.emptyList();

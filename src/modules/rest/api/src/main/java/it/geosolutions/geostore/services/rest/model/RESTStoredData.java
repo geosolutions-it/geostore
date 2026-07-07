@@ -29,6 +29,7 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 
 /**
@@ -55,22 +56,30 @@ public class RESTStoredData implements Serializable {
         this.data = data;
     }
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(long id) {
         this.id = id;
     }
 
-    /** @return the data */
+    /**
+     * @return the data
+     */
     public String getData() {
         return data;
     }
 
-    /** @param data the data to set */
+    /**
+     * @param data the data to set
+     */
     public void setData(String data) {
         this.data = data;
     }

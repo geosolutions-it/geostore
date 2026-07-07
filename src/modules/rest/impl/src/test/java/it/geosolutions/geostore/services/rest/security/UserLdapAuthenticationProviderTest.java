@@ -28,8 +28,7 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.utils.MockedUserGroupService;
 import it.geosolutions.geostore.services.rest.utils.MockedUserService;
-import java.util.Collections;
-import java.util.Set;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -42,6 +41,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.Collections;
+import java.util.Set;
 
 public class UserLdapAuthenticationProviderTest {
     private static final String TEST_GROUP = "testgroup";

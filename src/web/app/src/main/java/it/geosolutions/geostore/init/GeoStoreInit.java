@@ -35,15 +35,20 @@ import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
+
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
-import java.io.File;
-import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
-/** @author ETj (etj at geo-solutions.it) */
+import java.io.File;
+import java.util.List;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class GeoStoreInit implements InitializingBean {
 
     private static final Logger LOGGER = LogManager.getLogger(GeoStoreInit.class);
@@ -62,6 +67,7 @@ public class GeoStoreInit implements InitializingBean {
 
     /** The password encoder to be set as default */
     protected GeoStorePasswordEncoder passwordEncoder = null;
+
     /** If set to true, the recoding of the password is automatic */
     protected boolean allowPasswordRecoding = false;
 

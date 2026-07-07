@@ -27,12 +27,13 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
 
 public final class AuditingOutputTest extends AuditingTestsBase {
 

@@ -29,13 +29,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpEntity;
@@ -46,6 +40,14 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * This class represents the OAuth2/OpenID Connect configuration for GeoStore. It includes settings
@@ -280,7 +282,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         return refreshUri.toString();
     }
 
-    /** @return the clientId. */
+    /**
+     * @return the clientId.
+     */
     public String getClientId() {
         return clientId;
     }
@@ -294,7 +298,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.clientId = cliendId;
     }
 
-    /** @return the client secret. */
+    /**
+     * @return the client secret.
+     */
     public String getClientSecret() {
         return clientSecret;
     }
@@ -308,7 +314,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.clientSecret = clientSecret;
     }
 
-    /** @return the access token uri */
+    /**
+     * @return the access token uri
+     */
     public String getAccessTokenUri() {
         return accessTokenUri;
     }
@@ -322,7 +330,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.accessTokenUri = accessTokenUri;
     }
 
-    /** @return the authorization URI. */
+    /**
+     * @return the authorization URI.
+     */
     public String getAuthorizationUri() {
         return authorizationUri;
     }
@@ -336,7 +346,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.authorizationUri = authorizationUri;
     }
 
-    /** @return the check token endpoint URL. */
+    /**
+     * @return the check token endpoint URL.
+     */
     public String getCheckTokenEndpointUrl() {
         return checkTokenEndpointUrl;
     }
@@ -350,7 +362,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.checkTokenEndpointUrl = checkTokenEndpointUrl;
     }
 
-    /** @return the logout URI. */
+    /**
+     * @return the logout URI.
+     */
     public String getLogoutUri() {
         return logoutUri;
     }
@@ -364,7 +378,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.logoutUri = logoutUri;
     }
 
-    /** @return */
+    /**
+     * @return
+     */
     public boolean isGlobalLogoutEnabled() {
         return globalLogoutEnabled;
     }
@@ -396,7 +412,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.scopes = scopes;
     }
 
-    /** @return the id Token URI. */
+    /**
+     * @return the id Token URI.
+     */
     public String getIdTokenUri() {
         return idTokenUri;
     }
@@ -410,7 +428,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.idTokenUri = idTokenUri;
     }
 
-    /** @return the Discovery URL. */
+    /**
+     * @return the Discovery URL.
+     */
     public String getDiscoveryUrl() {
         return discoveryUrl;
     }
@@ -437,7 +457,9 @@ public class OAuth2Configuration extends IdPConfiguration {
                 || accessTokenUri == null;
     }
 
-    /** @return the revoke endpoint. */
+    /**
+     * @return the revoke endpoint.
+     */
     public String getRevokeEndpoint() {
         return revokeEndpoint;
     }
@@ -451,7 +473,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.revokeEndpoint = revokeEndpoint;
     }
 
-    /** @return the token introspection endpoint (RFC 7662). */
+    /**
+     * @return the token introspection endpoint (RFC 7662).
+     */
     public String getIntrospectionEndpoint() {
         return introspectionEndpoint;
     }
@@ -557,7 +581,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         return headers;
     }
 
-    /** @return true if redirect to authorization is active always. False otherwise. */
+    /**
+     * @return true if redirect to authorization is active always. False otherwise.
+     */
     public boolean isEnableRedirectEntryPoint() {
         return enableRedirectEntryPoint;
     }
@@ -627,7 +653,9 @@ public class OAuth2Configuration extends IdPConfiguration {
         this.rolesClaim = rolesClaim != null && !rolesClaim.isEmpty() ? rolesClaim.trim() : null;
     }
 
-    /** @return the groups claim name. */
+    /**
+     * @return the groups claim name.
+     */
     public String getGroupsClaim() {
         return groupsClaim != null ? groupsClaim.trim() : null;
     }
@@ -922,17 +950,23 @@ public class OAuth2Configuration extends IdPConfiguration {
             this.requestEntity = requestEntity;
         }
 
-        /** @return the url. */
+        /**
+         * @return the url.
+         */
         public String getUrl() {
             return url;
         }
 
-        /** @return the HttpMethod. */
+        /**
+         * @return the HttpMethod.
+         */
         public HttpMethod getMethod() {
             return method;
         }
 
-        /** @return */
+        /**
+         * @return
+         */
         public HttpEntity<?> getRequestEntity() {
             return requestEntity;
         }

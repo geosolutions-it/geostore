@@ -35,6 +35,7 @@ import it.geosolutions.geostore.services.dto.search.GroupFilter;
 import it.geosolutions.geostore.services.dto.search.SearchFilter;
 import it.geosolutions.geostore.services.dto.search.SearchOperator;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

@@ -19,7 +19,9 @@
  */
 package it.geosolutions.geostore.services.exception;
 
-/** @author ETj (etj at geo-solutions.it) */
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class InternalErrorServiceEx extends GeoStoreServiceException {
 
     /** The Constant serialVersionUID. */

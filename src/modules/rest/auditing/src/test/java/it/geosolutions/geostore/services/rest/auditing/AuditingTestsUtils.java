@@ -27,6 +27,9 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
+import org.apache.commons.io.FileUtils;
+import org.junit.Assert;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
@@ -34,8 +37,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
 
 final class AuditingTestsUtils {
 

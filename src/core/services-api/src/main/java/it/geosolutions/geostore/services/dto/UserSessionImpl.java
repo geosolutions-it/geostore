@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.dto;
 
 import it.geosolutions.geostore.core.model.User;
+
 import java.util.Calendar;
 
 /**

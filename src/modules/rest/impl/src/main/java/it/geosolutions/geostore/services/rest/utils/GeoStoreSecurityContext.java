@@ -20,10 +20,12 @@
 package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.enums.Role;
-import java.security.Principal;
+
 import org.apache.cxf.security.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.security.Principal;
 
 /**
  * Class GeoStoreSecurityContext.
@@ -37,7 +39,9 @@ public class GeoStoreSecurityContext implements SecurityContext {
 
     private GeoStorePrincipal principal;
 
-    /** @param principal */
+    /**
+     * @param principal
+     */
     public void setPrincipal(GeoStorePrincipal principal) {
         this.principal = principal;
     }

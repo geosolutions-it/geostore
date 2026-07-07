@@ -22,16 +22,19 @@ package it.geosolutions.geostore.core.dao;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.enums.DataType;
-import java.util.Date;
-import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.Date;
+import java.util.List;
 
 /**
  * Class AttributeDAOTest
@@ -43,7 +46,9 @@ public class AttributeDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(AttributeDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistAttribute() throws Exception {
 
@@ -182,7 +187,9 @@ public class AttributeDAOTest extends BaseDAOTest {
         }
     }
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testSearchAttribute() throws Exception {
 

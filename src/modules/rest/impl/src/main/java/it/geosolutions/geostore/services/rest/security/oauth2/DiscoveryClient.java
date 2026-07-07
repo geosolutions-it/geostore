@@ -27,10 +27,11 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
-import java.util.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.*;
 
 /**
  * DiscoveryClient to perform a discovery request and set the value to the OAuth2Configuration

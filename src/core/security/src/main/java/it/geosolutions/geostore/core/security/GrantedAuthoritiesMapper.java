@@ -27,8 +27,9 @@
  */
 package it.geosolutions.geostore.core.security;
 
-import java.util.Collection;
 import org.springframework.security.core.GrantedAuthority;
+
+import java.util.Collection;
 
 /**
  * Allows mapping authorities fetched from a Populator, following specific rules. Each

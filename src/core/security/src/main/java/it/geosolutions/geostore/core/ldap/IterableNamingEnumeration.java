@@ -1,6 +1,7 @@
 package it.geosolutions.geostore.core.ldap;
 
 import java.util.Iterator;
+
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 

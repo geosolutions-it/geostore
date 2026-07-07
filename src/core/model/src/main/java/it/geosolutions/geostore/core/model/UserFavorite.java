@@ -9,8 +9,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.io.Serializable;
+
 import org.hibernate.annotations.Check;
+
+import java.io.Serializable;
 
 @Entity(name = "Favorite")
 @Table(

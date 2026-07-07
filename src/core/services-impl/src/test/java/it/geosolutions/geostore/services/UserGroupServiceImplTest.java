@@ -19,8 +19,9 @@
  */
 package it.geosolutions.geostore.services;
 
-import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertThrows;
+
+import static java.util.stream.Collectors.toList;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Category;
@@ -37,11 +38,15 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedResourceNameServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
-import java.util.*;
-import java.util.stream.Collectors;
+
 import org.junit.Test;
 
-/** @author DamianoG */
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @author DamianoG
+ */
 public class UserGroupServiceImplTest extends ServiceTestBase {
 
     @Test

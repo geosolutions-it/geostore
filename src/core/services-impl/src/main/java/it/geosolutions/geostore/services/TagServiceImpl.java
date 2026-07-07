@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.TagDAO;
 import it.geosolutions.geostore.core.model.Resource;
@@ -27,10 +28,12 @@ import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.DuplicatedTagNameServiceException;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 public class TagServiceImpl implements TagService {
 

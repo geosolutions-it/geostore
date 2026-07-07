@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.*;
 import it.geosolutions.geostore.core.model.*;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
@@ -29,14 +30,18 @@ import it.geosolutions.geostore.services.dto.ShortResource;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
-import java.util.*;
-import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
 
-/** @author DamianoG */
+import java.util.*;
+import java.util.stream.Collectors;
+
+/**
+ * @author DamianoG
+ */
 @Transactional(value = "geostoreTransactionManager", readOnly = true)
 public class UserGroupServiceImpl implements UserGroupService {
 
@@ -52,22 +57,30 @@ public class UserGroupServiceImpl implements UserGroupService {
 
     private UserGroupAttributeDAO userGroupAttributeDAO;
 
-    /** @param userGroupDAO the userGroupDAO to set */
+    /**
+     * @param userGroupDAO the userGroupDAO to set
+     */
     public void setUserGroupDAO(UserGroupDAO userGroupDAO) {
         this.userGroupDAO = userGroupDAO;
     }
 
-    /** @param userDAO the userDAO to set */
+    /**
+     * @param userDAO the userDAO to set
+     */
     public void setUserDAO(UserDAO userDAO) {
         this.userDAO = userDAO;
     }
 
-    /** @param resourceDAO the resourceDAO to set */
+    /**
+     * @param resourceDAO the resourceDAO to set
+     */
     public void setResourceDAO(ResourceDAO resourceDAO) {
         this.resourceDAO = resourceDAO;
     }
 
-    /** @param securityDAO the securityDAO to set */
+    /**
+     * @param securityDAO the securityDAO to set
+     */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }

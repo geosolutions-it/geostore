@@ -28,11 +28,13 @@
 package it.geosolutions.geostore.core.security.ldap;
 
 import it.geosolutions.geostore.core.security.UserDetailsWithAttributes;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.ldap.userdetails.LdapUserDetails;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.ldap.userdetails.LdapUserDetails;
 
 /**
  * Extends LdapUserDetails with the ability to store attributes coming from Ldap.

@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services.dto;
 
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.enums.DataType;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -72,12 +73,16 @@ public class ShortAttribute implements Serializable {
         return new ShortAttribute(name, text, DataType.STRING);
     }
 
-    /** @return the attribute */
+    /**
+     * @return the attribute
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the attribute to set */
+    /**
+     * @param name the attribute to set
+     */
     public void setName(String name) {
         this.name = name;
     }
@@ -86,17 +91,23 @@ public class ShortAttribute implements Serializable {
         return this.value;
     }
 
-    /** @param value */
+    /**
+     * @param value
+     */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /** @return the type */
+    /**
+     * @return the type
+     */
     public DataType getType() {
         return type;
     }
 
-    /** @param type the type to set */
+    /**
+     * @param type the type to set
+     */
     public void setType(DataType type) {
         this.type = type;
     }

@@ -46,13 +46,15 @@ import jakarta.persistence.UniqueConstraint;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
+import org.glassfish.jaxb.runtime.CycleRecoverable;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import org.glassfish.jaxb.runtime.CycleRecoverable;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 /**
  * Class Resource.
@@ -130,135 +132,187 @@ public class Resource implements Serializable, CycleRecoverable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.ALL)
     private Set<UserFavorite> favorites;
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the description */
+    /**
+     * @return the description
+     */
     public String getDescription() {
         return description;
     }
 
-    /** @param description the description to set */
+    /**
+     * @param description the description to set
+     */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /** @return the creation */
+    /**
+     * @return the creation
+     */
     public Date getCreation() {
         return creation;
     }
 
-    /** @param creation the creation to set */
+    /**
+     * @param creation the creation to set
+     */
     public void setCreation(Date creation) {
         this.creation = creation;
     }
 
-    /** @return the lastUpdate */
+    /**
+     * @return the lastUpdate
+     */
     public Date getLastUpdate() {
         return lastUpdate;
     }
 
-    /** @param lastUpdate the lastUpdate to set */
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
     }
 
-    /** @return the creator username */
+    /**
+     * @return the creator username
+     */
     public String getCreator() {
         return creator;
     }
 
-    /** @param creator the creator username */
+    /**
+     * @param creator the creator username
+     */
     public void setCreator(String creator) {
         this.creator = creator;
     }
 
-    /** @return the editor username */
+    /**
+     * @return the editor username
+     */
     public String getEditor() {
         return editor;
     }
 
-    /** @param editor the creator username */
+    /**
+     * @param editor the creator username
+     */
     public void setEditor(String editor) {
         this.editor = editor;
     }
 
-    /** @return the advertised */
+    /**
+     * @return the advertised
+     */
     public Boolean isAdvertised() {
         return advertised;
     }
 
-    /** @param advertised the advertised to set */
+    /**
+     * @param advertised the advertised to set
+     */
     public void setAdvertised(Boolean advertised) {
         this.advertised = advertised;
     }
 
-    /** @return the metadata */
+    /**
+     * @return the metadata
+     */
     public String getMetadata() {
         return metadata;
     }
 
-    /** @param metadata the metadata to set */
+    /**
+     * @param metadata the metadata to set
+     */
     public void setMetadata(String metadata) {
         this.metadata = metadata;
     }
 
-    /** @return the attributes */
+    /**
+     * @return the attributes
+     */
     @XmlElementWrapper(name = "Attributes")
     public List<Attribute> getAttribute() {
         return attribute;
     }
 
-    /** @param attribute the attribute to set */
+    /**
+     * @param attribute the attribute to set
+     */
     public void setAttribute(List<Attribute> attribute) {
         this.attribute = attribute;
     }
 
-    /** @return the data */
+    /**
+     * @return the data
+     */
     // @XmlTransient
     public StoredData getData() {
         return data;
     }
 
-    /** @param data the data to set */
+    /**
+     * @param data the data to set
+     */
     public void setData(StoredData data) {
         this.data = data;
     }
 
-    /** @return the category */
+    /**
+     * @return the category
+     */
     public Category getCategory() {
         return category;
     }
 
-    /** @param category the category to set */
+    /**
+     * @param category the category to set
+     */
     public void setCategory(Category category) {
         this.category = category;
     }
 
-    /** @return the security */
+    /**
+     * @return the security
+     */
     @XmlTransient
     public List<SecurityRule> getSecurity() {
         return security;
     }
 
-    /** @param security the security to set */
+    /**
+     * @param security the security to set
+     */
     public void setSecurity(List<SecurityRule> security) {
         this.security = security;
     }

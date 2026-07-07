@@ -49,6 +49,7 @@ public class PwEncoderTest {
         testString("topolino");
         testString("");
     }
+
     /**
      * Test encode and decode string
      *

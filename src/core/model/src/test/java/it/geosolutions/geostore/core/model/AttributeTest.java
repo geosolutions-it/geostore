@@ -22,10 +22,14 @@ package it.geosolutions.geostore.core.model;
 import static org.junit.Assert.*;
 
 import it.geosolutions.geostore.core.model.enums.DataType;
-import java.util.Date;
+
 import org.junit.Test;
 
-/** @author ETj (etj at geo-solutions.it) */
+import java.util.Date;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class AttributeTest {
 
     private static final Marshaler<Attribute> MARSHALER = new Marshaler<Attribute>(Attribute.class);

@@ -30,16 +30,20 @@ package it.geosolutions.geostore.services.rest.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import it.geosolutions.geostore.services.rest.RESTDiagnosticsService;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
-import java.time.Instant;
-import java.util.Collection;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
+
+import java.time.Instant;
+import java.util.Collection;
 
 /** Admin-only diagnostics endpoint for runtime observability. */
 public class RESTDiagnosticsServiceImpl extends RESTServiceImpl implements RESTDiagnosticsService {

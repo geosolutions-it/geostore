@@ -28,6 +28,7 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
+
 import org.springframework.context.annotation.Configuration;
 
 /**

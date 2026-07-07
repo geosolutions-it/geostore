@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
@@ -65,15 +66,18 @@ import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.ShortAttributeList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 import it.geosolutions.geostore.services.rest.model.TagList;
+
 import jakarta.ws.rs.core.SecurityContext;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTExtJsServiceImpl.
@@ -801,52 +805,72 @@ public class RESTExtJsServiceImpl extends RESTServiceImpl implements RESTExtJsSe
             }
         }
 
-        /** @return true if the logged user is owner of the resource and false otherwise */
+        /**
+         * @return true if the logged user is owner of the resource and false otherwise
+         */
         boolean isCanDelete() {
             return canDelete;
         }
 
-        /** @return true if the logged user is owner of the resource and false otherwise */
+        /**
+         * @return true if the logged user is owner of the resource and false otherwise
+         */
         boolean isCanEdit() {
             return canEdit;
         }
 
-        /** @return data creation */
+        /**
+         * @return data creation
+         */
         Date getCreation() {
             return sr != null ? sr.getCreation() : r.getCreation();
         }
 
-        /** @return last update */
+        /**
+         * @return last update
+         */
         Date getLastUpdate() {
             return sr != null ? sr.getLastUpdate() : r.getLastUpdate();
         }
 
-        /** @return resource description */
+        /**
+         * @return resource description
+         */
         String getDescription() {
             return sr != null ? sr.getDescription() : r.getDescription();
         }
 
-        /** @return resource id */
+        /**
+         * @return resource id
+         */
         long getId() {
             return sr != null ? sr.getId() : r.getId();
         }
 
-        /** @return resource name */
+        /**
+         * @return resource name
+         */
         String getName() {
             return sr != null ? sr.getName() : r.getName();
         }
 
-        /** @return resource attributes if contains */
+        /**
+         * @return resource attributes if contains
+         */
         List<Attribute> getAttribute() {
             return r != null ? r.getAttribute() : null;
         }
 
-        /** @return true if there are a user logged */
+        /**
+         * @return true if there are a user logged
+         */
         public Boolean isCanCopy() {
             return authUser != null;
         }
 
-        /** @return resource owner */
+        /**
+         * @return resource owner
+         */
         public String getOwner() {
             return owner;
         }

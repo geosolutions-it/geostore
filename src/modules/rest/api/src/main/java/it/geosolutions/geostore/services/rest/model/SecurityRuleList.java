@@ -29,8 +29,10 @@
 package it.geosolutions.geostore.services.rest.model;
 
 import it.geosolutions.geostore.core.model.SecurityRule;
+
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -47,7 +49,9 @@ public class SecurityRuleList implements Iterable<RESTSecurityRule> {
 
     public SecurityRuleList() {}
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public SecurityRuleList(List<SecurityRule> list) {
         if (list == null) {
             this.list = null;
@@ -57,13 +61,17 @@ public class SecurityRuleList implements Iterable<RESTSecurityRule> {
         this.list = list.stream().map(RESTSecurityRule::new).toList();
     }
 
-    /** @return List<Category> */
+    /**
+     * @return List<Category>
+     */
     @XmlElement(name = "SecurityRule")
     public List<RESTSecurityRule> getList() {
         return list;
     }
 
-    /** @param list */
+    /**
+     * @param list
+     */
     public void setList(List<RESTSecurityRule> list) {
         this.list = list;
     }

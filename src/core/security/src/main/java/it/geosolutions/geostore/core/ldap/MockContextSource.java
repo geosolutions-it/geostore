@@ -1,8 +1,9 @@
 package it.geosolutions.geostore.core.ldap;
 
-import javax.naming.directory.DirContext;
 import org.springframework.ldap.NamingException;
 import org.springframework.ldap.core.ContextSource;
+
+import javax.naming.directory.DirContext;
 
 public class MockContextSource implements ContextSource {
 

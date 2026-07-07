@@ -22,7 +22,9 @@ package it.geosolutions.geostore.services.dto.search;
 import it.geosolutions.geostore.core.model.enums.DataType;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 
 /**
@@ -60,42 +62,58 @@ public class AttributeFilter extends SearchFilter implements Serializable {
         this.operator = operator;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the value */
+    /**
+     * @return the value
+     */
     public String getValue() {
         return value;
     }
 
-    /** @param value the value to set */
+    /**
+     * @param value the value to set
+     */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /** @return the type */
+    /**
+     * @return the type
+     */
     public DataType getType() {
         return type;
     }
 
-    /** @param type the type to set */
+    /**
+     * @param type the type to set
+     */
     public void setType(DataType type) {
         this.type = type;
     }
 
-    /** @return the operator */
+    /**
+     * @return the operator
+     */
     public SearchOperator getOperator() {
         return operator;
     }
 
-    /** @param operator the operator to set */
+    /**
+     * @param operator the operator to set
+     */
     public void setOperator(SearchOperator operator) {
         this.operator = operator;
     }

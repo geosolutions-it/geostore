@@ -20,8 +20,10 @@
 package it.geosolutions.geostore.core.dao;
 
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+
 import java.util.List;
 
 /**

@@ -21,6 +21,7 @@ package it.geosolutions.geostore.core.dao;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserFavorite;
+
 import java.util.List;
 
 public interface UserFavoriteDAO extends RestrictedGenericDAO<UserFavorite> {

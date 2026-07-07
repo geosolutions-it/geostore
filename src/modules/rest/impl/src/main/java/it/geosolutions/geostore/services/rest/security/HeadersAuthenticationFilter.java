@@ -33,14 +33,17 @@ import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.GrantedAuthoritiesMapper;
 import it.geosolutions.geostore.services.rest.utils.GroupMapper;
+
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.Set;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     public static final String DEFAULT_USERNAME_HEADER = "x-geostore-user";
@@ -55,6 +58,7 @@ public class HeadersAuthenticationFilter extends GeoStoreAuthenticationFilter {
     private boolean addEveryOneGroup = false;
 
     private GrantedAuthoritiesMapper authoritiesMapper;
+
     /** remove this prefix from groups header */
     private GroupMapper groupMapper = null;
 

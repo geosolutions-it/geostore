@@ -1,9 +1,12 @@
 package it.geosolutions.geostore.core.ldap;
 
+import org.springframework.ldap.core.DirContextOperations;
+
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.SortedSet;
+
 import javax.naming.Binding;
 import javax.naming.Context;
 import javax.naming.Name;
@@ -16,7 +19,6 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.ModificationItem;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
-import org.springframework.ldap.core.DirContextOperations;
 
 public class MockDirContextOperations implements DirContextOperations {
 

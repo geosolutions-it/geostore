@@ -27,10 +27,11 @@
  */
 package it.geosolutions.geostore.core.security;
 
-import java.util.Map;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.PropertyAccessor;
 import org.springframework.expression.TypedValue;
+
+import java.util.Map;
 
 /** Maps user attributes for a JSON object. */
 public class MapExpressionUserMapper extends ExpressionUserMapper {

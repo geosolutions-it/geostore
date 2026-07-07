@@ -23,7 +23,9 @@ package it.geosolutions.geostore.services.rest.utils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** @author Emanuele Tajariol (etj at geo-solutions.it) */
+/**
+ * @author Emanuele Tajariol (etj at geo-solutions.it)
+ */
 public class DataURIDecoder {
     public static final String DEFAULT_MEDIA_TYPE = "text/plain";
     public static final String DEFAULT_CHARSET = "US-ASCII";

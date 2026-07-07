@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.dto.UserSession;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -43,8 +44,10 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.SecurityContext;
-import java.text.ParseException;
+
 import org.springframework.security.access.annotation.Secured;
+
+import java.text.ParseException;
 
 public interface RESTSessionService {
 
@@ -122,6 +125,7 @@ public interface RESTSessionService {
             @PathParam("sessionId") String sessionId,
             @PathParam("refreshToken") String refreshToken)
             throws ParseException;
+
     /**
      * Removes the given session.
      *
@@ -139,6 +143,7 @@ public interface RESTSessionService {
     @Consumes({MediaType.APPLICATION_JSON})
     @Secured({"ROLE_ADMIN", "ROLE_USER", "ROLE_ANONYMOUS"})
     public SessionToken refresh(SessionToken token) throws ParseException;
+
     /**
      * Removes the given session.
      *

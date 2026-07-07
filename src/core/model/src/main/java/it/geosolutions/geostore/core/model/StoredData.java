@@ -37,6 +37,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 
 /**
@@ -66,13 +67,17 @@ public class StoredData implements Serializable {
     /** Instantiates a new instance. */
     public StoredData() {}
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(long id) {
         this.id = id;
     }
@@ -85,13 +90,17 @@ public class StoredData implements Serializable {
         this.data = data;
     }
 
-    /** @return the resource */
+    /**
+     * @return the resource
+     */
     @XmlTransient
     public Resource getResource() {
         return resource;
     }
 
-    /** @param resource the resource to set */
+    /**
+     * @param resource the resource to set
+     */
     public void setResource(Resource resource) {
         this.resource = resource;
     }

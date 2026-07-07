@@ -22,10 +22,13 @@ package it.geosolutions.geostore.core.model;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
 import org.junit.Test;
 
-/** @author ETj (etj at geo-solutions.it) */
+import java.util.Arrays;
+
+/**
+ * @author ETj (etj at geo-solutions.it)
+ */
 public class UserGroupTest {
 
     private static final Marshaler<UserGroup> MARSHALER = new Marshaler<UserGroup>(UserGroup.class);

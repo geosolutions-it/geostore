@@ -40,6 +40,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlTransient;
+
 import java.io.Serializable;
 
 /**
@@ -74,44 +75,60 @@ public class UserAttribute implements Serializable {
     @JoinColumn(foreignKey = @ForeignKey(name = "fk_uattrib_user"))
     private User user;
 
-    /** @return the id */
+    /**
+     * @return the id
+     */
     @XmlTransient
     public Long getId() {
         return id;
     }
 
-    /** @param id the id to set */
+    /**
+     * @param id the id to set
+     */
     public void setId(Long id) {
         this.id = id;
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the value */
+    /**
+     * @return the value
+     */
     public String getValue() {
         return value;
     }
 
-    /** @param value the value to set */
+    /**
+     * @param value the value to set
+     */
     public void setValue(String value) {
         this.value = value;
     }
 
-    /** @return the user */
+    /**
+     * @return the user
+     */
     @XmlTransient
     public User getUser() {
         return user;
     }
 
-    /** @param user the user to set */
+    /**
+     * @param user the user to set
+     */
     public void setUser(User user) {
         this.user = user;
     }

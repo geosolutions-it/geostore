@@ -24,14 +24,17 @@ import static org.junit.Assert.assertTrue;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.ldap.impl.UserGroupDAOImpl;
 import it.geosolutions.geostore.core.ldap.MockContextSource;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+
+import org.junit.Test;
+
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import org.junit.Test;
 
 public class UserGroupDAOTest extends BaseDAOTest {
 

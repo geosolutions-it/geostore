@@ -28,13 +28,15 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
-import java.util.Collections;
-import java.util.Map;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+import java.util.Map;
 
 /** Calls the OIDC userinfo endpoint to resolve token claims. */
 public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {

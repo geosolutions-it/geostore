@@ -20,16 +20,19 @@
 package it.geosolutions.geostore.services;
 
 import com.googlecode.genericdao.search.Search;
+
 import it.geosolutions.geostore.core.dao.CategoryDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
-import java.util.List;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * Class CategoryServiceImpl.
@@ -47,12 +50,16 @@ public class CategoryServiceImpl implements CategoryService {
 
     private SecurityDAO securityDAO;
 
-    /** @param securityDAO the securityDAO to set */
+    /**
+     * @param securityDAO the securityDAO to set
+     */
     public void setSecurityDAO(SecurityDAO securityDAO) {
         this.securityDAO = securityDAO;
     }
 
-    /** @param categoryDAO the categoryDAO to set */
+    /**
+     * @param categoryDAO the categoryDAO to set
+     */
     public void setCategoryDAO(CategoryDAO categoryDAO) {
         this.categoryDAO = categoryDAO;
     }

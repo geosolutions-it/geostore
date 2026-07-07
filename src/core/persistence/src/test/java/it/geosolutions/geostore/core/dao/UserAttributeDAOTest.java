@@ -23,11 +23,13 @@ import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import java.util.HashSet;
-import java.util.Set;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Class RoleDAOTest.
@@ -38,7 +40,9 @@ public class UserAttributeDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(UserAttributeDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistRole() throws Exception {
 

@@ -20,6 +20,7 @@
 package it.geosolutions.geostore.services;
 
 import it.geosolutions.geostore.core.model.Category;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

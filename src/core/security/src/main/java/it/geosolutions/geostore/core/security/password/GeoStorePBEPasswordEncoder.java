@@ -24,11 +24,12 @@ import static it.geosolutions.geostore.core.security.password.SecurityUtils.scra
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toBytes;
 import static it.geosolutions.geostore.core.security.password.SecurityUtils.toChars;
 
+import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;
-import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 
 /**
  * Password Encoder using symmetric encryption

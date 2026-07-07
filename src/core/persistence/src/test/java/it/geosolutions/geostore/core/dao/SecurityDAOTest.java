@@ -25,10 +25,12 @@ import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.Role;
-import java.util.Date;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.Test;
+
+import java.util.Date;
 
 /**
  * Class SecurityDAOTest.
@@ -39,7 +41,9 @@ public class SecurityDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(SecurityDAOTest.class);
 
-    /** @throws Exception */
+    /**
+     * @throws Exception
+     */
     @Test
     public void testPersistSecurity() throws Exception {
         final String NAME = "NAME";

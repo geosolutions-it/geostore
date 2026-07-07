@@ -21,7 +21,9 @@ package it.geosolutions.geostore.services.dto.search;
 
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.InternalErrorServiceEx;
+
 import jakarta.xml.bind.annotation.XmlRootElement;
+
 import java.io.Serializable;
 
 /**
@@ -48,22 +50,30 @@ public class CategoryFilter extends SearchFilter implements Serializable {
         setOperator(operator);
     }
 
-    /** @return the name */
+    /**
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
-    /** @param name the name to set */
+    /**
+     * @param name the name to set
+     */
     public void setName(String name) {
         this.name = name;
     }
 
-    /** @return the operator */
+    /**
+     * @return the operator
+     */
     public SearchOperator getOperator() {
         return operator;
     }
 
-    /** @param operator the operator to set */
+    /**
+     * @param operator the operator to set
+     */
     public final void setOperator(SearchOperator operator) {
         checkOperator(operator);
         this.operator = operator;

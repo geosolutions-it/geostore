@@ -22,10 +22,7 @@ package it.geosolutions.geostore.core.dao.ldap.impl;
 
 import com.googlecode.genericdao.search.Filter;
 import com.googlecode.genericdao.search.ISearch;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import javax.naming.directory.DirContext;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
 import org.springframework.expression.ExpressionParser;
@@ -34,6 +31,12 @@ import org.springframework.ldap.control.SortControlDirContextProcessor;
 import org.springframework.ldap.core.ContextSource;
 import org.springframework.ldap.core.DirContextProcessor;
 import org.springframework.ldap.core.LdapTemplate;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import javax.naming.directory.DirContext;
 
 /**
  * Class LdapBaseDAOImpl. Base class for LDAP (read-only) based DAOs.

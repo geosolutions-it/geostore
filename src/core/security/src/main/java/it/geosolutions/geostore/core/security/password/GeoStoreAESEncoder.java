@@ -1,14 +1,16 @@
 package it.geosolutions.geostore.core.security.password;
 
+import org.apache.commons.codec.binary.Base64;
+import org.springframework.dao.DataAccessException;
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import org.apache.commons.codec.binary.Base64;
-import org.springframework.dao.DataAccessException;
 
 /**
  * This class wraps the old password encoding and decoding system

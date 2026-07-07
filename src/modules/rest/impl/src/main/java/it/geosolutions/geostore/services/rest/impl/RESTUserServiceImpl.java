@@ -40,13 +40,16 @@ import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
+
 import jakarta.ws.rs.core.SecurityContext;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Class RESTUserServiceImpl.
@@ -60,7 +63,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
 
     private UserService userService;
 
-    /** @param userService the userService to set */
+    /**
+     * @param userService the userService to set
+     */
     public void setUserService(UserService userService) {
         this.userService = userService;
     }

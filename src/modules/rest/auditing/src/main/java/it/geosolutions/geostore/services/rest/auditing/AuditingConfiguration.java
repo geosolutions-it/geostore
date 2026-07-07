@@ -27,12 +27,13 @@
  */
 package it.geosolutions.geostore.services.rest.auditing;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.Properties;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Properties;
 
 final class AuditingConfiguration {
 
