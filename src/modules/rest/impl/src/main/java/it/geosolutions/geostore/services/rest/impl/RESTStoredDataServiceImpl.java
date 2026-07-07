@@ -71,16 +71,10 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             Collections.singletonList(MediaType.TEXT_PLAIN_TYPE);
     private StoredDataService storedDataService;
 
-    /** @param storedDataService */
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#update(long, java.lang.String)
-     */
     @Override
     public long update(SecurityContext sc, long id, String data) throws NotFoundWebEx {
         try {
@@ -101,22 +95,17 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
 
             return id;
         } catch (NotFoundServiceEx ex) {
-            LOGGER.warn("Data not found (" + id + "): " + ex.getMessage(), ex);
+            LOGGER.warn("Data not found ({}): {}", id, ex.getMessage(), ex);
             throw new NotFoundWebEx("Data not found");
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#delete(long)
-     */
     @Override
     public void delete(SecurityContext sc, long id) throws NotFoundWebEx {
         //
         // Authorization check.
         //
-        boolean canDelete = false;
+        boolean canDelete;
         User authUser = extractAuthUser(sc);
         canDelete = resourceAccessWrite(authUser, id);
 
@@ -126,11 +115,6 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         } else throw new ForbiddenErrorWebEx("This user cannot delete this store !");
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.rest.RESTStoredDataService#get(long)
-     */
     @Override
     public String get(SecurityContext sc, HttpHeaders headers, long id) throws NotFoundWebEx {
         if (id == -1) return "dummy payload";
@@ -138,7 +122,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         //
         // Authorization check.
         //
-        boolean canRead = false;
+        boolean canRead;
         User authUser = extractAuthUser(sc);
         canRead = resourceAccessRead(authUser, id); // The ID is also the resource ID
         if (!canRead) {
@@ -207,6 +191,9 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         // Try an XML source
         try (StringReader reader = new StringReader(data)) {
             SAXBuilder builder = new SAXBuilder();
+            builder.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            builder.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            builder.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
             builder.build(reader);
             // no errors: return the original data
             if (LOGGER.isDebugEnabled()) LOGGER.debug("Data is in native XML format.");
@@ -270,7 +257,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         } else if (decodeFormat.equalsIgnoreCase(RawFormat.DATAURI.name())) {
             return decodeDataURI(data);
         } else {
-            LOGGER.warn("Unknown decode format '" + decodeFormat + "'");
+            LOGGER.warn("Unknown decode format '{}'", decodeFormat);
             return Response.ok().entity(data).build();
         }
     }
@@ -291,16 +278,16 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         DataURIDecoder dud = new DataURIDecoder(split[0]);
 
         if (!dud.isValid()) {
-            LOGGER.warn("Could not parse data URI '" + split[0] + "'");
+            LOGGER.warn("Could not parse data URI '{}'", split[0]);
             return Response.status(Response.Status.BAD_REQUEST).entity("Bad data URI").build();
         }
 
         if (dud.getCharset() != null) {
-            LOGGER.warn("TODO: Charset '" + dud.getCharset() + "' should be handled.");
+            LOGGER.warn("TODO: Charset '{}' should be handled.", dud.getCharset());
         }
 
         if (dud.getEncoding() != null && !dud.isBase64Encoded()) {
-            LOGGER.warn("TODO: Encoding '" + dud.getEncoding() + "' should be handled.");
+            LOGGER.warn("TODO: Encoding '{}' should be handled.", dud.getEncoding());
         }
 
         Object entity = dud.isBase64Encoded() ? Base64.decodeBase64(split[1]) : split[1];
@@ -308,17 +295,12 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
         return Response.ok().type(dud.getNormalizedMediatype()).entity(entity).build();
     }
 
-    /**
-     * @param id
-     * @return long
-     * @throws BadRequestWebEx
-     */
     @SuppressWarnings("unused")
     private long parseId(String id) throws BadRequestWebEx {
         try {
             return Long.parseLong(id);
         } catch (Exception e) {
-            LOGGER.info("Bad id requested '" + id + "'");
+            LOGGER.info("Bad id requested '{}'", id);
             throw new BadRequestWebEx("Bad id");
         }
     }

@@ -15,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 /**
  * Wrap geostore Rest Services to allow Authentication using Geostore Users
@@ -24,19 +23,22 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
  */
 public class UserServiceAuthenticationProvider implements AuthenticationProvider {
 
-    /** Message shown if the user it's not found. TODO: Localize it */
-    public static final String USER_NOT_FOUND_MSG = "User not found. Please check your credentials";
-
-    public static final String USER_NOT_ENABLED = "The user present but not enabled";
     private static final Logger LOGGER =
             LogManager.getLogger(UserServiceAuthenticationProvider.class);
-    /** Message shown if the user credentials are wrong. TODO: Localize it */
+
+    /** Message shown if the user is not found. */
+    // TODO: Localize it
+    private static final String USER_NOT_FOUND_MSG =
+            "User not found. Please check your credentials";
+
+    /** Message shown if the user credentials are wrong. */
+    // TODO: Localize it
     private static final String UNAUTHORIZED_MSG = "Bad credentials";
 
     @Autowired UserService userService;
 
     @Override
-    public boolean supports(Class<? extends Object> authentication) {
+    public boolean supports(Class<?> authentication) {
         return authentication.equals(UsernamePasswordAuthenticationToken.class);
     }
 
@@ -46,11 +48,10 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
         String us = (String) authentication.getPrincipal();
 
         // We use the credentials for all the session in the GeoStore client
-        User user = null;
+        User user;
         try {
             user = userService.get(us);
-            LOGGER.info("US: " + us); // + " PW: " + PwEncoder.encode(pw) + " -- " +
-            // user.getPassword());
+            LOGGER.info("US: {}", us); // + " PW: " + PwEncoder.encode(pw) + " -- " +
             if (user.getPassword() == null || !PwEncoder.isPasswordValid(user.getPassword(), pw)) {
                 throw new BadCredentialsException(UNAUTHORIZED_MSG);
             }
@@ -64,17 +65,11 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
 
         if (user != null) {
             String role = user.getRole().toString();
-            // return null;
-            List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
+            List<GrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
-            Authentication a = new UsernamePasswordAuthenticationToken(user, pw, authorities);
-            // a.setAuthenticated(true);
-            return a;
+            return new UsernamePasswordAuthenticationToken(user, pw, authorities);
         } else {
-            throw new UsernameNotFoundException(USER_NOT_FOUND_MSG);
+            throw new BadCredentialsException(USER_NOT_FOUND_MSG);
         }
     }
-
-    // GETTERS AND SETTERS
-
 }

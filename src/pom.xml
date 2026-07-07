@@ -729,15 +729,6 @@
             </dependency>
 
             <!-- =========================================================== -->
-            <!--     HIBERNATE-SPATIAL                                       -->
-            <!-- =========================================================== -->
-            <dependency>
-                <groupId>org.hibernatespatial</groupId>
-                <artifactId>hibernate-spatial-postgis</artifactId>
-                <version>${hibernate-spatial-postgis.version}</version>
-            </dependency>
-
-            <!-- =========================================================== -->
             <!--     POSTGRES - POSTGIS                                      -->
             <!-- =========================================================== -->
             <dependency>

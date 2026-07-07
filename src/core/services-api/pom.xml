@@ -61,14 +61,7 @@
                     <artifactId>hibernate-commons-annotations</artifactId>
                     <groupId>org.hibernate.common</groupId>
                 </exclusion>
-                <exclusion>
-                    <artifactId>hibernate-spatial</artifactId>
-                    <groupId>org.hibernatespatial</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>hibernate-spatial-postgis</artifactId>
-                    <groupId>org.hibernatespatial</groupId>
-                </exclusion>
+
             </exclusions>
         </dependency>
 

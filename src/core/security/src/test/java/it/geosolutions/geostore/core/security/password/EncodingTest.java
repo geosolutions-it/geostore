@@ -105,7 +105,6 @@ public class EncodingTest extends TestCase {
         String keyName = "ug:geostore:key";
         String keyName2 = "keyName2";
         KeyStoreProviderImpl ksp = new KeyStoreProviderImpl();
-        ksp.setKeyName(keyName);
         ksp.setKeyStoreFilePath("testStore");
         ksp.setMasterPassword(passwd);
         ksp.setSecretKey(keyName, "testkey".toCharArray());
@@ -117,7 +116,6 @@ public class EncodingTest extends TestCase {
         ksp.removeKey(keyName2);
         assertFalse(ksp.containsAlias(keyName2));
         ksp = new KeyStoreProviderImpl();
-        ksp.setKeyName(keyName);
         ksp.setMasterPassword(passwd2);
         ksp.setKeyStoreFilePath(EncodingTest.TEST_KEYSTORE_FILE_NAME);
         ksp.setSecretKey(
