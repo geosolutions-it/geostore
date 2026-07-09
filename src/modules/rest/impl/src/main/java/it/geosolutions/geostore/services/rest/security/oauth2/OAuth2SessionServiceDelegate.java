@@ -696,10 +696,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         }
         if (tokenValue == null) return;
 
-        // Revoke the token if a revocation endpoint is available
+        // Revoke the token if a revocation endpoint is available.
         if (configuration.getRevokeEndpoint() != null) {
             LOGGER.debug("Revoking token at revocation endpoint");
-            callRevokeEndpoint(tokenValue, accessToken);
+            callRevokeEndpoint(accessToken);
         }
 
         // Call the remote logout endpoint (end_session_endpoint) independently
@@ -707,11 +707,13 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         callRemoteLogout(tokenValue, accessToken);
     }
 
-    protected void callRevokeEndpoint(String token, String accessToken) {
+    protected void callRevokeEndpoint(String accessToken) {
         OAuth2Configuration configuration = configuration();
         if (configuration != null && configuration.isEnabled()) {
+            // accessToken is both the token to revoke and the Authorization: Bearer
+            // fallback buildRevokeEndpoint uses when no client secret is configured.
             OAuth2Configuration.Endpoint revokeEndpoint =
-                    configuration.buildRevokeEndpoint(token, accessToken, configuration);
+                    configuration.buildRevokeEndpoint(accessToken, accessToken, configuration);
             if (revokeEndpoint != null) {
                 RestTemplate template = new RestTemplate();
                 try {
