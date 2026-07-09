@@ -22,7 +22,6 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
-import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
@@ -134,25 +133,6 @@ public class StoredDataServiceImpl implements StoredDataService {
     @Override
     public List<StoredData> getAll() {
         return storedDataDAO.findAll();
-    }
-
-    @Override
-    public List<StoredData> getAllFull() {
-        List<StoredData> found = storedDataDAO.findAll();
-
-        for (StoredData data : found) {
-            Resource resource = data.getResource();
-            if (resource != null) {
-                List<SecurityRule> security =
-                        securityDAO.findResourceSecurityRules(resource.getId());
-                resource.setSecurity(security);
-
-                List<Attribute> attribute = resourceDAO.findAttributes(resource.getId());
-                resource.setAttribute(attribute);
-            }
-        }
-
-        return found;
     }
 
     @Override
