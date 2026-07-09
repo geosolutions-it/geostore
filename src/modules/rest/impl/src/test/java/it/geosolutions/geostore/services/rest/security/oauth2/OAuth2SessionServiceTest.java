@@ -27,11 +27,18 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
@@ -76,69 +83,84 @@ public class OAuth2SessionServiceTest {
 
     @Test
     void testLogout_withParamBearer_revokesAndClearsSessionAndCache() {
-        OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
-        configuration.setEnabled(true);
-        configuration.setIdTokenUri("https://www.googleapis.com/oauth2/v3/certs");
-        configuration.setRevokeEndpoint("http://google.foo/revoke");
+        WireMockServer revokeService = new WireMockServer(wireMockConfig().dynamicPort());
+        revokeService.start();
+        try {
+            revokeService.stubFor(
+                    post(urlPathEqualTo("/revoke")).willReturn(aResponse().withStatus(200)));
 
-        // principal + TokenDetails
-        PreAuthenticatedAuthenticationToken authenticationToken =
-                new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
-        OAuth2AccessToken accessToken = new DefaultOAuth2AccessToken(ACCESS_TOKEN);
-        TokenDetails details = Mockito.mock(TokenDetails.class);
-        when(details.getProvider()).thenReturn("oidc");
-        when(details.getAccessToken()).thenReturn(accessToken);
-        when(details.getIdToken()).thenReturn(ID_TOKEN);
-        authenticationToken.setDetails(details);
+            OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
+            configuration.setEnabled(true);
+            configuration.setIdTokenUri("https://www.googleapis.com/oauth2/v3/certs");
+            configuration.setRevokeEndpoint("http://localhost:" + revokeService.port() + "/revoke");
+            configuration.setGlobalLogoutEnabled(true);
 
-        // cache pre-populated with the token
-        TokenAuthenticationCache cache = new TokenAuthenticationCache();
-        cache.putCacheEntry(ACCESS_TOKEN, authenticationToken);
+            // principal + TokenDetails
+            PreAuthenticatedAuthenticationToken authenticationToken =
+                    new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
+            OAuth2AccessToken accessToken = new DefaultOAuth2AccessToken(ACCESS_TOKEN);
+            TokenDetails details = Mockito.mock(TokenDetails.class);
+            when(details.getProvider()).thenReturn("oidc");
+            when(details.getAccessToken()).thenReturn(accessToken);
+            when(details.getIdToken()).thenReturn(ID_TOKEN);
+            authenticationToken.setDetails(details);
 
-        // use a mocked restTemplate so we don't hit the network
-        OAuth2RestTemplate restTemplate = Mockito.mock(OAuth2RestTemplate.class);
-        when(restTemplate.getOAuth2ClientContext()).thenReturn(new DefaultOAuth2ClientContext());
-        // if your revoke flow performs an HTTP call, you can uncomment and tailor:
-        // when(restTemplate.postForEntity(anyString(), any(), eq(Void.class)))
-        //         .thenReturn(ResponseEntity.ok().build());
+            // cache pre-populated with the token
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+            cache.putCacheEntry(ACCESS_TOKEN, authenticationToken);
 
-        // prepare GeoStoreContext static lookups
-        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-        HashMap<Object, Object> configurations = new HashMap<>();
-        configurations.put("oidcOAuth2Config", configuration);
+            // use a mocked restTemplate so we don't hit the network
+            OAuth2RestTemplate restTemplate = Mockito.mock(OAuth2RestTemplate.class);
+            when(restTemplate.getOAuth2ClientContext())
+                    .thenReturn(new DefaultOAuth2ClientContext());
 
-        try (MockedStatic<GeoStoreContext> ctx = Mockito.mockStatic(GeoStoreContext.class)) {
-            ctx.when(() -> GeoStoreContext.beans(OAuth2Configuration.class))
-                    .thenReturn(configurations);
-            ctx.when(() -> GeoStoreContext.bean("oidcOAuth2Config", OAuth2Configuration.class))
-                    .thenReturn(configuration);
-            ctx.when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class))
-                    .thenReturn(cache);
-            ctx.when(() -> GeoStoreContext.bean("oidcOpenIdRestTemplate", OAuth2RestTemplate.class))
-                    .thenReturn(restTemplate);
+            // prepare GeoStoreContext static lookups
+            SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+            HashMap<Object, Object> configurations = new HashMap<>();
+            configurations.put("oidcOAuth2Config", configuration);
 
-            MockHttpServletRequest request = new MockHttpServletRequest();
-            request.setParameter(ACCESS_TOKEN_PARAM, ACCESS_TOKEN);
-            request.setUserPrincipal(authenticationToken);
-            MockHttpServletResponse response = new MockHttpServletResponse();
+            try (MockedStatic<GeoStoreContext> ctx = Mockito.mockStatic(GeoStoreContext.class)) {
+                ctx.when(() -> GeoStoreContext.beans(OAuth2Configuration.class))
+                        .thenReturn(configurations);
+                ctx.when(() -> GeoStoreContext.bean("oidcOAuth2Config", OAuth2Configuration.class))
+                        .thenReturn(configuration);
+                ctx.when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class))
+                        .thenReturn(cache);
+                ctx.when(
+                                () ->
+                                        GeoStoreContext.bean(
+                                                "oidcOpenIdRestTemplate", OAuth2RestTemplate.class))
+                        .thenReturn(restTemplate);
 
-            ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
-            attributes.setAttribute(PROVIDER_KEY, "oidc", 0);
-            RequestContextHolder.setRequestAttributes(attributes);
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.setParameter(ACCESS_TOKEN_PARAM, ACCESS_TOKEN);
+                request.setUserPrincipal(authenticationToken);
+                MockHttpServletResponse response = new MockHttpServletResponse();
 
-            RESTSessionService sessionService = new RESTSessionServiceImpl();
-            new OpenIdConnectSessionServiceDelegate(sessionService, null);
+                ServletRequestAttributes attributes =
+                        new ServletRequestAttributes(request, response);
+                attributes.setAttribute(PROVIDER_KEY, "oidc", 0);
+                RequestContextHolder.setRequestAttributes(attributes);
 
-            // act
-            sessionService.removeSession();
+                RESTSessionService sessionService = new RESTSessionServiceImpl();
+                new OpenIdConnectSessionServiceDelegate(sessionService, null);
 
-            // assert
-            assertEquals(HttpStatus.OK_200, response.getStatus());
-            assertNull(
-                    SecurityContextHolder.getContext().getAuthentication(),
-                    "SecurityContext should be cleared");
-            assertNull(request.getUserPrincipal(), "request principal should be cleared");
-            assertNull(cache.get(ACCESS_TOKEN), "token should be evicted from cache");
+                // act
+                sessionService.removeSession();
+
+                // assert
+                assertEquals(HttpStatus.OK_200, response.getStatus());
+                assertNull(
+                        SecurityContextHolder.getContext().getAuthentication(),
+                        "SecurityContext should be cleared");
+                assertNull(request.getUserPrincipal(), "request principal should be cleared");
+                assertNull(cache.get(ACCESS_TOKEN), "token should be evicted from cache");
+                revokeService.verify(
+                        postRequestedFor(urlPathEqualTo("/revoke"))
+                                .withRequestBody(containing("token=" + ACCESS_TOKEN)));
+            }
+        } finally {
+            revokeService.stop();
         }
     }
 
