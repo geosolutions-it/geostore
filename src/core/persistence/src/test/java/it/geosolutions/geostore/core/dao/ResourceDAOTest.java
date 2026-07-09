@@ -37,7 +37,7 @@ import java.util.Date;
 public class ResourceDAOTest extends BaseDAOTest {
 
     @Test
-    public void testPersistResource() throws Exception {
+    public void testPersistResource() {
 
         final String NAME1 = "FIRST_NAME";
         final String NAME2 = "SECOND_NAME";
@@ -75,14 +75,16 @@ public class ResourceDAOTest extends BaseDAOTest {
             data.setData("Dummy data");
             data.setResource(resource);
             data.setId(resource.getId());
-
             storedDataDAO.persist(data);
-            dataId = data.getId();
 
             assertEquals(1, storedDataDAO.count(null));
             assertEquals(1, storedDataDAO.findAll().size());
 
+            dataId = data.getId();
             assertEquals(dataId, resourceId);
+
+            resource.setData(data);
+            resourceDAO.merge(resource);
 
             SecurityRule security = new SecurityRule();
             security.setCanRead(true);

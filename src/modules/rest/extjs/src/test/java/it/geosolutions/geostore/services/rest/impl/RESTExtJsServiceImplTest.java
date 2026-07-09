@@ -32,10 +32,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.googlecode.genericdao.search.Search;
 
-import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
+import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
@@ -58,12 +58,17 @@ import it.geosolutions.geostore.services.model.ExtShortResource;
 import it.geosolutions.geostore.services.model.ExtUserList;
 import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
+import it.geosolutions.geostore.services.rest.model.RESTCategory;
+import it.geosolutions.geostore.services.rest.model.RESTResource;
 import it.geosolutions.geostore.services.rest.model.RESTSecurityRule;
 import it.geosolutions.geostore.services.rest.model.SecurityRuleList;
 import it.geosolutions.geostore.services.rest.model.Sort;
 
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.ws.rs.core.SecurityContext;
 
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -120,7 +125,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         long u1 = restCreateUser("u1", Role.USER, null, "p1");
 
-        Category cat = createCategory(CAT_NAME);
+        createCategory(CAT_NAME);
 
         restCreateResource("r_u0_0", "x", CAT_NAME, u0, true);
 
@@ -173,7 +178,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long u0 = restCreateUser("u0", Role.USER, null, "p0");
         long u1 = restCreateUser("u1", Role.USER, null, "p1");
 
-        Category cat = createCategory(CAT_NAME);
+        createCategory(CAT_NAME);
 
         int RESNUM0 = 20;
         int RESNUM1 = RESNUM0 * 2;
@@ -550,6 +555,107 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
                             new AndFilter());
 
             assertNull(response);
+        }
+    }
+
+    /**
+     * With {@code includeData=false}, {@code StoredData} must never be loaded from the DB while
+     * hydrating the resource list.
+     */
+    @Test
+    public void testExtResourcesList_excludeData() throws Exception {
+        final String CAT0_NAME = "CAT000";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        int resourceCount = 5;
+        for (int i = 0; i < resourceCount; i++) {
+            RESTResource resource = new RESTResource();
+            resource.setName("res_" + i);
+            resource.setDescription("d");
+            resource.setCategory(new RESTCategory(CAT0_NAME));
+            resource.setAdvertised(true);
+            resource.setData("stored data payload " + i);
+            restResourceService.insert(sc, resource);
+        }
+
+        EntityManagerFactory emf =
+                ctx.getBean("geostoreEntityManagerFactory", EntityManagerFactory.class);
+        SessionFactory sessionFactory = emf.unwrap(SessionFactory.class);
+        Statistics statistics = sessionFactory.getStatistics();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+
+        ExtResourceList response =
+                restExtJsService.getExtResourcesList(
+                        sc,
+                        0,
+                        12,
+                        new Sort("name", "asc"),
+                        true,
+                        false,
+                        true,
+                        false,
+                        new AndFilter());
+
+        assertEquals(resourceCount, response.getList().size());
+
+        long storedDataLoadCount =
+                statistics.getEntityStatistics(StoredData.class.getName()).getLoadCount();
+
+        // With includeData=false, no StoredData should ever be loaded from the DB
+        assertEquals(
+                "Expected zero StoredData loads when includeData=false", 0, storedDataLoadCount);
+
+        statistics.setStatisticsEnabled(false);
+    }
+
+    /**
+     * {@code Resource.data} is a lazy proxy, so {@code includeData=true} has to force its
+     * initialization while the session is still open, otherwise consumers hit {@code
+     * LazyInitializationException: could not initialize proxy - no session} once the resource is
+     * detached.
+     */
+    @Test
+    public void testExtResourcesList_includeData() throws Exception {
+        final String CAT0_NAME = "CAT001";
+
+        long u0 = restCreateUser("u0", Role.USER, null, "p0");
+        SecurityContext sc = new SimpleSecurityContext(u0);
+
+        createCategory(CAT0_NAME);
+
+        int resourceCount = 3;
+        for (int i = 0; i < resourceCount; i++) {
+            RESTResource resource = new RESTResource();
+            resource.setName("resd_" + i);
+            resource.setDescription("d");
+            resource.setCategory(new RESTCategory(CAT0_NAME));
+            resource.setAdvertised(true);
+            resource.setData("payload_" + i);
+            restResourceService.insert(sc, resource);
+        }
+
+        ExtResourceList response =
+                restExtJsService.getExtResourcesList(
+                        sc,
+                        0,
+                        12,
+                        new Sort("name", "asc"),
+                        false,
+                        true,
+                        false,
+                        false,
+                        new AndFilter());
+
+        assertEquals(resourceCount, response.getList().size());
+        for (ExtResource resource : response.getList()) {
+            assertNotNull(
+                    "Expected StoredData to be loaded when includeData=true", resource.getData());
+            assertNotNull(resource.getData().getData());
         }
     }
 
