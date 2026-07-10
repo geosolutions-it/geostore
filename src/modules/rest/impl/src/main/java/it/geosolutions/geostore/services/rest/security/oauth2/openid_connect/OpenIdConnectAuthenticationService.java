@@ -149,7 +149,7 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
         }
         try {
             OpenIdConnectTokenServices tokenServices =
-                    new OpenIdConnectTokenServices(configuration.getPrincipalKey());
+                    new OpenIdConnectTokenServices(configuration.getPrincipalKey(), configuration);
             tokenServices.setCheckTokenEndpointUrl(userInfoUri);
             tokenServices.setClientId(configuration.getClientId());
             tokenServices.setClientSecret(configuration.getClientSecret());
@@ -385,7 +385,7 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formParams, headers);
 
         try {
-            RestTemplate rt = new RestTemplate();
+            RestTemplate rt = OAuth2Utils.protectedRestTemplate(configuration);
             Map<String, Object> response = rt.postForObject(introspectionUrl, request, Map.class);
             if (response == null) {
                 LOGGER.warn("OIDC: Token introspection returned null response");
@@ -611,7 +611,7 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
                     graphClientInitialized = true;
                     return null;
                 }
-                graphClient = new MicrosoftGraphClient(oidcConfig.getMsGraphEndpoint());
+                graphClient = new MicrosoftGraphClient(oidcConfig.getMsGraphEndpoint(), oidcConfig);
                 LOGGER.info(
                         "MS Graph client initialized with endpoint '{}'",
                         oidcConfig.getMsGraphEndpoint());

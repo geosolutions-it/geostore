@@ -52,14 +52,9 @@ public class DiscoveryClient {
     private final RestTemplate restTemplate;
     private String location;
 
-    public DiscoveryClient(String location) {
+    public DiscoveryClient(String location, OAuth2Configuration configuration) {
         setLocation(location);
-        this.restTemplate = new RestTemplate();
-    }
-
-    public DiscoveryClient(String location, RestTemplate restTemplate) {
-        setLocation(location);
-        this.restTemplate = restTemplate;
+        this.restTemplate = OAuth2Utils.protectedRestTemplate(configuration);
     }
 
     private static String appendPath(String... pathComponents) {

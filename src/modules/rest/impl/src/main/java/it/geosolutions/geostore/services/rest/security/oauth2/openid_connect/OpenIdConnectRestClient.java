@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.ClientSecretRequestEnhancer;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.enancher.PKCERequestEnhancer;
 
@@ -71,13 +72,13 @@ public class OpenIdConnectRestClient {
 
     public OpenIdConnectRestClient(OpenIdConnectConfiguration config) {
         this.config = config;
-        this.restTemplate = buildRestTemplate();
+        this.restTemplate = buildRestTemplate(config);
         this.pkceEnhancer = new PKCERequestEnhancer(config);
         this.clientSecretEnhancer = new ClientSecretRequestEnhancer();
     }
 
-    private static RestTemplate buildRestTemplate() {
-        RestTemplate rt = new RestTemplate();
+    private static RestTemplate buildRestTemplate(OpenIdConnectConfiguration config) {
+        RestTemplate rt = OAuth2Utils.protectedRestTemplate(config);
         rt.setMessageConverters(
                 Arrays.asList(
                         new FormHttpMessageConverter(),

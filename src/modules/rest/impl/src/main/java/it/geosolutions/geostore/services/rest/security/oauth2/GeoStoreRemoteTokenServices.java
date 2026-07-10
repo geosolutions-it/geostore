@@ -152,8 +152,8 @@ public class GeoStoreRemoteTokenServices {
         return response.getBody();
     }
 
-    public static GeoStoreRemoteTokenServices defaultInstance() {
-        RestTemplate restTemplate = new RestTemplate();
+    public static GeoStoreRemoteTokenServices defaultInstance(OAuth2Configuration configuration) {
+        RestTemplate restTemplate = OAuth2Utils.protectedRestTemplate(configuration);
         restTemplate.setErrorHandler(
                 new DefaultResponseErrorHandler() {
                     @Override

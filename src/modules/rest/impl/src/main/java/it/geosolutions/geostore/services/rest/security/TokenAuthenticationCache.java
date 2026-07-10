@@ -145,7 +145,8 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
                                         accessToken.getTokenValue(),
                                         configuration);
                         if (revokeEndpoint != null) {
-                            RestTemplate template = new RestTemplate();
+                            RestTemplate template =
+                                    OAuth2Utils.protectedRestTemplate(configuration);
                             ResponseEntity<String> responseEntity =
                                     template.exchange(
                                             revokeEndpoint.getUrl(),

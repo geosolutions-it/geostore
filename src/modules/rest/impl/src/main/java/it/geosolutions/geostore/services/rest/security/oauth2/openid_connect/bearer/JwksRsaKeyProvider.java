@@ -30,6 +30,9 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.be
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.web.client.RestTemplate;
@@ -56,13 +59,9 @@ public class JwksRsaKeyProvider {
     private final RestTemplate restTemplate;
     private final Map<String, RSAPublicKey> keyCache = new ConcurrentHashMap<>();
 
-    public JwksRsaKeyProvider(String jwksUri) {
-        this(jwksUri, new RestTemplate());
-    }
-
-    JwksRsaKeyProvider(String jwksUri, RestTemplate restTemplate) {
+    public JwksRsaKeyProvider(String jwksUri, OAuth2Configuration configuration) {
         this.jwksUri = jwksUri;
-        this.restTemplate = restTemplate;
+        this.restTemplate = OAuth2Utils.protectedRestTemplate(configuration);
     }
 
     /**

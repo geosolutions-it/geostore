@@ -308,7 +308,7 @@ public class OAuth2GeoStoreAuthenticationService {
             LOGGER.info("Calling introspection endpoint [{}] for token", introspectionUri);
 
             GeoStoreRemoteTokenServices tokenServices =
-                    GeoStoreRemoteTokenServices.defaultInstance();
+                    GeoStoreRemoteTokenServices.defaultInstance(configuration);
             tokenServices.setCheckTokenEndpointUrl(introspectionUri);
             tokenServices.setClientId(configuration.getClientId());
             tokenServices.setClientSecret(configuration.getClientSecret());

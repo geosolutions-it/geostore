@@ -370,7 +370,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         // Use a plain RestTemplate (with the OAuth2 token-response converter) for the refresh
         // request body shaping; this mirrors the legacy behavior where the client secret is always
         // sent on refresh, independent of any sendClientSecret toggle.
-        RestTemplate plainRestTemplate = createRefreshRestTemplate();
+        RestTemplate plainRestTemplate = createRefreshRestTemplate(configuration);
         HttpHeaders headers = getHttpHeaders(accessToken, configuration);
         MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
         requestBody.add("grant_type", "refresh_token");
@@ -715,7 +715,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             OAuth2Configuration.Endpoint revokeEndpoint =
                     configuration.buildRevokeEndpoint(accessToken, accessToken, configuration);
             if (revokeEndpoint != null) {
-                RestTemplate template = new RestTemplate();
+                RestTemplate template = protectedRestTemplate(configuration);
                 try {
                     ResponseEntity<String> responseEntity =
                             template.exchange(
@@ -739,7 +739,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             OAuth2Configuration.Endpoint logoutEndpoint =
                     configuration.buildLogoutEndpoint(token, accessToken, configuration);
             if (logoutEndpoint != null) {
-                RestTemplate template = new RestTemplate();
+                RestTemplate template = protectedRestTemplate(configuration);
                 ResponseEntity<String> responseEntity =
                         template.exchange(
                                 logoutEndpoint.getUrl(),
@@ -855,8 +855,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
      * response converter so the token-endpoint JSON deserializes into an {@link
      * OAuth2AccessTokenResponse}.
      */
-    protected RestTemplate createRefreshRestTemplate() {
-        RestTemplate restTemplate = new RestTemplate();
+    protected RestTemplate createRefreshRestTemplate(OAuth2Configuration configuration) {
+        RestTemplate restTemplate = protectedRestTemplate(configuration);
         restTemplate.setMessageConverters(
                 Arrays.asList(
                         new FormHttpMessageConverter(),
