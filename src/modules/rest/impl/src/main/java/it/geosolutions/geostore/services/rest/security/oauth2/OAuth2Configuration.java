@@ -106,6 +106,46 @@ public class OAuth2Configuration extends IdPConfiguration {
     private double backoffMultiplier = 2.0; // Default multiplier
     private int maxRetries = 3; // Default max retries
 
+    // HTTP timeouts (milliseconds) for back-channel calls to the IdP
+    private int connectTimeout = 10_000;
+    private int readTimeout = 15_000;
+
+    /**
+     * Gets the connect timeout (in milliseconds) for back-channel calls to the IdP.
+     *
+     * @return connectTimeout - the connect timeout in milliseconds.
+     */
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    /**
+     * Sets the connect timeout (in milliseconds) for back-channel calls to the IdP.
+     *
+     * @param connectTimeout - the connect timeout in milliseconds.
+     */
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    /**
+     * Gets the read timeout (in milliseconds) for back-channel calls to the IdP.
+     *
+     * @return readTimeout - the read timeout in milliseconds.
+     */
+    public int getReadTimeout() {
+        return readTimeout;
+    }
+
+    /**
+     * Sets the read timeout (in milliseconds) for back-channel calls to the IdP.
+     *
+     * @param readTimeout - the read timeout in milliseconds.
+     */
+    public void setReadTimeout(int readTimeout) {
+        this.readTimeout = readTimeout;
+    }
+
     /**
      * Gets the maximum number of retries allowed for refreshing tokens.
      *
@@ -811,6 +851,8 @@ public class OAuth2Configuration extends IdPConfiguration {
                 && getInitialBackoffDelay() == that.getInitialBackoffDelay()
                 && Double.compare(getBackoffMultiplier(), that.getBackoffMultiplier()) == 0
                 && getMaxRetries() == that.getMaxRetries()
+                && getConnectTimeout() == that.getConnectTimeout()
+                && getReadTimeout() == that.getReadTimeout()
                 && getCacheSize() == that.getCacheSize()
                 && getCacheExpirationMinutes() == that.getCacheExpirationMinutes()
                 && Objects.equals(getClientId(), that.getClientId())
@@ -860,7 +902,9 @@ public class OAuth2Configuration extends IdPConfiguration {
                 getCacheExpirationMinutes(),
                 getInitialBackoffDelay(),
                 getBackoffMultiplier(),
-                getMaxRetries());
+                getMaxRetries(),
+                getConnectTimeout(),
+                getReadTimeout());
     }
 
     @Override
@@ -934,6 +978,10 @@ public class OAuth2Configuration extends IdPConfiguration {
                 + backoffMultiplier
                 + ", maxRetries="
                 + maxRetries
+                + ", connectTimeout="
+                + connectTimeout
+                + ", readTimeout="
+                + readTimeout
                 + '}';
     }
 

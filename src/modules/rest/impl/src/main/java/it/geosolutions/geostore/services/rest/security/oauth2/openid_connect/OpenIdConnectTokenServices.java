@@ -28,12 +28,13 @@
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
 import java.util.Map;
@@ -41,12 +42,12 @@ import java.util.Map;
 /** Calls the OIDC userinfo endpoint to resolve token claims. */
 public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
 
-    public OpenIdConnectTokenServices(String principalKey) {
+    public OpenIdConnectTokenServices(String principalKey, OAuth2Configuration configuration) {
         // principalKey is retained for call-site compatibility; principal resolution from the
         // userinfo/introspection claims is performed by OAuth2GeoStoreAuthenticationService using
-        // the provider OAuth2Configuration. A default RestTemplate mirrors the legacy
+        // the provider OAuth2Configuration. A protected RestTemplate mirrors the legacy
         // RemoteTokenServices behavior (the CompositeOpenIdConnectFilter may override it).
-        super(new RestTemplate());
+        super(OAuth2Utils.protectedRestTemplate(configuration));
         LOGGER.info("Instantiating OpenIdConnectTokenServices with principalKey: {}", principalKey);
     }
 

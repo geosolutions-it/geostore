@@ -43,10 +43,11 @@ public class DiscoveryClientTest {
 
     @Test
     public void testDiscovery() {
-        DiscoveryClient discoveryClient =
-                new DiscoveryClient(authService + "/.well-known/openid-configuration");
         OAuth2Configuration configuration = new OAuth2Configuration();
         configuration.setScopes("openid,groups");
+        DiscoveryClient discoveryClient =
+                new DiscoveryClient(
+                        authService + "/.well-known/openid-configuration", configuration);
         discoveryClient.autofill(configuration);
         assertEquals("https://oauth2.googleapis.com/token", configuration.getAccessTokenUri());
         assertEquals(

@@ -227,7 +227,8 @@ public class AzureAdWireMockLifecycleTest {
 
     private void recreateFilter() {
         OpenIdConnectRestClient restClient = new OpenIdConnectRestClient(configuration);
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(configuration.getIdTokenUri());
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(configuration.getIdTokenUri(), configuration);
         cache =
                 new TokenAuthenticationCache(
                         configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
@@ -508,7 +509,8 @@ public class AzureAdWireMockLifecycleTest {
         OpenIdConnectConfiguration discoveryConfig = new OpenIdConnectConfiguration();
         DiscoveryClient discoveryClient =
                 new DiscoveryClient(
-                        authService + "/tenant-id/v2.0/.well-known/openid-configuration");
+                        authService + "/tenant-id/v2.0/.well-known/openid-configuration",
+                        discoveryConfig);
         discoveryClient.autofill(discoveryConfig);
 
         assertEquals(

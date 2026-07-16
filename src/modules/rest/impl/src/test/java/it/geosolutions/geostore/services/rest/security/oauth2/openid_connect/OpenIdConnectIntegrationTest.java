@@ -251,7 +251,8 @@ public class OpenIdConnectIntegrationTest {
         configuration.setSendClientSecret(true);
         this.configuration = configuration;
         OpenIdConnectRestClient restClient = new OpenIdConnectRestClient(configuration);
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(authService + "/certs", configuration);
         this.cache =
                 new TokenAuthenticationCache(
                         configuration.getCacheSize(), configuration.getCacheExpirationMinutes());
@@ -3257,7 +3258,8 @@ public class OpenIdConnectIntegrationTest {
     /** Recreates the filter with current configuration (picks up JWE config changes). */
     private void recreateFilter() {
         OpenIdConnectRestClient restClient = new OpenIdConnectRestClient(configuration);
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(authService + "/certs");
+        JwksRsaKeyProvider jwksKeyProvider =
+                new JwksRsaKeyProvider(authService + "/certs", configuration);
         this.cache =
                 new TokenAuthenticationCache(
                         configuration.getCacheSize(), configuration.getCacheExpirationMinutes());

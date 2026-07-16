@@ -542,7 +542,7 @@ public class MultiProviderIntegrationTest {
      */
     private OpenIdConnectFilter buildFilter(OpenIdConnectConfiguration config, String jwksUri) {
         OpenIdConnectRestClient restClient = new OpenIdConnectRestClient(config);
-        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(jwksUri);
+        JwksRsaKeyProvider jwksKeyProvider = new JwksRsaKeyProvider(jwksUri, config);
         TokenAuthenticationCache cache =
                 new TokenAuthenticationCache(
                         config.getCacheSize(), config.getCacheExpirationMinutes());

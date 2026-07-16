@@ -148,7 +148,7 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                 jwksUri = config.getJwkURI();
             }
             if (jwksUri != null && !jwksUri.isEmpty()) {
-                jwksKeyProvider = new JwksRsaKeyProvider(jwksUri);
+                jwksKeyProvider = new JwksRsaKeyProvider(jwksUri, config);
             }
 
             MultiTokenValidator validator =

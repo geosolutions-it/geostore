@@ -30,21 +30,25 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Calendar;
-import java.util.Date;
+import java.util.Collections;
 import java.util.Enumeration;
 
 /**
  * A class that groups some constants and utility methods used to handle OAuth2 related tasks.
- * Provides functionality like retrieving tokens from the request, or retrieving the {@link
- * TokenDetails} from an Authentication instance.
+ * Provides functionality like retrieving tokens from the request, retrieving the {@link
+ * TokenDetails} from an Authentication instance, and building the {@link RestTemplate} and {@link
+ * SimpleClientHttpRequestFactory} instances used for back-channel calls to the IdP.
  */
 public class OAuth2Utils {
 
@@ -82,10 +86,53 @@ public class OAuth2Utils {
         return token;
     }
 
-    public static Date fiveMinutesFromNow() {
-        Calendar currentTimeNow = Calendar.getInstance();
-        currentTimeNow.add(Calendar.MINUTE, 5);
-        return currentTimeNow.getTime();
+    /**
+     * A {@link RestTemplate} for back-channel calls to the IdP, configured with the provider's
+     * connect/read timeouts and {@link #noKeepAliveInterceptor()}.
+     *
+     * @throws NullPointerException if configuration is null
+     */
+    public static RestTemplate protectedRestTemplate(OAuth2Configuration configuration) {
+        RestTemplate template = new RestTemplate(protectedRequestFactory(configuration));
+        template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
+        return template;
+    }
+
+    /**
+     * Builds a {@link SimpleClientHttpRequestFactory} using the connect/read timeouts configured
+     * for the given provider, so back-channel calls to the IdP never block indefinitely.
+     *
+     * @throws NullPointerException if configuration is null
+     * @throws IllegalArgumentException if either timeout is not a positive value.
+     */
+    public static SimpleClientHttpRequestFactory protectedRequestFactory(
+            OAuth2Configuration configuration) {
+        int connectTimeout = configuration.getConnectTimeout();
+        int readTimeout = configuration.getReadTimeout();
+        if (connectTimeout <= 0 || readTimeout <= 0) {
+            throw new IllegalArgumentException(
+                    "connectTimeout and readTimeout must be positive, got connectTimeout="
+                            + connectTimeout
+                            + ", readTimeout="
+                            + readTimeout);
+        }
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeout);
+        factory.setReadTimeout(readTimeout);
+        return factory;
+    }
+
+    /**
+     * Interceptor that forces "Connection: close" on the request, so the JVM never puts the
+     * underlying socket back in its shared keep-alive cache. IdP-facing calls are infrequent enough
+     * that connection reuse isn't worth the risk of the network path (LB/proxy/NAT) having already
+     * silently torn down an idle pooled connection.
+     */
+    public static ClientHttpRequestInterceptor noKeepAliveInterceptor() {
+        return (request, body, execution) -> {
+            request.getHeaders().set(HttpHeaders.CONNECTION, "close");
+            return execution.execute(request, body);
+        };
     }
 
     /**

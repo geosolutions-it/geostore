@@ -807,7 +807,7 @@ class RefreshTokenServiceTest {
         }
 
         @Override
-        protected RestTemplate createRefreshRestTemplate() {
+        protected RestTemplate createRefreshRestTemplate(OAuth2Configuration configuration) {
             return refreshRestTemplate;
         }
 

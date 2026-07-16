@@ -71,7 +71,8 @@ public class OpenIdConnectFilter extends OAuth2GeoStoreAuthenticationFilter {
             OpenIdConnectRestClient restClient) {
         super(configuration, authenticationService);
         if (StringUtils.hasText(configuration.getDiscoveryUrl())) {
-            new DiscoveryClient(configuration.getDiscoveryUrl()).autofill(configuration);
+            new DiscoveryClient(configuration.getDiscoveryUrl(), configuration)
+                    .autofill(configuration);
         }
         this.oidcService = authenticationService;
         this.restClient = restClient;
