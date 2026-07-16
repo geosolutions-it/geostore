@@ -41,9 +41,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Enumeration;
 
 /**
@@ -88,25 +86,11 @@ public class OAuth2Utils {
         return token;
     }
 
-    public static Date fiveMinutesFromNow() {
-        Calendar currentTimeNow = Calendar.getInstance();
-        currentTimeNow.add(Calendar.MINUTE, 5);
-        return currentTimeNow.getTime();
-    }
-
-    /**
-     * A plain {@link RestTemplate} with {@link #noKeepAliveInterceptor()} but no configurable
-     * timeouts, for call sites where no {@link OAuth2Configuration} is available.
-     */
-    public static RestTemplate noKeepAliveRestTemplate() {
-        RestTemplate template = new RestTemplate();
-        template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
-        return template;
-    }
-
     /**
      * A {@link RestTemplate} for back-channel calls to the IdP, configured with the provider's
      * connect/read timeouts and {@link #noKeepAliveInterceptor()}.
+     *
+     * @throws NullPointerException if configuration is null
      */
     public static RestTemplate protectedRestTemplate(OAuth2Configuration configuration) {
         RestTemplate template = new RestTemplate(protectedRequestFactory(configuration));
@@ -117,12 +101,24 @@ public class OAuth2Utils {
     /**
      * Builds a {@link SimpleClientHttpRequestFactory} using the connect/read timeouts configured
      * for the given provider, so back-channel calls to the IdP never block indefinitely.
+     *
+     * @throws NullPointerException if configuration is null
+     * @throws IllegalArgumentException if either timeout is not a positive value.
      */
     public static SimpleClientHttpRequestFactory protectedRequestFactory(
             OAuth2Configuration configuration) {
+        int connectTimeout = configuration.getConnectTimeout();
+        int readTimeout = configuration.getReadTimeout();
+        if (connectTimeout <= 0 || readTimeout <= 0) {
+            throw new IllegalArgumentException(
+                    "connectTimeout and readTimeout must be positive, got connectTimeout="
+                            + connectTimeout
+                            + ", readTimeout="
+                            + readTimeout);
+        }
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(configuration.getConnectTimeout());
-        factory.setReadTimeout(configuration.getReadTimeout());
+        factory.setConnectTimeout(connectTimeout);
+        factory.setReadTimeout(readTimeout);
         return factory;
     }
 
