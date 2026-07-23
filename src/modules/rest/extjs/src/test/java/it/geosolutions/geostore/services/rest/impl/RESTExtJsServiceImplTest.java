@@ -2707,6 +2707,50 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     }
 
     @Test
+    public void testGetUsersListWithNameLikeAndPagination() throws Exception {
+        final String prefix = "paginated_user_";
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        restCreateUser(prefix + "E", Role.USER, null, "p0");
+        restCreateUser(prefix + "C", Role.USER, null, "p0");
+        restCreateUser(prefix + "A", Role.USER, null, "p0");
+        restCreateUser(prefix + "D", Role.USER, null, "p0");
+        restCreateUser(prefix + "B", Role.USER, null, "p0");
+
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(
+                            adminSecurityContext, "*" + prefix + "*", 0, 2, true);
+            assertEquals(5, response.getCount());
+            List<User> users = response.getList();
+            assertEquals(2, users.size());
+            assertEquals(prefix + "A", users.get(0).getName());
+            assertEquals(prefix + "B", users.get(1).getName());
+        }
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(
+                            adminSecurityContext, "*" + prefix + "*", 2, 2, true);
+            assertEquals(5, response.getCount());
+            List<User> users = response.getList();
+            assertEquals(2, users.size());
+            assertEquals(prefix + "C", users.get(0).getName());
+            assertEquals(prefix + "D", users.get(1).getName());
+        }
+        {
+            ExtUserList response =
+                    restExtJsService.getUsersList(
+                            adminSecurityContext, "*" + prefix + "*", 4, 2, true);
+            assertEquals(5, response.getCount());
+            List<User> users = response.getList();
+            assertEquals(1, users.size());
+            assertEquals(prefix + "E", users.get(0).getName());
+        }
+    }
+
+    @Test
     public void testGetGroupsListWithNameLike() throws Exception {
         final String groupAName = "groupA";
         final String groupBName = "gruppoB";
@@ -2737,6 +2781,50 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
             assertEquals(1, userGroups.size());
             UserGroup userGroup = userGroups.get(0);
             assertEquals(groupAName, userGroup.getGroupName());
+        }
+    }
+
+    @Test
+    public void testGetGroupsListWithNameLikeAndPagination() throws Exception {
+        final String prefix = "paggroup";
+
+        createGroup(prefix + "E");
+        createGroup(prefix + "C");
+        createGroup(prefix + "A");
+        createGroup(prefix + "D");
+        createGroup(prefix + "B");
+
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
+
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(
+                            adminSecurityContext, "*" + prefix + "*", 0, 2, true);
+            assertEquals(5, response.getCount());
+            List<UserGroup> groups = response.getList();
+            assertEquals(2, groups.size());
+            assertEquals(prefix + "A", groups.get(0).getGroupName());
+            assertEquals(prefix + "B", groups.get(1).getGroupName());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(
+                            adminSecurityContext, "*" + prefix + "*", 2, 2, true);
+            assertEquals(5, response.getCount());
+            List<UserGroup> groups = response.getList();
+            assertEquals(2, groups.size());
+            assertEquals(prefix + "C", groups.get(0).getGroupName());
+            assertEquals(prefix + "D", groups.get(1).getGroupName());
+        }
+        {
+            ExtGroupList response =
+                    restExtJsService.getGroupsList(
+                            adminSecurityContext, "*" + prefix + "*", 4, 2, true);
+            assertEquals(5, response.getCount());
+            List<UserGroup> groups = response.getList();
+            assertEquals(1, groups.size());
+            assertEquals(prefix + "E", groups.get(0).getGroupName());
         }
     }
 
