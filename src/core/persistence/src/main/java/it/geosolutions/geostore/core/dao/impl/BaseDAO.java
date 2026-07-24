@@ -100,22 +100,31 @@ public class BaseDAO<T, ID extends Serializable> extends GenericDAOImpl<T, ID> {
     private Search createNormalizedSearchForSql(ISearch search) {
         Search sqlSearch = new Search(search.getSearchClass());
 
-        List<Filter> sqlFilters =
-                search.getFilters().stream()
-                        .map(
-                                f -> {
-                                    if (hasLikeToStringOperator(f)) {
-                                        return new Filter(
-                                                f.getProperty(),
-                                                f.getValue().toString().replaceAll("[*]", "%"),
-                                                f.getOperator());
-                                    }
-                                    return f;
-                                })
-                        .toList();
+        sqlSearch.setFilters(calculateFilters(search));
+        sqlSearch.setSorts(search.getSorts());
 
-        sqlSearch.setFilters(sqlFilters);
+        int maxResults = search.getMaxResults();
+        if (maxResults > 0) {
+            sqlSearch.setPage(search.getPage());
+            sqlSearch.setMaxResults(maxResults);
+        }
+
         return sqlSearch;
+    }
+
+    private List<Filter> calculateFilters(ISearch search) {
+        return search.getFilters().stream()
+                .map(
+                        f -> {
+                            if (hasLikeToStringOperator(f)) {
+                                return new Filter(
+                                        f.getProperty(),
+                                        f.getValue().toString().replaceAll("[*]", "%"),
+                                        f.getOperator());
+                            }
+                            return f;
+                        })
+                .toList();
     }
 
     private boolean hasLikeToStringOperator(Filter f) {
