@@ -57,9 +57,4 @@ public interface StoredDataService extends SecurityService {
      * @return List<StoredData>
      */
     List<StoredData> getAll();
-
-    /**
-     * @return List<StoredData>
-     */
-    List<StoredData> getAllFull();
 }

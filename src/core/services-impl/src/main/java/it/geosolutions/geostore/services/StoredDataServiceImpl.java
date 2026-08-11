@@ -22,7 +22,6 @@ package it.geosolutions.geostore.services;
 import it.geosolutions.geostore.core.dao.ResourceDAO;
 import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.dao.StoredDataDAO;
-import it.geosolutions.geostore.core.model.Attribute;
 import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.StoredData;
@@ -59,9 +58,6 @@ public class StoredDataServiceImpl implements StoredDataService {
         this.resourceDAO = resourceDAO;
     }
 
-    /**
-     * @param storedDataDAO
-     */
     public void setStoredDataDAO(StoredDataDAO storedDataDAO) {
         this.storedDataDAO = storedDataDAO;
     }
@@ -91,6 +87,8 @@ public class StoredDataServiceImpl implements StoredDataService {
             sData.setData(data);
             sData.setResource(resource);
             storedDataDAO.persist(sData);
+
+            resource.setData(sData);
         } else {
             sData.setData(data);
             storedDataDAO.merge(sData);
@@ -115,9 +113,7 @@ public class StoredDataServiceImpl implements StoredDataService {
             throw new NotFoundServiceEx("Corresponding Resource not found: " + id);
         }
 
-        StoredData data = storedDataDAO.find(id);
-
-        return data;
+        return storedDataDAO.find(id);
     }
 
     @Override
@@ -126,47 +122,24 @@ public class StoredDataServiceImpl implements StoredDataService {
         //
         // data on ancillary tables should be deleted by cascading
         //
+        Resource resource = resourceDAO.find(id);
+        if (resource != null) {
+            resource.setData(null);
+            resourceDAO.merge(resource);
+        }
         return storedDataDAO.removeById(id);
     }
 
     @Override
     public List<StoredData> getAll() {
-        List<StoredData> found = storedDataDAO.findAll();
-
-        return found;
+        return storedDataDAO.findAll();
     }
 
-    @Override
-    public List<StoredData> getAllFull() {
-        List<StoredData> found = storedDataDAO.findAll();
-
-        for (StoredData data : found) {
-            Resource resource = data.getResource();
-            if (resource != null) {
-                List<SecurityRule> security =
-                        securityDAO.findResourceSecurityRules(resource.getId());
-                resource.setSecurity(security);
-
-                List<Attribute> attribute = resourceDAO.findAttributes(resource.getId());
-                resource.setAttribute(attribute);
-            }
-        }
-
-        return found;
-    }
-
-    /*
-     * (non-Javadoc)
-     * @see it.geosolutions.geostore.services.SecurityService#getUserSecurityRule(java.lang.String, long)
-     */
     @Override
     public List<SecurityRule> getUserSecurityRule(String name, long storedDataId) {
         return securityDAO.findUserSecurityRule(name, storedDataId);
     }
 
-    /* (non-Javadoc)
-     * @see it.geosolutions.geostore.services.SecurityService#getGroupSecurityRule(java.lang.String, long)
-     */
     @Override
     public List<SecurityRule> getGroupSecurityRule(List<String> groupNames, long storedDataId) {
         return securityDAO.findGroupSecurityRule(groupNames, storedDataId);

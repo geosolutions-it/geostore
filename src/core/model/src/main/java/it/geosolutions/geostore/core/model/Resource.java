@@ -32,9 +32,11 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
@@ -112,7 +114,8 @@ public class Resource implements Serializable, CycleRecoverable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     private List<Attribute> attribute;
 
-    @OneToOne(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @JoinColumn(name = "stored_data_id", foreignKey = @ForeignKey(name = "fk_resource_stored_data"))
     private StoredData data;
 
     @ManyToOne(optional = false)

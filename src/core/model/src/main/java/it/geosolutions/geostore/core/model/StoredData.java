@@ -29,9 +29,7 @@ package it.geosolutions.geostore.core.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
@@ -60,8 +58,7 @@ public class StoredData implements Serializable {
     @Size(max = 10_000_000, message = "Data exceeds maximum length")
     private String data;
 
-    @OneToOne(optional = false)
-    @JoinColumn(foreignKey = @ForeignKey(name = "fk_data_resource"))
+    @OneToOne(mappedBy = "data")
     private Resource resource;
 
     /** Instantiates a new instance. */
