@@ -43,9 +43,8 @@ public class AttributeDAOTest extends BaseDAOTest {
 
     private static final Logger LOGGER = LogManager.getLogger(AttributeDAOTest.class);
 
-    /** @throws Exception */
     @Test
-    public void testPersistAttribute() throws Exception {
+    public void testPersistAttribute() {
 
         final String TEXT1 = "text1";
         final String TEXT2 = "text2";
@@ -182,9 +181,8 @@ public class AttributeDAOTest extends BaseDAOTest {
         }
     }
 
-    /** @throws Exception */
     @Test
-    public void testSearchAttribute() throws Exception {
+    public void testSearchAttribute() {
 
         Category category = new Category();
         category.setName("MAP");
@@ -210,6 +208,8 @@ public class AttributeDAOTest extends BaseDAOTest {
         data.setId(resource.getId());
 
         storedDataDAO.persist(data);
+        resource.setData(data);
+        resourceDAO.merge(resource);
 
         assertEquals(1, storedDataDAO.count(null));
         assertEquals(1, storedDataDAO.findAll().size());
@@ -284,11 +284,11 @@ public class AttributeDAOTest extends BaseDAOTest {
             assertNotNull("Can't retrieve Attribute list", attrList);
             assertEquals(5, attrList.size());
 
-            for (int i = 0; i < attrList.size(); i++) {
-                if (!attrList.get(i).getName().contains("attrnumber"))
+            for (Attribute attribute : attrList) {
+                if (!attribute.getName().contains("attrnumber"))
                     fail("Attribute name not matched!");
 
-                assertEquals(DataType.NUMBER, attrList.get(i).getType());
+                assertEquals(DataType.NUMBER, attribute.getType());
             }
         }
 
@@ -306,11 +306,10 @@ public class AttributeDAOTest extends BaseDAOTest {
             assertNotNull("Can't retrieve Attribute list", attrList);
             assertEquals(10, attrList.size());
 
-            for (int i = 0; i < attrList.size(); i++) {
-                if (!attrList.get(i).getName().contains("attrdate"))
-                    fail("Attribute name not matched!");
+            for (Attribute attribute : attrList) {
+                if (!attribute.getName().contains("attrdate")) fail("Attribute name not matched!");
 
-                assertEquals(DataType.DATE, attrList.get(i).getType());
+                assertEquals(DataType.DATE, attribute.getType());
             }
         }
 
@@ -327,8 +326,8 @@ public class AttributeDAOTest extends BaseDAOTest {
             assertNotNull("Can't retrieve Attribute list", attrList);
             assertEquals(20, attrList.size());
 
-            for (int i = 0; i < attrList.size(); i++)
-                if (attrList.get(i).getType().equals(DataType.NUMBER))
+            for (Attribute attribute : attrList)
+                if (attribute.getType().equals(DataType.NUMBER))
                     fail("Attribute type not matched!");
         }
 

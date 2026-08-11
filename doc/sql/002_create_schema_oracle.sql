@@ -29,8 +29,10 @@
         creator varchar2(255 char),
         editor varchar2(255 char),
         advertised bool not null default true,
+        stored_data_id number(19,0),
         primary key (id),
-        unique (name)
+        unique (name),
+        unique (stored_data_id)
     );
 
     create table gs_security (
@@ -50,9 +52,7 @@
     create table gs_stored_data (
         id number(19,0) not null,
         stored_data CLOB not null,
-        resource_id number(19,0) not null,
-        primary key (id),
-        unique (resource_id)
+        primary key (id)
     );
 
     create table gs_user (
@@ -252,10 +252,10 @@
         foreign key (resource_id) 
         references gs_resource;
 
-    alter table gs_stored_data 
-        add constraint fk_data_resource 
-        foreign key (resource_id) 
-        references gs_resource;
+    alter table gs_resource
+        add constraint fk_resource_stored_data
+        foreign key (stored_data_id)
+        references gs_stored_data;
 
     create index idx_user_group on gs_user (group_id);
 

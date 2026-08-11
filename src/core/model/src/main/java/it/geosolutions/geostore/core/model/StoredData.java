@@ -30,9 +30,7 @@ package it.geosolutions.geostore.core.model;
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.ForeignKey;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -57,8 +55,7 @@ public class StoredData implements Serializable {
     @Column(name = "stored_data", nullable = false, updatable = true, length = 10000000)
     private String data;
 
-    @OneToOne(optional = false)
-    @JoinColumn(foreignKey = @ForeignKey(name = "fk_data_resource"))
+    @OneToOne(mappedBy = "data")
     private Resource resource;
 
     /** Instantiates a new instance. */

@@ -234,6 +234,9 @@ public class ResourceServiceImpl implements ResourceService {
                 data.setId(r.getId());
                 data.setResource(r);
                 storedDataDAO.persist(data);
+
+                r.setData(data);
+                resourceDAO.merge(r);
             }
 
             //
@@ -647,7 +650,8 @@ public class ResourceServiceImpl implements ResourceService {
         configuredResource.setEditor(resource.getEditor());
 
         if (includeData) {
-            configuredResource.setData(resource.getData());
+            // explicit fetch as Resource.data is a lazy proxy
+            configuredResource.setData(storedDataDAO.find(resource.getId()));
         }
 
         if (includeAttributes) {
