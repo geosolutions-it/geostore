@@ -46,8 +46,10 @@ SET search_path TO geostore;
         creator varchar(255),
         editor varchar(255),
         advertised bool not null default true,
+        stored_data_id int8,
         primary key (id),
-        unique (name)
+        unique (name),
+        unique (stored_data_id)
     );
 
     create table gs_security (
@@ -67,9 +69,7 @@ SET search_path TO geostore;
     create table gs_stored_data (
         id int8 not null,
         stored_data varchar(10000000) not null,
-        resource_id int8 not null,
-        primary key (id),
-        unique (resource_id)
+        primary key (id)
     );
 
     create table gs_user (
@@ -256,10 +256,10 @@ SET search_path TO geostore;
         foreign key (resource_id) 
         references gs_resource;
 
-    alter table gs_stored_data 
-        add constraint fk_data_resource 
-        foreign key (resource_id) 
-        references gs_resource;
+    alter table gs_resource
+        add constraint fk_resource_stored_data
+        foreign key (stored_data_id)
+        references gs_stored_data;
 
     create index idx_user_group on gs_user (group_id);
 

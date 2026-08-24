@@ -35,12 +35,12 @@ import org.junit.Test;
 public class StoredDataDAOTest extends BaseDAOTest {
 
     @Test
-    public void testPersistData() throws Exception {
+    public void testPersistData() {
 
         final String NAME1 = "FIRST_DATA";
         final String NAME2 = "SECOND_DATA";
 
-        long id;
+        long dataId;
 
         //
         // PERSIST test
@@ -68,20 +68,22 @@ public class StoredDataDAOTest extends BaseDAOTest {
             data.setData(NAME1);
             data.setResource(resource);
             data.setId(resource.getId());
-
             storedDataDAO.persist(data);
-            id = data.getId();
+            resource.setData(data);
+            resourceDAO.merge(resource);
 
             assertEquals(1, storedDataDAO.count(null));
             assertEquals(1, storedDataDAO.findAll().size());
             assertEquals(data.getId(), resource.getId());
+
+            dataId = data.getId();
         }
 
         //
         // LOAD and UPDATE tests
         //
         {
-            StoredData loaded = storedDataDAO.find(id);
+            StoredData loaded = storedDataDAO.find(dataId);
             assertNotNull("Can't retrieve data", loaded);
 
             assertEquals(NAME1, loaded.getData());
@@ -90,13 +92,22 @@ public class StoredDataDAOTest extends BaseDAOTest {
         }
 
         {
-            StoredData loaded = storedDataDAO.find(id);
+            StoredData loaded = storedDataDAO.find(dataId);
             assertNotNull("Can't retrieve data", loaded);
             assertEquals(NAME2, loaded.getData());
         }
 
-        storedDataDAO.removeById(id);
-        assertNull("Data not deleted", storedDataDAO.find(id));
+        //
+        // REMOVE test
+        //
+        // Resource owns the FK to StoredData, so the reference has to be cleared before
+        // StoredData can be removed directly, otherwise the FK constraint is violated.
+        Resource resource = resourceDAO.find(dataId);
+        resource.setData(null);
+        resourceDAO.merge(resource);
+
+        storedDataDAO.removeById(dataId);
+        assertNull("Data not deleted", storedDataDAO.find(dataId));
     }
 
     public void testBigData() {

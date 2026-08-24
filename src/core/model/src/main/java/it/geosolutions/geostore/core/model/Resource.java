@@ -37,9 +37,11 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Index;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -110,7 +112,8 @@ public class Resource implements Serializable, CycleRecoverable {
     @OneToMany(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     private List<Attribute> attribute;
 
-    @OneToOne(mappedBy = "resource", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    @JoinColumn(name = "stored_data_id", foreignKey = @ForeignKey(name = "fk_resource_stored_data"))
     private StoredData data;
 
     @ManyToOne(optional = false)
