@@ -111,5 +111,6 @@ public interface RESTIPRangeService {
     @DELETE
     @Path("{id}")
     @Secured({"ROLE_ADMIN"})
-    void delete(@Context SecurityContext sc, @PathParam("id") long id) throws NotFoundWebEx;
+    void delete(@Context SecurityContext sc, @PathParam("id") long id)
+            throws NotFoundWebEx, BadRequestWebEx;
 }

@@ -108,9 +108,12 @@ public class RESTIPRangeServiceImpl implements RESTIPRangeService {
     }
 
     @Override
-    public void delete(SecurityContext sc, long id) throws NotFoundWebEx {
+    public void delete(SecurityContext sc, long id) throws NotFoundWebEx, BadRequestWebEx {
         try {
             ipRangeService.delete(id);
+        } catch (BadRequestServiceEx e) {
+            LOGGER.error(e.getMessage(), e);
+            throw new BadRequestWebEx(e.getMessage());
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
         }

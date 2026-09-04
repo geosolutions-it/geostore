@@ -265,7 +265,7 @@ public abstract class ServiceTestBase {
                             LOGGER.info("Removing IP range: {}", item.getCidr());
                             try {
                                 ipRangeService.delete(item.getId());
-                            } catch (NotFoundServiceEx e) {
+                            } catch (NotFoundServiceEx | BadRequestServiceEx e) {
                                 throw new RuntimeException(e);
                             }
                         });

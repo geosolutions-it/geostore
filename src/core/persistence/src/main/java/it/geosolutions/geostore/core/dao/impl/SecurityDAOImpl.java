@@ -279,6 +279,13 @@ public class SecurityDAOImpl extends BaseDAO<SecurityRule, Long> implements Secu
     }
 
     @Override
+    public boolean isIpRangeInUse(long ipRangeId) {
+        Search searchCriteria = new Search(SecurityRule.class);
+        searchCriteria.addFilter(Filter.some("ipRanges", Filter.equal("id", ipRangeId)));
+        return super.count(searchCriteria) > 0;
+    }
+
+    @Override
     public List<SecurityRule> findGroupSecurityRule(List<String> groupNames, long resourceId) {
         List<SecurityRule> rules = findResourceSecurityRules(resourceId);
         // WORKAROUND
