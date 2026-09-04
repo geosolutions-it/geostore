@@ -22,11 +22,13 @@ package it.geosolutions.geostore.services;
 import static org.junit.Assert.assertThrows;
 
 import it.geosolutions.geostore.core.model.IPRange;
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Set;
 
 public class IPRangeServiceImplTest extends ServiceTestBase {
 
@@ -276,6 +278,31 @@ public class IPRangeServiceImplTest extends ServiceTestBase {
 
     public void testDeleteNotFoundIPRange() {
         assertThrows(NotFoundServiceEx.class, () -> ipRangeService.delete(0L));
+    }
+
+    public void testDeleteIPRangeInUse() throws Exception {
+
+        IPRange ipRange = new IPRange();
+        ipRange.setCidr("127.0.0.0/24");
+
+        ipRangeDAO.persist(ipRange);
+
+        SecurityRule rule =
+                new SecurityRuleBuilder().canRead(true).ipRanges(Set.of(ipRange)).build();
+        securityDAO.persist(rule);
+
+        try {
+            BadRequestServiceEx ex =
+                    assertThrows(
+                            BadRequestServiceEx.class,
+                            () -> ipRangeService.delete(ipRange.getId()));
+            assertTrue(ex.getMessage().contains("referenced by one or more security rules"));
+
+            assertNotNull(ipRangeDAO.find(ipRange.getId()));
+        } finally {
+            // cleanup
+            securityDAO.remove(rule);
+        }
     }
 
     public void testIPRangeBoundsCalculationOnInsertion() throws Exception {
