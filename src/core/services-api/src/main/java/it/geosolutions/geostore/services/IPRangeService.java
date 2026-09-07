@@ -43,7 +43,7 @@ public interface IPRangeService {
 
     long update(long id, IPRange tag) throws BadRequestServiceEx, NotFoundServiceEx;
 
-    void delete(long id) throws NotFoundServiceEx;
+    void delete(long id) throws NotFoundServiceEx, BadRequestServiceEx;
 
     long count();
 }

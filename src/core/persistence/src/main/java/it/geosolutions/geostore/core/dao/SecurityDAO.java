@@ -55,4 +55,10 @@ public interface SecurityDAO extends RestrictedGenericDAO<SecurityRule> {
      * @return List<SecurityRule>
      */
     List<SecurityRule> findResourceSecurityRules(long resourceId);
+
+    /**
+     * @param ipRangeId
+     * @return true if the given IPRange is referenced by at least one SecurityRule
+     */
+    boolean isIpRangeInUse(long ipRangeId);
 }

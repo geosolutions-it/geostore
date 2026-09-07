@@ -23,6 +23,7 @@ import com.googlecode.genericdao.search.Search;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 import it.geosolutions.geostore.core.dao.IpRangeDAO;
+import it.geosolutions.geostore.core.dao.SecurityDAO;
 import it.geosolutions.geostore.core.model.IPRange;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -38,8 +39,14 @@ public class IPRangeServiceImpl implements IPRangeService {
 
     private IpRangeDAO ipRangeDAO;
 
+    private SecurityDAO securityDAO;
+
     public void setIpRangeDAO(IpRangeDAO ipRangeDAO) {
         this.ipRangeDAO = ipRangeDAO;
+    }
+
+    public void setSecurityDAO(SecurityDAO securityDAO) {
+        this.securityDAO = securityDAO;
     }
 
     @Override
@@ -129,8 +136,17 @@ public class IPRangeServiceImpl implements IPRangeService {
         ipRange.setIpHigh(cidr.getUpper().getValue());
     }
 
-    public void delete(long id) throws NotFoundServiceEx {
-        if (get(id) == null || !ipRangeDAO.removeById(id)) {
+    public void delete(long id) throws NotFoundServiceEx, BadRequestServiceEx {
+        if (get(id) == null) {
+            throw new NotFoundServiceEx("IPRange not found");
+        }
+
+        if (securityDAO.isIpRangeInUse(id)) {
+            throw new BadRequestServiceEx(
+                    "IPRange is still referenced by one or more security rules and cannot be deleted");
+        }
+
+        if (!ipRangeDAO.removeById(id)) {
             throw new NotFoundServiceEx("IPRange not found");
         }
     }
