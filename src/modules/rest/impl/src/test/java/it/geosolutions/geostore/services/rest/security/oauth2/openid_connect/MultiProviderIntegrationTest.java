@@ -425,6 +425,56 @@ public class MultiProviderIntegrationTest {
     }
 
     @Test
+    public void testCompositeFilterSharesTokenCacheAcrossProviders() throws Exception {
+        ApplicationContext ctx =
+                createMockApplicationContext(
+                        Map.of(
+                                PROVIDER_A_NAME + "OAuth2Config", configA,
+                                PROVIDER_B_NAME + "OAuth2Config", configB));
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(ctx);
+        composite.afterPropertiesSet();
+
+        TokenAuthenticationCache sharedCache =
+                ctx.getBean("oAuth2Cache", TokenAuthenticationCache.class);
+
+        String jwtA =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        MockHttpServletRequest requestA = createRequest("rest/resources");
+        requestA.addHeader("Authorization", "Bearer " + jwtA);
+        composite.doFilter(requestA, new MockHttpServletResponse(), new MockFilterChain());
+
+        SecurityContextHolder.clearContext();
+
+        String jwtB =
+                createSignedJwt(
+                        "bob@provider-b.com",
+                        "bob-sub",
+                        PROVIDER_B_CLIENT_ID,
+                        PROVIDER_B_KID,
+                        rsaAlgorithmB);
+        MockHttpServletRequest requestB = createRequest("rest/resources");
+        requestB.addHeader("Authorization", "Bearer " + jwtB);
+        composite.doFilter(requestB, new MockHttpServletResponse(), new MockFilterChain());
+
+        Set<String> cachedUsernames = new HashSet<>();
+        for (Authentication cached : sharedCache.getCache().asMap().values()) {
+            cachedUsernames.add(((User) cached.getPrincipal()).getName());
+        }
+        assertTrue(
+                cachedUsernames.contains("alice@provider-a.com"),
+                "Provider A's authentication should be cached in the shared oAuth2Cache bean");
+        assertTrue(
+                cachedUsernames.contains("bob@provider-b.com"),
+                "Provider B's authentication should be cached in the shared oAuth2Cache bean");
+    }
+
+    @Test
     public void testCompositeFilterRejectsInvalidBearerToken() throws Exception {
         CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
         composite.setApplicationContext(
