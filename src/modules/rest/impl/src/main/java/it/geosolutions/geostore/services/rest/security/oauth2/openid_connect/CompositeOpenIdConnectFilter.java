@@ -141,6 +141,11 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                 sharedCache =
                         new TokenAuthenticationCache(
                                 config.getCacheSize(), config.getCacheExpirationMinutes());
+                // Wire the ApplicationContext so that revoke-on-eviction can resolve the
+                // provider configuration bean. The cache is registered with
+                // registerSingleton(), which does not run ApplicationContextAware callbacks,
+                // so nothing else will set it.
+                sharedCache.setApplicationContext(applicationContext);
             }
             TokenAuthenticationCache cache = sharedCache;
 

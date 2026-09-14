@@ -37,12 +37,14 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreOAuthRestTemplate;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
+import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -463,6 +465,65 @@ public class MultiProviderIntegrationTest {
         assertTrue(
                 cachedUsernames.contains("bob@provider-b.com"),
                 "Provider B's authentication should be cached in the shared oAuth2Cache bean");
+    }
+
+    /**
+     * Reproduces the symptom reported in MapStore2 #12790: GeoServer's authkey integration resolves
+     * an OIDC user through {@code GET /rest/geostore/session/username/{token}}, which lands in
+     * {@code OAuth2SessionServiceDelegate.getUserName} and looks the token cache up <em>by bean
+     * name</em> through {@link GeoStoreContext}. Before the cache was shared, only the first
+     * provider's cache was ever registered under that name, so a token minted by the second
+     * provider resolved to {@code null} and the caller saw a 401.
+     *
+     * <p>{@link #testCompositeFilterSharesTokenCacheAcrossProviders()} asserts on the contents of
+     * the cache bean; this one goes through the call that actually broke in the field.
+     */
+    @Test
+    public void testSecondProviderTokenResolvesThroughSessionServiceByNameLookup()
+            throws Exception {
+        // Registration order decides which provider claims the "oAuth2Cache" bean name before
+        // the fix, so pin it here: the provider under assertion must not be the first one.
+        Map<String, OpenIdConnectConfiguration> ordered = new LinkedHashMap<>();
+        ordered.put(PROVIDER_A_NAME + "OAuth2Config", configA);
+        ordered.put(PROVIDER_B_NAME + "OAuth2Config", configB);
+        ApplicationContext ctx = createMockApplicationContext(ordered);
+
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(ctx);
+        composite.afterPropertiesSet();
+
+        try {
+            // The session delegate reaches the cache through the static holder rather than
+            // through any context handed to it, so wire the one the filter just populated.
+            new GeoStoreContext().setApplicationContext(ctx);
+
+            String jwtB =
+                    createSignedJwt(
+                            "bob@provider-b.com",
+                            "bob-sub",
+                            PROVIDER_B_CLIENT_ID,
+                            PROVIDER_B_KID,
+                            rsaAlgorithmB);
+            MockHttpServletRequest requestB = createRequest("rest/resources");
+            requestB.addHeader("Authorization", "Bearer " + jwtB);
+            composite.doFilter(requestB, new MockHttpServletResponse(), new MockFilterChain());
+            SecurityContextHolder.clearContext();
+
+            OpenIdConnectSessionServiceDelegate delegate =
+                    new OpenIdConnectSessionServiceDelegate(
+                            new RESTSessionServiceImpl(), null, PROVIDER_B_NAME);
+
+            assertEquals(
+                    "bob@provider-b.com",
+                    delegate.getUserName(jwtB, false, false),
+                    "a token minted by the second provider must resolve through the by-name "
+                            + "oAuth2Cache lookup that GeoServer's authkey call depends on");
+        } finally {
+            // GeoStoreContext is a static holder; do not leak this context into other tests.
+            StaticApplicationContext empty = new StaticApplicationContext();
+            empty.refresh();
+            new GeoStoreContext().setApplicationContext(empty);
+        }
     }
 
     @Test
