@@ -106,6 +106,10 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
 
         Map<String, OpenIdConnectConfiguration> configs =
                 applicationContext.getBeansOfType(OpenIdConnectConfiguration.class);
+
+        // Single, shared token authentication cache
+        TokenAuthenticationCache sharedCache = null;
+
         for (Map.Entry<String, OpenIdConnectConfiguration> entry : configs.entrySet()) {
             OpenIdConnectConfiguration config = entry.getValue();
             String beanName = entry.getKey();
@@ -133,9 +137,17 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
                     OpenIdConnectRestTemplateFactory.create(
                             config, new DefaultAccessTokenRequest());
 
-            TokenAuthenticationCache cache =
-                    new TokenAuthenticationCache(
-                            config.getCacheSize(), config.getCacheExpirationMinutes());
+            if (sharedCache == null) {
+                sharedCache =
+                        new TokenAuthenticationCache(
+                                config.getCacheSize(), config.getCacheExpirationMinutes());
+                // Wire the ApplicationContext so that revoke-on-eviction can resolve the
+                // provider configuration bean. The cache is registered with
+                // registerSingleton(), which does not run ApplicationContextAware callbacks,
+                // so nothing else will set it.
+                sharedCache.setApplicationContext(applicationContext);
+            }
+            TokenAuthenticationCache cache = sharedCache;
 
             JwksRsaKeyProvider jwksKeyProvider = null;
             String jwksUri = config.getIdTokenUri();
