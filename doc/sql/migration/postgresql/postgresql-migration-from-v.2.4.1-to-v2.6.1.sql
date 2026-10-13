@@ -1,3 +1,8 @@
+/*
+    requires geostore version to be at least 2.6.1
+    make sure to have this version configured 
+*/
+
 ALTER TABLE geostore.gs_resource
     ADD COLUMN stored_data_id int8;
 
