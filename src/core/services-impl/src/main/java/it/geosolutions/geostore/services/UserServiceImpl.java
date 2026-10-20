@@ -41,8 +41,10 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.cxf.common.util.StringUtils;
@@ -250,10 +252,12 @@ public class UserServiceImpl implements UserService {
         return orig.getId();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see it.geosolutions.geostore.services.UserService#updateAttributes(long, java.util.List)
+    /**
+     * Replaces the user's attributes with the given list. A stored attribute whose name is in the
+     * list keeps its row and gets the new value, names not stored yet are inserted, and stored
+     * names missing from the list are deleted. Deleting and re-inserting the same name in one
+     * transaction would break the unique key on (name, user_id), because the inserts are flushed
+     * before the deletes.
      */
     @Override
     public void updateAttributes(long id, List<UserAttribute> attributes) throws NotFoundServiceEx {
@@ -262,24 +266,31 @@ public class UserServiceImpl implements UserService {
             throw new NotFoundServiceEx("User not found " + id);
         }
 
-        //
-        // Removing old attributes
-        //
-        List<UserAttribute> oldList = user.getAttribute();
-        // Iterator<UserAttribute> iterator;
-
-        if (oldList != null) {
-            for (UserAttribute a : oldList) {
-                userAttributeDAO.removeById(a.getId());
+        Map<String, UserAttribute> byName = new HashMap<>();
+        if (user.getAttribute() != null) {
+            for (UserAttribute stored : user.getAttribute()) {
+                byName.put(stored.getName(), stored);
             }
         }
 
-        //
-        // Saving new attributes
-        //
-        for (UserAttribute a : attributes) {
-            a.setUser(user);
-            userAttributeDAO.persist(a);
+        Set<String> kept = new HashSet<>();
+        for (UserAttribute requested : attributes) {
+            UserAttribute current = byName.get(requested.getName());
+            if (current != null) {
+                current.setValue(requested.getValue());
+                userAttributeDAO.merge(current);
+            } else {
+                requested.setUser(user);
+                userAttributeDAO.persist(requested);
+                byName.put(requested.getName(), requested);
+            }
+            kept.add(requested.getName());
+        }
+
+        for (UserAttribute stored : byName.values()) {
+            if (!kept.contains(stored.getName())) {
+                userAttributeDAO.removeById(stored.getId());
+            }
         }
     }
 
