@@ -37,6 +37,7 @@ import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTUserService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.RESTUser;
 import it.geosolutions.geostore.services.rest.model.UserList;
@@ -60,6 +61,8 @@ import java.util.Set;
 public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTUserServiceImpl.class);
+
+    private static final String UUID_ATTRIBUTE = "UUID";
 
     private UserService userService;
 
@@ -112,6 +115,10 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
      */
     @Override
     public long update(SecurityContext sc, long id, User user) {
+        if (user == null) {
+            throw new BadRequestWebEx("User is null");
+        }
+
         try {
             User authUser = extractAuthUser(sc);
 
@@ -120,8 +127,19 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                 throw new NotFoundWebEx("User not found");
             }
 
+            boolean isAdmin = authUser != null && Role.ADMIN.equals(authUser.getRole());
+            boolean isSelf = authUser != null && old.getName().equals(authUser.getName());
+            if (!isAdmin && !isSelf) {
+                throw new ForbiddenErrorWebEx("Only administrators can update another user");
+            }
+
+            List<UserAttribute> attributeDto = user.getAttribute();
+            if (!isAdmin && attributeDto != null && !attributeDto.isEmpty()) {
+                throw new ForbiddenErrorWebEx("Only administrators can update user attributes");
+            }
+
             boolean userUpdated = false;
-            if (authUser.getRole().equals(Role.ADMIN)) {
+            if (isAdmin) {
                 String npw = user.getNewPassword();
                 if (npw != null && !npw.isEmpty()) {
                     old.setNewPassword(user.getNewPassword());
@@ -144,7 +162,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
                     old.setGroups(groups);
                     userUpdated = true;
                 }
-            } else if (old.getName().equals(authUser.getName())) { // Check if the User is the same
+            } else if (isSelf) { // Check if the User is the same
                 String npw = user.getNewPassword();
                 if (npw != null && !npw.isEmpty()) {
                     old.setNewPassword(user.getNewPassword());
@@ -156,22 +174,9 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             //
             // Creating a new User Attribute list (updated).
             //
-            List<UserAttribute> attributeDto = user.getAttribute();
-
-            if (attributeDto != null) {
-                Iterator<UserAttribute> iteratorDto = attributeDto.iterator();
-
-                List<UserAttribute> attributes = new ArrayList<UserAttribute>();
-                while (iteratorDto.hasNext()) {
-                    UserAttribute aDto = iteratorDto.next();
-
-                    UserAttribute a = new UserAttribute();
-                    a.setValue(aDto.getValue());
-                    a.setName(aDto.getName());
-                    attributes.add(a);
-                }
-
-                if (attributes.size() > 0) {
+            if (isAdmin && attributeDto != null) {
+                List<UserAttribute> attributes = attributesToStore(old, attributeDto);
+                if (!attributes.isEmpty()) {
                     userService.updateAttributes(id, attributes);
                 }
             }
@@ -189,6 +194,38 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         } catch (BadRequestServiceEx e) {
             throw new BadRequestWebEx(e.getMessage());
         }
+    }
+
+    /**
+     * Returns the attributes to store for an administrator's update, or an empty list when the
+     * request leaves them unchanged. The {@code UUID} attribute is managed by the server: a value
+     * in the request is ignored, and the stored one is carried over because {@link
+     * UserService#updateAttributes} replaces the whole list.
+     */
+    private static List<UserAttribute> attributesToStore(
+            User stored, List<UserAttribute> requested) {
+        List<UserAttribute> attributes = new ArrayList<>();
+        for (UserAttribute requestedAttribute : requested) {
+            if (requestedAttribute != null
+                    && !UUID_ATTRIBUTE.equals(requestedAttribute.getName())) {
+                attributes.add(copyOf(requestedAttribute));
+            }
+        }
+        if (!attributes.isEmpty() && stored.getAttribute() != null) {
+            for (UserAttribute storedAttribute : stored.getAttribute()) {
+                if (UUID_ATTRIBUTE.equals(storedAttribute.getName())) {
+                    attributes.add(copyOf(storedAttribute));
+                }
+            }
+        }
+        return attributes;
+    }
+
+    private static UserAttribute copyOf(UserAttribute source) {
+        UserAttribute copy = new UserAttribute();
+        copy.setName(source.getName());
+        copy.setValue(source.getValue());
+        return copy;
     }
 
     /*
