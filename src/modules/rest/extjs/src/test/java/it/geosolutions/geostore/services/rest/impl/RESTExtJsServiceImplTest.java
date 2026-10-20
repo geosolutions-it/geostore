@@ -1233,7 +1233,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String OWNED_RESOURCE_NAME = "ownedResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -1331,7 +1331,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long groupId = createGroup("group");
@@ -1445,7 +1445,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String GROUP_RESOURCE_NAME = "advertisedGroupResource";
         final String READ_ONLY_RESOURCE_NAME = "readOnlyResource";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         User ldapUser = new User();
@@ -1551,7 +1551,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testExtResourcesList_withIPRangeRestriction() throws Exception {
         final String CAT0_NAME = "CAT000";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -1648,7 +1648,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long groupId = createGroup("group");
         UserGroup group = userGroupService.get(groupId);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
@@ -1911,7 +1911,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long groupId = createGroup("group");
         UserGroup group = userGroupService.get(groupId);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("_guest", Role.GUEST, Collections.singleton(group), "guest");
@@ -1972,7 +1972,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetExtResource_withoutSecurityInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -2023,7 +2023,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         ShortAttribute attributeA = new ShortAttribute("attributeA", "ABC", DataType.STRING);
         ShortAttribute attributeB = new ShortAttribute("attributeB", "123.0", DataType.NUMBER);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -2161,7 +2161,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long groupId = createGroup("group");
         UserGroup group = userGroupService.get(groupId);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
@@ -2278,7 +2278,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetExtResource_userOwnedWithPermissionsInformation() throws Exception {
         final String CAT0_NAME = "CAT000";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -2399,7 +2399,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long groupId = createGroup("group");
         UserGroup group = userGroupService.get(groupId);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(group), "p0");
@@ -2501,7 +2501,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetExtResource_withIPRangeRestriction() throws Exception {
         final String CAT0_NAME = "CAT000";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -2571,7 +2571,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetExtResource_ipRangeRestrictionBehindProxy() throws Exception {
         final String CAT0_NAME = "CAT000";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, null, "p0");
@@ -2711,7 +2711,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         long groupId = createGroup("group");
         UserGroup group = userGroupService.get(groupId);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("_guest", Role.GUEST, Collections.singleton(group), "guest");
@@ -2753,7 +2753,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
 
         createGroup("groupB");
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         long userId = restCreateUser("u0", Role.USER, Collections.singleton(groupA), "p0");
@@ -2782,7 +2782,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         final String userAName = "userA";
         final String userBName = "usuarioB";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         restCreateUser(userAName, Role.USER, null, "p0");
@@ -2816,7 +2816,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
     public void testGetUsersListWithNameLikeAndPagination() throws Exception {
         final String prefix = "paginated_user_";
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         restCreateUser(prefix + "E", Role.USER, null, "p0");
@@ -2864,7 +2864,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         createGroup(groupAName);
         createGroup(groupBName);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         {
@@ -2900,7 +2900,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         createGroup(prefix + "D");
         createGroup(prefix + "B");
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         {
@@ -2943,7 +2943,7 @@ public class RESTExtJsServiceImplTest extends ServiceTestBase {
         reservedGroup.setGroupName(GroupReservedNames.EVERYONE.groupName());
         userGroupDAO.persist(reservedGroup);
 
-        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin");
+        long adminId = restCreateUser("admin", Role.ADMIN, null, "admin-test-pw");
         SecurityContext adminSecurityContext = new SimpleSecurityContext(adminId);
 
         {

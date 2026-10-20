@@ -32,6 +32,7 @@ import it.geosolutions.geostore.core.model.UserAttribute;
 import it.geosolutions.geostore.core.model.UserGroup;
 import it.geosolutions.geostore.core.model.enums.GroupReservedNames;
 import it.geosolutions.geostore.core.model.enums.Role;
+import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.services.UserService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
@@ -84,6 +85,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         if (user.getId() != null) {
             throw new BadRequestWebEx("Id should be null");
         }
+        rejectFormerDefaultPassword(user.getName(), user.getNewPassword());
 
         long id = -1;
         try {
@@ -137,6 +139,7 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
             if (!isAdmin && attributeDto != null && !attributeDto.isEmpty()) {
                 throw new ForbiddenErrorWebEx("Only administrators can update user attributes");
             }
+            rejectFormerDefaultPassword(old.getName(), user.getNewPassword());
 
             boolean userUpdated = false;
             if (isAdmin) {
@@ -226,6 +229,19 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
         copy.setName(source.getName());
         copy.setValue(source.getValue());
         return copy;
+    }
+
+    /**
+     * The former sample pairs {@code admin}/{@code admin} and {@code user}/{@code user} are
+     * publicly known. Existing accounts that still use them keep working and are reported at
+     * startup, but a new password must not bring them back: reject them here with a 400.
+     */
+    private static void rejectFormerDefaultPassword(String name, String newPassword) {
+        String trimmedName = name == null ? null : name.trim();
+        if (PwEncoder.isLegacySamplePassword(trimmedName, newPassword)) {
+            throw new BadRequestWebEx(
+                    "The former default password cannot be used for user '" + trimmedName + "'");
+        }
     }
 
     /*

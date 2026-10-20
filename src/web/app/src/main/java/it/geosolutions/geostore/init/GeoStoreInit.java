@@ -22,6 +22,7 @@ package it.geosolutions.geostore.init;
 import it.geosolutions.geostore.core.model.Category;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.model.UserGroup;
+import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.core.security.password.GeoStorePasswordEncoder;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
 import it.geosolutions.geostore.init.model.InitUserList;
@@ -44,6 +45,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -52,6 +54,14 @@ import java.util.List;
 public class GeoStoreInit implements InitializingBean {
 
     private static final Logger LOGGER = LogManager.getLogger(GeoStoreInit.class);
+
+    private static final String ADMIN_NAME = "admin";
+
+    /**
+     * Environment variable holding the password used to create the {@code admin} account whenever
+     * it is missing at startup.
+     */
+    static final String INITIAL_ADMIN_PASSWORD_ENV = "INITIAL_ADMIN_PASSWORD";
 
     protected UserService userService;
 
@@ -108,10 +118,151 @@ public class GeoStoreInit implements InitializingBean {
                 LOGGER.warn("Initializing users from file " + userListInitFile);
                 initUsers(userListInitFile);
             } else {
-                LOGGER.info("No user initializer defined.");
+                userService.insertSpecialUsers();
             }
         } else {
             LOGGER.info("Users already in db: " + userCnt);
+        }
+        ensureAdminAccount();
+        if (userCnt > 0) {
+            warnAboutLegacySampleCredentials();
+        }
+    }
+
+    /**
+     * Makes sure an {@code admin} account exists and can be recovered, using the password in the
+     * {@value #INITIAL_ADMIN_PASSWORD_ENV} environment variable:
+     *
+     * <ul>
+     *   <li>when {@code admin} is missing, on a new database or because it was renamed or deleted,
+     *       it is created with that password;
+     *   <li>when {@code admin} still has its former default password, the password is reset to that
+     *       value, so setting the variable and restarting replaces the publicly known one;
+     *   <li>otherwise an existing {@code admin} is not modified, and a warning is logged while it
+     *       still uses that password.
+     * </ul>
+     *
+     * Without the variable nothing is created or changed and startup continues, so installations
+     * whose administrator has a different name or comes from an external provider keep working.
+     */
+    void ensureAdminAccount() {
+        String password = initialAdminPassword();
+        boolean configured = password != null && !password.trim().isEmpty();
+        if (configured && PwEncoder.isLegacySamplePassword(ADMIN_NAME, password)) {
+            LOGGER.error(
+                    "SECURITY: {} is set to the former default password, so it is ignored. Choose a different password.",
+                    INITIAL_ADMIN_PASSWORD_ENV);
+            return;
+        }
+
+        User admin = adminOrNull();
+        if (admin == null) {
+            if (configured) {
+                createAdmin(password);
+            } else {
+                LOGGER.warn(
+                        "No '{}' account found and the {} environment variable is not set, so none was created. Set {} to have GeoStore create the '{}' account at startup.",
+                        ADMIN_NAME,
+                        INITIAL_ADMIN_PASSWORD_ENV,
+                        INITIAL_ADMIN_PASSWORD_ENV,
+                        ADMIN_NAME);
+            }
+            return;
+        }
+        if (!configured) {
+            LOGGER.info(
+                    "The {} environment variable is not set. Set it if GeoStore should recreate the '{}' account when it is missing.",
+                    INITIAL_ADMIN_PASSWORD_ENV,
+                    ADMIN_NAME);
+            return;
+        }
+        if (usesPassword(admin, ADMIN_NAME)) {
+            resetFormerDefaultPassword(admin, password);
+        } else if (usesPassword(admin, password)) {
+            LOGGER.warn(
+                    "SECURITY: the '{}' account still uses the password from the {} environment variable. Change it.",
+                    ADMIN_NAME,
+                    INITIAL_ADMIN_PASSWORD_ENV);
+        }
+    }
+
+    private void createAdmin(String password) {
+        User admin = new User();
+        admin.setName(ADMIN_NAME);
+        admin.setRole(Role.ADMIN);
+        admin.setEnabled(true);
+        admin.setNewPassword(password);
+        try {
+            userService.insert(admin);
+        } catch (Exception e) {
+            LOGGER.error("Could not create the '{}' account.", ADMIN_NAME, e);
+            return;
+        }
+        LOGGER.warn(
+                "Created the '{}' account with the password from the {} environment variable. Change it after the first login.",
+                ADMIN_NAME,
+                INITIAL_ADMIN_PASSWORD_ENV);
+    }
+
+    private void resetFormerDefaultPassword(User admin, String password) {
+        admin.setNewPassword(password);
+        // Attributes are stored separately; leaving them out keeps them as they are.
+        admin.setAttribute(null);
+        try {
+            userService.update(admin);
+        } catch (Exception e) {
+            LOGGER.error(
+                    "Could not reset the former default password of the '{}' account.",
+                    ADMIN_NAME,
+                    e);
+            return;
+        }
+        LOGGER.warn(
+                "SECURITY: the '{}' account still had its former default password; it was reset to the password from the {} environment variable. Change it after logging in.",
+                ADMIN_NAME,
+                INITIAL_ADMIN_PASSWORD_ENV);
+    }
+
+    private static boolean usesPassword(User user, String rawPassword) {
+        return user.getPassword() != null
+                && PwEncoder.isPasswordValid(user.getPassword(), rawPassword);
+    }
+
+    /** The password for the {@code admin} account, or null when none is configured. */
+    protected String initialAdminPassword() {
+        return System.getenv(INITIAL_ADMIN_PASSWORD_ENV);
+    }
+
+    /**
+     * Logs a critical security error for every stored {@code admin} or {@code user} account that
+     * still authenticates with its former sample password. It does not change the database, stop
+     * startup or block those logins, so existing installations keep working until it is changed.
+     */
+    void warnAboutLegacySampleCredentials() {
+        for (String name : new String[] {"admin", "user"}) {
+            User existing = userOrNull(name);
+            if (existing != null && usesPassword(existing, name)) {
+                LOGGER.error(
+                        "SECURITY: GeoStore user '{}' still uses its former default password, so anyone who knows it can log in. {}",
+                        name,
+                        ADMIN_NAME.equals(name)
+                                ? "Change it now, or set "
+                                        + INITIAL_ADMIN_PASSWORD_ENV
+                                        + " and restart to reset it."
+                                : "Change it now.");
+            }
+        }
+    }
+
+    private User adminOrNull() {
+        return userOrNull(ADMIN_NAME);
+    }
+
+    private User userOrNull(String name) {
+        try {
+            return userService.get(name);
+        } catch (NotFoundServiceEx missing) {
+            return null;
         }
     }
 
@@ -144,13 +295,21 @@ public class GeoStoreInit implements InitializingBean {
         }
     }
 
-    private void initUsers(File file) {
+    void initUsers(File file) {
         try {
             userService.insertSpecialUsers();
             JAXBContext context = getUserContext();
 
             InitUserList list = (InitUserList) context.createUnmarshaller().unmarshal(file);
-            for (User user : list.getList()) {
+            List<User> users = list.getList() == null ? Collections.emptyList() : list.getList();
+            for (User user : users) {
+                if (PwEncoder.isLegacySamplePassword(user.getName(), user.getNewPassword())) {
+                    LOGGER.error(
+                            "SECURITY: skipping user '{}' from {}: it uses the former default password.",
+                            user.getName(),
+                            file);
+                    continue;
+                }
                 LOGGER.info("Adding user " + user);
                 userService.insert(user);
             }

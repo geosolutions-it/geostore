@@ -17,9 +17,9 @@
     <context:annotation-config />
 
     <bean id="geostoreInitializer" class="it.geosolutions.geostore.init.GeoStoreInit" lazy-init="false">
-        <!-- Site specific initialization. Please specify a path in the ovr file-->
-        <!--<property name="userListInitFile"><null/></property>-->
-        <property name="userListInitFile" value="classpath:sample_users.xml"/>
+        <!-- When no 'admin' account exists at startup it is created with the password in the
+             INITIAL_ADMIN_PASSWORD environment variable; without the variable none is created.
+             Set userListInitFile in the ovr file only to seed a site-specific user list. -->
         <!-- Site specific initialization. Please specify a path in the ovr file-->
         <property name="categoryListInitFile" value="classpath:sample_categories.xml" />
 
