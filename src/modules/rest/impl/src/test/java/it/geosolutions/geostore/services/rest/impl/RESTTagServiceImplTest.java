@@ -19,11 +19,15 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import it.geosolutions.geostore.core.model.SecurityRule;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.core.model.enums.Role;
 import it.geosolutions.geostore.services.ServiceTestBase;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
 import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.model.TagList;
 import it.geosolutions.geostore.services.rest.utils.MockSecurityContext;
 import java.util.List;
@@ -31,6 +35,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.web.context.request.RequestContextHolder;
 
 public class RESTTagServiceImplTest extends ServiceTestBase {
 
@@ -38,12 +43,13 @@ public class RESTTagServiceImplTest extends ServiceTestBase {
 
     @Before
     public void setUp() throws BadRequestServiceEx, NotFoundServiceEx {
-        restService = new RESTTagServiceImpl();
-        restService.setTagService(tagService);
+        restService = (RESTTagServiceImpl) ctx.getBean("restTagService");
+        mockHttpRequestIPAddressAttribute();
     }
 
     @After
     public void tearDown() throws Exception {
+        RequestContextHolder.resetRequestAttributes();
         removeAll();
     }
 
@@ -68,5 +74,31 @@ public class RESTTagServiceImplTest extends ServiceTestBase {
         TagList secondPage = restService.getAll(sc, 1, 2, null);
         assertEquals(3, (long) firstPage.getCount());
         assertEquals(List.of(tag_c), secondPage.getList());
+    }
+
+    @Test
+    public void testTagChangesRequireWriteAccessToResource() throws Exception {
+        long ownerId = createUser("owner", Role.USER, "owner");
+        long otherId = createUser("other", Role.USER, "other");
+
+        SecurityRule ownerRule = new SecurityRule();
+        ownerRule.setUser(userService.get(ownerId));
+        ownerRule.setCanRead(true);
+        ownerRule.setCanWrite(true);
+        long resourceId = createResource("private-map", "canary", "MAP", List.of(ownerRule));
+        long tagId = tagService.insert(new Tag("canary-tag", "black", null));
+
+        SecurityContext owner = new MockSecurityContext(userService.get(ownerId));
+        SecurityContext other = new MockSecurityContext(userService.get(otherId));
+
+        assertThrows(
+                ForbiddenErrorWebEx.class,
+                () -> restService.addToResource(other, tagId, resourceId));
+        restService.addToResource(owner, tagId, resourceId);
+
+        assertThrows(
+                ForbiddenErrorWebEx.class,
+                () -> restService.removeFromResource(other, tagId, resourceId));
+        restService.removeFromResource(owner, tagId, resourceId);
     }
 }

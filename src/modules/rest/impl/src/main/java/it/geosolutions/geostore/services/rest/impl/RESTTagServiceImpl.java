@@ -26,6 +26,7 @@
  */
 package it.geosolutions.geostore.services.rest.impl;
 
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.Tag;
 import it.geosolutions.geostore.services.TagService;
 import it.geosolutions.geostore.services.exception.BadRequestServiceEx;
@@ -34,6 +35,7 @@ import it.geosolutions.geostore.services.exception.NotFoundServiceEx;
 import it.geosolutions.geostore.services.rest.RESTTagService;
 import it.geosolutions.geostore.services.rest.exception.BadRequestWebEx;
 import it.geosolutions.geostore.services.rest.exception.ConflictWebEx;
+import it.geosolutions.geostore.services.rest.exception.ForbiddenErrorWebEx;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.TagList;
 import java.util.List;
@@ -41,7 +43,7 @@ import javax.ws.rs.core.SecurityContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class RESTTagServiceImpl implements RESTTagService {
+public class RESTTagServiceImpl extends RESTServiceImpl implements RESTTagService {
 
     private static final Logger LOGGER = LogManager.getLogger(RESTTagServiceImpl.class);
 
@@ -121,6 +123,7 @@ public class RESTTagServiceImpl implements RESTTagService {
 
     @Override
     public void addToResource(SecurityContext sc, long id, long resourceId) throws NotFoundWebEx {
+        checkCanChangeResourceTags(sc, resourceId);
         try {
             tagService.addToResource(id, resourceId);
         } catch (NotFoundServiceEx e) {
@@ -131,10 +134,19 @@ public class RESTTagServiceImpl implements RESTTagService {
     @Override
     public void removeFromResource(SecurityContext sc, long id, long resourceId)
             throws NotFoundWebEx {
+        checkCanChangeResourceTags(sc, resourceId);
         try {
             tagService.removeFromResource(id, resourceId);
         } catch (NotFoundServiceEx e) {
             throw new NotFoundWebEx(e.getMessage());
+        }
+    }
+
+    private void checkCanChangeResourceTags(SecurityContext sc, long resourceId) {
+        Resource resource = resourceService.getResource(resourceId, false, true, false);
+        if (resource == null) throw new NotFoundWebEx("Resource not found");
+        if (!resourcePermissionService.canResourceBeWrittenByUser(resource, extractAuthUser(sc))) {
+            throw new ForbiddenErrorWebEx("This user cannot modify this resource's tags !");
         }
     }
 }
