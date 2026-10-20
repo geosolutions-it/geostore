@@ -21,6 +21,7 @@
 package it.geosolutions.geostore.core.security.password;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.AfterClass;
@@ -48,6 +49,30 @@ public class PwEncoderTest {
         testString("test");
         testString("topolino");
         testString("");
+    }
+
+    @Test
+    public void rejectsOnlyTheFormerSamplePairs() {
+        assertTrue(PwEncoder.isLegacySamplePassword("admin", "admin"));
+        assertTrue(PwEncoder.isLegacySamplePassword("user", "user"));
+        assertFalse(PwEncoder.isLegacySamplePassword("admin", "a different password"));
+        assertFalse(PwEncoder.isLegacySamplePassword("operator", "admin"));
+    }
+
+    @Test
+    public void formerSamplePairsMatchUsernameVariants() {
+        for (String name :
+                new String[] {" admin", "admin ", "\tadmin\n", "Admin", "ADMIN", " aDmIn "}) {
+            assertTrue(name, PwEncoder.isLegacySamplePassword(name, "admin"));
+        }
+        for (String name : new String[] {" user", "user ", "User", " USER "}) {
+            assertTrue(name, PwEncoder.isLegacySamplePassword(name, "user"));
+        }
+        // The password itself is compared exactly.
+        assertFalse(PwEncoder.isLegacySamplePassword("admin", "Admin"));
+        assertFalse(PwEncoder.isLegacySamplePassword("admin", " admin"));
+        assertFalse(PwEncoder.isLegacySamplePassword(null, "admin"));
+        assertFalse(PwEncoder.isLegacySamplePassword("admin", null));
     }
 
     /**

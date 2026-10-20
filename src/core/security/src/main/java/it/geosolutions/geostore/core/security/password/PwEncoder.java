@@ -19,6 +19,8 @@
  */
 package it.geosolutions.geostore.core.security.password;
 
+import java.util.Locale;
+
 /**
  * @author ETj <etj at geo-solutions.it>
  * @author Lorenzo Natali <lorenzo.natali at geo-solutions.it>
@@ -38,6 +40,20 @@ public class PwEncoder {
 
     public static boolean isPasswordValid(String encPass, String rawPass) {
         return encoder.isPasswordValid(encPass, rawPass, null);
+    }
+
+    /**
+     * Whether the pair is one of the former sample credentials, {@code admin}/{@code admin} or
+     * {@code user}/{@code user}. The username is compared ignoring case and surrounding whitespace,
+     * so variants that resolve to the same account are caught; the password is compared exactly.
+     */
+    public static boolean isLegacySamplePassword(String username, String rawPass) {
+        if (username == null || rawPass == null) {
+            return false;
+        }
+        String name = username.trim().toLowerCase(Locale.ROOT);
+        return ("admin".equals(name) && "admin".equals(rawPass))
+                || ("user".equals(name) && "user".equals(rawPass));
     }
 
     public static void setEncoder(GeoStorePasswordEncoder e) {

@@ -45,27 +45,31 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-m2-
 
-      - name: Verify admin / user seeding is enabled
-        # Since #549 the webapp's applicationContext.xml ships
-        # userListInitFile=classpath:sample_users.xml, so a fresh standalone jetty seeds
-        # admin/admin and user/user (both required by the test script). The previous step
-        # sed-patched a <null/> default that no longer exists; verify the seeding is in
-        # place instead, and fail fast if that default is ever changed.
+      - name: Verify no static default users are seeded
         run: |
           set -euo pipefail
           ctx=src/web/app/src/main/resources/applicationContext.xml
-          if ! grep -q '<property name="userListInitFile" value="classpath:sample_users.xml"/>' "$ctx"; then
-            echo "ERROR: admin/user seeding (sample_users.xml) is not enabled in $ctx"
+          if grep -Eq '<property name="userListInitFile" value="classpath:sample_users.xml"/>' "$ctx"; then
+            echo "ERROR: the default webapp must not seed a static user list"
             grep -n 'userListInitFile' "$ctx" || true
             exit 1
           fi
-          echo "OK: sample_users.xml seeding is enabled"
-          grep -n 'userListInitFile' "$ctx"
+          if [ -f src/web/app/src/main/resources/sample_users.xml ]; then
+            echo "ERROR: sample_users.xml must not ship with the webapp"
+            exit 1
+          fi
 
       - name: Build webapp + dependencies
         run: |
           set -euo pipefail
           mvn -B -ntp -pl src/web/app -am -DskipTests install
+
+      - name: Choose the admin password for the disposable test instance
+        run: |
+          set -euo pipefail
+          admin="ci-$(openssl rand -hex 16)"
+          echo "::add-mask::$admin"
+          echo "GEOSTORE_TEST_ADMIN_PASSWORD=$admin" >> "$GITHUB_ENV"
 
       - name: Start GeoStore (jetty:run on :9191)
         run: |
@@ -75,7 +79,7 @@ jobs:
           # fails because -pl is re-interpreted relative to the pom directory and the
           # project is "not found in the reactor".
           cd src/web/app
-          nohup mvn -B -ntp jetty:run > "$GITHUB_WORKSPACE/jetty.log" 2>&1 &
+          nohup env INITIAL_ADMIN_PASSWORD="$GEOSTORE_TEST_ADMIN_PASSWORD" mvn -B -ntp jetty:run > "$GITHUB_WORKSPACE/jetty.log" 2>&1 &
           echo "JETTY_PID=$!" >> "$GITHUB_ENV"
           echo "Started jetty PID $! from $(pwd); log at $GITHUB_WORKSPACE/jetty.log"
 

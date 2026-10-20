@@ -32,16 +32,27 @@ param(
     # When pointing at a MapStore overlay use MAP/DASHBOARD/etc.
     [string]$Category   = 'cat1',
     # Optional CSV dump of per-step results (useful as a CI artifact).
-    [string]$ResultsCsv = ''
+    [string]$ResultsCsv = '',
+    [string]$AdminPassword = $env:GEOSTORE_TEST_ADMIN_PASSWORD,
+    # The 'user' account is provisioned by this script; override only to reuse an existing one.
+    [string]$UserPassword  = $env:GEOSTORE_TEST_USER_PASSWORD
 )
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference    = 'SilentlyContinue'
 
+if ([string]::IsNullOrWhiteSpace($AdminPassword)) {
+    throw 'Set AdminPassword to the INITIAL_ADMIN_PASSWORD this test instance was started with.'
+}
+if ([string]::IsNullOrWhiteSpace($UserPassword)) {
+    # A fixed sample 'user' is no longer seeded; create one with a generated password below.
+    $UserPassword = 'Usr-' + [Guid]::NewGuid().ToString('N').Substring(0, 12) + '!'
+}
+
 $Base   = $BaseUrl
 $FeBase = $FrontEnd
-$AdminB = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('admin:admin'))
-$UserB  = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('user:user'))
+$AdminB = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("admin:$AdminPassword"))
+$UserB  = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("user:$UserPassword"))
 $BadB   = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('admin:wrongpass'))
 
 $global:Results = New-Object System.Collections.ArrayList
@@ -130,11 +141,34 @@ Step "bad creds /users/user/details -> 401" {
     Expect-Status 401 { Invoke-WebRequest -Uri "$Base/users/user/details" -Headers @{Authorization=$BadB} -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop }
 }
 
+Step "fresh instance has no admin:admin login -> 401" {
+    $old = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('admin:admin'))
+    Expect-Status 401 { Invoke-WebRequest -Uri "$Base/users/user/details" -Headers @{Authorization=$old} -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop }
+}
+
+Step "fresh instance has no user:user login -> 401" {
+    $old = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes('user:user'))
+    Expect-Status 401 { Invoke-WebRequest -Uri "$Base/users/user/details" -Headers @{Authorization=$old} -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop }
+}
+
 Step "admin Basic /users/user/details -> 200, role=ADMIN" {
     $r = Invoke-RestMethod -Uri "$Base/users/user/details" -Headers @{Authorization=$AdminB; Accept='application/json'} -TimeoutSec 5
     $u = $r.User
     if ($u.name -ne 'admin' -or $u.role -ne 'ADMIN') { throw "got name=$($u.name) role=$($u.role)" }
     "name=admin role=ADMIN id=$($u.id)"
+}
+
+Step "creating 'user' with its former default password is refused -> 400" {
+    $body = "<User><name>user</name><newPassword>user</newPassword><role>USER</role><enabled>true</enabled></User>"
+    Expect-Status 400 { Invoke-WebRequest -Uri "$Base/users/" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body $body -UseBasicParsing -TimeoutSec 5 -ErrorAction Stop }
+}
+
+Step "provision the 'user' USER account (admin) -> new id" {
+    # The default seed no longer creates 'user'; the USER-role checks below need one.
+    $body = "<User><name>user</name><newPassword>$UserPassword</newPassword><role>USER</role><enabled>true</enabled></User>"
+    $id = Invoke-RestMethod -Uri "$Base/users/" -Method POST -Headers @{Authorization=$AdminB} -ContentType 'application/xml' -Body $body -TimeoutSec 5
+    if (-not ($id -as [int])) { throw "expected numeric id, got '$id'" }
+    "provisioned user id=$([int]$id)"
 }
 
 Step "user Basic /users/user/details -> 200, role=USER" {
