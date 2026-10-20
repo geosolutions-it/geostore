@@ -100,6 +100,18 @@ public interface RESTStoredDataService {
     String get(@Context SecurityContext sc, @Context HttpHeaders headers, @PathParam("id") long id)
             throws NotFoundWebEx;
 
+    /**
+     * Returns the stored data of a resource, unchanged or decoded.
+     *
+     * <p>The caller needs read permission on the resource, except for the categories configured as
+     * public, {@code THUMBNAIL} as shipped ({@code publicRawCategories} in {@code
+     * geostore.properties}). With {@code decode=datauri} only image media types are decoded; any
+     * other data URI gets a 400. Every response carries {@code Content-Security-Policy: sandbox}
+     * and {@code X-Content-Type-Options: nosniff}.
+     *
+     * @param id the resource id
+     * @param decodeFormat {@code base64}, {@code datauri}, or none to return the data as stored
+     */
     @GET
     @Path("/{id}/raw")
     @Secured({"ROLE_USER", "ROLE_ADMIN", "ROLE_ANONYMOUS"})
