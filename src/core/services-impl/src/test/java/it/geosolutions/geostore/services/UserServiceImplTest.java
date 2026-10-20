@@ -34,6 +34,8 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -374,5 +376,47 @@ public class UserServiceImplTest extends ServiceTestBase {
         rule.setCanRead(true);
         rule.setCanWrite(true);
         return rule;
+    }
+
+    @Test
+    public void testUpdateAttributesReusingStoredNames() throws Exception {
+        long userId =
+                createUser(
+                        "attributes",
+                        Role.USER,
+                        "testPW",
+                        Arrays.asList(
+                                attribute("email", "old@example.test"),
+                                attribute("UUID", "stored-uuid")));
+
+        userService.updateAttributes(
+                userId,
+                Arrays.asList(
+                        attribute("email", "new@example.test"),
+                        attribute("UUID", "stored-uuid"),
+                        attribute("notes", "added")));
+
+        assertEquals(
+                Map.of("email", "new@example.test", "UUID", "stored-uuid", "notes", "added"),
+                attributesOf(userId));
+
+        userService.updateAttributes(userId, Arrays.asList(attribute("notes", "changed")));
+
+        assertEquals(Map.of("notes", "changed"), attributesOf(userId));
+    }
+
+    private static UserAttribute attribute(String name, String value) {
+        UserAttribute attribute = new UserAttribute();
+        attribute.setName(name);
+        attribute.setValue(value);
+        return attribute;
+    }
+
+    private Map<String, String> attributesOf(long userId) {
+        Map<String, String> values = new HashMap<>();
+        for (UserAttribute attribute : userService.get(userId).getAttribute()) {
+            values.put(attribute.getName(), attribute.getValue());
+        }
+        return values;
     }
 }
