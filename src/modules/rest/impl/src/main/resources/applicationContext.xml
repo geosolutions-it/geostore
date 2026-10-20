@@ -33,6 +33,7 @@
     <!-- ==================================================================== -->
     <bean id="restStoredDataService"
           class="it.geosolutions.geostore.services.rest.impl.RESTStoredDataServiceImpl">
+        <property name="publicRawCategories" value="${publicRawCategories}"/>
     </bean>
 
     <bean id="restResourceService"

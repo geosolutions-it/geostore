@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
+import it.geosolutions.geostore.core.model.Resource;
 import it.geosolutions.geostore.core.model.StoredData;
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.services.StoredDataService;
@@ -53,6 +54,8 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Class RESTStoredDataServiceImpl.
@@ -75,8 +78,34 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
             Collections.singletonList(MediaType.TEXT_PLAIN_TYPE);
     private StoredDataService storedDataService;
 
+    private Set<String> publicRawCategories = Set.of();
+
     public void setStoredDataService(StoredDataService storedDataService) {
         this.storedDataService = storedDataService;
+    }
+
+    /**
+     * Sets the categories whose raw data ({@code GET /data/{id}/raw}) is served without checking
+     * that the caller can read the resource. GeoStore sets it from the {@code publicRawCategories}
+     * key in {@code geostore.properties}, shipped as {@code THUMBNAIL} because MapStore loads
+     * thumbnails in {@code <img>} tags, which send no authorization header. When it is not set, no
+     * category is public.
+     *
+     * <p>Names are comma-separated and trimmed, and they must match the category name exactly, case
+     * included. An empty value makes every category require read permission. Deployments can
+     * override it in {@code geostore-ovr.properties} as {@code
+     * restStoredDataService.publicRawCategories}.
+     *
+     * @param categories comma-separated category names, or an empty string for none
+     */
+    public void setPublicRawCategories(String categories) {
+        this.publicRawCategories =
+                categories == null
+                        ? Set.of()
+                        : Arrays.stream(categories.split(","))
+                                .map(String::trim)
+                                .filter(name -> !name.isEmpty())
+                                .collect(Collectors.toUnmodifiableSet());
     }
 
     @Override
@@ -237,53 +266,85 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
     @Override
     public Response getRaw(SecurityContext sc, HttpHeaders headers, long id, String decodeFormat)
             throws NotFoundWebEx {
-        if (id == -1) return Response.ok().entity("dummy payload").build();
+        if (id == -1) return rawResponse(Response.ok().entity("dummy payload"));
+
+        Resource resource = resourceService.getResource(id, false, true, false);
+        if (resource == null) return rawResponse(Response.status(Response.Status.NOT_FOUND));
+
+        if (!isPublicRawCategory(resource)
+                && !resourcePermissionService.canResourceBeReadByUser(
+                        resource, extractAuthUser(sc))) {
+            throw new ForbiddenErrorWebEx("This user cannot read this stored data !");
+        }
 
         StoredData storedData;
         try {
             storedData = storedDataService.get(id);
         } catch (NotFoundServiceEx e) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            return rawResponse(Response.status(Response.Status.NOT_FOUND));
         }
 
         if (storedData == null) {
-            return Response.noContent().build();
+            return rawResponse(Response.noContent());
         }
 
         String data = storedData.getData();
 
         // prefer no transformation
         if (decodeFormat == null) {
-            return Response.ok().entity(data).build();
+            return rawResponse(Response.ok().entity(data));
         } else if (decodeFormat.equalsIgnoreCase(RawFormat.BASE64.name())) {
             byte[] decoded = Base64.decodeBase64(data);
-            return Response.ok().entity(decoded).build();
+            return rawResponse(Response.ok().entity(decoded));
         } else if (decodeFormat.equalsIgnoreCase(RawFormat.DATAURI.name())) {
             return decodeDataURI(data);
         } else {
             LOGGER.warn("Unknown decode format '{}'", decodeFormat);
-            return Response.ok().entity(data).build();
+            return rawResponse(Response.ok().entity(data));
         }
+    }
+
+    /** See {@link #setPublicRawCategories(String)}. */
+    private boolean isPublicRawCategory(Resource resource) {
+        return resource.getCategory() != null
+                && publicRawCategories.contains(resource.getCategory().getName());
+    }
+
+    /**
+     * Builds a raw response with its security headers. Raw data is user-supplied, so browsers must
+     * neither run it as a page on this origin nor guess its content type: keep these headers.
+     */
+    private Response rawResponse(Response.ResponseBuilder builder) {
+        return builder.header("Content-Security-Policy", "sandbox")
+                .header("X-Content-Type-Options", "nosniff")
+                .build();
     }
 
     private Response decodeDataURI(String data) {
         if (!data.startsWith("data:")) {
-            return Response.status(Response.Status.BAD_REQUEST).entity("Not a data URI").build();
+            return rawResponse(
+                    Response.status(Response.Status.BAD_REQUEST).entity("Not a data URI"));
         }
 
         String[] split = data.split(",", 2);
 
         if (split.length < 2) {
-            return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Bad data, comma is missing")
-                    .build();
+            return rawResponse(
+                    Response.status(Response.Status.BAD_REQUEST)
+                            .entity("Bad data, comma is missing"));
         }
 
         DataURIDecoder dud = new DataURIDecoder(split[0]);
 
         if (!dud.isValid()) {
             LOGGER.warn("Could not parse data URI '{}'", split[0]);
-            return Response.status(Response.Status.BAD_REQUEST).entity("Bad data URI").build();
+            return rawResponse(Response.status(Response.Status.BAD_REQUEST).entity("Bad data URI"));
+        }
+
+        if (dud.getMediatype() == null
+                || !dud.getMediatype().regionMatches(true, 0, "image/", 0, 6)) {
+            return rawResponse(
+                    Response.status(Response.Status.BAD_REQUEST).entity("Not an image data URI"));
         }
 
         if (dud.getCharset() != null) {
@@ -296,7 +357,7 @@ public class RESTStoredDataServiceImpl extends RESTServiceImpl implements RESTSt
 
         Object entity = dud.isBase64Encoded() ? Base64.decodeBase64(split[1]) : split[1];
 
-        return Response.ok().type(dud.getNormalizedMediatype()).entity(entity).build();
+        return rawResponse(Response.ok().type(dud.getNormalizedMediatype()).entity(entity));
     }
 
     @SuppressWarnings("unused")
