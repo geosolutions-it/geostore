@@ -72,8 +72,8 @@
         <cxf-version>4.2.2</cxf-version>
 
         <!-- Spring Framework & Security (aligned) -->
-        <spring-version>7.0.8</spring-version>
-        <spring-security-version>7.1.0</spring-security-version>
+        <spring-version>7.0.9</spring-version>
+        <spring-security-version>7.1.1</spring-security-version>
 
         <!-- etc. -->
         <javax-mail-version>1.4</javax-mail-version>
@@ -112,7 +112,7 @@
         <!-- GeoTools, Jackson (aligned) -->
         <geoapi-version>2.3-M1</geoapi-version>
         <gt-version>31.3</gt-version>
-        <jackson-version>2.21.3</jackson-version>
+        <jackson-version>2.21.4</jackson-version>
 
         <!-- Additional tooling -->
         <gson.version>2.9.0</gson.version>
