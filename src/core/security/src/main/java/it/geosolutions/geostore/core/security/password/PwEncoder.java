@@ -45,15 +45,26 @@ public class PwEncoder {
     /**
      * Whether the pair is one of the former sample credentials, {@code admin}/{@code admin} or
      * {@code user}/{@code user}. The username is compared ignoring case and surrounding whitespace,
-     * so variants that resolve to the same account are caught; the password is compared exactly.
+     * so variants that resolve to the same account are caught. The password is compared on its
+     * letters and digits only, ignoring case, so variants such as {@code Admin}, {@code " ADMIN "}
+     * or {@code a-d-m-i-n!} are caught as well.
      */
     public static boolean isLegacySamplePassword(String username, String rawPass) {
         if (username == null || rawPass == null) {
             return false;
         }
         String name = username.trim().toLowerCase(Locale.ROOT);
-        return ("admin".equals(name) && "admin".equals(rawPass))
-                || ("user".equals(name) && "user".equals(rawPass));
+        return ("admin".equals(name) || "user".equals(name))
+                && name.equals(lowerCaseLettersAndDigits(rawPass));
+    }
+
+    private static String lowerCaseLettersAndDigits(String value) {
+        StringBuilder kept = new StringBuilder(value.length());
+        value.codePoints()
+                .filter(Character::isLetterOrDigit)
+                .map(Character::toLowerCase)
+                .forEach(kept::appendCodePoint);
+        return kept.toString();
     }
 
     public static void setEncoder(GeoStorePasswordEncoder e) {

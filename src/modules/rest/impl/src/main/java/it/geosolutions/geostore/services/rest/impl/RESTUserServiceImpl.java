@@ -233,8 +233,8 @@ public class RESTUserServiceImpl extends RESTServiceImpl implements RESTUserServ
 
     /**
      * The former sample pairs {@code admin}/{@code admin} and {@code user}/{@code user} are
-     * publicly known. Existing accounts that still use them keep working and are reported at
-     * startup, but a new password must not bring them back: reject them here with a 400.
+     * publicly known. Accounts that still use them cannot log in, and a new password must not bring
+     * them back, variants included: reject them here with a 400.
      */
     private static void rejectFormerDefaultPassword(String name, String newPassword) {
         String trimmedName = name == null ? null : name.trim();

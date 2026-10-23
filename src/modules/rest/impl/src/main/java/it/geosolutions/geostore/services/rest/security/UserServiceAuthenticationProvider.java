@@ -60,6 +60,9 @@ public class UserServiceAuthenticationProvider implements AuthenticationProvider
             if (!user.isEnabled()) {
                 throw new DisabledException(USER_NOT_FOUND_MSG);
             }
+            if (FormerDefaultPasswordCheck.refusesLogin(user.getName(), pw)) {
+                throw new BadCredentialsException(UNAUTHORIZED_MSG);
+            }
         } catch (Exception e) {
             LOGGER.info("Error while authenticating user", e);
             user = null;

@@ -21,6 +21,7 @@ package it.geosolutions.geostore.services.rest.utils;
 
 import it.geosolutions.geostore.core.model.User;
 import it.geosolutions.geostore.core.security.password.PwEncoder;
+import it.geosolutions.geostore.services.rest.security.FormerDefaultPasswordCheck;
 
 import org.apache.cxf.configuration.security.AuthorizationPolicy;
 import org.apache.cxf.interceptor.Fault;
@@ -87,6 +88,9 @@ public abstract class AbstractGeoStoreAuthenticationInterceptor
 
             if (!PwEncoder.isPasswordValid(user.getPassword(), password)) {
                 if (LOGGER.isInfoEnabled()) LOGGER.info("Bad pw for user {}", username);
+                throw new AccessDeniedException("Not authorized");
+            }
+            if (FormerDefaultPasswordCheck.refusesLogin(user.getName(), password)) {
                 throw new AccessDeniedException("Not authorized");
             }
 
