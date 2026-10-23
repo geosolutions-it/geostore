@@ -35,6 +35,7 @@ import it.geosolutions.geostore.services.exception.ReservedUserGroupNameEx;
 import it.geosolutions.geostore.services.rest.model.CategoryList;
 import it.geosolutions.geostore.services.rest.model.RESTUserGroup;
 import it.geosolutions.geostore.services.rest.model.UserGroupList;
+import it.geosolutions.geostore.services.rest.security.FormerDefaultPasswordCheck;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreJAXBContext;
 
 import jakarta.xml.bind.JAXBContext;
@@ -61,7 +62,8 @@ public class GeoStoreInit implements InitializingBean {
      * Environment variable holding the password used to create the {@code admin} account whenever
      * it is missing at startup.
      */
-    static final String INITIAL_ADMIN_PASSWORD_ENV = "INITIAL_ADMIN_PASSWORD";
+    static final String INITIAL_ADMIN_PASSWORD_ENV =
+            FormerDefaultPasswordCheck.INITIAL_ADMIN_PASSWORD_ENV;
 
     protected UserService userService;
 
@@ -150,7 +152,7 @@ public class GeoStoreInit implements InitializingBean {
         boolean configured = password != null && !password.trim().isEmpty();
         if (configured && PwEncoder.isLegacySamplePassword(ADMIN_NAME, password)) {
             LOGGER.error(
-                    "SECURITY: {} is set to the former default password, so it is ignored. Choose a different password.",
+                    "SECURITY: {} is set to the former default password or a variant of it, so it is ignored. Choose a different password.",
                     INITIAL_ADMIN_PASSWORD_ENV);
             return;
         }
@@ -235,21 +237,21 @@ public class GeoStoreInit implements InitializingBean {
 
     /**
      * Logs a critical security error for every stored {@code admin} or {@code user} account that
-     * still authenticates with its former sample password. It does not change the database, stop
-     * startup or block those logins, so existing installations keep working until it is changed.
+     * still has its former sample password. It does not change the database or stop startup; the
+     * logins themselves are refused by {@link FormerDefaultPasswordCheck} until it is changed.
      */
     void warnAboutLegacySampleCredentials() {
         for (String name : new String[] {"admin", "user"}) {
             User existing = userOrNull(name);
             if (existing != null && usesPassword(existing, name)) {
                 LOGGER.error(
-                        "SECURITY: GeoStore user '{}' still uses its former default password, so anyone who knows it can log in. {}",
+                        "SECURITY: GeoStore user '{}' still uses its former default password, so its logins are refused. {}",
                         name,
                         ADMIN_NAME.equals(name)
-                                ? "Change it now, or set "
+                                ? "Set "
                                         + INITIAL_ADMIN_PASSWORD_ENV
-                                        + " and restart to reset it."
-                                : "Change it now.");
+                                        + " and restart to initialize it correctly, or reset a correct password in the database."
+                                : "Log in as an administrator and set a new password, or reset a correct password in the database.");
             }
         }
     }

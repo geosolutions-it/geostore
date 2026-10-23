@@ -68,11 +68,36 @@ public class PwEncoderTest {
         for (String name : new String[] {" user", "user ", "User", " USER "}) {
             assertTrue(name, PwEncoder.isLegacySamplePassword(name, "user"));
         }
-        // The password itself is compared exactly.
-        assertFalse(PwEncoder.isLegacySamplePassword("admin", "Admin"));
-        assertFalse(PwEncoder.isLegacySamplePassword("admin", " admin"));
         assertFalse(PwEncoder.isLegacySamplePassword(null, "admin"));
         assertFalse(PwEncoder.isLegacySamplePassword("admin", null));
+    }
+
+    @Test
+    public void formerSamplePairsMatchPasswordVariants() {
+        for (String password :
+                new String[] {
+                    "Admin",
+                    "ADMIN",
+                    " admin",
+                    "admin ",
+                    "\tAdMiN\n",
+                    "a d m i n",
+                    "a-d-m-i-n!",
+                    "_Admin_",
+                    "admin."
+                }) {
+            assertTrue(password, PwEncoder.isLegacySamplePassword("admin", password));
+        }
+        for (String password : new String[] {"User", "USER", " user ", "u s e r", "user!"}) {
+            assertTrue(password, PwEncoder.isLegacySamplePassword("user", password));
+        }
+        // Different letters or digits make it a different password.
+        for (String password :
+                new String[] {"admin1", "admins", "adm", "4dmin", "", "  ", "user"}) {
+            assertFalse(password, PwEncoder.isLegacySamplePassword("admin", password));
+        }
+        assertFalse(PwEncoder.isLegacySamplePassword("user", "user2026"));
+        assertFalse(PwEncoder.isLegacySamplePassword("user", "admin"));
     }
 
     /**
