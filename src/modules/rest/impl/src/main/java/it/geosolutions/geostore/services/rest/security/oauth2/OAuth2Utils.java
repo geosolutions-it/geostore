@@ -41,6 +41,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.util.Collections;
 import java.util.Enumeration;
 
@@ -93,7 +95,19 @@ public class OAuth2Utils {
      * @throws NullPointerException if configuration is null
      */
     public static RestTemplate protectedRestTemplate(OAuth2Configuration configuration) {
-        RestTemplate template = new RestTemplate(protectedRequestFactory(configuration));
+        return protectedRestTemplate(configuration, true);
+    }
+
+    /**
+     * Same as {@link #protectedRestTemplate(OAuth2Configuration)}, choosing whether GET requests
+     * follow HTTP redirects. Without redirects, a 3xx response is returned to the caller as is.
+     *
+     * @throws NullPointerException if configuration is null
+     */
+    public static RestTemplate protectedRestTemplate(
+            OAuth2Configuration configuration, boolean followRedirects) {
+        RestTemplate template =
+                new RestTemplate(protectedRequestFactory(configuration, followRedirects));
         template.setInterceptors(Collections.singletonList(noKeepAliveInterceptor()));
         return template;
     }
@@ -107,6 +121,18 @@ public class OAuth2Utils {
      */
     public static SimpleClientHttpRequestFactory protectedRequestFactory(
             OAuth2Configuration configuration) {
+        return protectedRequestFactory(configuration, true);
+    }
+
+    /**
+     * Same as {@link #protectedRequestFactory(OAuth2Configuration)}, choosing whether GET requests
+     * follow HTTP redirects.
+     *
+     * @throws NullPointerException if configuration is null
+     * @throws IllegalArgumentException if either timeout is not a positive value.
+     */
+    public static SimpleClientHttpRequestFactory protectedRequestFactory(
+            OAuth2Configuration configuration, boolean followRedirects) {
         int connectTimeout = configuration.getConnectTimeout();
         int readTimeout = configuration.getReadTimeout();
         if (connectTimeout <= 0 || readTimeout <= 0) {
@@ -116,10 +142,23 @@ public class OAuth2Utils {
                             + ", readTimeout="
                             + readTimeout);
         }
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        SimpleClientHttpRequestFactory factory =
+                followRedirects
+                        ? new SimpleClientHttpRequestFactory()
+                        : new NoRedirectRequestFactory();
         factory.setConnectTimeout(connectTimeout);
         factory.setReadTimeout(readTimeout);
         return factory;
+    }
+
+    /** A {@link SimpleClientHttpRequestFactory} whose connections never follow redirects. */
+    private static class NoRedirectRequestFactory extends SimpleClientHttpRequestFactory {
+        @Override
+        protected void prepareConnection(HttpURLConnection connection, String httpMethod)
+                throws IOException {
+            super.prepareConnection(connection, httpMethod);
+            connection.setInstanceFollowRedirects(false);
+        }
     }
 
     /**
