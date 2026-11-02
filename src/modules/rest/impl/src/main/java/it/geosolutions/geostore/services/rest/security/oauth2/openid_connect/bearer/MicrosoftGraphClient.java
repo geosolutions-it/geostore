@@ -71,6 +71,7 @@ public class MicrosoftGraphClient {
 
     private final String graphEndpoint;
     private final URI graphEndpointUri;
+    private final String graphEndpointOrigin;
     private final RestTemplate restTemplate;
 
     /**
@@ -86,6 +87,8 @@ public class MicrosoftGraphClient {
             throw new IllegalArgumentException(
                     "msGraphEndpoint must be an absolute URL: " + this.graphEndpoint);
         }
+        this.graphEndpointOrigin =
+                graphEndpointUri.getScheme() + "://" + graphEndpointUri.getRawAuthority();
         this.restTemplate = OAuth2Utils.protectedRestTemplate(configuration, false);
     }
 
@@ -295,7 +298,11 @@ public class MicrosoftGraphClient {
         return allValues;
     }
 
-    /** Parses an {@code @odata.nextLink} and checks that it is on the configured endpoint. */
+    /**
+     * Parses an {@code @odata.nextLink}, checks that it is on the configured endpoint, and returns
+     * the next request: the endpoint's scheme and authority followed by the link's raw path and
+     * query, so the encoding Graph applied is kept.
+     */
     private URI nextPage(String nextLink) {
         URI next;
         try {
@@ -310,7 +317,13 @@ public class MicrosoftGraphClient {
                             + "://"
                             + graphEndpointUri.getHost());
         }
-        return next;
+        String path = next.getRawPath() != null ? next.getRawPath() : "";
+        String query = next.getRawQuery() != null ? "?" + next.getRawQuery() : "";
+        return URI.create(
+                graphEndpointOrigin
+                        + "/"
+                        + (path.startsWith("/") ? path.substring(1) : path)
+                        + query);
     }
 
     /** Whether {@code uri} has the same scheme, host and port as {@code endpoint}. */
