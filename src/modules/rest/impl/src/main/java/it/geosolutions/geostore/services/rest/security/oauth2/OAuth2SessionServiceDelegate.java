@@ -192,7 +192,10 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         // Set updated refresh token as HttpOnly cookie and remove it from the JSON response.
         HttpServletResponse response = getResponse();
         if (response != null && sessionToken.getRefreshToken() != null) {
-            setRefreshTokenCookie(response, sessionToken.getRefreshToken(), request.isSecure());
+            setRefreshTokenCookie(
+                    response,
+                    sessionToken.getRefreshToken(),
+                    OAuth2Utils.isSecureCookie(configuration, request));
             sessionToken.setRefreshToken(null);
         }
 
@@ -487,7 +490,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                         + "the failure to the client.");
         HttpServletResponse response = getResponse();
         if (response != null) {
-            clearRefreshTokenCookie(response);
+            clearRefreshTokenCookie(
+                    response, OAuth2Utils.isSecureCookie(configuration, getRequest()));
         }
         doLogout(null);
 
@@ -767,7 +771,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     toDelete.setComment("EXPIRING COOKIE at " + System.currentTimeMillis());
                     if (toDelete.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM)) {
                         toDelete.setHttpOnly(true);
-                        toDelete.setSecure(request.isSecure());
+                        toDelete.setSecure(OAuth2Utils.isSecureCookie(configuration(), request));
                     }
                     response.addCookie(toDelete);
                 }
@@ -803,8 +807,13 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     protected void clearRefreshTokenCookie(HttpServletResponse response) {
+        clearRefreshTokenCookie(response, false);
+    }
+
+    protected void clearRefreshTokenCookie(HttpServletResponse response, boolean secure) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, "");
         cookie.setHttpOnly(true);
+        cookie.setSecure(secure);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);

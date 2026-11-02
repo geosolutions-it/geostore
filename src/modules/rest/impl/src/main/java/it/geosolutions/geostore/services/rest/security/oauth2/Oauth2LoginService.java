@@ -101,6 +101,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
         if (token != null) {
             LOGGER.debug("AccessToken found");
             SessionToken sessionToken = new SessionToken();
+            boolean secure = isSecureCookie(configuration, currentRequest());
             try {
                 result = result.status(302).location(new URI(internalRedirectUri));
                 LOGGER.debug("AccessToken: {}", token);
@@ -108,14 +109,15 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 sessionToken.setTokenType("Bearer");
                 if (refreshToken != null) {
                     LOGGER.debug("RefreshToken: {}", refreshToken);
-                    result.header("Set-Cookie", refreshTokenCookie(refreshToken).toString());
+                    result.header(
+                            "Set-Cookie", refreshTokenCookie(refreshToken, secure).toString());
                 }
                 TokenStorage tokenStorage = tokenStorage();
                 Object key = tokenStorage.buildTokenKey();
                 tokenStorage.saveToken(key, sessionToken);
-                Cookie cookie = cookie(TOKENS_KEY, key.toString());
+                Cookie cookie = cookie(TOKENS_KEY, key.toString(), secure);
                 result.header("Set-Cookie", cookie.toString());
-                cookie = cookie(AUTH_PROVIDER, provider);
+                cookie = cookie(AUTH_PROVIDER, provider, secure);
                 result.header("Set-Cookie", cookie.toString());
             } catch (URISyntaxException e) {
                 LOGGER.error(e);
@@ -190,20 +192,27 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     }
 
     protected NewCookie refreshTokenCookie(String value) {
-        boolean secure = isRequestSecure();
+        return refreshTokenCookie(value, isSecureCookie(null, currentRequest()));
+    }
+
+    protected NewCookie refreshTokenCookie(String value, boolean secure) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, value, "/", null);
         return new AccessCookie(cookie, "", 604800, null, secure, true, "lax");
     }
 
-    private boolean isRequestSecure() {
+    private static HttpServletRequest currentRequest() {
         ServletRequestAttributes attrs =
                 (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        return attrs != null && attrs.getRequest().isSecure();
+        return attrs != null ? attrs.getRequest() : null;
     }
 
     protected NewCookie cookie(String name, String value) {
+        return cookie(name, value, false);
+    }
+
+    protected NewCookie cookie(String name, String value, boolean secure) {
         Cookie cookie = new Cookie(name, value, "/", null);
         return new AccessCookie(
-                cookie, "", 120, DateUtils.addMinutes(new Date(), 2), false, false, "lax");
+                cookie, "", 120, DateUtils.addMinutes(new Date(), 2), secure, false, "lax");
     }
 }

@@ -27,6 +27,8 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2;
 
+import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -252,5 +254,19 @@ public class OAuth2Utils {
     public static HttpServletResponse getResponse() {
         return ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
                 .getResponse();
+    }
+
+    /**
+     * Whether a cookie set at login must carry the {@code Secure} attribute: always when the
+     * provider sets {@code forceSecureCookies}, otherwise only when the request reached the
+     * application over HTTPS.
+     *
+     * @param configuration the provider configuration, may be null.
+     * @param request the current request, may be null.
+     */
+    public static boolean isSecureCookie(
+            IdPConfiguration configuration, HttpServletRequest request) {
+        return (configuration != null && configuration.isForceSecureCookies())
+                || (request != null && request.isSecure());
     }
 }
