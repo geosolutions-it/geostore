@@ -38,11 +38,14 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * HTTP client for Microsoft Graph API. Provides methods to resolve group memberships and app role
@@ -51,18 +54,39 @@ import java.util.Map;
  * <p>Used to resolve the Azure AD "groups overage" scenario where the JWT's {@code groups} claim is
  * replaced by {@code _claim_names}/{@code _claim_sources} metadata when a user belongs to more than
  * 200 groups.
+ *
+ * <p>All requests go to the configured Graph endpoint: {@code @odata.nextLink} pages are followed
+ * only when they have the endpoint's scheme, host and port, HTTP redirects are not followed, and at
+ * most {@link #MAX_PAGES} pages are read per collection.
  */
 public class MicrosoftGraphClient {
 
     private static final Logger LOGGER = LogManager.getLogger(MicrosoftGraphClient.class);
 
+    /** Maximum number of pages read from a single OData collection. */
+    static final int MAX_PAGES = 100;
+
+    /** Graph object ids are GUIDs: only letters, digits and hyphens go into a request path. */
+    private static final Pattern RESOURCE_ID = Pattern.compile("[A-Za-z0-9-]+");
+
     private final String graphEndpoint;
+    private final URI graphEndpointUri;
     private final RestTemplate restTemplate;
 
+    /**
+     * @param graphEndpoint the Graph base URL, {@code https://graph.microsoft.com/v1.0} when null.
+     * @param configuration the provider configuration (HTTP timeouts).
+     * @throws IllegalArgumentException if {@code graphEndpoint} is not an absolute URL.
+     */
     public MicrosoftGraphClient(String graphEndpoint, OAuth2Configuration configuration) {
         this.graphEndpoint =
                 graphEndpoint != null ? graphEndpoint : "https://graph.microsoft.com/v1.0";
-        this.restTemplate = OAuth2Utils.protectedRestTemplate(configuration);
+        this.graphEndpointUri = URI.create(this.graphEndpoint);
+        if (graphEndpointUri.getScheme() == null || graphEndpointUri.getHost() == null) {
+            throw new IllegalArgumentException(
+                    "msGraphEndpoint must be an absolute URL: " + this.graphEndpoint);
+        }
+        this.restTemplate = OAuth2Utils.protectedRestTemplate(configuration, false);
     }
 
     /**
@@ -175,6 +199,13 @@ public class MicrosoftGraphClient {
             for (Map.Entry<String, List<String>> entry : byResource.entrySet()) {
                 String resourceId = entry.getKey();
                 List<String> roleIds = entry.getValue();
+                if (resourceId == null || !RESOURCE_ID.matcher(resourceId).matches()) {
+                    LOGGER.warn(
+                            "MS Graph: skipping app role assignments with unexpected resourceId"
+                                    + " '{}'",
+                            resourceId);
+                    continue;
+                }
 
                 String url = graphEndpoint + "/servicePrincipals/" + resourceId + "/appRoles";
                 List<Map<String, Object>> appRoles = fetchAllPages(url, accessToken);
@@ -209,22 +240,45 @@ public class MicrosoftGraphClient {
     /**
      * Fetches all pages of an OData collection, following {@code @odata.nextLink} pagination.
      *
+     * <p>Each next link is requested as the absolute URI Graph returned, without re-encoding it,
+     * and only when it is on the configured endpoint. Reading stops after {@link #MAX_PAGES} pages.
+     *
      * @param url the initial request URL.
      * @param accessToken the OAuth2 access token.
      * @return all {@code value} entries collected across pages.
+     * @throws IllegalStateException if a page is not a 2xx response, or a next link is not a valid
+     *     URL on the configured endpoint.
      */
     @SuppressWarnings("unchecked")
     List<Map<String, Object>> fetchAllPages(String url, String accessToken) {
         List<Map<String, Object>> allValues = new ArrayList<>();
-        String currentUrl = url;
+        URI currentUri = URI.create(url);
+        int pages = 0;
 
-        while (currentUrl != null) {
+        while (currentUri != null) {
+            if (pages == MAX_PAGES) {
+                LOGGER.warn(
+                        "MS Graph: stopped after {} pages of {}; the remaining entries were not"
+                                + " read",
+                        MAX_PAGES,
+                        currentUri.getPath());
+                break;
+            }
+            pages++;
+
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);
             HttpEntity<Void> entity = new HttpEntity<>(headers);
 
             ResponseEntity<Map> response =
-                    restTemplate.exchange(currentUrl, HttpMethod.GET, entity, Map.class);
+                    restTemplate.exchange(currentUri, HttpMethod.GET, entity, Map.class);
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                throw new IllegalStateException(
+                        "MS Graph answered "
+                                + response.getStatusCode().value()
+                                + " for "
+                                + currentUri.getPath());
+            }
 
             Map<String, Object> body = response.getBody();
             if (body == null) break;
@@ -235,10 +289,44 @@ public class MicrosoftGraphClient {
             }
 
             Object nextLink = body.get("@odata.nextLink");
-            currentUrl = (nextLink instanceof String) ? (String) nextLink : null;
+            currentUri = (nextLink instanceof String) ? nextPage((String) nextLink) : null;
         }
 
         return allValues;
+    }
+
+    /** Parses an {@code @odata.nextLink} and checks that it is on the configured endpoint. */
+    private URI nextPage(String nextLink) {
+        URI next;
+        try {
+            next = new URI(nextLink);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("MS Graph returned an invalid @odata.nextLink", e);
+        }
+        if (!isSameEndpoint(graphEndpointUri, next)) {
+            throw new IllegalStateException(
+                    "MS Graph returned an @odata.nextLink outside the configured endpoint "
+                            + graphEndpointUri.getScheme()
+                            + "://"
+                            + graphEndpointUri.getHost());
+        }
+        return next;
+    }
+
+    /** Whether {@code uri} has the same scheme, host and port as {@code endpoint}. */
+    static boolean isSameEndpoint(URI endpoint, URI uri) {
+        return uri.getScheme() != null
+                && uri.getHost() != null
+                && uri.getScheme().equalsIgnoreCase(endpoint.getScheme())
+                && uri.getHost().equalsIgnoreCase(endpoint.getHost())
+                && port(uri) == port(endpoint);
+    }
+
+    private static int port(URI uri) {
+        if (uri.getPort() != -1) return uri.getPort();
+        if ("https".equalsIgnoreCase(uri.getScheme())) return 443;
+        if ("http".equalsIgnoreCase(uri.getScheme())) return 80;
+        return -1;
     }
 
     /** Represents a Microsoft Graph app role assignment. */
