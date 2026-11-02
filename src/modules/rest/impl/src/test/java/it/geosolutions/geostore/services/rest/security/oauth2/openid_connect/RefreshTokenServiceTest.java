@@ -729,6 +729,57 @@ class RefreshTokenServiceTest {
         assertEquals("", cleared.getValue(), "The cookie value must be blanked");
     }
 
+    @Test
+    void testRefreshCookieNotSecureOverPlainHttp() {
+        stubSuccessfulRefresh();
+
+        serviceDelegate.refresh("providedRefreshToken", "providedAccessToken");
+
+        assertFalse(getRefreshTokenCookie(mockResponse).getSecure());
+    }
+
+    @Test
+    void testRefreshCookieSecureOverHttps() {
+        mockRequest.setSecure(true);
+        stubSuccessfulRefresh();
+
+        serviceDelegate.refresh("providedRefreshToken", "providedAccessToken");
+
+        assertTrue(getRefreshTokenCookie(mockResponse).getSecure());
+    }
+
+    @Test
+    void testRefreshCookieSecureWhenForced() {
+        when(configuration.isForceSecureCookies()).thenReturn(true);
+        stubSuccessfulRefresh();
+
+        serviceDelegate.refresh("providedRefreshToken", "providedAccessToken");
+
+        assertTrue(getRefreshTokenCookie(mockResponse).getSecure());
+    }
+
+    @Test
+    void testClearCookiesSecureWhenForced() {
+        when(configuration.isForceSecureCookies()).thenReturn(true);
+        mockRequest.setCookies(new Cookie("refresh_token", "leftoverRt"));
+
+        serviceDelegate.callClearCookies(mockRequest, mockResponse);
+
+        assertTrue(getRefreshTokenCookie(mockResponse).getSecure());
+    }
+
+    private void stubSuccessfulRefresh() {
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessTokenResponse.class)))
+                .thenReturn(
+                        new ResponseEntity<>(
+                                tokenResponse("newAccessToken", "newRefreshToken", 7200),
+                                HttpStatus.OK));
+    }
+
     /** Builds a fake unsigned JWT with iat and exp claims (decodable by JWTHelper). */
     private String buildFakeJwt(long iatEpochSeconds, long expEpochSeconds) {
         String header = "{\"alg\":\"none\",\"typ\":\"JWT\"}";

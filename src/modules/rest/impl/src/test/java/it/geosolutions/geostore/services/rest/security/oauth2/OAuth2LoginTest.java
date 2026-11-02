@@ -20,6 +20,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -91,6 +92,46 @@ public class OAuth2LoginTest {
                         .collect(Collectors.toList());
         assertEquals(2, tokenCookies.size());
         assertEquals("http://localhost:8080/geostore/redirect", result.getHeaderString("Location"));
+    }
+
+    @Test
+    public void testCallbackCookiesFollowRequestScheme() {
+        assertCallbackCookies(new OAuth2Configuration(), false);
+
+        request.setSecure(true);
+        assertCallbackCookies(new OAuth2Configuration(), true);
+    }
+
+    @Test
+    public void testCallbackCookiesSecureWhenForced() {
+        OAuth2Configuration configuration = new OAuth2Configuration();
+        configuration.setForceSecureCookies(true);
+
+        assertCallbackCookies(configuration, true);
+    }
+
+    /** Runs the callback and checks the Secure attribute of the three cookies it sets. */
+    private void assertCallbackCookies(OAuth2Configuration configuration, boolean secure) {
+        attributes.setAttribute(REFRESH_TOKEN_PARAM, "mockRefreshToken", 0);
+        attributes.setAttribute(ACCESS_TOKEN_PARAM, "mockAccessToken", 0);
+        configuration.setInternalRedirectUri("http://localhost:8080/geostore/redirect");
+        SetConfOAuthLoginService service = new SetConfOAuthLoginService(idPLoginRest);
+        service.setConfiguration(configuration);
+        service.setTokenStorage(new InMemoryTokenStorage());
+
+        Response result = idPLoginRest.callback("mock");
+
+        List<Object> cookies = result.getMetadata().get("Set-Cookie");
+        assertEquals(3, cookies.size());
+        for (Object cookie : cookies) {
+            assertEquals(cookie.toString(), secure, hasSecureAttribute(cookie.toString()));
+        }
+    }
+
+    private static boolean hasSecureAttribute(String setCookie) {
+        return Arrays.stream(setCookie.split(";"))
+                .map(String::trim)
+                .anyMatch("Secure"::equalsIgnoreCase);
     }
 
     @After
