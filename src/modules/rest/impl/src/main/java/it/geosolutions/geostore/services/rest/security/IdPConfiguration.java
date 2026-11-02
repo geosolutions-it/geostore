@@ -28,6 +28,8 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected List<String> defaultGroups = Collections.emptyList();
 
+    protected boolean forceSecureCookies = false;
+
     /**
      * @return true if the filter to which this configuration object refers is enabled. False
      *     otherwise.
@@ -64,6 +66,25 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     public void setAutoCreateUser(boolean autoCreateUser) {
         this.autoCreateUser = autoCreateUser;
+    }
+
+    /**
+     * @return true if the cookies set at login always carry the {@code Secure} attribute. False if
+     *     they carry it only when the request reached the application over HTTPS (the default).
+     */
+    public boolean isForceSecureCookies() {
+        return forceSecureCookies;
+    }
+
+    /**
+     * Set whether the cookies set at login always carry the {@code Secure} attribute, e.g. when
+     * users reach the application over HTTPS through a reverse proxy that talks plain HTTP to the
+     * servlet container.
+     *
+     * @param forceSecureCookies true to always set {@code Secure}.
+     */
+    public void setForceSecureCookies(boolean forceSecureCookies) {
+        this.forceSecureCookies = forceSecureCookies;
     }
 
     /**
