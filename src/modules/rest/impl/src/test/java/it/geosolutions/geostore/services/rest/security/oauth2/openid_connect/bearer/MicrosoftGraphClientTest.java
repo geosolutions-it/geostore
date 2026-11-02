@@ -33,17 +33,22 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class MicrosoftGraphClientTest {
 
@@ -63,6 +68,12 @@ public class MicrosoftGraphClientTest {
     @AfterAll
     static void afterAll() {
         graphService.stop();
+    }
+
+    @BeforeEach
+    void resetGraphService() {
+        graphService.resetMappings();
+        graphService.resetRequests();
     }
 
     @Test
@@ -237,5 +248,137 @@ public class MicrosoftGraphClientTest {
         // Null/empty for resolve
         List<String> roles = client.resolveAppRoleNames(null, java.util.Collections.emptyList());
         assertTrue(roles.isEmpty(), "Null token should return empty role names");
+    }
+
+    @Test
+    public void testPaginationKeepsNextLinkEncoding() {
+        // Graph returns next links already percent-encoded, e.g. a $skiptoken holding quotes
+        String page2 = "/me/memberOf?$skiptoken=X%27page2%27";
+        graphService.stubFor(
+                WireMock.get(urlPathEqualTo("/me/memberOf"))
+                        .withQueryParam("$select", containing("displayName"))
+                        .willReturn(jsonResponse(groupsPage(graphUrl(page2), "Group A"))));
+        graphService.stubFor(
+                WireMock.get(urlEqualTo(page2))
+                        .willReturn(jsonResponse(groupsPage(null, "Group B"))));
+
+        List<String> groups = client.fetchMemberOfGroups(TEST_TOKEN);
+
+        assertEquals(Arrays.asList("Group A", "Group B"), groups);
+    }
+
+    @Test
+    public void testNextLinkOnAnotherServerIsNotFollowed() {
+        WireMockServer otherService = new WireMockServer(wireMockConfig().dynamicPort());
+        otherService.start();
+        try {
+            otherService.stubFor(
+                    WireMock.get(anyUrl()).willReturn(jsonResponse(groupsPage(null, "Other"))));
+            String otherPage =
+                    "http://localhost:" + otherService.port() + "/me/memberOf?$skiptoken=page2";
+            graphService.stubFor(
+                    WireMock.get(urlPathEqualTo("/me/memberOf"))
+                            .willReturn(jsonResponse(groupsPage(otherPage, "Group A"))));
+
+            List<String> groups = client.fetchMemberOfGroups(TEST_TOKEN);
+
+            assertTrue(groups.isEmpty(), "a next link on another server fails the lookup");
+            otherService.verify(0, getRequestedFor(anyUrl()));
+        } finally {
+            otherService.stop();
+        }
+    }
+
+    @Test
+    public void testRedirectIsNotFollowed() {
+        graphService.stubFor(
+                WireMock.get(urlPathEqualTo("/me/memberOf"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(302)
+                                        .withHeader("Location", graphUrl("/moved/memberOf"))));
+        graphService.stubFor(
+                WireMock.get(urlPathEqualTo("/moved/memberOf"))
+                        .willReturn(jsonResponse(groupsPage(null, "Moved Group"))));
+
+        List<String> groups = client.fetchMemberOfGroups(TEST_TOKEN);
+
+        assertTrue(groups.isEmpty(), "a redirect fails the lookup");
+        graphService.verify(0, getRequestedFor(urlPathEqualTo("/moved/memberOf")));
+    }
+
+    @Test
+    public void testPagingStopsAfterMaxPages() {
+        // Every page links to a further page
+        graphService.stubFor(
+                WireMock.get(urlPathEqualTo("/me/memberOf"))
+                        .willReturn(
+                                jsonResponse(
+                                        groupsPage(
+                                                graphUrl("/me/memberOf?$skiptoken=next"),
+                                                "Group"))));
+
+        List<String> groups = client.fetchMemberOfGroups(TEST_TOKEN);
+
+        assertEquals(MicrosoftGraphClient.MAX_PAGES, groups.size());
+        graphService.verify(
+                MicrosoftGraphClient.MAX_PAGES, getRequestedFor(urlPathEqualTo("/me/memberOf")));
+    }
+
+    @Test
+    public void testResolveAppRoleNamesSkipsUnexpectedResourceId() {
+        List<MicrosoftGraphClient.AppRoleAssignment> assignments =
+                Arrays.asList(
+                        new MicrosoftGraphClient.AppRoleAssignment(
+                                "role-guid-001", "../me/memberOf"));
+
+        List<String> roleNames = client.resolveAppRoleNames(TEST_TOKEN, assignments);
+
+        assertTrue(roleNames.isEmpty());
+        graphService.verify(0, getRequestedFor(anyUrl()));
+    }
+
+    @Test
+    public void testIsSameEndpoint() {
+        URI endpoint = URI.create("https://graph.microsoft.com/v1.0");
+
+        assertTrue(isSameEndpoint(endpoint, "https://graph.microsoft.com/v1.0/me/memberOf?$top=5"));
+        assertTrue(isSameEndpoint(endpoint, "https://GRAPH.microsoft.com:443/v1.0/me/memberOf"));
+        assertFalse(isSameEndpoint(endpoint, "http://graph.microsoft.com/v1.0/me/memberOf"));
+        assertFalse(isSameEndpoint(endpoint, "https://graph.microsoft.com:8443/v1.0/me"));
+        // hosts that only start with the endpoint host, or carry it as user info
+        assertFalse(isSameEndpoint(endpoint, "https://graph.microsoft.com.example.org/v1.0/me"));
+        assertFalse(isSameEndpoint(endpoint, "https://graph.microsoft.com@example.org/v1.0/me"));
+        assertFalse(isSameEndpoint(endpoint, "/v1.0/me/memberOf"));
+    }
+
+    private static boolean isSameEndpoint(URI endpoint, String uri) {
+        return MicrosoftGraphClient.isSameEndpoint(endpoint, URI.create(uri));
+    }
+
+    private static String graphUrl(String pathAndQuery) {
+        return "http://localhost:" + graphService.port() + pathAndQuery;
+    }
+
+    private static ResponseDefinitionBuilder jsonResponse(String body) {
+        return aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                .withBody(body);
+    }
+
+    /** A {@code /me/memberOf} page with the given groups and optional next link. */
+    private static String groupsPage(String nextLink, String... groupNames) {
+        String values =
+                Stream.of(groupNames)
+                        .map(
+                                name ->
+                                        "{\"@odata.type\":\"#microsoft.graph.group\","
+                                                + "\"displayName\":\""
+                                                + name
+                                                + "\"}")
+                        .collect(Collectors.joining(","));
+        String next = nextLink != null ? "\"@odata.nextLink\":\"" + nextLink + "\"," : "";
+        return "{" + next + "\"value\":[" + values + "]}";
     }
 }
