@@ -37,7 +37,6 @@ import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.AudienceAccessTokenValidator;
-import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.JwksRsaKeyProvider;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.MultiTokenValidator;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.bearer.SubjectTokenValidator;
 
@@ -149,31 +148,29 @@ public class CompositeOpenIdConnectFilter extends GenericFilterBean
             }
             TokenAuthenticationCache cache = sharedCache;
 
-            JwksRsaKeyProvider jwksKeyProvider = null;
-            String jwksUri = config.getIdTokenUri();
-            if (jwksUri == null || jwksUri.isEmpty()) {
-                jwksUri = config.getJwkURI();
-            }
-            if (jwksUri != null && !jwksUri.isEmpty()) {
-                jwksKeyProvider = new JwksRsaKeyProvider(jwksUri, config);
-            }
-
             MultiTokenValidator validator =
                     new MultiTokenValidator(
                             Arrays.asList(
                                     new AudienceAccessTokenValidator(),
                                     new SubjectTokenValidator()));
 
+            // No key provider is built here: the JWKS address may only be known after discovery,
+            // which the filter below runs, so the service reads it from the configuration when it
+            // verifies a token.
             OpenIdConnectAuthenticationService service =
                     new OpenIdConnectAuthenticationService(
-                            cache,
-                            userService,
-                            userGroupService,
-                            config,
-                            validator,
-                            jwksKeyProvider);
+                            cache, userService, userGroupService, config, validator, null);
 
             OpenIdConnectFilter filter = new OpenIdConnectFilter(config, service, restClient);
+
+            if (config.isAllowBearerTokens()
+                    && !"introspection".equalsIgnoreCase(config.getBearerTokenStrategy())
+                    && OpenIdConnectAuthenticationService.jwksUri(config) == null) {
+                LOGGER.warn(
+                        "Provider '{}' has no JWKS address (idTokenUri, jwkURI or the jwks_uri of"
+                                + " the discovery document): JWT bearer tokens will be refused",
+                        providerName);
+            }
 
             LOGGER.info(
                     "Provider '{}' config after discovery: authorizationUri={}, accessTokenUri={}, "
