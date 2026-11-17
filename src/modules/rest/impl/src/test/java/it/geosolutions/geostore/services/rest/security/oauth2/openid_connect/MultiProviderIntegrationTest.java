@@ -150,6 +150,46 @@ public class MultiProviderIntegrationTest {
                                         .withBody(
                                                 "{\"email\":\"alice@provider-a.com\","
                                                         + "\"sub\":\"alice-sub-a\"}")));
+        // Discovery document of provider A, for the tests that configure it by discoveryUrl only
+        String baseA = "http://localhost:" + wireMockA.port();
+        wireMockA.stubFor(
+                WireMock.get(urlEqualTo("/.well-known/openid-configuration"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"issuer\":\""
+                                                        + baseA
+                                                        + "\",\"authorization_endpoint\":\""
+                                                        + baseA
+                                                        + "/authorize\",\"token_endpoint\":\""
+                                                        + baseA
+                                                        + "/token\",\"userinfo_endpoint\":\""
+                                                        + baseA
+                                                        + "/userinfo\",\"jwks_uri\":\""
+                                                        + baseA
+                                                        + "/certs\"}")));
+        wireMockA.stubFor(
+                WireMock.post(urlPathEqualTo("/introspect"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody(
+                                                "{\"active\":true,"
+                                                        + "\"email\":\"alice@provider-a.com\","
+                                                        + "\"sub\":\"alice-sub-a\"}")));
+        wireMockA.stubFor(
+                WireMock.post(urlPathEqualTo("/introspect-inactive"))
+                        .willReturn(
+                                aResponse()
+                                        .withStatus(200)
+                                        .withHeader(
+                                                "Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                                        .withBody("{\"active\":false}")));
 
         // Start WireMock for provider B
         wireMockB = new WireMockServer(wireMockConfig().dynamicPort());
@@ -556,6 +596,225 @@ public class MultiProviderIntegrationTest {
     }
 
     @Test
+    public void testCompositeFilterVerifiesBearerWithJwksFromDiscovery() throws Exception {
+        // Provider A configured the way a discovery-only deployment is: no idTokenUri, no jwkURI
+        OpenIdConnectConfiguration discovered = discoveryOnlyConfig();
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(
+                createMockApplicationContext(Map.of(PROVIDER_A_NAME + "OAuth2Config", discovered)));
+        composite.afterPropertiesSet();
+        assertEquals(
+                "http://localhost:" + wireMockA.port() + "/certs",
+                discovered.getIdTokenUri(),
+                "Discovery should have filled in the JWKS address");
+
+        // Right audience and key id, but signed with a key that provider A does not publish
+        String wrongKey =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmB);
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + wrongKey);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication(),
+                "A token not signed by the provider's key must be refused");
+
+        // The same token signed with provider A's key is accepted
+        SecurityContextHolder.clearContext();
+        String rightKey =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + rightKey);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "A token signed by the provider's key must be accepted");
+        assertEquals("alice@provider-a.com", ((User) auth.getPrincipal()).getName());
+    }
+
+    @Test
+    public void testCompositeFilterRefusesBearerWhenNoJwksAddressIsKnown() throws Exception {
+        // Neither discovery nor an explicit JWKS address: signatures cannot be verified
+        configA.setIdTokenUri(null);
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(
+                createMockApplicationContext(Map.of(PROVIDER_A_NAME + "OAuth2Config", configA)));
+        composite.afterPropertiesSet();
+
+        String jwt =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication(),
+                "A JWT bearer token must be refused when its signature cannot be verified");
+    }
+
+    @Test
+    public void testCompositeFilterUsesJwkUriWhenIdTokenUriIsNotSet() throws Exception {
+        configA.setIdTokenUri(null);
+        configA.setJwkURI("http://localhost:" + wireMockA.port() + "/certs");
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(
+                createMockApplicationContext(Map.of(PROVIDER_A_NAME + "OAuth2Config", configA)));
+        composite.afterPropertiesSet();
+
+        String wrongKey =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmB);
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + wrongKey);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+
+        SecurityContextHolder.clearContext();
+        String rightKey =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + rightKey);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    public void testAutoStrategyFallsBackToIntrospectionWithoutJwksAddress() throws Exception {
+        // With bearerTokenStrategy=auto the identity provider decides when no JWKS address is known
+        configA.setIdTokenUri(null);
+        configA.setBearerTokenStrategy("auto");
+        configA.setIntrospectionEndpoint("http://localhost:" + wireMockA.port() + "/introspect");
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(
+                createMockApplicationContext(Map.of(PROVIDER_A_NAME + "OAuth2Config", configA)));
+        composite.afterPropertiesSet();
+
+        String jwt =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(auth, "The token should be accepted through introspection");
+        assertEquals("alice@provider-a.com", ((User) auth.getPrincipal()).getName());
+        wireMockA.verify(postRequestedFor(urlPathEqualTo("/introspect")));
+    }
+
+    @Test
+    public void testAutoStrategyRefusesTokenThatIntrospectionReportsInactive() throws Exception {
+        configA.setIdTokenUri(null);
+        configA.setBearerTokenStrategy("auto");
+        configA.setIntrospectionEndpoint(
+                "http://localhost:" + wireMockA.port() + "/introspect-inactive");
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(
+                createMockApplicationContext(Map.of(PROVIDER_A_NAME + "OAuth2Config", configA)));
+        composite.afterPropertiesSet();
+
+        String jwt =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + jwt);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication(),
+                "A token that introspection reports as inactive must be refused");
+        wireMockA.verify(postRequestedFor(urlPathEqualTo("/introspect-inactive")));
+    }
+
+    @Test
+    public void testExplicitIdTokenUriTakesPrecedenceOverDiscovery() throws Exception {
+        // discoveryUrl advertises provider A's JWKS, while idTokenUri points to provider B's
+        OpenIdConnectConfiguration config = discoveryOnlyConfig();
+        config.setIdTokenUri("http://localhost:" + wireMockB.port() + "/certs");
+        assertExplicitJwksAddressIsUsed(config);
+    }
+
+    @Test
+    public void testExplicitJwkUriTakesPrecedenceOverDiscovery() throws Exception {
+        // the same with jwkURI, which discovery does not fill in
+        OpenIdConnectConfiguration config = discoveryOnlyConfig();
+        config.setJwkURI("http://localhost:" + wireMockB.port() + "/certs");
+        assertExplicitJwksAddressIsUsed(config);
+    }
+
+    /**
+     * The given configuration has a discoveryUrl that advertises provider A's JWKS and an explicit
+     * address for provider B's: tokens must be verified with the explicit one.
+     */
+    private void assertExplicitJwksAddressIsUsed(OpenIdConnectConfiguration config)
+            throws Exception {
+        CompositeOpenIdConnectFilter composite = new CompositeOpenIdConnectFilter();
+        composite.setApplicationContext(
+                createMockApplicationContext(Map.of(PROVIDER_A_NAME + "OAuth2Config", config)));
+        composite.afterPropertiesSet();
+
+        String signedWithExplicitKey =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_B_KID,
+                        rsaAlgorithmB);
+        MockHttpServletRequest request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + signedWithExplicitKey);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        assertNotNull(
+                SecurityContextHolder.getContext().getAuthentication(),
+                "A token signed with a key of the explicit JWKS address must be accepted");
+
+        SecurityContextHolder.clearContext();
+        String signedWithDiscoveredKey =
+                createSignedJwt(
+                        "alice@provider-a.com",
+                        "alice-sub",
+                        PROVIDER_A_CLIENT_ID,
+                        PROVIDER_A_KID,
+                        rsaAlgorithmA);
+        request = createRequest("rest/resources");
+        request.addHeader("Authorization", "Bearer " + signedWithDiscoveredKey);
+        composite.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication(),
+                "A token signed with a key that only the discovered JWKS address has must be"
+                        + " refused");
+    }
+
+    @Test
     public void testCompositeFilterSkipsDisabledProvider() throws Exception {
         // Disable provider B
         configB.setEnabled(false);
@@ -651,6 +910,21 @@ public class MultiProviderIntegrationTest {
                                 new AudienceAccessTokenValidator(), new SubjectTokenValidator()));
         return new OpenIdConnectFilter(
                 tokenServices, restTemplate, config, cache, validator, jwksKeyProvider);
+    }
+
+    /** Provider A configured by discoveryUrl only, as in a discovery-only deployment. */
+    private OpenIdConnectConfiguration discoveryOnlyConfig() {
+        OpenIdConnectConfiguration config = new OpenIdConnectConfiguration();
+        config.setClientId(PROVIDER_A_CLIENT_ID);
+        config.setClientSecret(PROVIDER_A_CLIENT_SECRET);
+        config.setDiscoveryUrl("http://localhost:" + wireMockA.port());
+        config.setEnabled(true);
+        config.setAutoCreateUser(true);
+        config.setAllowBearerTokens(true);
+        config.setBeanName(PROVIDER_A_NAME + "OAuth2Config");
+        config.setScopes("openId,email");
+        config.setRedirectUri("../../../geostore/rest/users/user/details");
+        return config;
     }
 
     private String createSignedJwt(
