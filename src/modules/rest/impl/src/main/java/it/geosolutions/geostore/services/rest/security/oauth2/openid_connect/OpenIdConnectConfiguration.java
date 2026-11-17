@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 
@@ -41,6 +42,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -303,8 +305,9 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
      * Build the OIDC RP-Initiated Logout endpoint. Uses standard parameters: id_token_hint,
      * post_logout_redirect_uri, and client_id.
      *
-     * @param token the refresh token (unused for OIDC logout, kept for API compat).
-     * @param accessToken the access token (fallback if no ID token is available).
+     * @param token the ID token cached for the session when the logout flow has it, otherwise the
+     *     refresh token.
+     * @param accessToken the access token. Never sent as id_token_hint.
      * @param configuration the OAuth2Configuration.
      * @return the logout endpoint, or null if no logoutUri is configured.
      */
@@ -316,11 +319,15 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
-        // id_token_hint: the ID token JWT string (required by most OIDC providers)
-        String idToken = OAuth2Utils.getIdToken();
-        if (idToken == null) idToken = accessToken;
+        String idToken = resolveIdTokenHint(token);
         if (idToken != null) {
             params.put("id_token_hint", Collections.singletonList(idToken));
+        } else {
+            LOGGER.warn(
+                    "No ID token available for RP-initiated logout; calling '{}' without "
+                            + "id_token_hint. The provider may require interactive confirmation "
+                            + "and keep the SSO session alive.",
+                    uri);
         }
 
         // client_id: some providers require it alongside id_token_hint
@@ -338,5 +345,41 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(null, new HttpHeaders());
         return new Endpoint(HttpMethod.GET, appendParameters(params, uri), requestEntity);
+    }
+
+    /**
+     * Picks the ID token for the {@code id_token_hint} parameter. Tries, in order: the token passed
+     * down by the logout flow (the ID token cached at login), the ID token stashed during the
+     * authorization-code exchange, and the {@code id_token} request attribute set for authenticated
+     * requests. Never falls back to the access token: an invalid hint is rejected outright by the
+     * provider (Keycloak answers 400 and keeps the SSO session alive), while a missing one may
+     * still be accepted.
+     */
+    private String resolveIdTokenHint(String token) {
+        if (isIdToken(token)) return token;
+        if (RequestContextHolder.getRequestAttributes() == null) return null;
+        String idToken = OAuth2Utils.getIdToken();
+        if (idToken == null) {
+            idToken = OAuth2Utils.getRequestAttribute(OAuth2Utils.ID_TOKEN_PARAM);
+        }
+        return idToken;
+    }
+
+    /**
+     * Detects whether a token is an OIDC ID token: a JWT whose payload {@code typ} claim is {@code
+     * ID} (Keycloak convention) or, lacking a {@code typ} claim, one carrying a {@code nonce}
+     * claim. Access tokens ({@code typ=Bearer}), refresh tokens ({@code typ=Refresh}) and opaque
+     * strings are rejected.
+     */
+    static boolean isIdToken(String token) {
+        if (token == null || token.chars().filter(c -> c == '.').count() != 2) return false;
+        try {
+            JWTHelper helper = new JWTHelper(token);
+            String typ = helper.getClaim("typ", String.class);
+            if (typ != null) return "ID".equalsIgnoreCase(typ);
+            return helper.getClaim("nonce", String.class) != null;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

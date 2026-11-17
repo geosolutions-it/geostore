@@ -29,6 +29,8 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl;
@@ -47,6 +50,8 @@ import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
+
+import jakarta.servlet.http.Cookie;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,9 +68,12 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import wiremock.org.eclipse.jetty.http.HttpStatus;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 
 public class OAuth2SessionServiceTest {
 
@@ -322,5 +330,140 @@ public class OAuth2SessionServiceTest {
             assertNull(cache.get("tokenA"), "oidc entry evicted");
             assertNotNull(cache.get("tokenB"), "azure entry untouched");
         }
+    }
+
+    @Test
+    void testGlobalLogout_sendsCachedIdTokenAsHint_withoutFollowingTheRedirect() {
+        WireMockServer idp = new WireMockServer(wireMockConfig().dynamicPort());
+        idp.start();
+        try {
+            String afterLogout = "http://localhost:" + idp.port() + "/after-logout";
+            idp.stubFor(
+                    get(urlPathEqualTo("/logout"))
+                            .willReturn(
+                                    aResponse()
+                                            .withStatus(302)
+                                            .withHeader("Location", afterLogout)));
+            idp.stubFor(
+                    get(urlPathEqualTo("/after-logout")).willReturn(aResponse().withStatus(200)));
+            String idToken = unsignedJwt("{\"typ\":\"ID\",\"sub\":\"user\"}");
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+
+            MockHttpServletResponse response =
+                    globalLogout(idp, afterLogout, idToken, cache, new MockHttpServletRequest());
+
+            assertEquals(HttpStatus.OK_200, response.getStatus());
+            assertNull(cache.get(ACCESS_TOKEN), "token should be evicted from cache");
+            List<LoggedRequest> logouts = idp.findAll(getRequestedFor(urlPathEqualTo("/logout")));
+            assertEquals(1, logouts.size());
+            LoggedRequest logout = logouts.get(0);
+            assertEquals(
+                    idToken,
+                    logout.queryParameter("id_token_hint").firstValue(),
+                    "the cached ID token must be the id_token_hint, not the access token");
+            assertEquals("test-client", logout.queryParameter("client_id").firstValue());
+            assertEquals(
+                    afterLogout, logout.queryParameter("post_logout_redirect_uri").firstValue());
+            assertTrue(
+                    idp.findAll(getRequestedFor(urlPathEqualTo("/after-logout"))).isEmpty(),
+                    "the redirect to post_logout_redirect_uri is meant for the browser");
+        } finally {
+            idp.stop();
+        }
+    }
+
+    @Test
+    void testGlobalLogout_providerRejectsLogout_stillLogsOutLocally() {
+        WireMockServer idp = new WireMockServer(wireMockConfig().dynamicPort());
+        idp.start();
+        try {
+            idp.stubFor(
+                    get(urlPathEqualTo("/logout"))
+                            .willReturn(
+                                    aResponse()
+                                            .withStatus(400)
+                                            .withHeader("Content-Type", "application/json")
+                                            .withBody(
+                                                    "{\"error\":\"Invalid parameter: id_token_hint\"}")));
+            String idToken = unsignedJwt("{\"typ\":\"ID\",\"sub\":\"user\"}");
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            request.setCookies(new Cookie("refresh_token", "refresh-value"));
+
+            MockHttpServletResponse response =
+                    assertDoesNotThrow(() -> globalLogout(idp, null, idToken, cache, request));
+
+            assertEquals(HttpStatus.OK_200, response.getStatus());
+            assertNull(cache.get(ACCESS_TOKEN), "token should be evicted from cache");
+            Cookie cleared = response.getCookie("refresh_token");
+            assertNotNull(cleared, "the refresh_token cookie must still be cleared");
+            assertEquals(0, cleared.getMaxAge());
+            assertEquals("", cleared.getValue());
+            assertEquals(1, idp.findAll(getRequestedFor(urlPathEqualTo("/logout"))).size());
+        } finally {
+            idp.stop();
+        }
+    }
+
+    /**
+     * Runs {@code removeSession()} for a cached OIDC session with global logout enabled, the
+     * provider's end-session endpoint being {@code /logout} on the given server.
+     */
+    private MockHttpServletResponse globalLogout(
+            WireMockServer idp,
+            String postLogoutRedirectUri,
+            String idToken,
+            TokenAuthenticationCache cache,
+            MockHttpServletRequest request) {
+        OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
+        configuration.setEnabled(true);
+        configuration.setClientId("test-client");
+        configuration.setGlobalLogoutEnabled(true);
+        configuration.setLogoutUri("http://localhost:" + idp.port() + "/logout");
+        configuration.setPostLogoutRedirectUri(postLogoutRedirectUri);
+
+        PreAuthenticatedAuthenticationToken authenticationToken =
+                new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
+        TokenDetails details = Mockito.mock(TokenDetails.class);
+        when(details.getProvider()).thenReturn("oidc");
+        when(details.getAccessToken()).thenReturn(bearer(ACCESS_TOKEN));
+        when(details.getIdToken()).thenReturn(idToken);
+        authenticationToken.setDetails(details);
+        cache.putCacheEntry(ACCESS_TOKEN, authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+
+        HashMap<Object, Object> configurations = new HashMap<>();
+        configurations.put("oidcOAuth2Config", configuration);
+        try (MockedStatic<GeoStoreContext> ctx = Mockito.mockStatic(GeoStoreContext.class)) {
+            ctx.when(() -> GeoStoreContext.beans(OAuth2Configuration.class))
+                    .thenReturn(configurations);
+            ctx.when(() -> GeoStoreContext.bean("oidcOAuth2Config", OAuth2Configuration.class))
+                    .thenReturn(configuration);
+            ctx.when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class))
+                    .thenReturn(cache);
+
+            request.addHeader("Authorization", "Bearer " + ACCESS_TOKEN);
+            request.setUserPrincipal(authenticationToken);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            ServletRequestAttributes attributes = new ServletRequestAttributes(request, response);
+            attributes.setAttribute(PROVIDER_KEY, "oidc", 0);
+            RequestContextHolder.setRequestAttributes(attributes);
+
+            RESTSessionService sessionService = new RESTSessionServiceImpl();
+            new OpenIdConnectSessionServiceDelegate(sessionService, null);
+
+            sessionService.removeSession();
+            return response;
+        }
+    }
+
+    private static String unsignedJwt(String payloadJson) {
+        Base64.Encoder enc = Base64.getUrlEncoder().withoutPadding();
+        String header =
+                enc.encodeToString(
+                        "{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+        String payload = enc.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String signature = enc.encodeToString("sig".getBytes(StandardCharsets.UTF_8));
+        return header + "." + payload + "." + signature;
     }
 }

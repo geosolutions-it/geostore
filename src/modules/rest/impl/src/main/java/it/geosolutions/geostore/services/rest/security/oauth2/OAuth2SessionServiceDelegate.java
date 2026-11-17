@@ -743,15 +743,32 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             OAuth2Configuration.Endpoint logoutEndpoint =
                     configuration.buildLogoutEndpoint(token, accessToken, configuration);
             if (logoutEndpoint != null) {
-                RestTemplate template = protectedRestTemplate(configuration);
-                ResponseEntity<String> responseEntity =
-                        template.exchange(
-                                logoutEndpoint.getUrl(),
-                                logoutEndpoint.getMethod(),
-                                logoutEndpoint.getRequestEntity(),
-                                String.class);
-                if (responseEntity.getStatusCode().value() != 200) {
-                    logRevokeErrors(responseEntity.getBody());
+                // Once the session is ended, the end-session endpoint answers with a redirect to
+                // post_logout_redirect_uri. That redirect is the success response: the address is
+                // meant for the browser and is often not reachable from this server.
+                RestTemplate template = protectedRestTemplate(configuration, false);
+                try {
+                    ResponseEntity<String> responseEntity =
+                            template.exchange(
+                                    logoutEndpoint.getUrl(),
+                                    logoutEndpoint.getMethod(),
+                                    logoutEndpoint.getRequestEntity(),
+                                    String.class);
+                    if (responseEntity.getStatusCode().isError()) {
+                        logRemoteLogoutFailure(
+                                responseEntity.getStatusCode().value(), responseEntity.getBody());
+                    }
+                } catch (HttpStatusCodeException e) {
+                    logRemoteLogoutFailure(e.getStatusCode().value(), e.getResponseBodyAsString());
+                } catch (RestClientException e) {
+                    // Not the exception message: it carries the request URL, id_token_hint
+                    // included.
+                    Throwable cause = e.getMostSpecificCause();
+                    LOGGER.warn(
+                            "Remote logout at the identity provider failed: {}",
+                            cause == e
+                                    ? e.getClass().getSimpleName()
+                                    : cause.getClass().getSimpleName() + ": " + cause.getMessage());
                 }
             }
         }
@@ -907,5 +924,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     private static void logRevokeErrors(Object cause) {
         LOGGER.error("Error while revoking authorization. Error is: {}", cause);
+    }
+
+    // A failure at the provider must not stop the local logout (cookies, cache, security
+    // context), so it is logged rather than thrown.
+    private static void logRemoteLogoutFailure(int status, String body) {
+        LOGGER.warn(
+                "Remote logout at the identity provider failed: HTTP {} {}",
+                status,
+                body != null ? body : "");
     }
 }
