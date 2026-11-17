@@ -4,6 +4,7 @@ import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import it.geosolutions.geostore.services.rest.IdPLoginRest;
@@ -108,6 +109,65 @@ public class OAuth2LoginTest {
         configuration.setForceSecureCookies(true);
 
         assertCallbackCookies(configuration, true);
+    }
+
+    @Test
+    public void testCallbackRefreshCookieDefaults() {
+        String refreshCookie = callbackRefreshCookie(new OAuth2Configuration());
+
+        assertEquals(refreshCookie, "604800", attribute(refreshCookie, "Max-Age"));
+        assertEquals(refreshCookie, "/", attribute(refreshCookie, "Path"));
+    }
+
+    @Test
+    public void testCallbackRefreshCookieConfiguredLifetimeAndPath() {
+        OAuth2Configuration configuration = new OAuth2Configuration();
+        configuration.setRefreshTokenCookieMaxAge(3600);
+        configuration.setRefreshTokenCookiePath("/geostore/rest");
+
+        String refreshCookie = callbackRefreshCookie(configuration);
+
+        assertEquals(refreshCookie, "3600", attribute(refreshCookie, "Max-Age"));
+        assertEquals(refreshCookie, "/geostore/rest", attribute(refreshCookie, "Path"));
+    }
+
+    @Test
+    public void testCallbackRefreshCookieAsSessionCookie() {
+        OAuth2Configuration configuration = new OAuth2Configuration();
+        configuration.setRefreshTokenCookieMaxAge(-1);
+
+        String refreshCookie = callbackRefreshCookie(configuration);
+
+        assertNull(refreshCookie, attribute(refreshCookie, "Max-Age"));
+        assertNull(refreshCookie, attribute(refreshCookie, "Expires"));
+    }
+
+    /** Runs the callback and returns the Set-Cookie header of the refresh token. */
+    private String callbackRefreshCookie(OAuth2Configuration configuration) {
+        attributes.setAttribute(REFRESH_TOKEN_PARAM, "mockRefreshToken", 0);
+        attributes.setAttribute(ACCESS_TOKEN_PARAM, "mockAccessToken", 0);
+        configuration.setInternalRedirectUri("http://localhost:8080/geostore/redirect");
+        SetConfOAuthLoginService service = new SetConfOAuthLoginService(idPLoginRest);
+        service.setConfiguration(configuration);
+        service.setTokenStorage(new InMemoryTokenStorage());
+
+        Response result = idPLoginRest.callback("mock");
+
+        return result.getMetadata().get("Set-Cookie").stream()
+                .map(Object::toString)
+                .filter(c -> c.startsWith(REFRESH_TOKEN_PARAM + "="))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("No refresh token cookie"));
+    }
+
+    /** The value of a Set-Cookie attribute, or null when the attribute is absent. */
+    private static String attribute(String setCookie, String name) {
+        return Arrays.stream(setCookie.split(";"))
+                .map(String::trim)
+                .filter(part -> part.regionMatches(true, 0, name + "=", 0, name.length() + 1))
+                .map(part -> part.substring(name.length() + 1))
+                .findFirst()
+                .orElse(null);
     }
 
     /** Runs the callback and checks the Secure attribute of the three cookies it sets. */

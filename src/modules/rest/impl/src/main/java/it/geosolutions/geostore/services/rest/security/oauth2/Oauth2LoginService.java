@@ -110,7 +110,8 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 if (refreshToken != null) {
                     LOGGER.debug("RefreshToken: {}", refreshToken);
                     result.header(
-                            "Set-Cookie", refreshTokenCookie(refreshToken, secure).toString());
+                            "Set-Cookie",
+                            refreshTokenCookie(refreshToken, secure, configuration).toString());
                 }
                 TokenStorage tokenStorage = tokenStorage();
                 Object key = tokenStorage.buildTokenKey();
@@ -196,8 +197,19 @@ public abstract class Oauth2LoginService implements IdPLoginService {
     }
 
     protected NewCookie refreshTokenCookie(String value, boolean secure) {
-        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, value, "/", null);
-        return new AccessCookie(cookie, "", 604800, null, secure, true, "lax");
+        return refreshTokenCookie(value, secure, null);
+    }
+
+    /**
+     * The refresh token cookie set at login, with the lifetime and path of the given provider (7
+     * days and {@code /} when the configuration is null).
+     */
+    protected NewCookie refreshTokenCookie(
+            String value, boolean secure, IdPConfiguration configuration) {
+        Cookie cookie =
+                new Cookie(REFRESH_TOKEN_PARAM, value, refreshTokenCookiePath(configuration), null);
+        return new AccessCookie(
+                cookie, "", refreshTokenCookieMaxAge(configuration), null, secure, true, "lax");
     }
 
     private static HttpServletRequest currentRequest() {

@@ -36,6 +36,7 @@ import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.exception.NotFoundWebEx;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 
@@ -195,7 +196,8 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             setRefreshTokenCookie(
                     response,
                     sessionToken.getRefreshToken(),
-                    OAuth2Utils.isSecureCookie(configuration, request));
+                    OAuth2Utils.isSecureCookie(configuration, request),
+                    configuration);
             sessionToken.setRefreshToken(null);
         }
 
@@ -491,7 +493,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
         HttpServletResponse response = getResponse();
         if (response != null) {
             clearRefreshTokenCookie(
-                    response, OAuth2Utils.isSecureCookie(configuration, getRequest()));
+                    response,
+                    OAuth2Utils.isSecureCookie(configuration, getRequest()),
+                    configuration);
         }
         doLogout(null);
 
@@ -759,9 +763,23 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     protected void clearCookies(HttpServletRequest request, HttpServletResponse response) {
         Cookie[] allCookies = request.getCookies();
+        boolean refreshTokenCleared = false;
         if (allCookies != null)
             for (Cookie toDelete : allCookies) {
                 if (deleteCookie(toDelete)) {
+                    if (toDelete.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM)) {
+                        // Cleared once, on the configured path (and on "/" if that differs),
+                        // even when the browser sent more than one refresh_token cookie.
+                        if (!refreshTokenCleared) {
+                            OAuth2Configuration configuration = configuration();
+                            clearRefreshTokenCookie(
+                                    response,
+                                    OAuth2Utils.isSecureCookie(configuration, request),
+                                    configuration);
+                            refreshTokenCleared = true;
+                        }
+                        continue;
+                    }
                     // Max-Age must be 0 (-1 means "session cookie" and would RE-INSTATE the
                     // cookie with its current value: observed live as a logout response
                     // carrying both the clearing Set-Cookie and a full refresh_token one).
@@ -769,10 +787,6 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     toDelete.setMaxAge(0);
                     toDelete.setPath("/");
                     toDelete.setComment("EXPIRING COOKIE at " + System.currentTimeMillis());
-                    if (toDelete.getName().equalsIgnoreCase(REFRESH_TOKEN_PARAM)) {
-                        toDelete.setHttpOnly(true);
-                        toDelete.setSecure(OAuth2Utils.isSecureCookie(configuration(), request));
-                    }
                     response.addCookie(toDelete);
                 }
             }
@@ -798,11 +812,23 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     protected void setRefreshTokenCookie(
             HttpServletResponse response, String refreshToken, boolean secure) {
+        setRefreshTokenCookie(response, refreshToken, secure, null);
+    }
+
+    /**
+     * Sets the refresh token cookie with the lifetime and path of the given provider (7 days and
+     * {@code /} when the configuration is null).
+     */
+    protected void setRefreshTokenCookie(
+            HttpServletResponse response,
+            String refreshToken,
+            boolean secure,
+            IdPConfiguration configuration) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, refreshToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(secure);
-        cookie.setPath("/");
-        cookie.setMaxAge(604800); // 7 days
+        cookie.setPath(OAuth2Utils.refreshTokenCookiePath(configuration));
+        cookie.setMaxAge(OAuth2Utils.refreshTokenCookieMaxAge(configuration));
         response.addCookie(cookie);
     }
 
@@ -811,10 +837,31 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     protected void clearRefreshTokenCookie(HttpServletResponse response, boolean secure) {
+        clearRefreshTokenCookie(response, secure, null);
+    }
+
+    /**
+     * Deletes the refresh token cookie on the path of the given provider. When that path is not
+     * {@code /}, the cookie is deleted on {@code /} as well, where versions without the setting put
+     * it.
+     */
+    protected void clearRefreshTokenCookie(
+            HttpServletResponse response, boolean secure, IdPConfiguration configuration) {
+        String path = OAuth2Utils.refreshTokenCookiePath(configuration);
+        addRefreshTokenDeletion(response, secure, path);
+        if (!IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH.equals(path)) {
+            addRefreshTokenDeletion(
+                    response, secure, IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH);
+        }
+    }
+
+    private static void addRefreshTokenDeletion(
+            HttpServletResponse response, boolean secure, String path) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, "");
         cookie.setHttpOnly(true);
         cookie.setSecure(secure);
-        cookie.setPath("/");
+        cookie.setPath(path);
+        // Max-Age 0 deletes the cookie; -1 would turn it into a session cookie instead.
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }

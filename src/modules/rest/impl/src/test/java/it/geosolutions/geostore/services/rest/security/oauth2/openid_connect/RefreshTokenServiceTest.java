@@ -34,6 +34,7 @@ import it.geosolutions.geostore.services.rest.model.SessionToken;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2SessionServiceDelegate;
+import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 import it.geosolutions.geostore.services.rest.security.oauth2.TokenDetails;
 
 import jakarta.servlet.http.Cookie;
@@ -61,6 +62,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /** Test class for OAuth2SessionServiceDelegate token refresh. */
 class RefreshTokenServiceTest {
@@ -121,6 +123,8 @@ class RefreshTokenServiceTest {
         when(configuration.getInitialBackoffDelay()).thenReturn(1000L);
         when(configuration.getBackoffMultiplier()).thenReturn(2.0);
         when(configuration.getProvider()).thenReturn("oidc");
+        when(configuration.getRefreshTokenCookieMaxAge()).thenReturn(604800);
+        when(configuration.getRefreshTokenCookiePath()).thenReturn("/");
 
         // Current cached access token (the refresh token is supplied separately, as a
         // param/cookie).
@@ -768,6 +772,86 @@ class RefreshTokenServiceTest {
         assertTrue(getRefreshTokenCookie(mockResponse).getSecure());
     }
 
+    @Test
+    void testRefreshCookieUsesConfiguredLifetimeAndPath() {
+        when(configuration.getRefreshTokenCookieMaxAge()).thenReturn(-1);
+        when(configuration.getRefreshTokenCookiePath()).thenReturn("/geostore/rest");
+        stubSuccessfulRefresh();
+
+        serviceDelegate.refresh("providedRefreshToken", "providedAccessToken");
+
+        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        assertEquals(-1, refreshCookie.getMaxAge(), "-1 gives a session cookie");
+        assertEquals("/geostore/rest", refreshCookie.getPath());
+    }
+
+    @Test
+    void testClearCookiesDeletesOnConfiguredPathAndRoot() {
+        when(configuration.getRefreshTokenCookiePath()).thenReturn("/geostore/rest");
+        // A browser that also kept a cookie from a version without the setting sends both.
+        mockRequest.setCookies(
+                new Cookie("refresh_token", "rtOnPath"), new Cookie("refresh_token", "rtOnRoot"));
+
+        serviceDelegate.callClearCookies(mockRequest, mockResponse);
+
+        List<Cookie> deletions = getRefreshTokenCookies(mockResponse);
+        assertEquals(2, deletions.size(), "One deletion per path, not one per cookie sent");
+        assertEquals("/geostore/rest", deletions.get(0).getPath());
+        assertEquals("/", deletions.get(1).getPath());
+        for (Cookie deletion : deletions) {
+            assertEquals(0, deletion.getMaxAge());
+            assertEquals("", deletion.getValue());
+            assertTrue(deletion.isHttpOnly());
+        }
+    }
+
+    @Test
+    void testRefreshFailureDeletesOnConfiguredPathAndRoot() {
+        when(configuration.getRefreshTokenCookiePath()).thenReturn("/geostore/rest");
+        serviceDelegate.currentAccessToken = accessToken("providedAccessToken", -10 * 60 * 1000);
+        when(restTemplate.exchange(
+                        anyString(),
+                        eq(HttpMethod.POST),
+                        any(HttpEntity.class),
+                        eq(OAuth2AccessTokenResponse.class)))
+                .thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+
+        serviceDelegate.refresh("expiredRefreshToken", "providedAccessToken");
+
+        List<String> paths =
+                getRefreshTokenCookies(mockResponse).stream()
+                        .filter(c -> c.getMaxAge() == 0)
+                        .map(Cookie::getPath)
+                        .collect(Collectors.toList());
+        assertTrue(paths.contains("/geostore/rest"), "Deleted on the configured path: " + paths);
+        assertTrue(paths.contains("/"), "Deleted on / as well: " + paths);
+    }
+
+    @Test
+    void testInvalidCookieSettingsFallBackToDefaults() {
+        OAuth2Configuration config = new OAuth2Configuration();
+        assertEquals(604800, OAuth2Utils.refreshTokenCookieMaxAge(config), "default lifetime");
+        assertEquals("/", OAuth2Utils.refreshTokenCookiePath(config), "default path");
+        assertEquals(604800, OAuth2Utils.refreshTokenCookieMaxAge(null));
+        assertEquals("/", OAuth2Utils.refreshTokenCookiePath(null));
+
+        config.setRefreshTokenCookieMaxAge(-1);
+        assertEquals(-1, OAuth2Utils.refreshTokenCookieMaxAge(config), "session cookie");
+        config.setRefreshTokenCookieMaxAge(3600);
+        assertEquals(3600, OAuth2Utils.refreshTokenCookieMaxAge(config));
+        config.setRefreshTokenCookieMaxAge(0);
+        assertEquals(604800, OAuth2Utils.refreshTokenCookieMaxAge(config), "0 would delete it");
+        config.setRefreshTokenCookieMaxAge(-5);
+        assertEquals(604800, OAuth2Utils.refreshTokenCookieMaxAge(config));
+
+        config.setRefreshTokenCookiePath(" /geostore/rest ");
+        assertEquals("/geostore/rest", OAuth2Utils.refreshTokenCookiePath(config));
+        config.setRefreshTokenCookiePath("geostore/rest");
+        assertEquals("/", OAuth2Utils.refreshTokenCookiePath(config), "a relative path is refused");
+        config.setRefreshTokenCookiePath("");
+        assertEquals("/", OAuth2Utils.refreshTokenCookiePath(config));
+    }
+
     private void stubSuccessfulRefresh() {
         when(restTemplate.exchange(
                         anyString(),
@@ -811,6 +895,19 @@ class RefreshTokenServiceTest {
                         .withoutPadding()
                         .encodeToString(payload.getBytes(StandardCharsets.UTF_8))
                 + ".";
+    }
+
+    private List<Cookie> getRefreshTokenCookies(MockHttpServletResponse response) {
+        List<Cookie> result = new ArrayList<>();
+        Cookie[] cookies = response.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refresh_token".equalsIgnoreCase(cookie.getName())) {
+                    result.add(cookie);
+                }
+            }
+        }
+        return result;
     }
 
     private Cookie getRefreshTokenCookie(MockHttpServletResponse response) {
