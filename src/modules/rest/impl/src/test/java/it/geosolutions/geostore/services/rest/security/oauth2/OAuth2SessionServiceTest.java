@@ -430,6 +430,65 @@ public class OAuth2SessionServiceTest {
         }
     }
 
+    @Test
+    void testGlobalLogout_withAnExpiredAccessToken_endsTheSessionAtTheProvider() {
+        WireMockServer idp = new WireMockServer(wireMockConfig().dynamicPort());
+        idp.start();
+        try {
+            idp.stubFor(get(urlPathEqualTo("/logout")).willReturn(aResponse().withStatus(200)));
+            OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
+            configuration.setEnabled(true);
+            configuration.setClientId("test-client");
+            configuration.setGlobalLogoutEnabled(true);
+            configuration.setLogoutUri("http://localhost:" + idp.port() + "/logout");
+
+            String idToken = unsignedJwt("{\"typ\":\"ID\",\"sub\":\"user\"}");
+            PreAuthenticatedAuthenticationToken authenticationToken =
+                    new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
+            TokenDetails details = Mockito.mock(TokenDetails.class);
+            when(details.getProvider()).thenReturn("oidcOAuth2Config");
+            when(details.getAccessToken()).thenReturn(bearer(ACCESS_TOKEN));
+            when(details.getIdToken()).thenReturn(idToken);
+            authenticationToken.setDetails(details);
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+            cache.putCacheEntry(ACCESS_TOKEN, authenticationToken);
+            // the authentication leaves the cache when the access token expires
+            cache.getCache().invalidate(ACCESS_TOKEN);
+
+            HashMap<Object, Object> configurations = new HashMap<>();
+            configurations.put("oidcOAuth2Config", configuration);
+            try (MockedStatic<GeoStoreContext> ctx = Mockito.mockStatic(GeoStoreContext.class)) {
+                ctx.when(() -> GeoStoreContext.beans(OAuth2Configuration.class))
+                        .thenReturn(configurations);
+                ctx.when(() -> GeoStoreContext.bean("oidcOAuth2Config", OAuth2Configuration.class))
+                        .thenReturn(configuration);
+                ctx.when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class))
+                        .thenReturn(cache);
+
+                // the expired token did not authenticate: no provider attribute on the request
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                request.addHeader("Authorization", "Bearer " + ACCESS_TOKEN);
+                MockHttpServletResponse response = new MockHttpServletResponse();
+                RequestContextHolder.setRequestAttributes(
+                        new ServletRequestAttributes(request, response));
+
+                RESTSessionService sessionService = new RESTSessionServiceImpl();
+                new OpenIdConnectSessionServiceDelegate(sessionService, null);
+
+                sessionService.removeSession();
+
+                assertEquals(HttpStatus.OK_200, response.getStatus());
+                List<LoggedRequest> logouts =
+                        idp.findAll(getRequestedFor(urlPathEqualTo("/logout")));
+                assertEquals(1, logouts.size(), "the provider's end-session endpoint is called");
+                assertEquals(idToken, logouts.get(0).queryParameter("id_token_hint").firstValue());
+                assertNull(cache.getLogoutRecord(ACCESS_TOKEN), "the record is used once");
+            }
+        } finally {
+            idp.stop();
+        }
+    }
+
     /**
      * Runs {@code removeSession()} for a cached OIDC session with global logout enabled, the
      * provider's end-session endpoint being {@code /logout} on the given server.
