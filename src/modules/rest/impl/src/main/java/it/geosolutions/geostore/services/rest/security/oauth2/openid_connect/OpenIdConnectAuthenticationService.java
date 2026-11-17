@@ -94,7 +94,19 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final OpenIdTokenValidator bearerTokenValidator;
+
+    /** Key provider given at construction time; when null, one is built from the configuration. */
     private final JwksRsaKeyProvider jwksKeyProvider;
+
+    /**
+     * JWKS address set in the configuration when this service was created, that is before discovery
+     * runs. It takes precedence over the {@code jwks_uri} that discovery fills in.
+     */
+    private final String configuredJwksUri;
+
+    /** Key provider built from the JWKS address, together with the address it was built for. */
+    private volatile ResolvedKeyProvider resolvedKeyProvider;
+
     private volatile JweTokenDecryptor jweDecryptor;
     private volatile boolean jweDecryptorInitialized = false;
     private volatile MicrosoftGraphClient graphClient;
@@ -113,10 +125,69 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
         super(cache, userService, userGroupService, configuration);
         this.bearerTokenValidator = bearerTokenValidator;
         this.jwksKeyProvider = jwksKeyProvider;
+        this.configuredJwksUri =
+                configuration instanceof OpenIdConnectConfiguration
+                        ? jwksUri((OpenIdConnectConfiguration) configuration)
+                        : null;
     }
 
     private OpenIdConnectConfiguration oidcConfig() {
         return (OpenIdConnectConfiguration) configuration;
+    }
+
+    /** A key provider and the JWKS address it was built for. */
+    private static final class ResolvedKeyProvider {
+        private final String jwksUri;
+        private final JwksRsaKeyProvider provider;
+
+        private ResolvedKeyProvider(String jwksUri, JwksRsaKeyProvider provider) {
+            this.jwksUri = jwksUri;
+            this.provider = provider;
+        }
+    }
+
+    /**
+     * Returns the JWKS address of the given provider: {@code idTokenUri}, which discovery fills in
+     * with the provider's {@code jwks_uri}, or else {@code jwkURI}. Null when neither is set.
+     */
+    static String jwksUri(OpenIdConnectConfiguration config) {
+        if (StringUtils.hasText(config.getIdTokenUri())) {
+            return config.getIdTokenUri();
+        }
+        if (StringUtils.hasText(config.getJwkURI())) {
+            return config.getJwkURI();
+        }
+        return null;
+    }
+
+    /**
+     * Returns the key provider used to verify bearer token signatures, or null when no JWKS address
+     * is known. An address set explicitly in the configuration is used as it was when this service
+     * was created. Otherwise the address is read from the configuration at each call: the filter
+     * runs discovery after this service has been created, so only at this point the {@code
+     * jwks_uri} of the discovery document is available.
+     */
+    private JwksRsaKeyProvider resolveJwksKeyProvider() {
+        if (jwksKeyProvider != null) {
+            return jwksKeyProvider;
+        }
+        String jwksUri = configuredJwksUri != null ? configuredJwksUri : jwksUri(oidcConfig());
+        if (jwksUri == null) {
+            return null;
+        }
+        ResolvedKeyProvider resolved = resolvedKeyProvider;
+        if (resolved == null || !jwksUri.equals(resolved.jwksUri)) {
+            synchronized (this) {
+                resolved = resolvedKeyProvider;
+                if (resolved == null || !jwksUri.equals(resolved.jwksUri)) {
+                    resolved =
+                            new ResolvedKeyProvider(
+                                    jwksUri, new JwksRsaKeyProvider(jwksUri, configuration));
+                    resolvedKeyProvider = resolved;
+                }
+            }
+        }
+        return resolved.provider;
     }
 
     /**
@@ -279,10 +350,22 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
 
     /**
      * Validates a bearer token as a JWT: optional JWE decryption, signature verification via JWKS,
-     * exp/iat checks, and the configured token validator.
+     * exp/iat checks, and the configured token validator. A token is refused when no JWKS address
+     * is known, since its signature cannot be verified.
      */
     @SuppressWarnings("unchecked")
     private Map<String, Object> validateBearerJwt(String token) {
+        JwksRsaKeyProvider keyProvider = resolveJwksKeyProvider();
+        if (keyProvider == null) {
+            // The signature cannot be checked, so the token is refused.
+            LOGGER.warn(
+                    "OIDC: bearer token refused, no JWKS address is known for this provider: set"
+                            + " idTokenUri or jwkURI, or check that the discovery document has a"
+                            + " jwks_uri");
+            throw new RuntimeException(
+                    "Attached Bearer Token cannot be verified: no JWKS address is known");
+        }
+
         Map<String, Object> accessTokenClaims;
         try {
             JweTokenDecryptor decryptor = getJweDecryptor();
@@ -290,19 +373,13 @@ public class OpenIdConnectAuthenticationService extends OAuth2GeoStoreAuthentica
                 LOGGER.debug("Detected JWE token (5 parts), attempting decryption");
                 token = decryptor.decrypt(token);
             }
-            if (jwksKeyProvider != null) {
-                String kid = extractKidFromHeader(token);
-                RSAPublicKey key = jwksKeyProvider.getKey(kid);
-                if (key == null) {
-                    throw new RuntimeException("No JWK key found for kid: " + kid);
-                }
-                // Verify the RSA signature; throws if invalid.
-                JWT.require(Algorithm.RSA256(key, null)).build().verify(token);
-            } else {
-                LOGGER.warn(
-                        "OIDC: No JWKS key provider configured — decoding bearer token WITHOUT"
-                                + " signature verification");
+            String kid = extractKidFromHeader(token);
+            RSAPublicKey key = keyProvider.getKey(kid);
+            if (key == null) {
+                throw new RuntimeException("No JWK key found for kid: " + kid);
             }
+            // Verify the RSA signature; throws if invalid.
+            JWT.require(Algorithm.RSA256(key, null)).build().verify(token);
             accessTokenClaims = new JWTHelper(token).getPayloadAsMap();
         } catch (Exception e) {
             LOGGER.error("OIDC: Could not decode/verify bearer token", e);
