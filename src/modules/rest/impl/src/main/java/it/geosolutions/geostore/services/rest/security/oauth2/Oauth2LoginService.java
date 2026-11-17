@@ -88,7 +88,7 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             throw new RuntimeException(
                     "No IdPConfiguration found for callback provider: " + provider);
         }
-        LOGGER.debug("Token: {}", token);
+        SensitiveLogging.debug(LOGGER, configuration, "Token: {}", token);
 
         String internalRedirectUri = configuration.getInternalRedirectUri();
 
@@ -104,11 +104,11 @@ public abstract class Oauth2LoginService implements IdPLoginService {
             boolean secure = isSecureCookie(configuration, currentRequest());
             try {
                 result = result.status(302).location(new URI(internalRedirectUri));
-                LOGGER.debug("AccessToken: {}", token);
+                SensitiveLogging.debug(LOGGER, configuration, "AccessToken: {}", token);
                 sessionToken.setAccessToken(token);
                 sessionToken.setTokenType("Bearer");
                 if (refreshToken != null) {
-                    LOGGER.debug("RefreshToken: {}", refreshToken);
+                    SensitiveLogging.debug(LOGGER, configuration, "RefreshToken: {}", refreshToken);
                     result.header(
                             "Set-Cookie", refreshTokenCookie(refreshToken, secure).toString());
                 }

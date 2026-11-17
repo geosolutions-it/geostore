@@ -65,6 +65,9 @@ public class GeoStoreRemoteTokenServices {
 
     protected String clientSecret;
 
+    /** The provider the tokens are checked for; it decides whether request details are logged. */
+    protected OAuth2Configuration configuration;
+
     protected GeoStoreRemoteTokenServices() {
         // constructor for subclasses that want to configure everything
     }
@@ -87,6 +90,10 @@ public class GeoStoreRemoteTokenServices {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public void setConfiguration(OAuth2Configuration configuration) {
+        this.configuration = configuration;
     }
 
     public Map<String, Object> loadAuthentication(String accessToken)
@@ -143,8 +150,9 @@ public class GeoStoreRemoteTokenServices {
 
         ParameterizedTypeReference<Map<String, Object>> map = new ParameterizedTypeReference<>() {};
 
-        LOGGER.debug("Executing request {} form data are {}", path, formData);
-        LOGGER.debug("Headers are {}", headers);
+        LOGGER.debug("Executing request {}", path);
+        SensitiveLogging.debug(
+                LOGGER, configuration, "Form data are {}, headers are {}", formData, headers);
 
         ResponseEntity<Map<String, Object>> response =
                 restTemplate.exchange(path, method, new HttpEntity<>(formData, headers), map);
@@ -167,6 +175,8 @@ public class GeoStoreRemoteTokenServices {
                         super.handleError(url, method, response);
                     }
                 });
-        return new GeoStoreRemoteTokenServices(restTemplate);
+        GeoStoreRemoteTokenServices services = new GeoStoreRemoteTokenServices(restTemplate);
+        services.setConfiguration(configuration);
+        return services;
     }
 }

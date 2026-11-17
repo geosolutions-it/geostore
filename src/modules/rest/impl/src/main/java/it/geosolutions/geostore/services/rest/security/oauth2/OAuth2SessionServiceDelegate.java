@@ -572,7 +572,9 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                             authentication.getPrincipal(),
                             authentication.getCredentials(),
                             authentication.getAuthorities());
-            LOGGER.info(
+            SensitiveLogging.debug(
+                    LOGGER,
+                    conf,
                     "Creating new details. AccessToken: {} IdToken: {}",
                     newToken.getTokenValue(),
                     idToken);
