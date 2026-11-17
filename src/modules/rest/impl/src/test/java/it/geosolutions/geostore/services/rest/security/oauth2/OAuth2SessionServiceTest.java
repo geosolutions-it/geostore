@@ -405,6 +405,31 @@ public class OAuth2SessionServiceTest {
         }
     }
 
+    @Test
+    void testGlobalLogout_neverSendsATokenFromTheRequestAsHint() {
+        WireMockServer idp = new WireMockServer(wireMockConfig().dynamicPort());
+        idp.start();
+        try {
+            idp.stubFor(get(urlPathEqualTo("/logout")).willReturn(aResponse().withStatus(200)));
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+            MockHttpServletRequest request = new MockHttpServletRequest();
+            // no ID token cached for the session; the request carries a token shaped like one
+            request.setParameter(
+                    "refresh_token", unsignedJwt("{\"typ\":\"ID\",\"sub\":\"someone-else\"}"));
+
+            MockHttpServletResponse response = globalLogout(idp, null, null, cache, request);
+
+            assertEquals(HttpStatus.OK_200, response.getStatus());
+            List<LoggedRequest> logouts = idp.findAll(getRequestedFor(urlPathEqualTo("/logout")));
+            assertEquals(1, logouts.size());
+            assertFalse(
+                    logouts.get(0).getUrl().contains("id_token_hint"),
+                    "a token supplied with the request must not be sent as id_token_hint");
+        } finally {
+            idp.stop();
+        }
+    }
+
     /**
      * Runs {@code removeSession()} for a cached OIDC session with global logout enabled, the
      * provider's end-session endpoint being {@code /logout} on the given server.

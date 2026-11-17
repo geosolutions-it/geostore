@@ -305,8 +305,7 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
      * Build the OIDC RP-Initiated Logout endpoint. Uses standard parameters: id_token_hint,
      * post_logout_redirect_uri, and client_id.
      *
-     * @param token the ID token cached for the session when the logout flow has it, otherwise the
-     *     refresh token.
+     * @param token the ID token GeoStore holds for the session, or null.
      * @param accessToken the access token. Never sent as id_token_hint.
      * @param configuration the OAuth2Configuration.
      * @return the logout endpoint, or null if no logoutUri is configured.
