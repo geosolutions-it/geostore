@@ -49,6 +49,8 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Set;
 
 public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
@@ -58,6 +60,10 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public static final String PKCE_CODE_VERIFIER_SESSION_ATTR = "oidc.pkce.code_verifier";
+
+    /** Payload {@code typ} values (lower case) of tokens that are never sent as id_token_hint. */
+    private static final Set<String> NON_ID_TOKEN_TYPES = Set.of("bearer", "refresh", "offline");
+
     private static final String PKCE_CODE_CHALLENGE_METHOD = "S256";
 
     String jwkURI;
@@ -365,18 +371,18 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     }
 
     /**
-     * Detects whether a token is an OIDC ID token: a JWT whose payload {@code typ} claim is {@code
-     * ID} (Keycloak convention) or, lacking a {@code typ} claim, one carrying a {@code nonce}
-     * claim. Access tokens ({@code typ=Bearer}), refresh tokens ({@code typ=Refresh}) and opaque
-     * strings are rejected.
+     * Whether a token can be sent as {@code id_token_hint}: a JWT that is not marked as an access
+     * or refresh token. Keycloak sets the payload claim {@code typ} to {@code ID} on ID tokens and
+     * to {@code Bearer}, {@code Refresh} or {@code Offline} on the others, and those are rejected.
+     * Most providers (Entra ID, Google, Okta, Auth0) set no {@code typ} on ID tokens, and no {@code
+     * nonce} either unless the authorization request carried one, so neither claim is required.
+     * Opaque strings are rejected.
      */
     static boolean isIdToken(String token) {
         if (token == null || token.chars().filter(c -> c == '.').count() != 2) return false;
         try {
-            JWTHelper helper = new JWTHelper(token);
-            String typ = helper.getClaim("typ", String.class);
-            if (typ != null) return "ID".equalsIgnoreCase(typ);
-            return helper.getClaim("nonce", String.class) != null;
+            String typ = new JWTHelper(token).getClaim("typ", String.class);
+            return typ == null || !NON_ID_TOKEN_TYPES.contains(typ.toLowerCase(Locale.ROOT));
         } catch (Exception e) {
             return false;
         }

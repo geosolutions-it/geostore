@@ -95,6 +95,24 @@ public class OpenIdConnectLogoutEndpointTest {
     }
 
     @Test
+    void usesAnIdTokenWithoutTypAndNonceAsHint() {
+        // Entra ID, Google, Okta and Auth0 put no typ claim in the ID token, and no nonce either
+        // unless the authorization request carried one.
+        String idToken =
+                jwt(
+                        "{\"iss\":\"https://login.example.com/tenant/v2.0\",\"sub\":\"user\","
+                                + "\"aud\":\"test-client\",\"exp\":1893456000,\"iat\":1893452400}");
+
+        OAuth2Configuration.Endpoint endpoint =
+                configuration.buildLogoutEndpoint(idToken, "opaque-access-token", configuration);
+
+        assertNotNull(endpoint);
+        assertTrue(
+                endpoint.getUrl().contains("id_token_hint=" + idToken),
+                "an ID token without typ and nonce must be used as id_token_hint");
+    }
+
+    @Test
     void neverUsesAccessOrRefreshTokenAsHint() {
         String refreshToken = jwt("{\"typ\":\"Refresh\",\"sub\":\"user\"}");
         String accessToken = jwt("{\"typ\":\"Bearer\",\"sub\":\"user\"}");
@@ -173,13 +191,19 @@ public class OpenIdConnectLogoutEndpointTest {
                 "Keycloak-style ID token (typ=ID)");
         assertTrue(
                 OpenIdConnectConfiguration.isIdToken(jwt("{\"sub\":\"u\",\"nonce\":\"n\"}")),
-                "generic ID token carrying a nonce");
+                "ID token without typ, carrying a nonce");
+        assertTrue(
+                OpenIdConnectConfiguration.isIdToken(jwt("{\"sub\":\"u\",\"aud\":\"c\"}")),
+                "ID token without typ and nonce (Entra ID, Google, Okta, Auth0)");
         assertFalse(
                 OpenIdConnectConfiguration.isIdToken(jwt("{\"typ\":\"Bearer\",\"sub\":\"u\"}")),
                 "access token (typ=Bearer)");
         assertFalse(
                 OpenIdConnectConfiguration.isIdToken(jwt("{\"typ\":\"Refresh\",\"sub\":\"u\"}")),
                 "refresh token (typ=Refresh)");
+        assertFalse(
+                OpenIdConnectConfiguration.isIdToken(jwt("{\"typ\":\"Offline\",\"sub\":\"u\"}")),
+                "offline token (typ=Offline)");
         assertFalse(OpenIdConnectConfiguration.isIdToken("opaque-token"), "opaque string");
         assertFalse(OpenIdConnectConfiguration.isIdToken("a.b.c"), "three parts, not a JWT");
         assertFalse(OpenIdConnectConfiguration.isIdToken(null), "null");
