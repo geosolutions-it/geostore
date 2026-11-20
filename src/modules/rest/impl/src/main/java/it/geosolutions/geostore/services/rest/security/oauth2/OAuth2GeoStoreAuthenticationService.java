@@ -321,7 +321,11 @@ public class OAuth2GeoStoreAuthenticationService {
                 return null;
             }
 
-            LOGGER.debug("Introspection returned attributes for token: {}", result);
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
+                    "Introspection returned attributes for token: {}",
+                    result);
             return result;
         } catch (BadOpaqueTokenException e) {
             LOGGER.warn("Introspection response indicates invalid token: {}", e.getMessage());
@@ -668,7 +672,9 @@ public class OAuth2GeoStoreAuthenticationService {
             if (oidcRoles == null) {
                 oidcRoles = Collections.emptyList();
             }
-            LOGGER.info(
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
                     "Resolved role strings from token: {} (roleMappings={})",
                     oidcRoles,
                     configuration.getRoleMappings());
@@ -707,7 +713,9 @@ public class OAuth2GeoStoreAuthenticationService {
         // 1) Try primary token (usually ID token)
         if (primaryHelper != null) {
             value = primaryHelper.getClaim(claimName, Object.class);
-            LOGGER.info(
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
                     "Roles claim '{}' from primary token: {} (type={})",
                     claimName,
                     value,
@@ -717,7 +725,9 @@ public class OAuth2GeoStoreAuthenticationService {
         // 2) Fallback: access token (Keycloak puts realm_access here)
         if (value == null && accessHelper != null) {
             value = accessHelper.getClaim(claimName, Object.class);
-            LOGGER.info(
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
                     "Roles claim '{}' from access token (fallback): {} (type={})",
                     claimName,
                     value,
@@ -727,7 +737,9 @@ public class OAuth2GeoStoreAuthenticationService {
         // 3) Fallback: userinfo map
         if (value == null && userinfoMap != null) {
             value = ClaimPathResolver.resolveIgnoreCase(userinfoMap, claimName);
-            LOGGER.info(
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
                     "Roles claim '{}' from userinfo: {} (type={})",
                     claimName,
                     value,
@@ -738,7 +750,9 @@ public class OAuth2GeoStoreAuthenticationService {
     }
 
     private Role computeRole(List<String> rolesFromToken, Role defaultRole) {
-        LOGGER.info(
+        SensitiveLogging.debug(
+                LOGGER,
+                configuration,
                 "computeRole: rolesFromToken={}, defaultRole={}, roleMappings={}, dropUnmapped={}",
                 rolesFromToken,
                 defaultRole,
@@ -759,15 +773,25 @@ public class OAuth2GeoStoreAuthenticationService {
             if (roleMappings != null) {
                 String mapped = roleMappings.get(rr.toUpperCase(Locale.ROOT));
                 if (mapped != null) {
-                    LOGGER.info("computeRole: '{}' mapped to '{}' via roleMappings", rr, mapped);
+                    SensitiveLogging.debug(
+                            LOGGER,
+                            configuration,
+                            "computeRole: '{}' mapped to '{}' via roleMappings",
+                            rr,
+                            mapped);
                     rr = mapped;
                     wasMapped = true;
                 } else if (dropUnmapped) {
-                    LOGGER.info(
-                            "computeRole: '{}' not in roleMappings, dropping (dropUnmapped)", rr);
+                    SensitiveLogging.debug(
+                            LOGGER,
+                            configuration,
+                            "computeRole: '{}' not in roleMappings, dropping (dropUnmapped)",
+                            rr);
                     continue;
                 } else {
-                    LOGGER.info(
+                    SensitiveLogging.debug(
+                            LOGGER,
+                            configuration,
                             "computeRole: '{}' not in roleMappings, keeping (dropUnmapped=false)",
                             rr);
                 }
@@ -777,16 +801,22 @@ public class OAuth2GeoStoreAuthenticationService {
             // (e.g. "guest", "admin") should not accidentally match GeoStore roles.
             if (wasMapped || roleMappings == null || roleMappings.isEmpty()) {
                 if (rr.equalsIgnoreCase(Role.ADMIN.name())) {
-                    LOGGER.info("computeRole: '{}' matches ADMIN -> returning ADMIN", rr);
+                    SensitiveLogging.debug(
+                            LOGGER,
+                            configuration,
+                            "computeRole: '{}' matches ADMIN -> returning ADMIN",
+                            rr);
                     return Role.ADMIN;
                 }
                 if (rr.equalsIgnoreCase(Role.USER.name())) {
-                    LOGGER.info("computeRole: '{}' matches USER", rr);
+                    SensitiveLogging.debug(
+                            LOGGER, configuration, "computeRole: '{}' matches USER", rr);
                     resolved = Role.USER;
                     continue;
                 }
                 if (rr.equalsIgnoreCase(Role.GUEST.name())) {
-                    LOGGER.info("computeRole: '{}' matches GUEST", rr);
+                    SensitiveLogging.debug(
+                            LOGGER, configuration, "computeRole: '{}' matches GUEST", rr);
                     resolved = Role.GUEST;
                 }
             }
@@ -815,7 +845,8 @@ public class OAuth2GeoStoreAuthenticationService {
                 oidcGroups = fromClaims;
             }
 
-            LOGGER.info("Groups resolved from token/userinfo: {}", oidcGroups);
+            SensitiveLogging.debug(
+                    LOGGER, configuration, "Groups resolved from token/userinfo: {}", oidcGroups);
         } else {
             LOGGER.info("No groupsClaim configured -> skipping group sync.");
         }
@@ -848,7 +879,9 @@ public class OAuth2GeoStoreAuthenticationService {
                     "Adding configured defaultGroups {} to the groups to assign.", defaultGroups);
         }
 
-        LOGGER.info(
+        SensitiveLogging.debug(
+                LOGGER,
+                configuration,
                 "Final groups to reconcile: {} (user.role={}, user.id={})",
                 oidcGroups,
                 user.getRole(),
@@ -867,13 +900,23 @@ public class OAuth2GeoStoreAuthenticationService {
         // 1) Try primary token
         if (primaryHelper != null) {
             values = primaryHelper.getClaimAsList(claimName, String.class);
-            LOGGER.info("Groups from primary token claim '{}': {}", claimName, values);
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
+                    "Groups from primary token claim '{}': {}",
+                    claimName,
+                    values);
         }
 
         // 2) Fallback: access token
         if ((values == null || values.isEmpty()) && accessHelper != null) {
             values = accessHelper.getClaimAsList(claimName, String.class);
-            LOGGER.info("Groups from access token claim '{}' (fallback): {}", claimName, values);
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
+                    "Groups from access token claim '{}' (fallback): {}",
+                    claimName,
+                    values);
         }
 
         if (values != null && !values.isEmpty()) {
@@ -884,7 +927,12 @@ public class OAuth2GeoStoreAuthenticationService {
         if (userinfoMap != null) {
             List<String> fromUserinfo =
                     ClaimPathResolver.resolveAsListIgnoreCase(userinfoMap, claimName);
-            LOGGER.info("Groups from userinfo claim '{}': {}", claimName, fromUserinfo);
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
+                    "Groups from userinfo claim '{}': {}",
+                    claimName,
+                    fromUserinfo);
             if (fromUserinfo != null) {
                 return fromUserinfo;
             }
@@ -906,11 +954,16 @@ public class OAuth2GeoStoreAuthenticationService {
                 String m = groupMappings.get(g.toUpperCase(Locale.ROOT));
                 if (m != null) {
                     mapped.add(m);
-                    LOGGER.info("Group '{}' mapped to '{}'", g, m);
+                    SensitiveLogging.debug(
+                            LOGGER, configuration, "Group '{}' mapped to '{}'", g, m);
                 } else if (!dropUnmapped) {
                     mapped.add(g);
                 } else {
-                    LOGGER.info("Group '{}' dropped (unmapped, dropUnmapped=true)", g);
+                    SensitiveLogging.debug(
+                            LOGGER,
+                            configuration,
+                            "Group '{}' dropped (unmapped, dropUnmapped=true)",
+                            g);
                 }
             }
             return mapped;
@@ -926,7 +979,9 @@ public class OAuth2GeoStoreAuthenticationService {
             return;
         }
 
-        LOGGER.info(
+        SensitiveLogging.debug(
+                LOGGER,
+                configuration,
                 "reconcileRemoteGroups: user='{}' (id={}, role={}), "
                         + "provider='{}', newGroupNames={}, "
                         + "currentGroups={} (type={})",
@@ -1109,7 +1164,9 @@ public class OAuth2GeoStoreAuthenticationService {
     protected void persistSynchronizedUser(User user) {
         try {
             if (userService != null) {
-                LOGGER.info(
+                SensitiveLogging.debug(
+                        LOGGER,
+                        configuration,
                         "Persisting user '{}' (id={}, role={}, groups={})",
                         user.getName(),
                         user.getId(),
@@ -1134,7 +1191,9 @@ public class OAuth2GeoStoreAuthenticationService {
                     e.getMessage(),
                     e);
         } finally {
-            LOGGER.info(
+            SensitiveLogging.debug(
+                    LOGGER,
+                    configuration,
                     "User '{}' after sync: role={}, groups={}",
                     user.getName(),
                     user.getRole(),
