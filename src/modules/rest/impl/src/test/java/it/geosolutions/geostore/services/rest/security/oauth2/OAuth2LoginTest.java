@@ -113,8 +113,10 @@ public class OAuth2LoginTest {
 
     @Test
     public void testCallbackRefreshCookieDefaults() {
-        String refreshCookie = callbackRefreshCookie(new OAuth2Configuration());
+        List<String> refreshCookies = callbackRefreshCookies(new OAuth2Configuration());
 
+        assertEquals("Only the cookie itself: " + refreshCookies, 1, refreshCookies.size());
+        String refreshCookie = refreshCookies.get(0);
         assertEquals(refreshCookie, "604800", attribute(refreshCookie, "Max-Age"));
         assertEquals(refreshCookie, "/", attribute(refreshCookie, "Path"));
     }
@@ -132,6 +134,27 @@ public class OAuth2LoginTest {
     }
 
     @Test
+    public void testCallbackDeletesTheRootCookieWhenThePathIsNarrower() {
+        OAuth2Configuration configuration = new OAuth2Configuration();
+        configuration.setRefreshTokenCookiePath("/geostore/rest");
+        configuration.setForceSecureCookies(true);
+
+        List<String> refreshCookies = callbackRefreshCookies(configuration);
+
+        assertEquals(refreshCookies.toString(), 2, refreshCookies.size());
+        String refreshCookie = refreshCookies.get(0);
+        assertEquals(refreshCookie, "/geostore/rest", attribute(refreshCookie, "Path"));
+        assertTrue(refreshCookie, refreshCookie.startsWith(REFRESH_TOKEN_PARAM + "=mock"));
+        // The cookie an earlier version left on "/" would otherwise stay until it expires.
+        String deletion = refreshCookies.get(1);
+        assertEquals(deletion, "/", attribute(deletion, "Path"));
+        assertEquals(deletion, "0", attribute(deletion, "Max-Age"));
+        assertTrue(deletion, !deletion.contains("mockRefreshToken"));
+        assertTrue(deletion, hasSecureAttribute(deletion));
+        assertTrue(deletion, hasAttribute(deletion, "HttpOnly"));
+    }
+
+    @Test
     public void testCallbackRefreshCookieAsSessionCookie() {
         OAuth2Configuration configuration = new OAuth2Configuration();
         configuration.setRefreshTokenCookieMaxAge(-1);
@@ -144,6 +167,13 @@ public class OAuth2LoginTest {
 
     /** Runs the callback and returns the Set-Cookie header of the refresh token. */
     private String callbackRefreshCookie(OAuth2Configuration configuration) {
+        List<String> refreshCookies = callbackRefreshCookies(configuration);
+        assertTrue("No refresh token cookie", !refreshCookies.isEmpty());
+        return refreshCookies.get(0);
+    }
+
+    /** Runs the callback and returns its Set-Cookie headers for the refresh token, in order. */
+    private List<String> callbackRefreshCookies(OAuth2Configuration configuration) {
         attributes.setAttribute(REFRESH_TOKEN_PARAM, "mockRefreshToken", 0);
         attributes.setAttribute(ACCESS_TOKEN_PARAM, "mockAccessToken", 0);
         configuration.setInternalRedirectUri("http://localhost:8080/geostore/redirect");
@@ -156,8 +186,7 @@ public class OAuth2LoginTest {
         return result.getMetadata().get("Set-Cookie").stream()
                 .map(Object::toString)
                 .filter(c -> c.startsWith(REFRESH_TOKEN_PARAM + "="))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("No refresh token cookie"));
+                .collect(Collectors.toList());
     }
 
     /** The value of a Set-Cookie attribute, or null when the attribute is absent. */
@@ -189,9 +218,13 @@ public class OAuth2LoginTest {
     }
 
     private static boolean hasSecureAttribute(String setCookie) {
+        return hasAttribute(setCookie, "Secure");
+    }
+
+    private static boolean hasAttribute(String setCookie, String name) {
         return Arrays.stream(setCookie.split(";"))
                 .map(String::trim)
-                .anyMatch("Secure"::equalsIgnoreCase);
+                .anyMatch(name::equalsIgnoreCase);
     }
 
     @After

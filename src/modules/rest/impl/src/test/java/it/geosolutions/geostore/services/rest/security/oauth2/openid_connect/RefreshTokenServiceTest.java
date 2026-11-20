@@ -780,9 +780,31 @@ class RefreshTokenServiceTest {
 
         serviceDelegate.refresh("providedRefreshToken", "providedAccessToken");
 
-        Cookie refreshCookie = getRefreshTokenCookie(mockResponse);
+        List<Cookie> cookies = getRefreshTokenCookies(mockResponse);
+        assertEquals(2, cookies.size(), "The cookie on the path, and the deletion on /");
+        Cookie refreshCookie = cookies.get(0);
         assertEquals(-1, refreshCookie.getMaxAge(), "-1 gives a session cookie");
         assertEquals("/geostore/rest", refreshCookie.getPath());
+        assertFalse(refreshCookie.getValue().isEmpty());
+        // The cookie an earlier version left on "/" would otherwise stay until it expires.
+        Cookie rootDeletion = cookies.get(1);
+        assertEquals("/", rootDeletion.getPath());
+        assertEquals(0, rootDeletion.getMaxAge());
+        assertEquals("", rootDeletion.getValue());
+        assertTrue(rootDeletion.isHttpOnly());
+    }
+
+    @Test
+    void testRefreshCookieOnTheDefaultPathIsNotDeleted() {
+        stubSuccessfulRefresh();
+
+        serviceDelegate.refresh("providedRefreshToken", "providedAccessToken");
+
+        List<Cookie> cookies = getRefreshTokenCookies(mockResponse);
+        assertEquals(1, cookies.size(), "Only the cookie itself");
+        assertEquals("/", cookies.get(0).getPath());
+        assertEquals(604800, cookies.get(0).getMaxAge());
+        assertFalse(cookies.get(0).getValue().isEmpty());
     }
 
     @Test

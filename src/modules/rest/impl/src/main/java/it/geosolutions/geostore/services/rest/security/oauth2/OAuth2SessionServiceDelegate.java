@@ -817,19 +817,26 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     /**
      * Sets the refresh token cookie with the lifetime and path of the given provider (7 days and
-     * {@code /} when the configuration is null).
+     * {@code /} when the configuration is null). When that path is not {@code /}, a cookie left on
+     * {@code /} by a version without the setting is deleted, so that it is no longer sent to the
+     * other applications on the host.
      */
     protected void setRefreshTokenCookie(
             HttpServletResponse response,
             String refreshToken,
             boolean secure,
             IdPConfiguration configuration) {
+        String path = OAuth2Utils.refreshTokenCookiePath(configuration);
         Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, refreshToken);
         cookie.setHttpOnly(true);
         cookie.setSecure(secure);
-        cookie.setPath(OAuth2Utils.refreshTokenCookiePath(configuration));
+        cookie.setPath(path);
         cookie.setMaxAge(OAuth2Utils.refreshTokenCookieMaxAge(configuration));
         response.addCookie(cookie);
+        if (!IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH.equals(path)) {
+            addRefreshTokenDeletion(
+                    response, secure, IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH);
+        }
     }
 
     protected void clearRefreshTokenCookie(HttpServletResponse response) {

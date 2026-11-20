@@ -112,6 +112,10 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                     result.header(
                             "Set-Cookie",
                             refreshTokenCookie(refreshToken, secure, configuration).toString());
+                    NewCookie rootDeletion = rootRefreshTokenCookieDeletion(secure, configuration);
+                    if (rootDeletion != null) {
+                        result.header("Set-Cookie", rootDeletion.toString());
+                    }
                 }
                 TokenStorage tokenStorage = tokenStorage();
                 Object key = tokenStorage.buildTokenKey();
@@ -210,6 +214,23 @@ public abstract class Oauth2LoginService implements IdPLoginService {
                 new Cookie(REFRESH_TOKEN_PARAM, value, refreshTokenCookiePath(configuration), null);
         return new AccessCookie(
                 cookie, "", refreshTokenCookieMaxAge(configuration), null, secure, true, "lax");
+    }
+
+    /**
+     * Deletes the refresh token cookie on {@code /}, where versions without the path setting put
+     * it, so that it is no longer sent to the other applications on the host.
+     *
+     * @return the deleting cookie, or null when the provider keeps the cookie on {@code /}.
+     */
+    protected NewCookie rootRefreshTokenCookieDeletion(
+            boolean secure, IdPConfiguration configuration) {
+        String rootPath = IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH;
+        if (rootPath.equals(refreshTokenCookiePath(configuration))) {
+            return null;
+        }
+        Cookie cookie = new Cookie(REFRESH_TOKEN_PARAM, "", rootPath, null);
+        // Max-Age 0 deletes the cookie.
+        return new AccessCookie(cookie, "", 0, null, secure, true, "lax");
     }
 
     private static HttpServletRequest currentRequest() {
