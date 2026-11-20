@@ -703,6 +703,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             if (tokenDetails != null) {
                 token = tokenDetails.getIdToken();
                 accessToken = tokenDetails.getAccessToken().getValue();
+                if (token != null) {
+                    // The ID token cached for this session is the id_token_hint of its logout,
+                    // whatever its claims: Entra ID, Google, Okta and Auth0 put neither typ nor
+                    // nonce in it, so it is not recognized as an ID token by its content.
+                    // Published here, it is the one the end-session request falls back to, also
+                    // when the request was authenticated with another session.
+                    request.setAttribute(ID_TOKEN_PARAM, token);
+                }
             }
             cache.removeEntry(sessionId);
         }

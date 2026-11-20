@@ -340,9 +340,12 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
      * Picks the ID token for the {@code id_token_hint} parameter. Tries, in order: the token passed
      * down by the logout flow (the ID token cached at login, when the logout is session-based), the
      * thread-local stashed during the token exchange, and the {@code id_token} request attribute
-     * set for authenticated requests. Never falls back to the access token: an invalid hint is
-     * rejected outright by the provider (leaving the SSO session alive), while a missing one may
-     * still be accepted.
+     * set for authenticated requests and by the logout flow for the session it ends. The passed
+     * token is used only when its claims mark it as an ID token (see {@link #isIdToken(String)});
+     * the request attribute is GeoStore's own copy and is used as it is, which covers the ID tokens
+     * of providers that set neither {@code typ} nor {@code nonce}. Never falls back to the access
+     * token: an invalid hint is rejected outright by the provider (leaving the SSO session alive),
+     * while a missing one may still be accepted.
      */
     private String resolveIdTokenHint(String token) {
         if (isIdToken(token)) return token;

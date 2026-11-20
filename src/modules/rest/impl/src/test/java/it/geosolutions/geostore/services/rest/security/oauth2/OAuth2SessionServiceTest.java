@@ -29,24 +29,31 @@ package it.geosolutions.geostore.services.rest.security.oauth2;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.containing;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static it.geosolutions.geostore.services.rest.SessionServiceDelegate.PROVIDER_KEY;
 import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ACCESS_TOKEN_PARAM;
+import static it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils.ID_TOKEN_PARAM;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.verification.LoggedRequest;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.impl.RESTSessionServiceImpl;
 import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectConfiguration;
 import it.geosolutions.geostore.services.rest.security.oauth2.openid_connect.OpenIdConnectSessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -341,5 +348,112 @@ public class OAuth2SessionServiceTest {
             assertNull(cache.get("tokenA"), "oidc entry evicted");
             assertNotNull(cache.get("tokenB"), "azure entry untouched");
         }
+    }
+
+    @Test
+    void testGlobalLogout_sendsTheCachedIdTokenWithoutTypAndNonce() {
+        // Entra ID, Google, Okta and Auth0 put neither claim in the ID token. The request carries
+        // no id_token attribute, as when it was not authenticated with the session it ends.
+        String idToken =
+                unsignedJwt("{\"iss\":\"https://login.example.com/v2.0\",\"sub\":\"user\"}");
+
+        List<LoggedRequest> logouts = globalLogout(idToken, null);
+
+        assertEquals(1, logouts.size(), "the provider's end-session endpoint is called");
+        assertEquals(idToken, logouts.get(0).queryParameter("id_token_hint").firstValue());
+    }
+
+    @Test
+    void testGlobalLogout_sendsTheIdTokenOfTheSessionItEnds() {
+        // The request was authenticated with another session, whose ID token the authentication
+        // filter published on the request.
+        String idToken =
+                unsignedJwt("{\"iss\":\"https://login.example.com/v2.0\",\"sub\":\"user\"}");
+        String callersIdToken =
+                unsignedJwt("{\"iss\":\"https://login.example.com/v2.0\",\"sub\":\"caller\"}");
+
+        List<LoggedRequest> logouts = globalLogout(idToken, callersIdToken);
+
+        assertEquals(1, logouts.size(), "the provider's end-session endpoint is called");
+        assertEquals(idToken, logouts.get(0).queryParameter("id_token_hint").firstValue());
+    }
+
+    /**
+     * Ends the cached session of {@code ACCESS_TOKEN}, whose ID token is the given one, with global
+     * logout enabled, and returns the calls received by the provider's end-session endpoint.
+     *
+     * @param requestIdToken the id_token attribute of the request, or null for none.
+     */
+    private List<LoggedRequest> globalLogout(String idToken, String requestIdToken) {
+        WireMockServer idp = new WireMockServer(wireMockConfig().dynamicPort());
+        idp.start();
+        try {
+            idp.stubFor(get(urlPathEqualTo("/logout")).willReturn(aResponse().withStatus(200)));
+            OpenIdConnectConfiguration configuration = new OpenIdConnectConfiguration();
+            configuration.setEnabled(true);
+            configuration.setClientId("test-client");
+            configuration.setGlobalLogoutEnabled(true);
+            configuration.setLogoutUri("http://localhost:" + idp.port() + "/logout");
+
+            PreAuthenticatedAuthenticationToken authenticationToken =
+                    new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
+            TokenDetails details = Mockito.mock(TokenDetails.class);
+            when(details.getProvider()).thenReturn("oidc");
+            when(details.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken(ACCESS_TOKEN));
+            when(details.getIdToken()).thenReturn(idToken);
+            authenticationToken.setDetails(details);
+            TokenAuthenticationCache cache = new TokenAuthenticationCache();
+            cache.putCacheEntry(ACCESS_TOKEN, authenticationToken);
+
+            OAuth2RestTemplate restTemplate = Mockito.mock(OAuth2RestTemplate.class);
+            when(restTemplate.getOAuth2ClientContext())
+                    .thenReturn(new DefaultOAuth2ClientContext());
+            HashMap<Object, Object> configurations = new HashMap<>();
+            configurations.put("oidcOAuth2Config", configuration);
+
+            try (MockedStatic<GeoStoreContext> ctx = Mockito.mockStatic(GeoStoreContext.class)) {
+                ctx.when(() -> GeoStoreContext.beans(OAuth2Configuration.class))
+                        .thenReturn(configurations);
+                ctx.when(() -> GeoStoreContext.bean("oidcOAuth2Config", OAuth2Configuration.class))
+                        .thenReturn(configuration);
+                ctx.when(() -> GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class))
+                        .thenReturn(cache);
+                ctx.when(
+                                () ->
+                                        GeoStoreContext.bean(
+                                                "oidcOpenIdRestTemplate", OAuth2RestTemplate.class))
+                        .thenReturn(restTemplate);
+
+                MockHttpServletRequest request = new MockHttpServletRequest();
+                MockHttpServletResponse response = new MockHttpServletResponse();
+                ServletRequestAttributes attributes =
+                        new ServletRequestAttributes(request, response);
+                attributes.setAttribute(PROVIDER_KEY, "oidc", 0);
+                if (requestIdToken != null) {
+                    attributes.setAttribute(ID_TOKEN_PARAM, requestIdToken, 0);
+                }
+                RequestContextHolder.setRequestAttributes(attributes);
+
+                RESTSessionService sessionService = new RESTSessionServiceImpl();
+                new OpenIdConnectSessionServiceDelegate(sessionService, null);
+
+                sessionService.removeSession(ACCESS_TOKEN);
+
+                assertNull(cache.get(ACCESS_TOKEN), "the session is removed from the cache");
+                return idp.findAll(getRequestedFor(urlPathEqualTo("/logout")));
+            }
+        } finally {
+            idp.stop();
+        }
+    }
+
+    private static String unsignedJwt(String payloadJson) {
+        Base64.Encoder enc = Base64.getUrlEncoder().withoutPadding();
+        String header =
+                enc.encodeToString(
+                        "{\"alg\":\"RS256\",\"typ\":\"JWT\"}".getBytes(StandardCharsets.UTF_8));
+        String payload = enc.encodeToString(payloadJson.getBytes(StandardCharsets.UTF_8));
+        String signature = enc.encodeToString("sig".getBytes(StandardCharsets.UTF_8));
+        return header + "." + payload + "." + signature;
     }
 }
