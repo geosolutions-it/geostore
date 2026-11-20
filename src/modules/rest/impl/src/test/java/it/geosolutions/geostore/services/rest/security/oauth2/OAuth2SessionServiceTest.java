@@ -432,6 +432,23 @@ public class OAuth2SessionServiceTest {
 
     @Test
     void testGlobalLogout_withAnExpiredAccessToken_endsTheSessionAtTheProvider() {
+        assertExpiredAccessTokenLogoutSends(unsignedJwt("{\"typ\":\"ID\",\"sub\":\"user\"}"));
+    }
+
+    @Test
+    void testGlobalLogout_withAnExpiredAccessToken_sendsAnIdTokenWithoutTypAndNonce() {
+        // Entra ID, Google, Okta and Auth0 put neither claim in the ID token.
+        assertExpiredAccessTokenLogoutSends(
+                unsignedJwt(
+                        "{\"iss\":\"https://login.example.com/tenant/v2.0\",\"sub\":\"user\","
+                                + "\"aud\":\"test-client\"}"));
+    }
+
+    /**
+     * Logs out with an access token whose authentication has left the cache, and checks that the
+     * provider's end-session endpoint is called with the given ID token of the session.
+     */
+    private void assertExpiredAccessTokenLogoutSends(String idToken) {
         WireMockServer idp = new WireMockServer(wireMockConfig().dynamicPort());
         idp.start();
         try {
@@ -442,7 +459,6 @@ public class OAuth2SessionServiceTest {
             configuration.setGlobalLogoutEnabled(true);
             configuration.setLogoutUri("http://localhost:" + idp.port() + "/logout");
 
-            String idToken = unsignedJwt("{\"typ\":\"ID\",\"sub\":\"user\"}");
             PreAuthenticatedAuthenticationToken authenticationToken =
                     new PreAuthenticatedAuthenticationToken("user", "", new ArrayList<>());
             TokenDetails details = Mockito.mock(TokenDetails.class);
