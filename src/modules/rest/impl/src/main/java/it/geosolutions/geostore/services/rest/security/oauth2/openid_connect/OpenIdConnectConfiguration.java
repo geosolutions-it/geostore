@@ -27,6 +27,7 @@
  */
 package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 
+import it.geosolutions.geostore.services.rest.security.oauth2.JWTHelper;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
 
@@ -41,12 +42,15 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
+import org.springframework.web.context.request.RequestContextHolder;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Locale;
+import java.util.Set;
 
 public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
@@ -56,6 +60,10 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public static final String PKCE_CODE_VERIFIER_SESSION_ATTR = "oidc.pkce.code_verifier";
+
+    /** Payload {@code typ} values (lower case) of tokens that are never sent as id_token_hint. */
+    private static final Set<String> NON_ID_TOKEN_TYPES = Set.of("bearer", "refresh", "offline");
+
     private static final String PKCE_CODE_CHALLENGE_METHOD = "S256";
 
     String jwkURI;
@@ -303,8 +311,8 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
      * Build the OIDC RP-Initiated Logout endpoint. Uses standard parameters: id_token_hint,
      * post_logout_redirect_uri, and client_id.
      *
-     * @param token the refresh token (unused for OIDC logout, kept for API compat).
-     * @param accessToken the access token (fallback if no ID token is available).
+     * @param token the ID token GeoStore holds for the session, or null.
+     * @param accessToken the access token. Never sent as id_token_hint.
      * @param configuration the OAuth2Configuration.
      * @return the logout endpoint, or null if no logoutUri is configured.
      */
@@ -316,11 +324,15 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
-        // id_token_hint: the ID token JWT string (required by most OIDC providers)
-        String idToken = OAuth2Utils.getIdToken();
-        if (idToken == null) idToken = accessToken;
+        String idToken = resolveIdTokenHint(token);
         if (idToken != null) {
             params.put("id_token_hint", Collections.singletonList(idToken));
+        } else {
+            LOGGER.warn(
+                    "No ID token available for RP-initiated logout; calling '{}' without "
+                            + "id_token_hint. The provider may require interactive confirmation "
+                            + "and keep the SSO session alive.",
+                    uri);
         }
 
         // client_id: some providers require it alongside id_token_hint
@@ -338,5 +350,41 @@ public class OpenIdConnectConfiguration extends OAuth2Configuration {
         HttpEntity<MultiValueMap<String, String>> requestEntity =
                 new HttpEntity<>(null, new HttpHeaders());
         return new Endpoint(HttpMethod.GET, appendParameters(params, uri), requestEntity);
+    }
+
+    /**
+     * Picks the ID token for the {@code id_token_hint} parameter. Tries, in order: the token passed
+     * down by the logout flow (the ID token cached at login), the ID token stashed during the
+     * authorization-code exchange, and the {@code id_token} request attribute set for authenticated
+     * requests. Never falls back to the access token: an invalid hint is rejected outright by the
+     * provider (Keycloak answers 400 and keeps the SSO session alive), while a missing one may
+     * still be accepted.
+     */
+    private String resolveIdTokenHint(String token) {
+        if (isIdToken(token)) return token;
+        if (RequestContextHolder.getRequestAttributes() == null) return null;
+        String idToken = OAuth2Utils.getIdToken();
+        if (idToken == null) {
+            idToken = OAuth2Utils.getRequestAttribute(OAuth2Utils.ID_TOKEN_PARAM);
+        }
+        return idToken;
+    }
+
+    /**
+     * Whether a token can be sent as {@code id_token_hint}: a JWT that is not marked as an access
+     * or refresh token. Keycloak sets the payload claim {@code typ} to {@code ID} on ID tokens and
+     * to {@code Bearer}, {@code Refresh} or {@code Offline} on the others, and those are rejected.
+     * Most providers (Entra ID, Google, Okta, Auth0) set no {@code typ} on ID tokens, and no {@code
+     * nonce} either unless the authorization request carried one, so neither claim is required.
+     * Opaque strings are rejected.
+     */
+    static boolean isIdToken(String token) {
+        if (token == null || token.chars().filter(c -> c == '.').count() != 2) return false;
+        try {
+            String typ = new JWTHelper(token).getClaim("typ", String.class);
+            return typ == null || !NON_ID_TOKEN_TYPES.contains(typ.toLowerCase(Locale.ROOT));
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
