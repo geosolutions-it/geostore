@@ -30,6 +30,7 @@ package it.geosolutions.geostore.services.rest.security.oauth2.openid_connect;
 import it.geosolutions.geostore.services.rest.security.oauth2.GeoStoreRemoteTokenServices;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Configuration;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import it.geosolutions.geostore.services.rest.security.oauth2.SensitiveLogging;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -48,6 +49,7 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
         // the provider OAuth2Configuration. A protected RestTemplate mirrors the legacy
         // RemoteTokenServices behavior (the CompositeOpenIdConnectFilter may override it).
         super(OAuth2Utils.protectedRestTemplate(configuration));
+        this.configuration = configuration;
         LOGGER.info("Instantiating OpenIdConnectTokenServices with principalKey: {}", principalKey);
     }
 
@@ -67,7 +69,7 @@ public class OpenIdConnectTokenServices extends GeoStoreRemoteTokenServices {
                         new LinkedMultiValueMap<>(),
                         headers,
                         HttpMethod.GET);
-        LOGGER.debug("Got userinfo results: {}", results);
+        SensitiveLogging.debug(LOGGER, configuration, "Got userinfo results: {}", results);
         return results;
     }
 }

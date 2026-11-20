@@ -40,6 +40,11 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -499,6 +504,88 @@ class RefreshTokenServiceTest {
                 "Service delegate must store the new refresh token internally.");
     }
 
+    private static final String LOGGED_ID_TOKEN =
+            Base64.getUrlEncoder().withoutPadding().encodeToString("{\"alg\":\"none\"}".getBytes())
+                    + "."
+                    + Base64.getUrlEncoder()
+                            .withoutPadding()
+                            .encodeToString("{\"typ\":\"ID\",\"sub\":\"log-test\"}".getBytes())
+                    + ".c2ln";
+
+    @Test
+    void testNewTokenDetailsAreNotLoggedWithoutLogSensitiveInfo() {
+        List<String> logged = updateAuthTokenCapturingLogs(false);
+
+        assertFalse(logged.isEmpty(), "the delegate logs while updating the cached tokens");
+        assertTrue(
+                logged.stream()
+                        .noneMatch(
+                                m ->
+                                        m.contains("completelyNewAccessToken")
+                                                || m.contains(LOGGED_ID_TOKEN)),
+                "token values must not be logged unless logSensitiveInfo is enabled: " + logged);
+    }
+
+    @Test
+    void testNewTokenDetailsAreLoggedWithLogSensitiveInfo() {
+        List<String> logged = updateAuthTokenCapturingLogs(true);
+
+        assertTrue(
+                logged.stream()
+                        .anyMatch(
+                                m ->
+                                        m.startsWith("updateAuthToken ")
+                                                && m.contains("completelyNewAccessToken")
+                                                && m.contains(LOGGED_ID_TOKEN)),
+                "with logSensitiveInfo the new tokens are logged at DEBUG, from updateAuthToken: "
+                        + logged);
+    }
+
+    /**
+     * Runs the real cache update that follows a successful refresh, with the delegate's logger at
+     * DEBUG, and returns every message it wrote, each prefixed with the method that logged it.
+     */
+    private List<String> updateAuthTokenCapturingLogs(boolean logSensitiveInfo) {
+        when(configuration.isLogSensitiveInfo()).thenReturn(logSensitiveInfo);
+        TokenDetails details = mock(TokenDetails.class);
+        when(details.getIdToken()).thenReturn(LOGGED_ID_TOKEN);
+        Authentication cached = mock(Authentication.class);
+        when(cached.getDetails()).thenReturn(details);
+        when(authenticationCache.get("loggedOldToken")).thenReturn(cached);
+
+        List<String> messages = new ArrayList<>();
+        AbstractAppender capture =
+                new AbstractAppender("capture", null, null, true, Property.EMPTY_ARRAY) {
+                    @Override
+                    public void append(LogEvent event) {
+                        StackTraceElement source = event.getSource();
+                        messages.add(
+                                (source != null ? source.getMethodName() : "?")
+                                        + " "
+                                        + event.getMessage().getFormattedMessage());
+                    }
+                };
+        org.apache.logging.log4j.core.Logger logger =
+                (org.apache.logging.log4j.core.Logger)
+                        LogManager.getLogger(OAuth2SessionServiceDelegate.class);
+        Level previous = logger.getLevel();
+        capture.start();
+        logger.addAppender(capture);
+        logger.setLevel(Level.DEBUG);
+        try {
+            serviceDelegate.callRealUpdateAuthToken(
+                    "loggedOldToken",
+                    accessToken("completelyNewAccessToken", 3600 * 1000),
+                    new OAuth2RefreshToken("newRefreshToken", null),
+                    configuration);
+        } finally {
+            logger.removeAppender(capture);
+            capture.stop();
+            logger.setLevel(previous);
+        }
+        return messages;
+    }
+
     @Test
     void testRefreshReadsCookieWhenNoRefreshTokenInParams() {
         String accessToken = "providedAccessToken";
@@ -855,6 +942,15 @@ class RefreshTokenServiceTest {
 
         void callClearCookies(HttpServletRequest request, HttpServletResponse response) {
             clearCookies(request, response);
+        }
+
+        // The real implementation, which the override below replaces for the refresh tests.
+        void callRealUpdateAuthToken(
+                String oldAccessToken,
+                OAuth2AccessToken newAccessToken,
+                OAuth2RefreshToken newRefreshToken,
+                OAuth2Configuration configuration) {
+            super.updateAuthToken(oldAccessToken, newAccessToken, newRefreshToken, configuration);
         }
 
         @Override
