@@ -59,6 +59,9 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
 
     private static final Logger LOGGER = LogManager.getLogger(TokenAuthenticationCache.class);
     private final Cache<String, Authentication> cache;
+    // What the logout of a session needs once its authentication has left the cache with the
+    // expiry of the access token. Never used to authenticate anything.
+    private final Cache<String, LogoutRecord> logoutRecords;
     private final long defaultExpirationNanos;
     private ApplicationContext context;
 
@@ -68,6 +71,11 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
 
     public TokenAuthenticationCache(int cacheSize, int cacheExpirationMinutes) {
         this.defaultExpirationNanos = TimeUnit.MINUTES.toNanos(cacheExpirationMinutes);
+        this.logoutRecords =
+                Caffeine.newBuilder()
+                        .maximumSize(cacheSize)
+                        .expireAfterWrite(cacheExpirationMinutes, TimeUnit.MINUTES)
+                        .build();
         this.cache =
                 Caffeine.newBuilder()
                         .maximumSize(cacheSize)
@@ -197,16 +205,72 @@ public class TokenAuthenticationCache implements ApplicationContextAware {
         }
 
         this.cache.put(accessToken, authentication);
+
+        TokenDetails details = OAuth2Utils.getTokenDetails(authentication);
+        if (details != null && details.getIdToken() != null && details.getProvider() != null) {
+            logoutRecords.put(
+                    accessToken,
+                    new LogoutRecord(providerName(details.getProvider()), details.getIdToken()));
+        }
         return authentication;
     }
 
     /**
-     * Remove an authentication from the cache.
+     * Remove an authentication from the cache, together with its logout record.
      *
      * @param accessToken the accessToken identifying the authentication to remove.
      */
     public void removeEntry(String accessToken) {
         this.cache.invalidate(accessToken);
+        this.logoutRecords.invalidate(accessToken);
+    }
+
+    /**
+     * The logout record of a session opened with the given access token. It is kept for the cache
+     * lifetime ({@code cacheExpirationMinutes}) even after the authentication itself left the cache
+     * because the access token expired, so that a logout with that token can still end the session
+     * at the identity provider. It only serves the logout: it never authenticates a request.
+     *
+     * @param accessToken the access token the session was cached with.
+     * @return the record, or null if there is none.
+     */
+    public LogoutRecord getLogoutRecord(String accessToken) {
+        return accessToken != null ? logoutRecords.getIfPresent(accessToken) : null;
+    }
+
+    // TokenDetails carries the name of the provider's configuration bean (e.g.
+    // "oidcOAuth2Config"); delegates and the provider request attribute use the provider name.
+    private static String providerName(String provider) {
+        return provider.endsWith(OAuth2Configuration.CONFIG_NAME_SUFFIX)
+                ? provider.substring(
+                        0, provider.length() - OAuth2Configuration.CONFIG_NAME_SUFFIX.length())
+                : provider;
+    }
+
+    /** The provider and the ID token of a cached session, for its logout. */
+    public static final class LogoutRecord {
+
+        private final String provider;
+        private final String idToken;
+
+        LogoutRecord(String provider, String idToken) {
+            this.provider = provider;
+            this.idToken = idToken;
+        }
+
+        /** The provider name, as used for the provider request attribute. */
+        public String getProvider() {
+            return provider;
+        }
+
+        public String getIdToken() {
+            return idToken;
+        }
+
+        @Override
+        public String toString() {
+            return "LogoutRecord[provider=" + provider + "]";
+        }
     }
 
     public Cache<String, Authentication> getCache() {

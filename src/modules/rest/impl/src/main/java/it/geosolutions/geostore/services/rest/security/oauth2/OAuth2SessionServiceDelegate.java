@@ -623,21 +623,39 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             return;
         }
 
-        String token = null;
+        // The ID token GeoStore holds for the session: the one cached at login, or the one the
+        // authentication filter published from the same cache entry. Only this one is sent to
+        // the provider as id_token_hint, never a token taken from the request.
+        String idToken = null;
         String accessToken = null;
         if (sessionId != null) {
             TokenAuthenticationCache cache = cache();
             Authentication authentication = cache.get(sessionId);
             TokenDetails tokenDetails = OAuth2Utils.getTokenDetails(authentication);
             if (tokenDetails != null) {
-                token = tokenDetails.getIdToken();
+                idToken = tokenDetails.getIdToken();
                 if (tokenDetails.getAccessToken() != null) {
                     accessToken = tokenDetails.getAccessToken().getTokenValue();
+                }
+            } else {
+                // The authentication left the cache when the access token expired; the logout
+                // record of the session still has what the logout at the provider needs.
+                TokenAuthenticationCache.LogoutRecord record = cache.getLogoutRecord(sessionId);
+                if (record != null && record.getProvider().equalsIgnoreCase(delegateName)) {
+                    idToken = record.getIdToken();
+                    accessToken = sessionId;
                 }
             }
             cache.removeEntry(sessionId);
         }
+        if (idToken == null && RequestContextHolder.getRequestAttributes() != null) {
+            idToken =
+                    (String)
+                            RequestContextHolder.getRequestAttributes()
+                                    .getAttribute(ID_TOKEN_PARAM, 0);
+        }
 
+        String token = idToken;
         if (token == null) {
             token = OAuth2Utils.getParameterValue(REFRESH_TOKEN_PARAM, request);
             if (token == null && RequestContextHolder.getRequestAttributes() != null) {
@@ -664,7 +682,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                     && !token.isEmpty()
                     && !accessToken.isEmpty()) {
                 if (configuration.isGlobalLogoutEnabled())
-                    doLogoutInternal(token, configuration, accessToken);
+                    doLogoutInternal(token, configuration, accessToken, idToken);
                 if (configuration.getRevokeEndpoint() != null) clearSession(request);
             } else {
                 LOGGER.debug("Unable to retrieve access token. Remote logout was not executed.");
@@ -685,13 +703,28 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
     }
 
     /**
-     * Call the revoke/logout endpoint of the OAuth2 provider.
+     * Call the revoke/logout endpoint of the OAuth2 provider, without an ID token for the
+     * end-session request.
      *
-     * @param token the access token.
+     * @param token the ID token or the refresh token of the session.
      * @param configuration the OAuth2Configuration
      */
     protected void doLogoutInternal(
             Object token, OAuth2Configuration configuration, String accessToken) {
+        doLogoutInternal(token, configuration, accessToken, null);
+    }
+
+    /**
+     * Call the revoke/logout endpoint of the OAuth2 provider.
+     *
+     * @param token the ID token or the refresh token of the session; nothing is called without it.
+     * @param configuration the OAuth2Configuration
+     * @param accessToken the access token, revoked at the revocation endpoint.
+     * @param idToken the ID token GeoStore holds for the session, sent to the end-session endpoint
+     *     as id_token_hint; may be null.
+     */
+    protected void doLogoutInternal(
+            Object token, OAuth2Configuration configuration, String accessToken, String idToken) {
         String tokenValue = null;
         if (token instanceof OAuth2AccessToken) {
             tokenValue = ((OAuth2AccessToken) token).getTokenValue();
@@ -708,7 +741,7 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
         // Call the remote logout endpoint (end_session_endpoint) independently
         LOGGER.debug("Performing remote logout");
-        callRemoteLogout(tokenValue, accessToken);
+        callRemoteLogout(idToken, accessToken);
     }
 
     protected void callRevokeEndpoint(String accessToken) {
@@ -743,15 +776,32 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
             OAuth2Configuration.Endpoint logoutEndpoint =
                     configuration.buildLogoutEndpoint(token, accessToken, configuration);
             if (logoutEndpoint != null) {
-                RestTemplate template = protectedRestTemplate(configuration);
-                ResponseEntity<String> responseEntity =
-                        template.exchange(
-                                logoutEndpoint.getUrl(),
-                                logoutEndpoint.getMethod(),
-                                logoutEndpoint.getRequestEntity(),
-                                String.class);
-                if (responseEntity.getStatusCode().value() != 200) {
-                    logRevokeErrors(responseEntity.getBody());
+                // Once the session is ended, the end-session endpoint answers with a redirect to
+                // post_logout_redirect_uri. That redirect is the success response: the address is
+                // meant for the browser and is often not reachable from this server.
+                RestTemplate template = protectedRestTemplate(configuration, false);
+                try {
+                    ResponseEntity<String> responseEntity =
+                            template.exchange(
+                                    logoutEndpoint.getUrl(),
+                                    logoutEndpoint.getMethod(),
+                                    logoutEndpoint.getRequestEntity(),
+                                    String.class);
+                    if (responseEntity.getStatusCode().isError()) {
+                        logRemoteLogoutFailure(
+                                responseEntity.getStatusCode().value(), responseEntity.getBody());
+                    }
+                } catch (HttpStatusCodeException e) {
+                    logRemoteLogoutFailure(e.getStatusCode().value(), e.getResponseBodyAsString());
+                } catch (RestClientException e) {
+                    // Not the exception message: it carries the request URL, id_token_hint
+                    // included.
+                    Throwable cause = e.getMostSpecificCause();
+                    LOGGER.warn(
+                            "Remote logout at the identity provider failed: {}",
+                            cause == e
+                                    ? e.getClass().getSimpleName()
+                                    : cause.getClass().getSimpleName() + ": " + cause.getMessage());
                 }
             }
         }
@@ -907,5 +957,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
 
     private static void logRevokeErrors(Object cause) {
         LOGGER.error("Error while revoking authorization. Error is: {}", cause);
+    }
+
+    // A failure at the provider must not stop the local logout (cookies, cache, security
+    // context), so it is logged rather than thrown.
+    private static void logRemoteLogoutFailure(int status, String body) {
+        LOGGER.warn(
+                "Remote logout at the identity provider failed: HTTP {} {}",
+                status,
+                body != null ? body : "");
     }
 }
