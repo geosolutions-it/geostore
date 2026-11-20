@@ -37,7 +37,9 @@ import it.geosolutions.geostore.services.dto.UserSessionImpl;
 import it.geosolutions.geostore.services.rest.RESTSessionService;
 import it.geosolutions.geostore.services.rest.SessionServiceDelegate;
 import it.geosolutions.geostore.services.rest.model.SessionToken;
+import it.geosolutions.geostore.services.rest.security.TokenAuthenticationCache;
 import it.geosolutions.geostore.services.rest.security.oauth2.OAuth2Utils;
+import it.geosolutions.geostore.services.rest.utils.GeoStoreContext;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.SecurityContext;
@@ -221,8 +223,27 @@ public class RESTSessionServiceImpl extends RESTServiceImpl implements RESTSessi
     public void removeSession(String sessionId) {
         String provider =
                 (String) RequestContextHolder.getRequestAttributes().getAttribute(PROVIDER_KEY, 0);
+        if (provider == null) {
+            // The token did not authenticate the request, typically because it has expired: a
+            // session opened with it is still ended by the delegate of its provider.
+            provider = providerOfLogoutRecord(sessionId);
+        }
         SessionServiceDelegate delegate = getDelegate(provider);
         delegate.doLogout(sessionId);
+    }
+
+    private static String providerOfLogoutRecord(String sessionId) {
+        if (sessionId == null) return null;
+        try {
+            TokenAuthenticationCache cache =
+                    GeoStoreContext.bean("oAuth2Cache", TokenAuthenticationCache.class);
+            TokenAuthenticationCache.LogoutRecord record =
+                    cache != null ? cache.getLogoutRecord(sessionId) : null;
+            return record != null ? record.getProvider() : null;
+        } catch (RuntimeException e) {
+            // no OAuth2 token cache in this deployment
+            return null;
+        }
     }
 
     @Override

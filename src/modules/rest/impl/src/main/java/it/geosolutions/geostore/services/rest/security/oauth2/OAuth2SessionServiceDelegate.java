@@ -637,6 +637,14 @@ public abstract class OAuth2SessionServiceDelegate implements SessionServiceDele
                 if (tokenDetails.getAccessToken() != null) {
                     accessToken = tokenDetails.getAccessToken().getTokenValue();
                 }
+            } else {
+                // The authentication left the cache when the access token expired; the logout
+                // record of the session still has what the logout at the provider needs.
+                TokenAuthenticationCache.LogoutRecord record = cache.getLogoutRecord(sessionId);
+                if (record != null && record.getProvider().equalsIgnoreCase(delegateName)) {
+                    idToken = record.getIdToken();
+                    accessToken = sessionId;
+                }
             }
             cache.removeEntry(sessionId);
         }
