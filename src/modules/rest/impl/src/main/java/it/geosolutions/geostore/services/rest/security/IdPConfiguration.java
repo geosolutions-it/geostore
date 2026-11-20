@@ -30,6 +30,16 @@ public abstract class IdPConfiguration implements BeanNameAware {
 
     protected boolean forceSecureCookies = false;
 
+    /** Default lifetime of the refresh token cookie, in seconds (7 days). */
+    public static final int DEFAULT_REFRESH_TOKEN_COOKIE_MAX_AGE = 604800;
+
+    /** Default path of the refresh token cookie. */
+    public static final String DEFAULT_REFRESH_TOKEN_COOKIE_PATH = "/";
+
+    protected int refreshTokenCookieMaxAge = DEFAULT_REFRESH_TOKEN_COOKIE_MAX_AGE;
+
+    protected String refreshTokenCookiePath = DEFAULT_REFRESH_TOKEN_COOKIE_PATH;
+
     /**
      * @return true if the filter to which this configuration object refers is enabled. False
      *     otherwise.
@@ -85,6 +95,41 @@ public abstract class IdPConfiguration implements BeanNameAware {
      */
     public void setForceSecureCookies(boolean forceSecureCookies) {
         this.forceSecureCookies = forceSecureCookies;
+    }
+
+    /**
+     * @return the lifetime of the refresh token cookie in seconds, or -1 for a session cookie,
+     *     which the browser drops when it closes. 7 days by default.
+     */
+    public int getRefreshTokenCookieMaxAge() {
+        return refreshTokenCookieMaxAge;
+    }
+
+    /**
+     * Set the lifetime of the refresh token cookie.
+     *
+     * @param refreshTokenCookieMaxAge the lifetime in seconds, or -1 for a session cookie.
+     */
+    public void setRefreshTokenCookieMaxAge(int refreshTokenCookieMaxAge) {
+        this.refreshTokenCookieMaxAge = refreshTokenCookieMaxAge;
+    }
+
+    /**
+     * @return the path of the refresh token cookie, {@code /} by default.
+     */
+    public String getRefreshTokenCookiePath() {
+        return refreshTokenCookiePath;
+    }
+
+    /**
+     * Set the path of the refresh token cookie, e.g. {@code /geostore/rest} to send it only to the
+     * GeoStore REST API instead of to every application on the same host. The path must cover both
+     * the login callback and the refresh endpoint.
+     *
+     * @param refreshTokenCookiePath the cookie path, starting with {@code /}.
+     */
+    public void setRefreshTokenCookiePath(String refreshTokenCookiePath) {
+        this.refreshTokenCookiePath = refreshTokenCookiePath;
     }
 
     /**

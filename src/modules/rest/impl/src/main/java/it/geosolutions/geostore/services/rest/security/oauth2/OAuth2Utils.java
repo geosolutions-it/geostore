@@ -32,6 +32,8 @@ import it.geosolutions.geostore.services.rest.security.IdPConfiguration;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -55,6 +57,8 @@ import java.util.Enumeration;
  * SimpleClientHttpRequestFactory} instances used for back-channel calls to the IdP.
  */
 public class OAuth2Utils {
+
+    private static final Logger LOGGER = LogManager.getLogger(OAuth2Utils.class);
 
     public static final String ID_TOKEN_PARAM = "id_token";
 
@@ -307,5 +311,54 @@ public class OAuth2Utils {
             IdPConfiguration configuration, HttpServletRequest request) {
         return (configuration != null && configuration.isForceSecureCookies())
                 || (request != null && request.isSecure());
+    }
+
+    /**
+     * The lifetime of the refresh token cookie for the given provider, in seconds, or -1 for a
+     * session cookie. A missing configuration gives the default of 7 days; an invalid value (0, or
+     * negative other than -1) gives the default too, with a warning.
+     *
+     * @param configuration the provider configuration, may be null.
+     */
+    public static int refreshTokenCookieMaxAge(IdPConfiguration configuration) {
+        if (configuration == null) {
+            return IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_MAX_AGE;
+        }
+        int maxAge = configuration.getRefreshTokenCookieMaxAge();
+        if (maxAge == -1 || maxAge > 0) {
+            return maxAge;
+        }
+        LOGGER.warn(
+                "Invalid refreshTokenCookieMaxAge {} for provider {}: use a number of seconds or"
+                        + " -1 for a session cookie. Using the default of {} seconds",
+                maxAge,
+                configuration.getBeanName(),
+                IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_MAX_AGE);
+        return IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_MAX_AGE;
+    }
+
+    /**
+     * The path of the refresh token cookie for the given provider. A missing configuration or an
+     * empty value gives the default {@code /}; a value that does not start with {@code /} gives the
+     * default too, with a warning.
+     *
+     * @param configuration the provider configuration, may be null.
+     */
+    public static String refreshTokenCookiePath(IdPConfiguration configuration) {
+        String path = configuration != null ? configuration.getRefreshTokenCookiePath() : null;
+        if (path == null || path.isBlank()) {
+            return IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH;
+        }
+        path = path.trim();
+        if (path.startsWith("/")) {
+            return path;
+        }
+        LOGGER.warn(
+                "Invalid refreshTokenCookiePath '{}' for provider {}: it must start with '/'."
+                        + " Using '{}'",
+                path,
+                configuration.getBeanName(),
+                IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH);
+        return IdPConfiguration.DEFAULT_REFRESH_TOKEN_COOKIE_PATH;
     }
 }
